@@ -1,0 +1,17 @@
+[data]
+filter_results = True
+min_event_reads = 20
+
+[cluster]
+cluster_command = qsub
+long_queue_name = long
+short_queue_name = quick
+
+[sampler]
+burn_in = 500
+lag = 10
+num_iters = 5000
+
+# For single event analysis
+#se_filter = [10, 0, 1]
+#utr_filter = [20, 0, 0]
