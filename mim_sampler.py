@@ -1174,17 +1174,18 @@ def profile_miso():
     
 
 def main():
-    import cProfile as profile
-    import pstats
-    output_file = "profile"
-    profile.run('profile_miso()', output_file)
-    p = pstats.Stats(output_file)
-    print "name: "
-    print p.sort_stats('name')
-    print "all stats: "
-    p.print_stats()
-    print "cumulative (top 10): "
-    p.sort_stats('cumulative').print_stats(20)
+    return
+    # import cProfile as profile
+    # import pstats
+    # output_file = "profile"
+    # profile.run('profile_miso()', output_file)
+    # p = pstats.Stats(output_file)
+    # print "name: "
+    # print p.sort_stats('name')
+    # print "all stats: "
+    # p.print_stats()
+    # print "cumulative (top 10): "
+    # p.sort_stats('cumulative').print_stats(20)
     
 if __name__ == '__main__':
     main()
