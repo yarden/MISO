@@ -28,7 +28,7 @@ def load_insert_dist(insert_dist_filename):
     # if len(insert_filename) == 0:
     #     raise Exception, "No insert length file found in %s." %(insert_dir)
 
-    
+
 def compute_insert_len(bam_filename, gff_filename, output_dir,
                        min_exon_size):
     """
@@ -60,6 +60,8 @@ def compute_insert_len(bam_filename, gff_filename, output_dir,
     insert_lengths = []
 
     t1 = time.time()
+
+    relevant_region = 0
     
     for gene_id, gene_info in gff_genes.iteritems():
         gene_obj = gene_info["gene_object"]
@@ -85,6 +87,9 @@ def compute_insert_len(bam_filename, gff_filename, output_dir,
 
                 if num_paired_reads == 0:
                     continue
+
+                print "Found %d region" %(relevant_region)
+                relevant_region += 1
 
                 # Compute the insert length of each read
                 for read_pair_id, read_pair in paired_reads.iteritems():
