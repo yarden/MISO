@@ -69,7 +69,9 @@ def run_on_cluster(cmd, job_name, cluster_output_dir, cluster_scripts_dir=None,
     elif queue_type == "short":
         queue_name = Settings.get_short_queue_name()
     else:
-        raise Exception, "Unknown queue type: %s" %(queue_type)
+        print "Warning: Unknown queue type: %s" %(queue_type)
+        queue_name = queue_type
+    
 
     if queue_type == None:
         print "  - queue: unspecified"
