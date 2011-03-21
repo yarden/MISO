@@ -172,12 +172,14 @@ def flag_to_strand(flag):
     return "-"
 
 
-def pair_sam_reads(samfile, filter_reads=True):
+def pair_sam_reads(samfile, filter_reads=True,
+                   return_unpaired=False):
     """
     Pair reads from a SAM file together.
     """
 #    print "Pairing SAM reads..."
     paired_reads = defaultdict(list)
+    unpaired_reads = {}
 
     for read in samfile:
         if filter_reads:
@@ -190,6 +192,7 @@ def pair_sam_reads(samfile, filter_reads=True):
     # Sanity check:
     for read_name, read in paired_reads.iteritems():
         if len(read) != 2:
+            unpaired_reads[read_name] = read
             continue
         left_read, right_read = read[0], read[1]
 
@@ -199,11 +202,16 @@ def pair_sam_reads(samfile, filter_reads=True):
 
         if left_strand == right_strand:
             # Skip read pairs that are on the same strand
+            del paired_reads[read_name]
             continue
         
         if left_read.pos > right_read.pos:
             raise Exception, (left_read.qname, left_read.pos, right_read.pos)
-    return paired_reads
+
+    if not return_unpaired:
+        return paired_reads
+    else:
+        return paired_reads, unpaired_reads
 
 
 def sam_pe_reads_to_isoforms(samfile, gene):
