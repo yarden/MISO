@@ -189,6 +189,8 @@ def pair_sam_reads(samfile, filter_reads=True,
                 continue
         paired_reads[read.qname].append(read)
 
+    to_delete = []
+
     # Sanity check:
     for read_name, read in paired_reads.iteritems():
         if len(read) != 2:
@@ -202,11 +204,15 @@ def pair_sam_reads(samfile, filter_reads=True,
 
         if left_strand == right_strand:
             # Skip read pairs that are on the same strand
-            del paired_reads[read_name]
+            to_delete.append(read_name)
             continue
         
         if left_read.pos > right_read.pos:
             raise Exception, (left_read.qname, left_read.pos, right_read.pos)
+
+    # Delete reads that are on the same strand
+    for del_key in to_delete:
+        del paired_reads[del_key] 
 
     if not return_unpaired:
         return paired_reads
