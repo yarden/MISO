@@ -192,7 +192,6 @@ def pair_sam_reads(samfile, filter_reads=True,
 
     to_delete = []
 
-    # Sanity check:
     for read_name, read in paired_reads.iteritems():
         if len(read) != 2:
             unpaired_reads[read_name] = read
