@@ -188,7 +188,7 @@ def pair_sam_reads(samfile, filter_reads=True,
                read.mate_is_unmapped or (not read.is_paired):
                 unpaired_reads[read_name] = read
                 continue
-        print read.qname
+        print "===>",read.qname
         paired_reads[read.qname].append(read)
 
     to_delete = []
@@ -196,7 +196,6 @@ def pair_sam_reads(samfile, filter_reads=True,
     for read_name, read in paired_reads.iteritems():
         if len(read) != 2:
             print "registering read"
-            print read
             unpaired_reads[read_name] = read
             continue
         left_read, right_read = read[0], read[1]
