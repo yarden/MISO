@@ -186,6 +186,7 @@ def pair_sam_reads(samfile, filter_reads=True,
             # Skip reads that failed QC or are unmapped
             if read.is_qcfail or read.is_unmapped or \
                read.mate_is_unmapped or (not read.is_paired):
+                print "adding read: ", read
                 unpaired_reads[read_name] = read
                 continue
         paired_reads[read.qname].append(read)
