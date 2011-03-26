@@ -2,14 +2,18 @@ from scipy import *
 from numpy.random import multinomial, binomial, negative_binomial, normal, randint
 from parse_csv import find
 
-def print_reads_summary(reads, gene):
+def print_reads_summary(reads, gene, paired_end=False):
     num_isoforms = len(gene.isoforms)
     for n in range(num_isoforms):
         unambig_read = zeros(num_isoforms, dtype=int)
         unambig_read[n] = 1
         num_iso_reads = 0
         for r in reads:
-            if all(r == unambig_read):
+            if paired_end:
+                curr_read = r[0]
+            else:
+                curr_read = r
+            if all(curr_read == unambig_read):
                 num_iso_reads += 1
         print "Iso %d (len = %d): %d unambiguous supporting reads" %(n, gene.isoforms[n].len,
                                                                      num_iso_reads)

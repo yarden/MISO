@@ -19,7 +19,8 @@ from numpy.random import normal
 from numpy.random.mtrand import dirichlet
 from scipy.stats.distributions import binom
 from scipy.stats import lognorm, nbinom, norm
-from read_simulator import simulate_reads, print_reads_summary, read_counts_to_read_list
+from read_simulator import simulate_reads, print_reads_summary, read_counts_to_read_list, \
+     get_reads_summary
 from scipy import *
 from numpy import *
 import hypothesis_test as ht
@@ -355,6 +356,7 @@ class MISOSampler:
 #        if DEBUG:
 #            print "  -> total log_joint_score: ", log_joint_score
 #	    time.sleep(2)
+
         return log_joint_score
 
 #     def log_score_joint(self, reads, assignments, psi_vector, gene, hyperparameters):
@@ -450,6 +452,9 @@ class MISOSampler:
         
 #         return final_psi_frags
 
+    ##
+    ## New version of score paired end assignment
+    ##
     def log_score_paired_end_assignment(self, isoform_nums, psi_vector, gene):
 	"""
 	Score an assignment of a set of paired-end reads given psi
@@ -474,14 +479,20 @@ class MISOSampler:
         
         # Take the log of the valid Psi frags
         psi_frag = log(psi_vector) + log(scaled_lens)
-
-        # Create a masked array where the elements that are -Inf
-        masked_psi_frag = ma.masked_where(psi_frag == -Inf, psi_frag)
-        psi_frag = nansum(masked_psi_frag, 0)
         
+        # Create a masked array where the elements that are -Inf 
+        masked_psi_frag = ma.masked_where(psi_frag == -Inf, psi_frag)
+
+        # Normalize the scaled Psi for each possible fragment length
+        # (based on the fragment length distribution)
+        psi_frag = vect_logsumexp(psi_frag, axis=0)
+        #psi_frag = nansum(masked_psi_frag, 0)
+
         psi_frag = psi_frag - logsumexp(psi_frag)
+        
         psi_frags = tile(psi_frag, [self.num_reads, 1])
-        final_psi_frags = psi_frags[range(self.num_reads), isoform_nums]
+        final_psi_frags = psi_frags[range(self.num_reads),
+                                    isoform_nums]
         
         return final_psi_frags
 
@@ -703,13 +714,15 @@ class MISOSampler:
         # Q(x'; x), the probability of proposing to move to the proposed state x' from
         # the current state
         curr_to_proposal_score = proposal_score_func(proposed_psi_vector, curr_alpha_vector)
-# 	self.miso_logger.debug("Computing MH ratio...")
-# 	self.miso_logger.debug("  - Proposed Psi vector: " + str(proposed_psi_vector))
-# 	self.miso_logger.debug("  - curr_joint_score: " + str(curr_joint_score))
-# 	self.miso_logger.debug("  - proposed_joint_score: " + str(proposed_joint_score))
-# 	self.miso_logger.debug("  - curr_to_proposal_score: " + str(curr_to_proposal_score))
-# 	self.miso_logger.debug("  - proposal_to_curr_score: " + str(proposal_to_curr_score))
-# 	self.miso_logger.debug("  - assignments: " + str(assignments))
+
+#  	self.miso_logger.debug("Computing MH ratio...")
+#  	self.miso_logger.debug("  - Proposed Psi vector: " + str(proposed_psi_vector))
+#  	self.miso_logger.debug("  - curr_joint_score: " + str(curr_joint_score))
+#  	self.miso_logger.debug("  - proposed_joint_score: " + str(proposed_joint_score))
+#  	self.miso_logger.debug("  - curr_to_proposal_score: " + str(curr_to_proposal_score))
+#  	self.miso_logger.debug("  - proposal_to_curr_score: " + str(proposal_to_curr_score))
+#  	self.miso_logger.debug("  - assignments: " + str(assignments))
+        
 # 	if abs(curr_to_proposal_score - proposal_to_curr_score) > 2:
 # 	    self.miso_logger.warn("curr_to_proposal and proposal_to_curr diverge!")
 # 	    self.miso_logger.warn("proposed_psi_vector: " + str(proposed_psi_vector))
@@ -840,7 +853,7 @@ class MISOSampler:
             else:
                 filtered_reads.append([r, frags])
 
-        print "Filtered out %d reads" %(num_skipped)
+        print "Filtered out %d reads due to incompatibility with all isoform" %(num_skipped)
 
         filtered_reads = array(filtered_reads)
         return filtered_reads
@@ -983,6 +996,7 @@ class MISOSampler:
 						       proposal_score_func, gene, hyperparameters, full_metropolis=False)
             if m_ratio == 0:
                 if not already_warned:
+                    #print_reads_summary(reads, gene, paired_end=True)
                     self.miso_logger.warn("MH ratio is ~0! Gene: %s" %(gene.label))
                     self.miso_logger.error("MH ratio is ~0!\ncurr_joint_score: %.2f\n"
                                            "proposed_joint_score: %.2f\nGene: %s" \
@@ -990,6 +1004,8 @@ class MISOSampler:
                                              gene.label))
                     print "MH ratio is ~0!"
                     already_warned = True
+		    raise Exception, "MH ratio is ~0!"
+                
 		#raise Exception, "MH ratio is ~0!"
             acceptance_prob = min(1, m_ratio)
             if rand() < acceptance_prob:
