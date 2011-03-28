@@ -1,5 +1,5 @@
 ##
-## Plotting utils -- should be moved out of here eventually
+## Plotting utils 
 ##
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid.axislines import SubplotZero

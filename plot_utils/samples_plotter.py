@@ -8,9 +8,11 @@ from scipy import *
 from numpy import *
 
 import matplotlib
-from plot_utils.plotting import *
+#from plotting import colors, show_spines, axes_square
+from plotting import *
 import matplotlib.pyplot as plt
 from matplotlib import rc
+rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 from parse_csv import csv2array
 import time
 
@@ -21,8 +23,8 @@ class SamplesPlotter:
     """
     Visualize a set of samples from a run of MISO.
     """
-    def __init__(self, samples, gene, params, log_scores=None,
-                 percent_acceptance=None)
+    def __init__(self, samples, gene, params, log_scores=None, percent_acceptance=None,
+		 true_psi=None):
 	"""
 	Given a sampler instance, store its properties.
 	"""
@@ -32,6 +34,7 @@ class SamplesPlotter:
 	self.gene = gene
 	self.log_scores = log_scores
 	self.percent_acceptance = percent_acceptance
+	self.true_psi = true_psi
 	
 	assert(len(samples) > 1)	
 	if gene:
@@ -112,33 +115,48 @@ class SamplesPlotter:
             print "yticks: ", yticks
             ytick_labels = ["%.2f" %(float(ytick) / float(normed)) for ytick in yticks]
             ax.set_yticklabels(ytick_labels)
-            
+#            samples_to_plot = samples_to_plot / float(len(samples_to_plot))
+        
+
+            # curr_tick_labels = [label.get_label() for label in ax.get_yticklabels()]
+            # print "Current tick labels: ", curr_tick_labels
+            # new_tick_labels = []
+            # for label in curr_tick_labels:
+            #     if len(label) > 0:
+            #         new_label = "%.1f" %(float(label) / normed)
+            #     else:
+            #         new_label = ""
+            #     new_tick_labels.append(new_label)
+            # #ax.set_yticklabels(new_tick_labels)
+        
 	curr_axes = plt.gca()
 	# Plot MAP estimate for same data
 	if map_estimate:
-	    l = plt.axvline(x=map_estimate, color='b', linewidth=1.2, ls='-',
-                            label=r'${\hat{\Psi}}_{MAP}\ =\ %.2f$' %(map_estimate))
+	    l = plt.axvline(x=map_estimate, color='b', linewidth=1.2, ls='-', label=r'${\hat{\Psi}}_{MAP}\ =\ %.2f$' %(map_estimate))
+	# Plot true Psi
+	if self.true_psi:
+	    plot_id = "%dsimul_%diters_%dburnin_%dlag_%s_truepsi_%.2f.pdf" %(simulation_num, num_iters, burn_in, lag, proposal_type, self.true_psi)
+	    l = plt.axvline(x=self.true_psi, color='r', linewidth=1.2, ls='-', label=r'True $\Psi$')
+	else:
+	    # Unknown true Psi
+	    plot_id = "%dsimul_%diters_%dburnin_%dlag_%s_%s_truepsi.pdf" %(simulation_num, num_iters, burn_in, lag, proposal_type, 'unknown')
 	if value_to_label:
 	    l = plt.axvline(x=value_to_label, color='r', linewidth=1.2, ls='-', label=label)
-            
 	# plot credible intervals if given
 	if plot_intervals:
+#	    print "Plotting %.2f confidence intervals" %(plot_intervals * 100)
 	    interval_c1, interval_c2 = ht.compute_credible_intervals(samples_to_plot, plot_intervals)
 	    plt.axvline(x=interval_c1, color='#999999', linewidth=0.7, ls='--',
 			label=r'%d' %(plot_intervals*100) + '% CI')
 	    plt.axvline(x=interval_c2, color='#999999', linewidth=0.7, ls='--')
-
-        # mean of posterior
 	if plot_mean:
 	    sample_mean = mean(samples_to_plot)
 	    plt.axvline(x=sample_mean, color='r', linewidth=0.8, label='Mean')
-	if with_legend and plot_intervals:
+	if with_legend and (plot_intervals or self.true_psi):
 	    if not bbox_coords:
-		lg = plt.legend(handletextpad=0.172, borderpad=0.01, labelspacing=.008,
-                                handlelength=1.4, loc='best', numpoints=1)
+		lg = plt.legend(handletextpad=0.172, borderpad=0.01, labelspacing=.008, handlelength=1.4, loc='best', numpoints=1)
 	    else:
-		lg = plt.legend(handletextpad=0.172, borderpad=0.01, labelspacing=.008,
-                                handlelength=1.4, loc='best', numpoints=1,
+		lg = plt.legend(handletextpad=0.172, borderpad=0.01, labelspacing=.008, handlelength=1.4, loc='best', numpoints=1,
 				bbox_to_anchor=bbox_coords)
 	    lg.get_frame().set_linewidth(0)
 	    for t in lg.get_texts():
