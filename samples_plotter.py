@@ -1,8 +1,6 @@
 ##
 ## Visualize samples produced by MISO.
 ##
-## TODO: In future interface with spliceplot to produce densities along a gene model
-##
 
 from scipy import *
 from numpy import *
