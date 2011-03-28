@@ -49,7 +49,7 @@ def plot_posterior(miso_filename, output_dir,
                                    os.path.basename(miso_filename).replace(".miso",
                                                                            file_ext))
     print "Outputting plot to: %s" %(output_filename)
-    plt.savefig(output_filename, format='png')
+    plt.savefig(output_filename)
     
 
 def main():
