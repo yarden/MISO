@@ -3,13 +3,30 @@
 ##
 
 import os
-from plot_utils.samples_plotter import SamplesPlotter, load_samples
 import matplotlib
-#from plotting import colors, show_spines, axes_square
+
+import pysam
+import GFF as gff_utils
+from plot_utils.samples_plotter import SamplesPlotter, load_samples
 from plot_utils.plotting import *
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from plot_gene import *
 
+def plot_density(pickle_filename, bam_filename):
+    print "Plotting density along alternative isoform"
+    print "  - pickle: %s" %(pickle_filename)
+    print "  - BAM: %s" %(bam_filename)
+    gff_genes = gff_utils.load_indexed_gff_file(pickle_filename)
+    #bamfile = pysam.Samfile(bam_filename, "rb")
+
+    plot_gene(gff_genes)
+
+    plt.show()
+
+    print "gff_genes: ", gff_genes
+    
+    
 def plot_posterior(miso_filename, output_dir,
                    with_intervals=None,
                    dimensions=None,
@@ -70,6 +87,10 @@ def main():
                       help="Output plot in PNG format (the default is PDF).")                      
     parser.add_option("--output-dir", dest="output_dir", nargs=1, default=None,
                       help="Output directory.")
+    parser.add_option("--plot-density", dest="plot_density", nargs=2, default=None,
+                      help="Plot density of reads along an alternative event. Takes as "
+                      "argument a pickle filename corresponding to an event and a BAM "
+                      "along an alternative isoform event.")
     (options, args) = parser.parse_args()
 
     if options.output_dir == None:
@@ -97,6 +118,12 @@ def main():
                        dimensions=dimensions,
                        plot_mean=plot_mean,
                        png=options.png)
+
+    if options.plot_density != None:
+        pickle_filename = os.path.abspath(os.path.expanduser(options.plot_density[0]))
+        bam_filename = os.path.abspath(os.path.expanduser(options.plot_density[1]))
+        plot_density(pickle_filename, bam_filename)
+        
 
 if __name__ == '__main__':
     main()
