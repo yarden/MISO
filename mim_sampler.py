@@ -854,7 +854,7 @@ class MISOSampler:
                 filtered_reads.append([r, frags])
 
         print "Filtered out %d reads that posited improbable fragment lengths with " \
-              "with all isoforms" %(num_skipped)
+              "with all isoforms." %(num_skipped)
 
         filtered_reads = array(filtered_reads)
         return filtered_reads
