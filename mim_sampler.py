@@ -853,7 +853,8 @@ class MISOSampler:
             else:
                 filtered_reads.append([r, frags])
 
-        print "Filtered out %d reads due to incompatibility with all isoform" %(num_skipped)
+        print "Filtered out %d reads that posited improbable fragment lengths with " \
+              "with all isoforms" %(num_skipped)
 
         filtered_reads = array(filtered_reads)
         return filtered_reads
