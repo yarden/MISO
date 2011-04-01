@@ -20,7 +20,7 @@ class SamplesPlotter:
     Visualize a set of samples from a run of MISO.
     """
     def __init__(self, samples, gene, params, log_scores=None,
-                 percent_acceptance=None)
+                 percent_acceptance=None):
 	"""
 	Given a sampler instance, store its properties.
 	"""
