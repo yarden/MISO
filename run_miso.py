@@ -320,6 +320,10 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
+    if not os.path.exists(gff_index_filename):
+        print "Error: no such GFF file as %s" %(gff_index_filename)
+        return
+
     num_genes = len(gene_ids)
     
     print "Computing Psi for %d genes..." %(num_genes)
