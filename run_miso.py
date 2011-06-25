@@ -454,7 +454,7 @@ def main():
     parser.add_option("--compute-gene-psi", dest="compute_gene_psi", nargs=4, default=None,
                       help="Compute Psi using for a given multi-isoform gene.  Expects four arguments: "
                       "the first is a gene ID or set of comma-separated (no spaces) gene IDs, "
-                      "the second is a GFF file with the gene information, the third is a sorted and "
+                      "the second is a GFF indexed file with the gene information, the third is a sorted and "
                       "indexed BAM file with reads aligned to the gene, and the fourth is an output directory.")
     parser.add_option("--paired-end", dest="paired_end", nargs=2, default=None,
                       help="Run in paired-end mode.  Takes a mean and standard deviation "
