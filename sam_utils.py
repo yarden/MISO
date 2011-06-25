@@ -159,6 +159,10 @@ def fetch_bam_reads_in_gene(bamfile, chrom, start, end, gene=None):
         print "Cannot fetch reads in region: %s:%d-%d" %(chrom,
                                                          start,
                                                          end)
+    except AssertionError:
+        print "AssertionError in region: %s:%d-%d" %(chrom,
+                                                     start,
+                                                     end)
     return gene_reads
 
 
