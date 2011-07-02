@@ -273,9 +273,10 @@ def sam_se_reads_to_isoforms(samfile, gene):
     num_reads = 0
 
     alignments = []
+
+    print "samfile: ", samfile
     
     for read in samfile:
-        print "read: ", read
         alignment = single_end_read_to_isoforms(read, gene)
         if 1 in alignment:
             # If the read aligns to at least one of the isoforms, keep it
