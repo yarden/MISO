@@ -275,6 +275,7 @@ def sam_se_reads_to_isoforms(samfile, gene):
     alignments = []
     
     for read in samfile:
+        print "read: ", read
         alignment = single_end_read_to_isoforms(read, gene)
         if 1 in alignment:
             # If the read aligns to at least one of the isoforms, keep it
@@ -288,7 +289,7 @@ def sam_reads_to_isoforms(samfile, gene, paired_end=False):
     """
     Align BAM reads to the gene model.
     """
-    print "Aligning reads gene..."
+    print "Aligning reads to gene..."
     t1 = time.time()
 
     if paired_end != None:
