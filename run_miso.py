@@ -383,6 +383,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
 
         # Align the reads to the isoforms
         reads = sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj, read_len,
+                                                overhang_len,
                                                 paired_end=paired_end)
 
         num_raw_reads = len(reads)
@@ -407,7 +408,8 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
             sampler_params = miso.get_paired_end_sampler_params(num_isoforms,
                                                                 mean_frag_len,
                                                                 frag_variance,
-                                                                read_len)
+                                                                read_len,
+                                                                overhang_len=overhang_len)
             sampler = miso.MISOSampler(sampler_params, paired_end=True,
                                        log_dir=output_dir)
 
