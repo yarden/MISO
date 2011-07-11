@@ -383,6 +383,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
 
         # Align the reads to the isoforms
         reads = sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj, read_len,
+                                                overhang_len,
                                                 paired_end=paired_end)
 
         num_raw_reads = len(reads)
