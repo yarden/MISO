@@ -406,6 +406,7 @@ def load_event_counts(events_filename, event_type, delimiter=';',
 	
 	# Make sure there's more than one count in the set
 	assert(len(counts_list) > 1)
+
 	counts = [int(c) for c in counts_list]
 
         # Part information about event (lengths of exons, etc.)

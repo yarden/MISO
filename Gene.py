@@ -230,10 +230,9 @@ class Gene:
 	end_part_num = self.parts.index(end_part)
 	# find parts crossed in between start and end
         parts_crossed = range(start_part_num + 1, end_part_num)	
-	if read_len:
+        if read_len != None:
 	    if (end - start) <= read_len:
 		return parts_crossed
-	    return []
 	return parts_crossed
 
     def get_part_by_label(self, part_label):
@@ -269,16 +268,19 @@ class Gene:
 
     def genomic_coords_to_isoform(self, isoform, genomic_start, genomic_end):
 	"""
+        Get isoform coords and return genomic coords.
 	"""
 	assert(isoform in self.isoforms)
 	# ensure that the parts the coordinates map to are in the isoform
 	start_part = self.get_part_by_coord(genomic_start)
 	end_part = self.get_part_by_coord(genomic_end)
+        
 	if start_part == None or end_part == None:
 	    return None, None
 	# find the isoform coordinates of the corresponding parts
 	isoform_start = isoform.part_coord_to_isoform(genomic_start)
 	isoform_end = isoform.part_coord_to_isoform(genomic_end)
+
 	return (isoform_start, isoform_end)
 		
     def create_parts(self, parts):
@@ -324,57 +326,83 @@ class Gene:
         """
 	return Exception, "Unimplemented method."
 
-    def align_read_pair(self, genomic_left_read_start, genomic_left_read_end,
-			genomic_right_read_start, genomic_right_read_end, overhang=1,
-			read_len=36):
-	"""
-	Align a paired-end read to all of the gene's isoforms.
-	
-	Return an alignment binary vector of length K, where K is the number of isoforms, as well as
-	a vector with the fragment lengths that correspond to each alignment to an isoform.
+    def align_read_pair_with_cigar(self, left_cigar, genomic_left_read_start,
+                                   genomic_left_read_end, right_cigar,
+                                   genomic_right_read_start,
+                                   genomic_right_read_end, read_len, 
+                                   overhang=1):
 
-	When a read does not align to a particular isoform, the fragment length for that alignment is
-	denoted with -Inf.
-	"""
-	# align each of the pairs independently to all isoforms, and then compute the fragment
-	# lengths that correspond to each alignment
-	alignment = []
-	iso_frag_lens = []
-
-#        print "Aligning: ", (genomic_left_read_start, genomic_left_read_end), \
-#              " - ", (genomic_right_read_start, genomic_right_read_end)
+        alignment = []
+        iso_frag_lens = []
         
-	# align left read
-	(left_alignment, left_isoform_coords) = self.align_read_to_isoforms(genomic_left_read_start, genomic_left_read_end,
-									    overhang=overhang, read_len=read_len)
-	# align right read
-	(right_alignment, right_isoform_coords) = self.align_read_to_isoforms(genomic_right_read_start,
-									      genomic_right_read_end,
-									      overhang=overhang, read_len=read_len)
+        left = self.align_read_to_isoforms_with_cigar(
+            left_cigar, genomic_left_read_start, genomic_left_read_end,
+            read_len, overhang)
+        right = self.align_read_to_isoforms_with_cigar(
+            right_cigar, genomic_right_read_start, genomic_right_read_end,
+            read_len, overhang)
+    
+        for lal, lco, ral, rco in zip(left[0], left[1], right[0], right[1]):
+            if lal and ral:
+                alignment.append(1)
+                iso_frag_lens.append(rco[1]-lco[0]+1)
+            else:
+                alignment.append(0)
+                iso_frag_lens.append(-Inf)
 
-	num_isoforms = len(self.isoforms)
-	for n in range(num_isoforms):
-	    # check that both reads align to the isoform with no overhang violation
-	    if not (left_alignment[n] == right_alignment[n] and right_alignment[n] != 0):
-		alignment.append(0)
-		iso_frag_lens.append(-Inf)
-		continue
-#            else:
-#                print "Not both reads align to the same isoform"
-	    # compute fragment length for each isoform, which is the isoform start coordinate of
-	    # the right read minus the isoform start coordinate of the left read
-	    frag_len = right_isoform_coords[n][1] - left_isoform_coords[n][0] + 1
-	    if frag_len < 0:
-		# negative fragment length		
-		print "Warning: Negative fragment length during alignment of ", genomic_left_read_start, \
-		      genomic_right_read_start, " to isoform: ", self.isoforms[n]
-		alignment.append(0)
-		iso_frag_lens.append(-Inf)
-		continue
-	    # both reads align with no overhang violations and the fragment length is reasonable
-	    alignment.append(1)
-	    iso_frag_lens.append(frag_len)
-	return (alignment, iso_frag_lens)
+        return (alignment, iso_frag_lens)
+
+#     def align_read_pair(self, genomic_left_read_start, genomic_left_read_end,
+# 			genomic_right_read_start, genomic_right_read_end, overhang=1,
+# 			read_len=36):
+# 	"""
+# 	Align a paired-end read to all of the gene's isoforms.
+	
+# 	Return an alignment binary vector of length K, where K is the number of isoforms, as well as
+# 	a vector with the fragment lengths that correspond to each alignment to an isoform.
+
+# 	When a read does not align to a particular isoform, the fragment length for that alignment is
+# 	denoted with -Inf.
+# 	"""
+# 	# align each of the pairs independently to all isoforms, and then compute the fragment
+# 	# lengths that correspond to each alignment
+# 	alignment = []
+# 	iso_frag_lens = []
+
+# #        print "Aligning: ", (genomic_left_read_start, genomic_left_read_end), \
+# #              " - ", (genomic_right_read_start, genomic_right_read_end)
+        
+# 	# align left read
+# 	(left_alignment, left_isoform_coords) = self.align_read_to_isoforms(genomic_left_read_start, genomic_left_read_end,
+# 									    overhang=overhang, read_len=read_len)
+# 	# align right read
+# 	(right_alignment, right_isoform_coords) = self.align_read_to_isoforms(genomic_right_read_start,
+# 									      genomic_right_read_end,
+# 									      overhang=overhang, read_len=read_len)
+
+# 	num_isoforms = len(self.isoforms)
+# 	for n in range(num_isoforms):
+# 	    # check that both reads align to the isoform with no overhang violation
+# 	    if not (left_alignment[n] == right_alignment[n] and right_alignment[n] != 0):
+# 		alignment.append(0)
+# 		iso_frag_lens.append(-Inf)
+# 		continue
+# #            else:
+# #                print "Not both reads align to the same isoform"
+# 	    # compute fragment length for each isoform, which is the isoform start coordinate of
+# 	    # the right read minus the isoform start coordinate of the left read
+# 	    frag_len = right_isoform_coords[n][1] - left_isoform_coords[n][0] + 1
+# 	    if frag_len < 0:
+# 		# negative fragment length		
+# 		print "Warning: Negative fragment length during alignment of ", genomic_left_read_start, \
+# 		      genomic_right_read_start, " to isoform: ", self.isoforms[n]
+# 		alignment.append(0)
+# 		iso_frag_lens.append(-Inf)
+# 		continue
+# 	    # both reads align with no overhang violations and the fragment length is reasonable
+# 	    alignment.append(1)
+# 	    iso_frag_lens.append(frag_len)
+# 	return (alignment, iso_frag_lens)
 
     def align_reads_to_isoforms(self, read_genomic_coords, overhang=1, read_len=36):
 	alignments = []
@@ -382,71 +410,104 @@ class Gene:
 	for read_coords in read_genomic_coords:
 #	    print "aligning: ", read_coords
 	    genomic_read_start, genomic_read_end = read_coords
-	    alignment, isoform_coords = self.align_read_to_isoforms(genomic_read_start, genomic_read_end, overhang=overhang, read_len=read_len)
+	    alignment, isoform_coords = self.align_read_to_isoforms(genomic_read_start, genomic_read_end,
+                                                                    overhang=overhang, read_len=read_len)
 #	    print " - aligned isoform coords: ", isoform_coords
 	    alignments.append(alignment)
 	    isoforms_coords.append(isoform_coords)
 	return (array(alignments), isoforms_coords)
 
-    def align_read_to_isoforms(self, genomic_read_start, genomic_read_end, overhang=1, read_len=36):
-	"""
-	Align a single-end read to all of the gene's isoforms.
+    def align_read_to_isoforms_with_cigar(self, cigar, genomic_read_start,
+                                          genomic_read_end, read_len, overhang_len):
+        """
+        Align a single-end read to all of the gene's isoforms.
+        Use the cigar string of the read to determine whether an
+        isoform matches
+        """
+        alignment = []
+        isoform_coords = []
+        for isoform in self.isoforms:
+            iso_read_start, iso_read_end = self.genomic_coords_to_isoform(
+                isoform, genomic_read_start, genomic_read_end)
+            isocigar = isoform.get_local_cigar(genomic_read_start, read_len)
+            # Check that read is consistent with isoform and that the overhang
+            # constraint is met
+            if (isocigar and isocigar == cigar) and \
+                   isoform.cigar_overhang_met(isocigar, overhang_len):
+                alignment.append(1)
+                isoform_coords.append((iso_read_start, iso_read_end))
+            else:
+                alignment.append(0)
+                isoform_coords.append(None)
+                
+        return (alignment, isoform_coords)        
 
-	Return an alignment as well as a set of isoform coordinates, for each isoform, corresponding
-	to the places where the read aligned.
 
-        When the read violates overhang or the read doesn't align to a particular
-	isoform, the coordinate is set to None.
-	"""
-	alignment = []
-	isoform_coords = []
-	genomic_parts_crossed = self.get_genomic_parts_crossed(genomic_read_start,
-                                                               genomic_read_end,
-							       read_len=read_len)
-        ##
-        ## NEW: If no genomic parts are crossed, must be intronic read
-        ##
-        # if len(genomic_parts_crossed) == 0:
-        #     alignment = [0] * len(self.isoforms)
-        #     isoform_coords = [None] * len(self.isoforms)
-        #     return (alignment, isoform_coords)
+#     def align_read_to_isoforms(self, genomic_read_start, genomic_read_end, overhang=1, read_len=36):
+# 	"""
+# 	Align a single-end read to all of the gene's isoforms.
+
+# 	Return an alignment as well as a set of isoform coordinates, for each isoform, corresponding
+# 	to the places where the read aligned.
+
+#         When the read violates overhang or the read doesn't align to a particular
+# 	isoform, the coordinate is set to None.
+# 	"""
+# 	alignment = []
+# 	isoform_coords = []
+# 	genomic_parts_crossed = self.get_genomic_parts_crossed(genomic_read_start,
+#                                                                genomic_read_end,
+# 							       read_len=read_len)
+
+#         if len(genomic_parts_crossed) == 0:
+#             print "zero genomic parts crossed"
+
+#         ##
+#         ## NEW: If no genomic parts are crossed, must be intronic read
+#         ##
+#         # if len(genomic_parts_crossed) == 0:
+#         #     alignment = [0] * len(self.isoforms)
+#         #     isoform_coords = [None] * len(self.isoforms)
+#         #     return (alignment, isoform_coords)
         
-	for isoform in self.isoforms:
-	    # check that parts aligned to in genomic coordinates exist
-	    # in the current isoform
-	    iso_read_start, iso_read_end = self.genomic_coords_to_isoform(isoform,
-									  genomic_read_start,
-									  genomic_read_end)
-	    if iso_read_start == None or iso_read_end == None:
-		alignment.append(0)
-		isoform_coords.append(None)		
-		continue
-	    # genomic parts have matching parts in isoform. Now check that
-	    # that they cross the same junctions
-	    iso_parts_crossed = isoform.get_isoform_parts_crossed(iso_read_start, iso_read_end)
-	    if iso_parts_crossed != genomic_parts_crossed:
-		alignment.append(0)
-		isoform_coords.append(None)
-		continue
-	    # check that overhang violation is met on outer parts crossed (as long as
-	    # parts that are crossed in between are greater or equal to overhang constraint,
-	    # no need to check those)
-	    if overhang > 1:
-		start_part, start_part_coord = isoform.get_part_by_coord(iso_read_start)
-                if (start_part.end - (start_part_coord + start_part.start) + 1) < overhang:
-		    alignment.append(0)
-		    isoform_coords.append(None)		    
-		    continue
-		end_part, end_part_coord = isoform.get_part_by_coord(iso_read_end)
-		if ((end_part_coord + end_part.start) - end_part.start) + 1 < overhang:
-		    alignment.append(0)
-		    isoform_coords.append(None)		    
-		    continue
-	    # overhang is met and read aligns to the isoform
-	    alignment.append(1)
-	    # register coordinates
-	    isoform_coords.append((iso_read_start, iso_read_end))
-	return (alignment, isoform_coords)
+# 	for isoform in self.isoforms:
+# 	    # check that parts aligned to in genomic coordinates exist
+# 	    # in the current isoform
+# 	    iso_read_start, iso_read_end = self.genomic_coords_to_isoform(isoform,
+# 									  genomic_read_start,
+# 									  genomic_read_end)
+# 	    if iso_read_start == None or iso_read_end == None:
+# 		alignment.append(0)
+# 		isoform_coords.append(None)
+# 		continue
+# 	    # genomic parts have matching parts in isoform. Now check that
+# 	    # that they cross the same junctions
+# 	    iso_parts_crossed = isoform.get_isoform_parts_crossed(iso_read_start, iso_read_end)
+
+# 	    if iso_parts_crossed != genomic_parts_crossed:
+# 		alignment.append(0)
+# 		isoform_coords.append(None)
+# 		continue
+            
+# 	    # check that overhang violation is met on outer parts crossed (as long as
+# 	    # parts that are crossed in between are greater or equal to overhang constraint,
+# 	    # no need to check those)
+# 	    if overhang > 1:
+# 		start_part, start_part_coord = isoform.get_part_by_coord(iso_read_start)
+#                 if (start_part.end - (start_part_coord + start_part.start) + 1) < overhang:
+# 		    alignment.append(0)
+# 		    isoform_coords.append(None)		 
+# 		    continue
+# 		end_part, end_part_coord = isoform.get_part_by_coord(iso_read_end)
+# 		if ((end_part_coord + end_part.start) - end_part.start) + 1 < overhang:
+# 		    alignment.append(0)
+# 		    isoform_coords.append(None)		    
+# 		    continue
+# 	    # overhang is met and read aligns to the isoform
+# 	    alignment.append(1)
+# 	    # register coordinates
+# 	    isoform_coords.append((iso_read_start, iso_read_end))
+# 	return (alignment, isoform_coords)
 
     def align_read(self, genomic_read_start, genomic_read_end, overhang=1, read_len=36):
 	"""
@@ -684,6 +745,55 @@ class Isoform:
 	# find parts crossed in between start and end	
 	return range(start_part_num + 1, end_part_num)
 
+    def cigar_overhang_met(self, cigar, overhang_len):
+        """
+        Check that the overhang constraint is met in each
+        match condition of the read.
+        """
+        overhang_met = True
+        for c in cigar:
+            # If it's the match (M) part of the cigar
+            # and the match length is less than the overhang
+            # constraint, then the constraint is violated
+            if c[0] == 0 and c[1] < overhang_len:
+                return False
+        return overhang_met
+
+    def get_local_cigar(self, start, read_len):
+        """
+        Calculate a CIGAR string for a hypothetical read at a given start position, with a given read length"""
+        # If the read starts before or after the isoform, then it does not fit
+        if start < self.parts[0].start or self.parts[-1].end < start:
+            return None
+        # Look for the exon where the read starts
+        found = None
+        for i, p in enumerate(self.parts):
+            if p.start <= start and start <= p.end:
+                found = i
+                break
+        if found == None:
+            return None
+        
+        # Create CIGAR string
+        cigar = []
+        rl = read_len
+        st = start
+        for i in range(found, len(self.parts)):
+            # the rest is on this exon?
+            if rl <= self.parts[i].end - st + 1:
+                cigar.append((0, rl))
+                return cigar
+            # the next exon is needed as well
+            else:
+                # is there a next exon?
+                if i+1 == len(self.parts):
+                    return None
+                cigar.append((0, self.parts[i].end - st + 1))
+                cigar.append((3, self.parts[i+1].start - self.parts[i].end - 1))
+                rl = rl - (self.parts[i].end - st + 1)
+                st = self.parts[i+1].start
+        return cigar
+
     def part_coord_to_isoform(self, part_start):
 	"""
 	Get the isoform coordinate that the *given part_start coordinate* lands in.
@@ -691,7 +801,7 @@ class Isoform:
 	isoform_interval_start = 0
 	isoform_coord = None
 	for part in self.parts:
-	    if part.contains(part_start, part_start):
+            if part.contains(part_start, part_start):
 		isoform_coord = isoform_interval_start + (part_start - part.start)
 		return isoform_coord
 	    isoform_interval_start += part.len
@@ -704,6 +814,7 @@ class Isoform:
 	# get the part that each coordinate point lands in
 	start_part, start_part_coord = self.get_part_by_coord(isoform_start)
 	end_part, end_part_coord = self.get_part_by_coord(isoform_end)
+        
 	# retrieve the corresponding genomic coordinates
 	genomic_start = self.gene.part_coords_to_genomic(start_part, start_part_coord)
 	genomic_end = self.gene.part_coords_to_genomic(end_part, end_part_coord)
@@ -926,8 +1037,6 @@ def load_multi_isoform_reads(reads_filename):
 
 def load_multi_isoform_gene(multi_isoform_filename):
     isoforms_info = json_load_file(multi_isoform_filename, use_jsonpickle=False)
-    print "exons: ", isoforms_info["exons"]
-    print "isoforms: ", isoforms_info["isoforms"]
     multi_isoform_gene = make_gene(isoforms_info["exons"],
                                    isoforms_info["isoforms"])
     return multi_isoform_gene

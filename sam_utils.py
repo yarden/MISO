@@ -37,22 +37,35 @@ def cigar_to_end_coord(start, cigar):
     end = start + offset - 1
     return end
 
-def single_end_read_to_isoforms(read, gene, read_len=36, overhang_len=1):
+def single_end_read_to_isoforms(read, gene, read_len, overhang_len=1):
     """
     Align single-end SAM read to gene's isoforms.
     """
     start = read.pos + 1
-    end = cigar_to_end_coord(start, read.cigar)
+    end = cigar_to_end_coord(start, read.cigar)    
     
     assert(start < end)
-    
-    alignment, isoform_coords = gene.align_read_to_isoforms(start, end,
-                                                            overhang=overhang_len,
-                                                            read_len=read_len)
+
+    alignment, isoform_coords = gene.align_read_to_isoforms_with_cigar(read.cigar, start, end, read_len,
+                                                                       overhang_len)
     return alignment
+
+# def single_end_read_to_isoforms(read, gene, read_len=36, overhang_len=1):
+#     """
+#     Align single-end SAM read to gene's isoforms.
+#     """
+#     start = read.pos + 1
+#     end = cigar_to_end_coord(start, read.cigar)
+    
+#     assert(start < end)
+    
+#     alignment, isoform_coords = gene.align_read_to_isoforms(start, end,
+#                                                             overhang=overhang_len,
+#                                                             read_len=read_len)
+#     return alignment
     
 
-def paired_read_to_isoforms(paired_read, gene, read_len=36,
+def paired_read_to_isoforms(paired_read, gene, read_len,
                             overhang_len=1):
     """
     Align paired-end SAM read to gene's isoforms.
@@ -81,10 +94,10 @@ def paired_read_to_isoforms(paired_read, gene, read_len=36,
     if left_start > right_start or left_end > right_start:
         return None, None
     else:
-        alignment, frag_lens = gene.align_read_pair(left_start, left_end,
-                                                    right_start, right_end,
-                                                    read_len=read_len,
-                                                    overhang=overhang_len)
+        alignment, frag_lens = gene.align_read_pair_with_cigar(
+            left_read.cigar, left_start, left_end, 
+            right_read.cigar, right_start, right_end,
+            read_len=read_len, overhang=overhang_len)
         
     
 #    assert(left_start < right_start), "Reads scrambled?"
@@ -97,6 +110,52 @@ def paired_read_to_isoforms(paired_read, gene, read_len=36,
 #    print "  - %s\t%s" %(left_read.seq, right_read.seq)
     
     return alignment, frag_lens
+
+# def paired_read_to_isoforms(paired_read, gene, read_len=36,
+#                             overhang_len=1):
+#     """
+#     Align paired-end SAM read to gene's isoforms.
+#     """
+#     left_read = paired_read[0]
+#     right_read = paired_read[1]
+
+#     # Convert to 1-based coordinates
+#     left_start = left_read.pos + 1
+#     right_start = right_read.pos + 1
+
+#     # Get end coordinates of each read
+#     left_end = cigar_to_end_coord(left_start, left_read.cigar)
+
+#     assert(left_start < left_end)
+    
+#     right_end = cigar_to_end_coord(right_start, right_read.cigar)
+
+#     assert(right_start < right_end)
+
+#     alignment = None
+#     frag_lens = None
+    
+#     # Throw out reads that posit a zero or less than zero fragment
+#     # length
+#     if left_start > right_start or left_end > right_start:
+#         return None, None
+#     else:
+#         alignment, frag_lens = gene.align_read_pair(left_start, left_end,
+#                                                     right_start, right_end,
+#                                                     read_len=read_len,
+#                                                     overhang=overhang_len)
+        
+    
+# #    assert(left_start < right_start), "Reads scrambled?"
+# #    assert(left_end < right_start), "Reads scrambled: left=(%d, %d), right=(%d, %d)" \
+# #                    %(left_start, left_end, right_start, right_end)
+    
+# #    print "Read: ", (left_start, left_end), " - ", (right_start, right_end)
+# #    print "  - Alignment: ", alignment, " frag_lens: ", frag_lens
+# #    print "  - Sequences: "
+# #    print "  - %s\t%s" %(left_read.seq, right_read.seq)
+    
+#     return alignment, frag_lens
                          
 
 def load_bam_reads(bam_filename,
@@ -135,6 +194,7 @@ def fetch_bam_reads_in_region(bamfile, chrom, start, end, gene=None):
         pass
     else:
         chrom = chrom.split("chr")[1]
+        
     try:
         gene_reads = bamfile.fetch(chrom, start, end)
     except ValueError:
@@ -149,10 +209,12 @@ def fetch_bam_reads_in_gene(bamfile, chrom, start, end, gene=None):
     Align BAM reads to the gene model.
     """
     gene_reads = []
+
     if chrom in bamfile.references:
         pass
     else:
         chrom = chrom.split("chr")[1]
+        
     try:
         gene_reads = bamfile.fetch(chrom, start, end)
     except ValueError:
@@ -163,6 +225,7 @@ def fetch_bam_reads_in_gene(bamfile, chrom, start, end, gene=None):
         print "AssertionError in region: %s:%d-%d" %(chrom,
                                                      start,
                                                      end)
+        print "  - Check that your BAM file is indexed!"
     return gene_reads
 
 
@@ -266,7 +329,7 @@ def sam_pe_reads_to_isoforms(samfile, gene):
     return pe_reads, num_read_pairs
 
 
-def sam_se_reads_to_isoforms(samfile, gene):
+def sam_se_reads_to_isoforms(samfile, gene, read_len):
     """
     Align single-end reads to gene.
     """
@@ -274,19 +337,24 @@ def sam_se_reads_to_isoforms(samfile, gene):
 
     alignments = []
 
-    print "samfile: ", samfile
+    num_skipped = 0
     
     for read in samfile:
-        alignment = single_end_read_to_isoforms(read, gene)
+        alignment = single_end_read_to_isoforms(read, gene, read_len)
         if 1 in alignment:
             # If the read aligns to at least one of the isoforms, keep it
             alignments.append(alignment)
             num_reads += 1
+        else:
+            num_skipped += 1
+
+    print "Skipped total of %d reads." %(num_skipped)
         
     return alignments, num_reads
 
 
-def sam_reads_to_isoforms(samfile, gene, paired_end=False):
+def sam_reads_to_isoforms(samfile, gene, read_len,
+                          paired_end=False):
     """
     Align BAM reads to the gene model.
     """
@@ -295,61 +363,15 @@ def sam_reads_to_isoforms(samfile, gene, paired_end=False):
 
     if paired_end != None:
         # Paired-end reads
-        reads, num_reads = sam_pe_reads_to_isoforms(samfile, gene)
+        reads, num_reads = sam_pe_reads_to_isoforms(samfile, gene, read_len)
     else:
         # Single-end reads
-        reads, num_reads = sam_se_reads_to_isoforms(samfile, gene)
+        reads, num_reads = sam_se_reads_to_isoforms(samfile, gene, read_len)
     
     t2 = time.time()
     print "Alignment to gene took %.2f seconds (%d reads)." %((t2 - t1),
                                                               num_reads)
     return reads
-
-
-    
-def GRIA1_example(sam_filename):
-    """
-    Test GRIA1 example.
-    """
-    sam_filename = 'sam-tests/brain/GRIA1.mm9.stim30.sam'
-    samfile = load_sam_reads(sam_filename)
-#    chrom = 'chr1'
-#    start = 1
-#    end = 4500
-    
-    gene = None
-
-    sam_reads_to_isoforms(samfile, gene)
-
-    #align_sam_reads_to_gene(samfile, chrom, start, end, gene)
-    
-
-def Atp2b1_example(sam_filename, use_bam=False, template=None):
-    """
-    Test Atp2b1 example in C2C12.
-    """
-    if use_bam:
-        print "Using BAM"
-        samfile = load_bam_reads(sam_filename, template=template)
-    else:
-        print "Using SAM"
-        samfile = load_sam_reads(sam_filename, template=template)
-    gene = load_genes_from_gff('gff/mm9.Atp2b1.gff')
-
-    for isoform in gene.isoforms:
-        print "=" * 10
-        print "isoform parts: "
-        for p in isoform.parts:
-            print " part: ", p
-    sam_reads_to_isoforms(samfile, gene)
-
-
-def load_sam_as_bam(header_filename=None):
-    """
-    Convert a SAM format into BAM, after sorting it and indexing it.
-    """
-    return
-    
 
 def main():
     #bam_filename = 'sam-tests/skeletal-muscle/accepted_hits.n250000.bam'
@@ -357,10 +379,6 @@ def main():
     sam_filename = 'sam-tests/muscle-c2c12/c2c12_cugbp1_kd.control_0d.Atp2b1.sam'
     bam_filename = 'sam-tests/muscle-c2c12/c2c12_cugbp1_kd.control_0d.Atp2b1.sorted.bam'
     mm9_header = pysam.Samfile('sam-tests/muscle-c2c12/mm9.genome.fasta.fai', "r")
-#    Atp2b1_example(bam_filename, template=mm9_header,
-#                   use_bam=True)
-
-#    bam_filename = 'sam-tests/brain/Grin1.mm9.control.sorted.bam'
     bamfile = load_bam_reads(bam_filename, template=mm9_header)
     for r in bamfile:
         print r

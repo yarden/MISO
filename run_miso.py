@@ -15,7 +15,7 @@ import cluster_utils
 import sam_utils
 from parse_csv import *
 from json_utils import *
-import mim_sampler as miso
+import miso_sampler as miso
 import Gene as gene_utils
 import GFF as gff_utils
 from samples_utils import *
@@ -363,7 +363,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
 
         gene_obj = gene_info['gene_object']
         gene_hierarchy = gene_info['hierarchy']
-        
+
         # Find the most inclusive transcription start and end sites for each gene
         tx_start, tx_end = gff_utils.get_inclusive_txn_bounds(gene_info['hierarchy'][gene_id])
 
@@ -382,7 +382,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
                                                        gene_obj)
 
         # Align the reads to the isoforms
-        reads = sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj,
+        reads = sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj, read_len,
                                                 paired_end=paired_end)
 
         num_raw_reads = len(reads)
