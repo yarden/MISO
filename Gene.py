@@ -288,13 +288,7 @@ class Gene:
 	gene_parts = []
 	for part in parts:
             gene_part = part
-	    # assign internal sequences to parts if they don't already have assigned sequences
-            ##
-            ## REMOVE INTERNAL SEQUENCE ASSIGNMENT
-            ##
-	    #if not gene_part.seq:
-            #    gene_part.seq = str(part_counter) * part.len
-	    # add pointer to gene that part belongs to
+
 	    gene_part.gene = self
 	    gene_parts.append(gene_part)
 	    part_counter += 1
@@ -755,7 +749,8 @@ class Isoform:
             # If it's the match (M) part of the cigar
             # and the match length is less than the overhang
             # constraint, then the constraint is violated
-            if c[0] == 0 and c[1] < overhang_len:
+            if (c[0] == 0) and (c[1] < overhang_len):
+                print "overhang unmet"
                 return False
         return overhang_met
 

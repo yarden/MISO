@@ -407,7 +407,8 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
             sampler_params = miso.get_paired_end_sampler_params(num_isoforms,
                                                                 mean_frag_len,
                                                                 frag_variance,
-                                                                read_len)
+                                                                read_len,
+                                                                overhang_len=overhang_len)
             sampler = miso.MISOSampler(sampler_params, paired_end=True,
                                        log_dir=output_dir)
 
