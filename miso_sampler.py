@@ -232,7 +232,7 @@ class MISOSampler:
 	if self.paired_end:
 	    if ((not 'mean_frag_len' in self.params) or (not 'frag_variance' in self.params)):
 		raise Exception, "Must set mean_frag_len and frag_variance when " \
-                      "running in sampler on paired-end data"
+                      "running in sampler on paired-end data."
 	    self.mean_frag_len = self.params['mean_frag_len']
 	    self.frag_variance = self.params['frag_variance']
 
@@ -241,12 +241,12 @@ class MISOSampler:
             # the mean plus num_deviations-many standard deviations out.
             num_devs = 4
             out_range = int(round(num_devs * sqrt(self.frag_variance)))
-
+            
             # Don't consider fragment lengths smaller than 20 nucleotides
-            min_frag_range = min(self.mean_frag_len - out_range, 20)
+            min_frag_range = max(self.mean_frag_len - out_range, 20)
             max_frag_range = self.mean_frag_len + out_range
 
-            self.frag_range = array(range(min_frag_range, max_frag_range))
+            self.frag_range = array(range(min_frag_range, max_frag_range + 1))
             self.frag_range_len = len(self.frag_range)
             
 	# for paired-end, set the default fragment length distribution
@@ -332,28 +332,28 @@ class MISOSampler:
         """
         Return a log score for the joint distribution.  Efficient vectorized version.
         """
-#	DEBUG = False
+#	DEBUG = True
         # Score the read
 	if not self.paired_end:
 	    log_reads_prob = sum(self.log_score_reads(reads, assignments, gene))
 	else:
 	    log_reads_prob = sum(self.log_score_paired_end_reads(reads, assignments, gene))
-#        if DEBUG:
-#            print " log_reads_prob: ", log_reads_prob
+#         if DEBUG:
+#             print " log_reads_prob: ", log_reads_prob
 	if not self.paired_end:
 	    log_assignments_prob = sum(self.log_score_assignment(assignments, psi_vector, gene))
 	else:
 	    log_assignments_prob = sum(self.log_score_paired_end_assignment(assignments, psi_vector, gene))
-#        if DEBUG:
-#            print " log_assignments_prob: ", log_assignments_prob
+#         if DEBUG:
+#             print " log_assignments_prob: ", log_assignments_prob
         # Score the Psi vector
         log_psi_prob = self.log_score_psi_vector(psi_vector, hyperparameters)
-#        if DEBUG:
-#            print "log_psi_prob: ", log_psi_prob
+#         if DEBUG:
+#             print "log_psi_prob: ", log_psi_prob
         log_joint_score = log_reads_prob + log_assignments_prob + log_psi_prob
-#        if DEBUG:
-#            print "  -> total log_joint_score: ", log_joint_score
-#	    time.sleep(2)
+#         if DEBUG:
+#             print "  -> total log_joint_score: ", log_joint_score
+# 	    time.sleep(2)
 
         return log_joint_score
 
@@ -384,7 +384,8 @@ class MISOSampler:
         Score a setting of the Psi values given hyperparameters of the Dirichlet prior.
         """
         assert (all(hyperparameters > 0))
-        return dirichlet_lnpdf(psi_vector, [hyperparameters])[0]
+        return dirichlet_lnpdf(hyperparameters, [psi_vector])[0]
+        #return dirichlet_lnpdf(psi_vector, [hyperparameters])[0]
 
     def log_score_psi_vector_proposal(self, psi_vector, alpha_vector):
         """
@@ -460,6 +461,9 @@ class MISOSampler:
 
         Score each assignment by the insert length and its probability.
 	"""
+        ###
+        ### TODO: Compute this once before starting sampling!!!
+        ###
         # Construct matrix of number of considered fragment lengths
         # by isoform lengths (for vectorization purposes)
         iso_lens_matrix = tile(gene.iso_lens,
@@ -468,25 +472,45 @@ class MISOSampler:
         # Scaled lengths of each isoform by the considered
         # fragment length in the distribution
         scaled_lens = iso_lens_matrix - self.frag_range_matrix + 1
+
+#        print "scaled_lens: ", scaled_lens
         
         # Construct a matrix of Psi values with dimensions of
         # number of considered fragment lengths by number of
         # isoforms (for vectorization purposes)
         #self.psi_matrix = tile(psi_vector,
         #                       [self.frag_range_len, 1])
+
+#        print "psi_vector: ", psi_vector
+
         
         # Take the log of the valid Psi frags
         psi_frag = log(psi_vector) + log(scaled_lens)
-        
-        # Create a masked array where the elements that are -Inf 
-        masked_psi_frag = ma.masked_where(psi_frag == -Inf, psi_frag)
 
+#         print "psi_frag: ", psi_frag
+#         print "where frag is nan:", where(isnan(psi_frag))
+#         print "Convert nan to -inf"
+        psi_frag[where(isnan(psi_frag))] = -Inf
+#         print "after: "
+#         print "where frag is nan:", where(isnan(psi_frag))
+
+
+#         print "scaled_lens: ", scaled_lens
+
+        # Create a masked array where the elements that are -Inf 
+        masked_psi_frag = ma.masked_where(psi_frag == -Inf,
+                                          psi_frag)
+        
+#        print "masked_psi_frag: ", masked_psi_frag
+        
         # Normalize the scaled Psi for each possible fragment length
         # (based on the fragment length distribution)
         psi_frag = vect_logsumexp(psi_frag, axis=0)
-        #psi_frag = nansum(masked_psi_frag, 0)
+
+#        psi_frag = nansum(masked_psi_frag, 0)
 
         psi_frag = psi_frag - logsumexp(psi_frag)
+        
         
         psi_frags = tile(psi_frag, [self.num_reads, 1])
         final_psi_frags = psi_frags[range(self.num_reads),
@@ -1023,6 +1047,7 @@ class MISOSampler:
             if isnan(jscore):
                 self.miso_logger.error("Unable to get log joint score for gene %s" \
                                        %(gene.label))
+                raise Exception, "Crap"
             
             if burn_in_counter >= burn_in:
                 # Accumulate Psi vectors

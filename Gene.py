@@ -274,6 +274,10 @@ class Gene:
 	# ensure that the parts the coordinates map to are in the isoform
 	start_part = self.get_part_by_coord(genomic_start)
 	end_part = self.get_part_by_coord(genomic_end)
+
+#        print "COORDS2ISO: genomic_start, genomic_end: ", genomic_start, \
+#              genomic_end
+#        print "--->",start_part, end_part
         
 	if start_part == None or end_part == None:
 	    return None, None
@@ -335,6 +339,9 @@ class Gene:
         right = self.align_read_to_isoforms_with_cigar(
             right_cigar, genomic_right_read_start, genomic_right_read_end,
             read_len, overhang)
+
+#        print "left: ", left
+#        print "right: ", right
     
         for lal, lco, ral, rco in zip(left[0], left[1], right[0], right[1]):
             if lal and ral:
@@ -421,9 +428,11 @@ class Gene:
         alignment = []
         isoform_coords = []
         for isoform in self.isoforms:
-            iso_read_start, iso_read_end = self.genomic_coords_to_isoform(
-                isoform, genomic_read_start, genomic_read_end)
+            iso_read_start, iso_read_end = self.genomic_coords_to_isoform(isoform,
+                                                                          genomic_read_start,
+                                                                          genomic_read_end)
             isocigar = isoform.get_local_cigar(genomic_read_start, read_len)
+
             # Check that read is consistent with isoform and that the overhang
             # constraint is met
             if (isocigar and isocigar == cigar) and \
@@ -750,7 +759,6 @@ class Isoform:
             # and the match length is less than the overhang
             # constraint, then the constraint is violated
             if (c[0] == 0) and (c[1] < overhang_len):
-                print "overhang unmet"
                 return False
         return overhang_met
 
@@ -1081,5 +1089,5 @@ def afe_ale_event_to_gene(proximal_exons, distal_exons, event_type,
     return gene
 
 if __name__ == '__main__':
-    load_genes_from_gff('gff/Gria2.mm9.ensembl.gff')
+    pass
     
