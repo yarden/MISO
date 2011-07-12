@@ -91,7 +91,9 @@ def paired_read_to_isoforms(paired_read, gene, read_len,
     
     # Throw out reads that posit a zero or less than zero fragment
     # length
-    if left_start > right_start or left_end > right_start:
+#    print "LEFT read start,end: ", left_start, left_end
+#    print "RIGHT read start,end: ", right_start, right_end
+    if left_start > right_start:
         return None, None
     else:
         alignment, frag_lens = gene.align_read_pair_with_cigar(
@@ -295,7 +297,7 @@ def pair_sam_reads(samfile, filter_reads=True,
         return paired_reads, unpaired_reads
 
 
-def sam_pe_reads_to_isoforms(samfile, gene):
+def sam_pe_reads_to_isoforms(samfile, gene, read_len, overhang_len):
     """
     Align read pairs (from paired-end data set) to gene.
 
@@ -315,13 +317,15 @@ def sam_pe_reads_to_isoforms(samfile, gene):
             # Skip reads with no pair
             continue
         
-        alignment, frag_lens = paired_read_to_isoforms(read_pair, gene)
+        alignment, frag_lens = paired_read_to_isoforms(read_pair, gene,
+                                                       read_len, overhang_len)
 
         # Skip reads that are not consistent with any isoform
         if any(array(alignment) == 1):
             pe_reads.append([alignment, frag_lens])
             num_read_pairs += 1
         else:
+#            print "read %s inconsistent with all isoforms" %(read_id)
             k += 1
 
     print "Filtered out %d reads that were not consistent with any isoform" %(k)
@@ -329,7 +333,8 @@ def sam_pe_reads_to_isoforms(samfile, gene):
     return pe_reads, num_read_pairs
 
 
-def sam_se_reads_to_isoforms(samfile, gene, read_len):
+def sam_se_reads_to_isoforms(samfile, gene, read_len,
+                             overhang_len):
     """
     Align single-end reads to gene.
     """
@@ -340,7 +345,8 @@ def sam_se_reads_to_isoforms(samfile, gene, read_len):
     num_skipped = 0
     
     for read in samfile:
-        alignment = single_end_read_to_isoforms(read, gene, read_len)
+        alignment = single_end_read_to_isoforms(read, gene, read_len,
+                                                overhang_len)
         if 1 in alignment:
             # If the read aligns to at least one of the isoforms, keep it
             alignments.append(alignment)
@@ -353,7 +359,7 @@ def sam_se_reads_to_isoforms(samfile, gene, read_len):
     return alignments, num_reads
 
 
-def sam_reads_to_isoforms(samfile, gene, read_len,
+def sam_reads_to_isoforms(samfile, gene, read_len, overhang_len,
                           paired_end=False):
     """
     Align BAM reads to the gene model.
@@ -363,10 +369,12 @@ def sam_reads_to_isoforms(samfile, gene, read_len,
 
     if paired_end != None:
         # Paired-end reads
-        reads, num_reads = sam_pe_reads_to_isoforms(samfile, gene, read_len)
+        reads, num_reads = sam_pe_reads_to_isoforms(samfile, gene, read_len,
+                                                    overhang_len)
     else:
         # Single-end reads
-        reads, num_reads = sam_se_reads_to_isoforms(samfile, gene, read_len)
+        reads, num_reads = sam_se_reads_to_isoforms(samfile, gene, read_len,
+                                                    overhang_len)
     
     t2 = time.time()
     print "Alignment to gene took %.2f seconds (%d reads)." %((t2 - t1),

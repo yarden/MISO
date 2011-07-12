@@ -499,6 +499,13 @@ def main():
     parser.add_option("--overhang-len", dest="overhang_len", type="int", default=None)
     parser.add_option("--event-type", dest="event_type", default=None,
 		      help="Event type of two-isoform events (e.g. 'SE', 'RI', 'A3SS', ...)")
+
+    ##
+    ## Gene utilities
+    ##
+    parser.add_option("--view-gene", dest="view_gene", nargs=1, default=None,
+                      help="View the contents of a gene/event that has been indexed. "\
+                      "Takes as input an indexed (.pickle) filename.")
     (options, args) = parser.parse_args()
 
     ##
@@ -622,6 +629,28 @@ def main():
 	summary_filename = os.path.join(summary_output_dir,
 					'%s.miso_summary' %(samples_label))
 	summarize_sampler_results(samples_dir, summary_filename)
+
+    if options.view_gene != None:
+        indexed_gene_filename = os.path.abspath(os.path.expanduser(options.view_gene))
+        print "Viewing genes in %s" %(indexed_gene_filename)
+        gff_genes = gff_utils.load_indexed_gff_file(indexed_gene_filename)
+
+        if gff_genes == None:
+            print "No genes."
+            return
+
+        for gene_id, gene_info in gff_genes.iteritems():
+            print "Gene %s" %(gene_id)
+            gene_obj = gene_info['gene_object']
+            print " - Gene object: ", gene_obj
+            print "=="
+            print "Isoforms: "
+            for isoform in gene_obj.isoforms:
+                print " - ", isoform
+            print "=="
+            print "Exons: "
+            for exon in gene_obj.parts:
+                print " - ", exon
 
 if __name__ == '__main__':
     main()
