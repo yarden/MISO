@@ -384,6 +384,7 @@ class MISOSampler:
         Score a setting of the Psi values given hyperparameters of the Dirichlet prior.
         """
         assert (all(hyperparameters > 0))
+        # Hyperparameters first, Psi vector second (unlike C interface)
         return dirichlet_lnpdf(hyperparameters, [psi_vector])[0]
         #return dirichlet_lnpdf(psi_vector, [hyperparameters])[0]
 
@@ -411,6 +412,7 @@ class MISOSampler:
         scaled_lens[invalid_lens_ind] = 0
         
         psi_frag = log(psi_vector) + log(scaled_lens)
+        
         psi_frag = psi_frag - logsumexp(psi_frag)
         psi_frags = tile(psi_frag, [self.num_reads, 1])
         return psi_frags[range(self.num_reads), isoform_nums]
@@ -485,23 +487,19 @@ class MISOSampler:
 
         
         # Take the log of the valid Psi frags
+#        print "scaled_lens: ", scaled_lens
         psi_frag = log(psi_vector) + log(scaled_lens)
 
-#         print "psi_frag: ", psi_frag
 #         print "where frag is nan:", where(isnan(psi_frag))
 #         print "Convert nan to -inf"
-        psi_frag[where(isnan(psi_frag))] = -Inf
+        psi_frag[where(isnan(psi_frag))[0]] = -Inf
 #         print "after: "
-#         print "where frag is nan:", where(isnan(psi_frag))
-
 
 #         print "scaled_lens: ", scaled_lens
 
         # Create a masked array where the elements that are -Inf 
         masked_psi_frag = ma.masked_where(psi_frag == -Inf,
                                           psi_frag)
-        
-#        print "masked_psi_frag: ", masked_psi_frag
         
         # Normalize the scaled Psi for each possible fragment length
         # (based on the fragment length distribution)
@@ -510,7 +508,6 @@ class MISOSampler:
 #        psi_frag = nansum(masked_psi_frag, 0)
 
         psi_frag = psi_frag - logsumexp(psi_frag)
-        
         
         psi_frags = tile(psi_frag, [self.num_reads, 1])
         final_psi_frags = psi_frags[range(self.num_reads),
@@ -576,12 +573,11 @@ class MISOSampler:
 
 	# Get the number of overhang positions violated
 	num_overhang_excluded = 0
-	if overhang_excluded != {}:
-	    raise Exception, "Support for overhang > 1 not implemented!"
 	# The number of reads possible is the number of ways a fragment of the given length
 	# can be generated from the isoforms
 #	print "isoform_nums: ", isoform_nums
 	assigned_iso_frag_lens = frag_lens[range(self.num_reads), isoform_nums]
+#        print "assigned_iso_frag_lens: ", assigned_iso_frag_lens
 #	print >> sys.stderr, "Scoring fragments: ", assigned_iso_frag_lens, " - reads: ", pe_reads
 #	print >> sys.stderr, "Isoform assignments: ", isoform_nums
         num_reads_possible = gene.iso_lens[isoform_nums] - assigned_iso_frag_lens + 1 - num_overhang_excluded
@@ -591,6 +587,12 @@ class MISOSampler:
 #	print >> sys.stderr, "log_frag_len_prob: ", self.log_frag_len_prob(assigned_iso_frag_lens)
 #	print >> sys.stderr, " reads : ", type(pe_reads)
         log_prob_frags = self.log_frag_len_prob(assigned_iso_frag_lens, self.mean_frag_len, self.frag_variance)
+#        print "Fragment score for: ", assigned_iso_frag_lens
+#        print "is:                 ", log_prob_frags
+
+#        print "assigned_iso_frag_lens: ", assigned_iso_frag_lens
+#        print "log_prob_frags: "
+#        print log_prob_frags
         log_prob_reads = (log(1) - log(num_reads_possible)) + log_prob_frags
         zero_prob_indx = nonzero(pe_reads[range(self.num_reads), isoform_nums] == 0)[0]
         # Assign probability 0 to reads inconsistent with assignment
@@ -635,7 +637,7 @@ class MISOSampler:
                                          [self.num_reads, 1]))
 #        reassignment_probs = map(lambda assignment: self.log_score_reads(reads, assignment, gene) + \
 #                                 self.log_score_assignment(assignment, psi_vector, gene),
-#                                 all_assignments)
+#                                 all_assignments
         for assignment in all_assignments:
 	    if not self.paired_end:
 		read_probs = self.log_score_reads(reads, assignment, gene)
@@ -645,6 +647,7 @@ class MISOSampler:
 		assignment_probs = self.log_score_paired_end_assignment(assignment, psi_vector, gene)
             reassignment_p = read_probs + assignment_probs
             reassignment_probs.append(reassignment_p)
+            
         reassignment_probs = transpose(array(reassignment_probs))
         m = transpose(vect_logsumexp(reassignment_probs, axis=1)[newaxis,:])
         norm_reassignment_probs = exp(reassignment_probs - m)

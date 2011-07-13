@@ -4,6 +4,9 @@ from parse_csv import find
 
 def print_reads_summary(reads, gene, paired_end=False):
     num_isoforms = len(gene.isoforms)
+    computed_const = False
+    num_constitutive_reads = 0
+    
     for n in range(num_isoforms):
         unambig_read = zeros(num_isoforms, dtype=int)
         unambig_read[n] = 1
@@ -15,8 +18,15 @@ def print_reads_summary(reads, gene, paired_end=False):
                 curr_read = r
             if all(curr_read == unambig_read):
                 num_iso_reads += 1
+            if not computed_const:
+                # If didn't compute so already, calculate how many reads
+                # are constitutive, i.e. consistent with all isoforms
+                if all(curr_read == 1):
+                    num_constitutive_reads += 1
+        computed_const = True
         print "Iso %d (len = %d): %d unambiguous supporting reads" %(n, gene.isoforms[n].len,
                                                                      num_iso_reads)
+    print "No. constitutive reads (consistent with all): %d" %(num_constitutive_reads)
 
 def get_reads_summary(reads):
     if reads.ndim != 2:

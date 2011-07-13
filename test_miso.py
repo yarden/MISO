@@ -67,6 +67,12 @@ class TestMISO(unittest.TestCase):
         print "Executing: %s" %(miso_cmd)
         os.system(miso_cmd)
 
+    def test_paired_end_scoring(self):
+        """
+        Test scoring functions on synthetic gene model.
+        """
+        pass
+
         
     def test_z_gene_psi(self):
         """
