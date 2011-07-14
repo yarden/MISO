@@ -55,8 +55,6 @@ def valid_qsub_name(name):
 
 
 
-
-
 def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir, queue_type="long", cluster_scripts_dir=None, chunk=2500, settings=None, cmd_name="qsub", job_name="misojob"):
     import string;
     f = open(argfile, 'w')

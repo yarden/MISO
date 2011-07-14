@@ -22,6 +22,12 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     """
     Compute Psi values for genes using a GFF and a BAM filename.
     """
+
+
+
+
+  
+    
     gene_ids_to_gff_index = gff_utils.get_gene_ids_to_gff_index(gff_dir)
 
     num_genes = len(gene_ids_to_gff_index.keys())
@@ -70,11 +76,14 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
 
     if use_cluster:
         if SGEarray:
+            if not chunk_jobs:
+                chunk_jobs = 2500
+                print "  - Using default chunk jobs = %d" %(chunk_jobs)
             cluster_output_dir = os.path.join(output_dir, "cluster_scripts")
             if not os.path.isdir(cluster_output_dir):
                 os.makedirs(cluster_output_dir)
             batch_argfile = os.path.join(cluster_output_dir, "run_args.txt");
-            cluster_utils.run_SGEarray_cluster(all_miso_cmds, batch_argfile, output_dir, settings=settings, job_name=options.job_name, chunk=options.chunk_jobs)
+            cluster_utils.run_SGEarray_cluster(all_miso_cmds, batch_argfile, output_dir, settings=settings, job_name=job_name, chunk=chunk_jobs)
         else:
             # Threshold for putting jobs in the long queue
             long_thresh = 50
@@ -123,6 +132,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                                              queue_type=queue_type,
                                              settings=settings)
                 time.sleep(delay_constant)
+        
             
         
 def compute_psi(sample_filenames, output_dir, event_type, read_len, overhang_len,
@@ -336,8 +346,17 @@ def main():
     ##
     settings_filename = os.path.abspath(os.path.expanduser(options.settings_filename))
     Settings.load(settings_filename)
-
+    
     print "Loading settings file from: %s" %(settings_filename)
+
+
+    if (not options.use_cluster) and options.chunk_jobs:
+        print "Error: Chunking jobs only applies when using the --use-cluster option to run MISO on cluster."
+        sys.exit(1)
+    if (not options.use_cluster) and options.SGEarray:
+        print "Error: SGEarray implies that you are using an SGE cluster, please run again with --use-cluster option enabled."
+        sys.exit(1)
+
     
     if options.pool_counts:
         if options.output_dir == None:
@@ -390,12 +409,7 @@ def main():
 	    print "Error: Need output directory to run MISO."
             sys.exit(1)
 
-	if (not options.use_cluster) and options.chunk_jobs:
-	    print "Error: Chunking jobs only applies when using the --use-cluster option to run MISO on cluster."
-            sys.exit(1)
-        if (not options.use_cluster) and options.SGEarray:
-            print "Error: SGEarray implies that you are using an SGE cluster, please run again with --use-cluster option enabled."
-	
+
 	labels = options.compute_events_psi[0].split(',')
 	filenames = options.compute_events_psi[1].split(',')
 	assert(len(labels) == len(filenames))
@@ -452,8 +466,7 @@ def main():
         if options.overhang_len != None:
             overhang_len = options.overhang_len
         
-            
-
+   
         compute_all_genes_psi(gff_filename, bam_filename, options.read_len, output_dir,
                               overhang_len=overhang_len,
                               use_cluster=options.use_cluster,
