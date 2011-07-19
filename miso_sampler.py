@@ -348,6 +348,7 @@ class MISOSampler:
 #             print " log_assignments_prob: ", log_assignments_prob
         # Score the Psi vector
         log_psi_prob = self.log_score_psi_vector(psi_vector, hyperparameters)
+
 #         if DEBUG:
 #             print "log_psi_prob: ", log_psi_prob
         log_joint_score = log_reads_prob + log_assignments_prob + log_psi_prob
@@ -385,8 +386,9 @@ class MISOSampler:
         """
         assert (all(hyperparameters > 0))
         # Hyperparameters first, Psi vector second (unlike C interface)
-        return dirichlet_lnpdf(hyperparameters, [psi_vector])[0]
-        #return dirichlet_lnpdf(psi_vector, [hyperparameters])[0]
+        #return dirichlet_lnpdf(hyperparameters, [psi_vector])[0]
+        
+        return dirichlet_lnpdf(psi_vector, [hyperparameters])[0]
 
     def log_score_psi_vector_proposal(self, psi_vector, alpha_vector):
         """
@@ -418,6 +420,9 @@ class MISOSampler:
         return psi_frags[range(self.num_reads), isoform_nums]
         #return log(psi_frags[range(num_reads), isoform_nums])
 
+##
+## OLD VERSION
+##    
 #     def log_score_paired_end_assignment(self, isoform_nums, psi_vector, gene):
 # 	"""
 # 	Score an assignment of a set of paired-end reads given psi
@@ -475,27 +480,17 @@ class MISOSampler:
         # fragment length in the distribution
         scaled_lens = iso_lens_matrix - self.frag_range_matrix + 1
 
-#        print "scaled_lens: ", scaled_lens
-        
         # Construct a matrix of Psi values with dimensions of
         # number of considered fragment lengths by number of
         # isoforms (for vectorization purposes)
         #self.psi_matrix = tile(psi_vector,
         #                       [self.frag_range_len, 1])
-
-#        print "psi_vector: ", psi_vector
-
         
         # Take the log of the valid Psi frags
-#        print "scaled_lens: ", scaled_lens
         psi_frag = log(psi_vector) + log(scaled_lens)
 
-#         print "where frag is nan:", where(isnan(psi_frag))
-#         print "Convert nan to -inf"
+        # Convert NaN to -Inf
         psi_frag[where(isnan(psi_frag))[0]] = -Inf
-#         print "after: "
-
-#         print "scaled_lens: ", scaled_lens
 
         # Create a masked array where the elements that are -Inf 
         masked_psi_frag = ma.masked_where(psi_frag == -Inf,
@@ -504,15 +499,12 @@ class MISOSampler:
         # Normalize the scaled Psi for each possible fragment length
         # (based on the fragment length distribution)
         psi_frag = vect_logsumexp(psi_frag, axis=0)
-
-#        psi_frag = nansum(masked_psi_frag, 0)
-
+        
         psi_frag = psi_frag - logsumexp(psi_frag)
         
         psi_frags = tile(psi_frag, [self.num_reads, 1])
         final_psi_frags = psi_frags[range(self.num_reads),
                                     isoform_nums]
-        
         return final_psi_frags
 
 
@@ -563,7 +555,7 @@ class MISOSampler:
 
 	  - overhang_excluded: a dictionary mapping reads an isoform length and a fragment length
             to the number of possible reads of that fragment size that the isoform could have generated,
-	    taking into account the overhang constraint.
+	    taking into account the overhang constraint. [NOT USED]
         """
         # The probability of a read being assigned to an isoform that
         # could not have generated it (i.e. where the read is not a
@@ -587,13 +579,8 @@ class MISOSampler:
 #	print >> sys.stderr, "log_frag_len_prob: ", self.log_frag_len_prob(assigned_iso_frag_lens)
 #	print >> sys.stderr, " reads : ", type(pe_reads)
         log_prob_frags = self.log_frag_len_prob(assigned_iso_frag_lens, self.mean_frag_len, self.frag_variance)
-#        print "Fragment score for: ", assigned_iso_frag_lens
-#        print "is:                 ", log_prob_frags
-
-#        print "assigned_iso_frag_lens: ", assigned_iso_frag_lens
-#        print "log_prob_frags: "
-#        print log_prob_frags
         log_prob_reads = (log(1) - log(num_reads_possible)) + log_prob_frags
+#        print "log_prob_reads: ", log_prob_reads
         zero_prob_indx = nonzero(pe_reads[range(self.num_reads), isoform_nums] == 0)[0]
         # Assign probability 0 to reads inconsistent with assignment
         log_prob_reads[zero_prob_indx] = -inf
@@ -638,19 +625,50 @@ class MISOSampler:
 #        reassignment_probs = map(lambda assignment: self.log_score_reads(reads, assignment, gene) + \
 #                                 self.log_score_assignment(assignment, psi_vector, gene),
 #                                 all_assignments
+        # DEBUG
+        assignment1_probs = {}
+        assignment2_probs = {}
+        n = 0
+        
         for assignment in all_assignments:
 	    if not self.paired_end:
 		read_probs = self.log_score_reads(reads, assignment, gene)
 		assignment_probs = self.log_score_assignment(assignment, psi_vector, gene)
 	    else:
+                # Paired-end
 		read_probs = self.log_score_paired_end_reads(reads, assignment, gene)
-		assignment_probs = self.log_score_paired_end_assignment(assignment, psi_vector, gene)
+
+                ## DEBUG TEMPORARY USE SINGLE-END FUNCTIONS
+                assignment_probs = self.log_score_paired_end_assignment(assignment, psi_vector, gene)                
+		
+
             reassignment_p = read_probs + assignment_probs
             reassignment_probs.append(reassignment_p)
+
+            # DEBUG
+            if n == 0:
+                assignment1_probs['read_probs'] = read_probs[0:5]
+                assignment1_probs['assignment_probs'] = assignment_probs[0:5]
+                assignment1_probs['assignment'] = assignment[0:5]
+            elif n == 1:
+                assignment2_probs['read_probs'] = read_probs[0:5]
+                assignment2_probs['assignment_probs'] = assignment_probs[0:5]
+                assignment2_probs['assignment'] = assignment[0:5]                
+            n += 1
+            
+
+        # DEBUG
+#         print "ASSIGNMENT1: "
+#         print assignment1_probs
+#         print assignment1_probs['assignment']
+#         print "ASSIGNMENT2: "
+#         print assignment2_probs
+#         print assignment2_probs['assignment']
             
         reassignment_probs = transpose(array(reassignment_probs))
         m = transpose(vect_logsumexp(reassignment_probs, axis=1)[newaxis,:])
         norm_reassignment_probs = exp(reassignment_probs - m)
+        
         rvsunif = random.rand(self.num_reads, 1)
         yrvs = (rvsunif<cumsum(norm_reassignment_probs,axis=1)).argmax(1)[:,newaxis]
         ### Note taking first element of transpose(yrvs)!  To avoid a list of assignments
@@ -802,7 +820,8 @@ class MISOSampler:
 	if self.paired_end:
 	    # if paired-end, consider the alignments of the reads
 	    pe_reads = reads[:, 0]
-	    frag_lens = reads[:, 1]	    	    
+	    frag_lens = reads[:, 1]
+            
 	assignments = []
 	if self.paired_end:
 	    for r, frags in zip(pe_reads, frag_lens):
@@ -1022,7 +1041,6 @@ class MISOSampler:
 						       proposal_score_func, gene, hyperparameters, full_metropolis=False)
             if m_ratio == 0:
                 if not already_warned:
-                    #print_reads_summary(reads, gene, paired_end=True)
                     self.miso_logger.warn("MH ratio is ~0! Gene: %s" %(gene.label))
                     self.miso_logger.error("MH ratio is ~0!\ncurr_joint_score: %.2f\n"
                                            "proposed_joint_score: %.2f\nGene: %s" \
@@ -1069,6 +1087,7 @@ class MISOSampler:
                 log_scores[curr_joint_score] = [curr_psi_vector, assignments]
             total_log_scores.append(jscore)            
             burn_in_counter += 1
+
             # For each read, sample its reassignment to one of the gene's isoforms
             reassignments = self.sample_reassignments(reads, curr_psi_vector, gene)
 	    if len(reassignments) == 0:
@@ -1083,6 +1102,7 @@ class MISOSampler:
 		self.miso_logger.error("reads: " + str(reads))
                 raise Exception, "Moved to impossible state!"
             assignments = reassignments
+
         if accepted_proposals == 0:
 	    self.miso_logger.error("0 proposals accepted!")
             raise Exception, "0 proposals accepted!"

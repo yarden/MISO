@@ -339,9 +339,6 @@ class Gene:
         right = self.align_read_to_isoforms_with_cigar(
             right_cigar, genomic_right_read_start, genomic_right_read_end,
             read_len, overhang)
-
-#        print "left: ", left
-#        print "right: ", right
     
         for lal, lco, ral, rco in zip(left[0], left[1], right[0], right[1]):
             if lal and ral:
@@ -409,11 +406,9 @@ class Gene:
 	alignments = []
 	isoforms_coords = []
 	for read_coords in read_genomic_coords:
-#	    print "aligning: ", read_coords
 	    genomic_read_start, genomic_read_end = read_coords
 	    alignment, isoform_coords = self.align_read_to_isoforms(genomic_read_start, genomic_read_end,
                                                                     overhang=overhang, read_len=read_len)
-#	    print " - aligned isoform coords: ", isoform_coords
 	    alignments.append(alignment)
 	    isoforms_coords.append(isoform_coords)
 	return (array(alignments), isoforms_coords)

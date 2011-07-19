@@ -319,7 +319,7 @@ def sam_pe_reads_to_isoforms(samfile, gene, read_len, overhang_len):
         
         alignment, frag_lens = paired_read_to_isoforms(read_pair, gene,
                                                        read_len, overhang_len)
-
+        
         # Skip reads that are not consistent with any isoform
         if any(array(alignment) == 1):
             pe_reads.append([alignment, frag_lens])
@@ -329,7 +329,6 @@ def sam_pe_reads_to_isoforms(samfile, gene, read_len, overhang_len):
             k += 1
 
     print "Filtered out %d reads that were not consistent with any isoform" %(k)
-
     return pe_reads, num_read_pairs
 
 

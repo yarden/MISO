@@ -21,7 +21,7 @@ def print_reads_summary(reads, gene, paired_end=False):
             if not computed_const:
                 # If didn't compute so already, calculate how many reads
                 # are constitutive, i.e. consistent with all isoforms
-                if all(curr_read == 1):
+                if all(array(curr_read) == 1):
                     num_constitutive_reads += 1
         computed_const = True
         print "Iso %d (len = %d): %d unambiguous supporting reads" %(n, gene.isoforms[n].len,
