@@ -1,0 +1,37 @@
+
+R version 2.13.0 (2011-04-13)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> library(splicing)
+> 
+> set.seed(42)
+> options(width=60)
+> 
+> gene <- createGene(list(c(1,100), c(201,300), c(401,500)),
++                    list(c(1,2), c(1,3), c(1,2,3)))
+> 
+> reads <- genReadsForGene(gene, c(2/9, 3/9, 4/9))
+> 
+> condIso(gene, mode="matrix")
+    [,1] [,2] [,3]
+111   68   68   68
+101  100    0  100
+010    0   32    0
+001    0    0   32
+011    0   68   68
+> 

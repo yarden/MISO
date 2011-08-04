@@ -1,0 +1,81 @@
+
+R version 2.13.0 (2011-04-13)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> library(splicing)
+> 
+> set.seed(42)
+> options(width=60)
+> 
+> gene <- createGene(list(c(1,100), c(201,300), c(401,500)),
++                    list(c(1,2), c(1,3), c(1,2,3)))
+> 
+> reads <- genReadsForGene(gene, c(2/9, 3/9, 4/9))
+> 
+> matchIso(gene, reads=reads)
+ [1] "101" "111" "101" "101" "111" "101" "111" "101" "011"
+[10] "011" "101" "111" "111" "111" "101" "101" "111" "111"
+[19] "011" "011" "101" "101" "101" "101" "101" "101" "111"
+[28] "111" "101" "101" "011" "011" "001" "010" "111" "101"
+[37] "011" "011" "101" "010" "101" "111" "101" "101" "011"
+[46] "111" "101" "010" "101" "011" "101" "011" "011" "111"
+[55] "001" "011" "011" "001" "011" "011" "010" "101" "111"
+[64] "011" "101" "111" "111" "101" "011" "001" "011" "111"
+[73] "011" "101" "111"
+> 
+> ######################
+> 
+> reads2 <- genReadsForGene(gene, c(2/9, 3/9, 4/9), paired=TRUE,
++                           normalInsert=c(100, 10))
+> 
+> m2 <- matchIso(gene, reads=reads2)
+> m2
+ [1] "101" "101" "001" "001" "011" "011" "001" "001" "001"
+[10] "001" "011" "011" "001" "001" "001" "001" "101" "101"
+[19] "001" "001" "101" "101" "001" "001" "101" "101" "011"
+[28] "011" "001" "001" "001" "001" "011" "011" "001" "001"
+[37] "101" "101" "101" "101" "001" "001" "101" "101" "001"
+[46] "001" "001" "001" "101" "101" "001" "001" "011" "011"
+[55] "001" "001" "011" "011" "011" "011" "101" "101" "011"
+[64] "011" "001" "001" "101" "101" "101" "101" "001" "001"
+[73] "101" "101" "011" "011"
+> 
+> reads3 <- reads2 
+> attr(reads3, "paired") <- FALSE
+> 
+> m3 <- matchIso(gene, reads=reads3)
+> m3
+ [1] "111" "101" "111" "001" "111" "011" "111" "001" "101"
+[10] "011" "111" "011" "101" "011" "101" "011" "111" "101"
+[19] "101" "011" "111" "101" "101" "001" "111" "101" "111"
+[28] "011" "101" "011" "101" "011" "111" "011" "101" "011"
+[37] "111" "101" "111" "101" "111" "001" "111" "101" "111"
+[46] "001" "101" "011" "111" "101" "101" "011" "111" "011"
+[55] "111" "001" "111" "011" "111" "011" "111" "101" "111"
+[64] "011" "111" "001" "111" "101" "111" "101" "101" "011"
+[73] "111" "101" "111" "011"
+> 
+> m <- cbind(matrix(m2, ncol=2, byrow=TRUE), 
++            matrix(m3, ncol=2, byrow=TRUE))
+> 
+> all(apply(m, 1, function(x) {
++   r <- lapply(strsplit(x, ""), as.numeric)
++   all(r[[1]] == r[[2]]) && all(r[[1]] == (r[[3]] & r[[4]]) + 0)
++ }))
+[1] TRUE
+> 

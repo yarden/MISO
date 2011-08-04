@@ -1,0 +1,24 @@
+
+export(listGTFs, downloadGTF, gtf2gff3, gff32gtf, readGFF3, writeGFF3,
+       writeGTF)
+
+export(isGFF3, noGenes, seqIds, geneIds, selectGenes, noIso, geneTypes,
+       noExons, getIso, geneLength, isoLength, totalExonLength)
+
+export(genReadsForGene, genReads, createGene, mergeGenes, rpk, realPsi,
+       simulateReads)
+
+export(sam2bam, readSAM, writeSAM)
+
+export(plotIso, plotIsoSize, plotIsoPDF)
+
+export(MISO, postMean, runData)
+
+S3method("postMean", "MISOresult")
+S3method("logLik", "MISOresult")
+S3method("runData", "MISOresult")
+
+export(condIso, assignmentMatrix)
+
+export(matchIso, solveIsoOne)
+
