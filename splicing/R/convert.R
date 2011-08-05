@@ -206,6 +206,9 @@ selectGenes <- function(gff3, idx) {
          attributes=attributes[sel], ID=ID[sel], parent=parent[sel])
   })
 
+  gp <- res$parent >= 0
+  res$parent[gp] <- as.integer(match(gff3$ID[res$parent[gp]+1], res$ID)-1)
+
   class(res) <- "gff3"
   res <- addGidTid(res)
   res
