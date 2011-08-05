@@ -444,6 +444,23 @@ static PyObject* pysplicing_gene_complexity(PyObject *self, PyObject *args) {
   
   return Py_BuildValue("d", complexity);
 }
+
+static PyObject* pysplicing_gff_nogenes(PyObject *self, PyObject *args) {
+  
+  PyObject *gff;
+  size_t nogenes;
+  int nogenes2;
+  splicing_gff_t *mygff;
+  
+  if (!PyArg_ParseTuple(args, "O", &gff)) { return NULL; }
+  
+  mygff=PyCObject_AsVoidPtr(gff);
+  
+  SPLICING_PYCHECK(splicing_gff_nogenes(mygff, &nogenes));
+  nogenes2=nogenes;		/* in case int and size_t are different */
+    
+  return Py_BuildValue("i", nogenes2);
+} 
   
 /* -------------------------------------------------------------------- */
 
@@ -467,6 +484,8 @@ static PyMethodDef pysplicing_methods[] = {
     "MISO on paired-end data" },
   { "geneComplexity", pysplicing_gene_complexity, METH_VARARGS,
     "Gene complexity based on a linear model" },
+  { "noGenes", pysplicing_gff_nogenes, METH_VARARGS, 
+    "Number of genes in a GFF object." },
   { NULL, NULL, 0, NULL }
 };
 
