@@ -175,21 +175,6 @@ class GFFDatabase:
         ID=12    ; PARENT=13
         types=('gene', 'mRNA', 'exon', 'CDS', 'start_codon', 'end_codon')
 
-        def parse_attributes_v3(s):
-            attributes = {}
-
-            for pair_string in s.split(";"):
-                if (len (pair_string) == 0):
-                    continue
-                try:
-                    tag, value = pair_string.split("=")
-                    attributes[url_unquote(tag)] = map(url_unquote,
-                                                   value.split(","))
-                except ValueError:
-                    raise FormatError("Invalid attributes string: " + s)
-            
-            return attributes
-
         gff=pysplicing.i_fromGFF(gff)
         gene_idx=-1
         for i in range(len(gff[TYPE])):
@@ -197,16 +182,15 @@ class GFFDatabase:
             if type == "gene":
                 gene_idx += 1
 
-            attributes='ID=' + gff[ID][i]
+            attributes = { 'ID': gff[ID][i] }
             if gff[PARENT][i] >= 0:
-                attributes += ';Parent=' + gff[ID][gff[PARENT][i]]
+                attributes['Parent'] = gff[ID][gff[PARENT][i]]
 
             newrec=GFF(gff[SEQIDS][gff[SEQID][gene_idx]], 
                        gff[SOURCES][gff[SOURCE][gene_idx]],
                        type, gff[START][i], gff[END][i], 
                        gff[SCORE][i], gff[STRAND][gene_idx],
-                       gff[PHASE][i], 
-                       parse_attributes_v3(attributes))
+                       gff[PHASE][i], attributes)
 
             if newrec.type == "gene":
                 self.genes.append(newrec)
