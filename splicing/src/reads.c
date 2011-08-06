@@ -45,31 +45,42 @@ int splicing_i_cmp_reads(void *pdata, const void *a, const void *b) {
 
 int splicing_read_sambam(const char *filename, 
 			 splicing_strvector_t *chrname, 
+			 splicing_vector_int_t *chrlen,
 			 splicing_vector_int_t *chr,
 			 splicing_strvector_t *qname,
 			 splicing_strvector_t *cigar,
 			 splicing_vector_int_t *position,
 			 splicing_vector_int_t *flag,
 			 splicing_vector_int_t *pairpos,
-			 int *noPairs, int *noSingles,
-			 int *paired) {
+			 int *noPairs, int *noSingles, int *paired,
+			 splicing_vector_int_t *mapq,
+			 splicing_vector_int_t *rnext,
+			 splicing_vector_int_t *tlen,
+			 splicing_strvector_t *seq,
+			 splicing_strvector_t *qual) {
 
   samfile_t *infile=0;
   int bytesread;
   bam1_t *read = bam_init1();
-  char buffer[1024];
+  char buffer[4096];
   char *cigarcode="MIDNSHP";
   int i;
 
   SPLICING_FINALLY(splicing_i_bam_destroy1, read);
   
   splicing_strvector_clear(chrname);
+  splicing_vector_int_clear(chrlen);
   splicing_vector_int_clear(chr);
   splicing_strvector_clear(qname);
   splicing_strvector_clear(cigar);
   splicing_vector_int_clear(position);
   splicing_vector_int_clear(flag);
   splicing_vector_int_clear(pairpos);
+  splicing_vector_int_clear(mapq);
+  splicing_vector_int_clear(rnext);
+  splicing_vector_int_clear(tlen);
+  splicing_strvector_clear(seq);
+  splicing_strvector_clear(qual);
   *noPairs = *noSingles = 0;
 
   infile=samopen(filename, "r", /*aux=*/ 0);
@@ -77,15 +88,20 @@ int splicing_read_sambam(const char *filename,
     SPLICING_ERROR("Cannot open SAM/BAM file", SPLICING_EFILE);
   }
 
+  SPLICING_CHECK(splicing_vector_int_resize(chrlen,
+					    infile->header->n_targets));
   for (i=0; i<infile->header->n_targets; i++) {
     char *s=infile->header->target_name[i];
     SPLICING_CHECK(splicing_strvector_append(chrname, s));
+    VECTOR(*chrlen)[i] = infile->header->target_len[i];
   }
 
   while ( (bytesread=samread(infile, read)) >= 0) {
     int i, ncigar=read->core.n_cigar;
     char *bufptr=buffer;
     uint32_t *actcigar=bam1_cigar(read);
+    uint8_t *s = bam1_seq(read), *t = bam1_qual(read);
+
     SPLICING_CHECK(splicing_vector_int_push_back(position,
 						 read->core.pos+1));
     SPLICING_CHECK(splicing_strvector_append2(qname, 
@@ -108,6 +124,31 @@ int splicing_read_sambam(const char *filename,
     SPLICING_CHECK(splicing_vector_int_push_back(pairpos, 
 						 read->core.mpos+1));
     SPLICING_CHECK(splicing_vector_int_push_back(flag, read->core.flag));
+    SPLICING_CHECK(splicing_vector_int_push_back(rnext, read->core.mtid));
+    SPLICING_CHECK(splicing_vector_int_push_back(mapq, read->core.qual));
+    SPLICING_CHECK(splicing_vector_int_push_back(tlen, read->core.isize));
+    
+    if (!read->core.l_qseq) {
+      SPLICING_CHECK(splicing_strvector_append(seq, "*"));
+    } else {
+      bufptr=buffer;
+      for (i=0; i<read->core.l_qseq; i++) { 
+	*bufptr = bam_nt16_rev_table[bam1_seqi(s, i)];
+	bufptr++;
+      }
+      SPLICING_CHECK(splicing_strvector_append2(seq, buffer, bufptr-buffer));
+    }
+
+    if (!read->core.l_qseq || t[0] == 0xff) {
+      SPLICING_CHECK(splicing_strvector_append(qual, "*"));
+    } else {
+      bufptr=buffer;
+      for (i=0; i<read->core.l_qseq; i++) { 
+	*bufptr = t[i] + 33;
+	bufptr++;
+      }
+      SPLICING_CHECK(splicing_strvector_append2(qual, buffer, bufptr-buffer));
+    }
 
     if (read->core.mpos < 0) {
       *noSingles  += 1;

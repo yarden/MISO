@@ -29,13 +29,19 @@ int R_splicing_SEXP_to_isoforms(SEXP piso, splicing_vector_int_t *iso);
 
 int splicing_read_sambam(const char *filename, 
 			 splicing_strvector_t *chrname, 
+			 splicing_vector_int_t *chrlen,
 			 splicing_vector_int_t *chr,
 			 splicing_strvector_t *qname,
 			 splicing_strvector_t *cigar,
 			 splicing_vector_int_t *position, 
 			 splicing_vector_int_t *flag,
 			 splicing_vector_int_t *pairpos,
-			 int *noPairs, int *noSingles, int *paired);
+			 int *noPairs, int *noSingles, int *paired,
+			 splicing_vector_int_t *mapq,
+			 splicing_vector_int_t *rnext,
+			 splicing_vector_int_t *tlen,
+			 splicing_strvector_t *seq,
+			 splicing_strvector_t *qual);
 
 
 #endif
