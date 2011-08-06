@@ -8,6 +8,7 @@
 const char *splicing_types[] = { "gene", "mRNA", "exon", "CDS", 
 				 "start_codon", "stop_codon" };
 
+/* TODO: do not ignore size */
 int splicing_gff_init(splicing_gff_t *gff, size_t size) {
 
   if (size < 0) { 

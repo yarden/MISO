@@ -493,6 +493,95 @@ static PyObject* pysplicing_from_gff(PyObject *self, PyObject *args) {
 		       seqid, source, type, start, end, score, strand, 
 		       phase, ID, parent);
 }
+
+/* TODO: Check that it works for missing values */
+
+static PyObject* pysplicing_to_gff(PyObject *self, PyObject *args) {
+  
+  PyObject *pygff, *entries;
+  size_t i, noRec;
+  splicing_gff_t *cgff;
+  PyObject *IDkey, *Parentkey;
+  
+  if (!PyArg_ParseTuple(args, "O", &pygff)) { return NULL; }
+
+  if (!PyObject_HasAttrString(pygff, "_GFFDatabase__entries")) {
+    splicingmodule_handle_splicing_error();
+    return NULL;
+  }
+  entries=PyObject_GetAttrString(pygff, "_GFFDatabase__entries");
+  noRec=PySequence_Size(entries);
+
+  IDkey=PyString_FromString("ID");
+  Parentkey=PyString_FromString("Parent");
+
+  cgff=malloc(sizeof(splicing_gff_t));
+  if (!cgff) { splicingmodule_handle_splicing_error(); return NULL; }
+  splicing_gff_init(cgff, noRec);
+  
+  for (i=0; i<noRec; i++) {
+    PyObject *rec=0, *seqid=0, *source=0, *type=0, *start=0, *end=0,
+      *score=0, *strand=0, *phase=0, *attributes=0, *ID=0, *Parent=0;
+    char *Cseqid, *Csource, *CID, *Cparent=0, *Ctype;
+    splicing_type_t Ctype2;
+    int Cstart, Cend, Cphase;
+    double Cscore;
+    splicing_strand_t Cstrand;
+    
+    rec=PySequence_GetItem(entries, i);
+    seqid=PyObject_GetAttrString(rec, "seqid");
+    source=PyObject_GetAttrString(rec, "source");
+    type=PyObject_GetAttrString(rec, "type");
+    start=PyObject_GetAttrString(rec, "start");
+    end=PyObject_GetAttrString(rec, "end");
+    score=PyObject_GetAttrString(rec, "score");
+    strand=PyObject_GetAttrString(rec, "strand");
+    phase=PyObject_GetAttrString(rec, "phase");
+    attributes=PyObject_GetAttrString(rec, "attributes");
+    ID=PyDict_GetItem(attributes, IDkey);
+    Parent=PyDict_GetItem(attributes, Parentkey);
+
+    Cseqid=PyString_AsString(seqid);
+    Csource=PyString_AsString(source);
+
+    Ctype=PyString_AsString(type);
+    if (!strcmp(Ctype, "gene")) { 
+      Ctype2=SPLICING_TYPE_GENE;
+    } else if (!strcmp(Ctype, "mRNA")) {
+      Ctype2=SPLICING_TYPE_MRNA;
+    } else if (!strcmp(Ctype, "exon")) {
+      Ctype2=SPLICING_TYPE_EXON;
+    } else if (!strcmp(Ctype, "CDS")) {
+      Ctype2=SPLICING_TYPE_CDS;
+    } else if (!strcmp(Ctype, "start_codon")) {
+      Ctype2=SPLICING_TYPE_START_CODON;
+    } else if (!strcmp(Ctype, "stop_codon")) {
+      Ctype2=SPLICING_TYPE_STOP_CODON;
+    } /* TODO: else error? */
+
+    Cstart=PyInt_AsLong(start);
+    Cend=PyInt_AsLong(end);
+    Cscore=PyFloat_AsDouble(score);
+    Cstrand=PyInt_AsLong(strand);
+    Cphase=PyInt_AsLong(phase);
+    CID=PyString_AsString(ID);
+    if (Parent) { Cparent=PyString_AsString(Parent); }
+
+    SPLICING_PYCHECK(splicing_gff_append(cgff, Cseqid, Csource, Ctype2, 
+					 Cstart, Cend, Cscore, Cstrand,
+					 Cphase, CID, Cparent));
+
+    Py_DECREF(rec); Py_DECREF(seqid); Py_DECREF(source); Py_DECREF(type);
+    Py_DECREF(start); Py_DECREF(end); Py_DECREF(score); Py_DECREF(strand);
+    Py_DECREF(phase); Py_DECREF(attributes);
+  }
+
+  Py_DECREF(entries);
+  Py_DECREF(IDkey);
+  Py_DECREF(Parentkey);
+  
+  return PyCObject_FromVoidPtr(cgff, splicing_gff_destroy2);
+}
   
 /* -------------------------------------------------------------------- */
 
@@ -520,6 +609,7 @@ static PyMethodDef pysplicing_methods[] = {
     "Number of genes in a GFF object." },
   { "i_fromGFF", pysplicing_from_gff, METH_VARARGS, 
     "Convert a C GFF structure to Python" },
+  { "toGFF", pysplicing_to_gff, METH_VARARGS, "Convert a Python GFF to C" },
   { NULL, NULL, 0, NULL }
 };
 
