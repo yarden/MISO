@@ -469,7 +469,6 @@ static PyObject* pysplicing_from_gff(PyObject *self, PyObject *args) {
   splicing_gff_t *mygff;
   PyObject *seqids, *sources, *genes, *transcripts, *seqid, *source,
     *type, *start, *end, *score, *strand, *phase, *ID, *parent;
-  PyObject *result;
   
   if (!PyArg_ParseTuple(args, "O", &gff)) { return NULL; }
   
@@ -490,12 +489,9 @@ static PyObject* pysplicing_from_gff(PyObject *self, PyObject *args) {
   ID=pysplicing_from_strvector(&mygff->ID);
   parent=pysplicing_from_vector_int(&mygff->parent);
  
-  result=PyType_GenericNew(&pysplicing_gff_type, Py_None, Py_None);
-  if (PyObject_SetAttr(result, PyString_FromString("seqids"), seqids) == -1) {
-    return NULL; 
-  }
-  
-  return Py_BuildValue("O", result);
+  return Py_BuildValue("OOOOOOOOOOOOOO", seqids, sources, genes, transcripts,
+		       seqid, source, type, start, end, score, strand, 
+		       phase, ID, parent);
 }
   
 /* -------------------------------------------------------------------- */
@@ -522,64 +518,12 @@ static PyMethodDef pysplicing_methods[] = {
     "Gene complexity based on a linear model" },
   { "noGenes", pysplicing_gff_nogenes, METH_VARARGS, 
     "Number of genes in a GFF object." },
-  { "fromGFF", pysplicing_from_gff, METH_VARARGS, 
+  { "i_fromGFF", pysplicing_from_gff, METH_VARARGS, 
     "Convert a C GFF structure to Python" },
   { NULL, NULL, 0, NULL }
 };
 
 extern PyObject* splicingmodule_InternalError;
-
-static PyMethodDef pysplicing_gff_methods[] = {
-    {NULL}  /* Sentinel */
-};
-
-static PyMemberDef pysplicing_gff_members[] = {
-  { "seqids", T_OBJECT_EX, offsetof(pysplicing_gff_t, seqids), 0, 
-    "sequence ids" },
-    {NULL}  /* Sentinel */
-};
-
-static PyTypeObject pysplicing_gff_type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
-    "pysplicing.splicingGFF",  /*tp_name*/
-    sizeof(pysplicing_gff_t),  /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    0,                         /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    0,                         /*tp_compare*/
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    0,                         /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-    "GFF gene structures",     /* tp_doc */
-    0,		               /* tp_traverse */
-    0,		               /* tp_clear */
-    0,		               /* tp_richcompare */
-    0,		               /* tp_weaklistoffset */
-    0,		               /* tp_iter */
-    0,		               /* tp_iternext */
-    pysplicing_gff_methods,    /* tp_methods */
-    pysplicing_gff_members,    /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    0,			       /* tp_init */
-    0,                         /* tp_alloc */
-    0,			       /* tp_new */
-};
 
 PyMODINIT_FUNC initpysplicing(void) {
 
@@ -602,10 +546,4 @@ PyMODINIT_FUNC initpysplicing(void) {
   splicing_set_error_handler(splicingmodule_splicing_error_hook);
   splicing_set_warning_handler(splicingmodule_splicing_warning_hook);
 
-  /* New types */
-
-  pysplicing_gff_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&pysplicing_gff_type) < 0) { return; }
-  Py_INCREF(&pysplicing_gff_type);
-  PyModule_AddObject(m, "splicingGFF", (PyObject *)&pysplicing_gff_type);
 }

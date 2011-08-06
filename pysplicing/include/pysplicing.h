@@ -6,14 +6,6 @@
 
 #include "splicing.h"
 
-typedef struct {
-    PyObject_HEAD
-    /* Type-specific fields go here. */
-    PyObject *seqids;
-} pysplicing_gff_t;
-
-static PyTypeObject pysplicing_gff_type;
-
 int pysplicing_to_vector_int(PyObject *pv, splicing_vector_int_t *v);
 int pysplicing_to_vector(PyObject *pv, splicing_vector_t *v);
 int pysplicing_to_strvector(PyObject *pv, splicing_strvector_t *v);
