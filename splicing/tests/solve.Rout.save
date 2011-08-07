@@ -28,7 +28,7 @@ Type 'q()' to quit R.
 > reads <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
 +                        noReads=100L, readLength=20)
 > 
-> mres <- solveIsoOne(gene, reads=reads, readLength=20L)
+> mres <- solveIso(gene, reads=reads, readLength=20L)
 > mres$expression
 [1] 0.1667444 0.2782573 0.5549983
 > 
@@ -36,8 +36,8 @@ Type 'q()' to quit R.
 +                         noReads=500L, readLength=20, normalMean=50,
 +                         normalVar=50, numDevs=4)
 > 
-> mres2 <- solveIsoOne(gene, reads=reads2, readLength=20L,
-+                      normalMean=50, normalVar=50, numDevs=4)
+> mres2 <- solveIso(gene, reads=reads2, readLength=20L,
++                   normalMean=50, normalVar=50, numDevs=4)
 > mres2$expression
 [1] 0.3381114 0.3277335 0.3341551
 > 
