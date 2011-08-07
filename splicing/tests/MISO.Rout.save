@@ -33,14 +33,14 @@ Type 'q()' to quit R.
 > postMean(mres)
 [1] 0.1971022 0.2724280 0.5304697
 > 
-> reads2 <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
-+                         noReads=200L, readLength=33, normalMean=50,
-+                         normalVar=100, numDevs=4)
+> reads2 <- simulateReads(gene, expression=c(2/10, 3/10, 5/10), paired=TRUE,
++                         noReads=100L, readLength=33, normalMean=50,
++                         normalVar=50, numDevs=4)
 > 
-> mres2 <- MISO(gene, reads=reads2, readLength=33L, normalMean=50,
-+               normalVar=100, numDevs=4)
+> mres2 <- MISO(gene, reads=reads2, readLength=33L, normalMean=50, paired=TRUE,
++               insertStart=0L, normalVar=50, numDevs=4)
 > 
 > postMean(mres2)
-[1] 0.1474470 0.2731028 0.5794503
+[1] 0.6027453 0.1934744 0.2037803
 > 
 > 

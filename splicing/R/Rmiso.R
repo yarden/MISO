@@ -1,4 +1,6 @@
 
+# TODO: better API
+
 MISO <- function(geneStructure, gene=1L, reads, readLength,
                  noIterations=5000, noBurnIn=500, noLag=10,
                  hyperparameters=rep(1,noIso(geneStructure)[1]),
