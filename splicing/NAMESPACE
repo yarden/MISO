@@ -5,7 +5,7 @@ export(listGTFs, downloadGTF, gtf2gff3, gff32gtf, readGFF3, writeGFF3,
 export(isGFF3, noGenes, seqIds, geneIds, selectGenes, noIso, geneTypes,
        noExons, getIso, geneLength, isoLength, totalExonLength)
 
-export(genReadsForGene, genReads, createGene, mergeGenes, rpk, realPsi,
+export(createGene, mergeGenes, rpk, realPsi,
        simulateReads)
 
 export(sam2bam, readSAM, writeSAM)
