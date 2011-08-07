@@ -323,6 +323,8 @@ createGene <- function(exons, isoforms, id="insilicogene",
                        seqid="seq1", source="protein_coding",
                        strand=c("+", "-", "."), geneStructure=NULL) {
 
+  exons <- lapply(exons, as.integer)
+  isoforms <- lapply(isoforms, as.integer)
   strand <- match.arg(strand)
   strand <- switch(strand, "+"=0L, "-"=1L, "."=2L)
   .Call("R_splicing_create_gene", exons, isoforms, id, seqid, source,
