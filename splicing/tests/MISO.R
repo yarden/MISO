@@ -7,10 +7,19 @@ options(width=60)
 gene <- createGene(list(c(1,100), c(201,300), c(401,500)),
                    list(c(1,2), c(1,3), c(1,2,3)))
 
-reads <- genReadsForGene(gene, c(2/10, 3/10, 5/10), readLength=35)
+reads <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
+                       noReads=100L, readLength=35)
 
 mres <- MISO(gene, reads=reads, readLength=35L)
 
-rowMeans(mres[[1]])
+postMean(mres)
 
+reads2 <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
+                        noReads=200L, readLength=33, normalMean=50,
+                        normalVar=100, numDevs=4)
+
+mres2 <- MISO(gene, reads=reads2, readLength=33L, normalMean=50,
+              normalVar=100, numDevs=4)
+
+postMean(mres2)
 

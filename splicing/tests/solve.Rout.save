@@ -26,21 +26,19 @@ Type 'q()' to quit R.
 +                    list(c(1,2), c(1,3), c(1,2,3)))
 > 
 > reads <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
-+                        noReads=100L, readLength=35)
++                        noReads=100L, readLength=20)
 > 
-> mres <- MISO(gene, reads=reads, readLength=35L)
-> 
-> postMean(mres)
-[1] 0.1971022 0.2724280 0.5304697
+> mres <- solveIsoOne(gene, reads=reads, readLength=20L)
+> mres$expression
+[1] 0.1667444 0.2782573 0.5549983
 > 
 > reads2 <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
-+                         noReads=200L, readLength=33, normalMean=50,
-+                         normalVar=100, numDevs=4)
++                         noReads=500L, readLength=20, normalMean=50,
++                         normalVar=50, numDevs=4)
 > 
-> mres2 <- MISO(gene, reads=reads2, readLength=33L, normalMean=50,
-+               normalVar=100, numDevs=4)
-> 
-> postMean(mres2)
-[1] 0.1474470 0.2731028 0.5794503
+> mres2 <- solveIsoOne(gene, reads=reads2, readLength=20L,
++                      normalMean=50, normalVar=50, numDevs=4)
+> mres2$expression
+[1] 0.3381114 0.3277335 0.3341551
 > 
 > 
