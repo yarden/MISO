@@ -1,6 +1,6 @@
 
 matchIso <- function(geneStructure, gene=1, reads, paired=reads$paired,
-                     insertProb=NULL, insertStart=0L,
+                     fragmentProb=NULL, fragmentStart=0L,
                      normalMean, normalVar, numDevs) {
 
   if (paired) {
@@ -9,10 +9,10 @@ matchIso <- function(geneStructure, gene=1, reads, paired=reads$paired,
                                    cig), "M")[[1]]))
     }
     readLength=getreadlength(reads$cigar[1])
-    if (!is.null(insertProb)) { insertProb <- as.numeric(insertProb) }
+    if (!is.null(fragmentProb)) { fragmentProb <- as.numeric(fragmentProb) }
     .Call("R_splicing_matchIso_paired", geneStructure, as.integer(gene),
           as.integer(reads$position), as.character(reads$cigar),
-          as.integer(readLength), insertProb, as.integer(insertStart),
+          as.integer(readLength), fragmentProb, as.integer(fragmentStart),
           as.numeric(normalMean), as.numeric(normalVar),
           as.numeric(numDevs),
           PACKAGE="splicing")
@@ -24,10 +24,10 @@ matchIso <- function(geneStructure, gene=1, reads, paired=reads$paired,
 }
 
 solveIso <- function(geneStructure, gene=1L, reads, readLength=33L,
-                     paired=FALSE, insertProb=NULL, insertStart=0L,
+                     paired=FALSE, fragmentProb=NULL, fragmentStart=0L,
                      normalMean, normalVar, numDevs) {
 
-  if (!is.null(insertProb)) { insertProb <- as.double(insertProb) }
+  if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
 
   if (!paired) { 
     .Call("R_splicing_solve_gene", geneStructure, as.integer(gene),
@@ -37,8 +37,8 @@ solveIso <- function(geneStructure, gene=1L, reads, readLength=33L,
   } else {
     .Call("R_splicing_solve_gene_paired", geneStructure, as.integer(gene),
           as.integer(readLength), as.integer(reads$position),
-          as.character(reads$cigar), insertProb,
-          as.integer(insertStart), as.double(normalMean),
+          as.character(reads$cigar), fragmentProb,
+          as.integer(fragmentStart), as.double(normalMean),
           as.double(normalVar), as.double(numDevs),
           PACKAGE="splicing")
   }

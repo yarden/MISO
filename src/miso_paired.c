@@ -25,7 +25,7 @@ int splicing_reassign_samples_paired(
 			     const splicing_matrix_t *matches, 
 			     const splicing_vector_int_t *match_order,
 			     const splicing_vector_t *psi, 
-			     int noiso, int insertStart, 
+			     int noiso, int fragmentStart, 
 			     splicing_vector_int_t *result) {
 
   int noreads = splicing_matrix_ncol(matches);
@@ -129,8 +129,8 @@ int splicing_score_joint_paired(const splicing_vector_int_t *assignment,
 				const splicing_vector_int_t *isolen,
 				const splicing_matrix_t *isoscores, 
 				const splicing_vector_t *assscores,
-				const splicing_matrix_int_t *insertLength,
-				int insertStart, double *score) {
+				const splicing_matrix_int_t *fragmentLength,
+				int fragmentStart, double *score) {
 
   int no_reads=splicing_vector_int_size(assignment);
   int i, noiso = splicing_vector_int_size(isolen);
@@ -139,8 +139,8 @@ int splicing_score_joint_paired(const splicing_vector_int_t *assignment,
   /* Scores the reads */
   for (i=0; i<no_reads; i++) {
     int ass=VECTOR(*assignment)[i];
-    int inslen=MATRIX(*insertLength, ass, i);
-    readProb += MATRIX(*isoscores, inslen-insertStart, ass);
+    int fraglen=MATRIX(*fragmentLength, ass, i);
+    readProb += MATRIX(*isoscores, fraglen-fragmentStart, ass);
   }
   
   /* Score isoforms */
@@ -163,19 +163,19 @@ int splicing_metropolis_hastings_ratio_paired(
 			      const splicing_vector_t *hyperp, 
 			      const splicing_matrix_t *isoscores,
 			      const splicing_vector_t *assscores,
-			      const splicing_matrix_int_t *insertLength,
-			      int insertStart, int full, double *acceptP, 
+			      const splicing_matrix_int_t *fragmentLength,
+			      int fragmentStart, int full, double *acceptP, 
 			      double *pcJS, double *ppJS) {
   
   double pJS, cJS, ptoCS, ctoPS;
 
   SPLICING_CHECK(splicing_score_joint_paired(ass, psiNew, hyperp,
 					     isolen, isoscores, assscores, 
-					     insertLength, insertStart,
+					     fragmentLength, fragmentStart,
 					     &pJS));
   SPLICING_CHECK(splicing_score_joint_paired(ass, psi, hyperp,
 					     isolen, isoscores, assscores,
-					     insertLength, insertStart,
+					     fragmentLength, fragmentStart,
 					     &cJS));
   
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psi, alpha, sigma, 
@@ -202,8 +202,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const char **cigarstr, int readLength, 
 			 int noIterations, int noBurnIn, int noLag,
 			 const splicing_vector_t *hyperp,
-			 const splicing_vector_t *insertProb,
-			 int insertStart, double normalMean, 
+			 const splicing_vector_t *fragmentProb,
+			 int fragmentStart, double normalMean, 
 			 double normalVar, double numDevs,
 			 splicing_matrix_t *samples, 
 			 splicing_vector_t *logLik,
@@ -221,23 +221,24 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   splicing_vector_int_t match_order;
   splicing_vector_int_t isolen;
   splicing_matrix_t isoscores;
-  splicing_matrix_int_t insertLength;
+  splicing_matrix_int_t fragmentLength;
   splicing_vector_t assscores;
   int il;
-  splicing_vector_t *myinsertProb=(splicing_vector_t*) insertProb,
-    vinsertProb;
+  splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
+    vfragmentProb;
 
-  if (!insertProb) { 
-    myinsertProb=&vinsertProb;
-    SPLICING_CHECK(splicing_vector_init(&vinsertProb, 0));
-    SPLICING_FINALLY(splicing_vector_destroy, &vinsertProb);
-    SPLICING_CHECK(splicing_normal_insert(normalMean, normalVar, numDevs,
-					  myinsertProb, &insertStart));
-    splicing_vector_scale(myinsertProb, 
-			  1.0/splicing_vector_sum(myinsertProb));
+  if (!fragmentProb) { 
+    myfragmentProb=&vfragmentProb;
+    SPLICING_CHECK(splicing_vector_init(&vfragmentProb, 0));
+    SPLICING_FINALLY(splicing_vector_destroy, &vfragmentProb);
+    SPLICING_CHECK(splicing_normal_fragment(normalMean, normalVar, numDevs,
+					    2*readLength, myfragmentProb,
+					    &fragmentStart));
+    splicing_vector_scale(myfragmentProb, 
+			  1.0/splicing_vector_sum(myfragmentProb));
   }
 
-  il=splicing_vector_size(myinsertProb);
+  il=splicing_vector_size(myfragmentProb);
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
 
@@ -262,12 +263,12 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_FINALLY(splicing_matrix_destroy, &matches);
   SPLICING_CHECK(splicing_vector_int_init(&match_order, noReads));
   SPLICING_FINALLY(splicing_vector_int_destroy, &match_order);
-  SPLICING_CHECK(splicing_matrix_int_init(&insertLength, noiso, noReads));
-  SPLICING_FINALLY(splicing_matrix_int_destroy, &insertLength);
+  SPLICING_CHECK(splicing_matrix_int_init(&fragmentLength, noiso, noReads));
+  SPLICING_FINALLY(splicing_matrix_int_destroy, &fragmentLength);
   SPLICING_CHECK(splicing_matchIso_paired(gff, gene, position, cigarstr, 
-					  readLength, myinsertProb, 
-					  insertStart, normalMean, normalVar,
-					  numDevs, &matches, &insertLength));
+					  readLength, myfragmentProb, 
+					  fragmentStart, normalMean, normalVar,
+					  numDevs, &matches, &fragmentLength));
   SPLICING_CHECK(splicing_order_matches(&matches, &match_order));
 
   SPLICING_CHECK(splicing_vector_int_init(&isolen, noiso));
@@ -278,9 +279,9 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_vector_init(&assscores, noiso));
   SPLICING_FINALLY(splicing_vector_destroy, &assscores);
   for (j=0; j<il; j++) {
-    double logprob=VECTOR(*myinsertProb)[j];
+    double logprob=VECTOR(*myfragmentProb)[j];
     for (i=0; i<noiso; i++) {
-      double lp = VECTOR(isolen)[i] - insertStart - j - 2 * readLength + 1;
+      double lp = VECTOR(isolen)[i] - fragmentStart - j + 1;
       MATRIX(isoscores, j, i) = -log(lp) + logprob;
       VECTOR(assscores)[i] += lp;
     }
@@ -302,7 +303,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   /* Initialize assignments of reads */  
   
   SPLICING_CHECK(splicing_reassign_samples_paired(&matches, &match_order, 
-						  psi, noiso, insertStart,
+						  psi, noiso, fragmentStart,
 						  &ass));
   
   /* foreach Iteration m=1, ..., M do */
@@ -317,7 +318,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 					     psiNew, alphaNew, psi, alpha,
 					     sigma, noiso, &isolen, hyperp, 
 					     &isoscores, &assscores,
-					     &insertLength, insertStart,
+					     &fragmentLength, fragmentStart,
 					     m > 0 ? 1 : 0, 
 					     &acceptP, &cJS, &pJS));
     
@@ -344,7 +345,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
     }
     
     SPLICING_CHECK(splicing_reassign_samples_paired(&matches, &match_order,
-						    psi, noiso, insertStart,
+						    psi, noiso, fragmentStart,
 						    &ass));
 
   } /* for m < noIterations */
@@ -352,7 +353,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   splicing_vector_destroy(&assscores);
   splicing_matrix_destroy(&isoscores);
   splicing_vector_int_destroy(&isolen);
-  splicing_matrix_int_destroy(&insertLength);
+  splicing_matrix_int_destroy(&fragmentLength);
   splicing_vector_int_destroy(&match_order);
   splicing_matrix_destroy(&matches);
   splicing_vector_destroy(&valphaNew);
@@ -362,8 +363,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   splicing_vector_int_destroy(&ass);
   SPLICING_FINALLY_CLEAN(11);
 
-  if (!insertProb) { 
-    splicing_vector_destroy(&vinsertProb);
+  if (!fragmentProb) { 
+    splicing_vector_destroy(&vfragmentProb);
     SPLICING_FINALLY_CLEAN(1);
   }
 

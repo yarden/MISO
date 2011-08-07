@@ -4,9 +4,9 @@
 
 int splicing_gene_complexity(const splicing_gff_t *gff, size_t gene,
 			     int readLength, splicing_complexity_t type,
-			     splicing_norm_t norm,
-			     int paired, const splicing_vector_t *insertProb,
-			     int insertStart, double normalMean, 
+			     splicing_norm_t norm, int paired,
+			     const splicing_vector_t *fragmentProb,
+			     int fragmentStart, double normalMean, 
 			     double normalVar, double numDevs,
 			     double *complexity) {
   
@@ -20,7 +20,8 @@ int splicing_gene_complexity(const splicing_gff_t *gff, size_t gene,
 					      &assignment_matrix));
   } else {
     SPLICING_CHECK(splicing_paired_assignment_matrix(gff, gene, readLength, 
-						     insertProb, insertStart,
+						     fragmentProb, 
+						     fragmentStart,
 						     normalMean, normalVar,
 						     numDevs, 
 						     &assignment_matrix));

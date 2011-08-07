@@ -15,8 +15,8 @@ matchIso(gene, reads=reads)
 ######################
 
 reads2 <- simulateReads(gene, expression=c(2/10, 3/10, 4/10), noReads=100L,
-                        paired=TRUE, readLength=33L, normalMean=100,
+                        paired=TRUE, readLength=33L, normalMean=166,
                         normalVar=100, numDevs=4)
 
-m3 <- matchIso(gene, reads=reads2, normalMean=100, normalVar=100, numDevs=4)
+m3 <- matchIso(gene, reads=reads2, normalMean=166, normalVar=100, numDevs=4)
 m3

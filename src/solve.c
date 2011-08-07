@@ -82,30 +82,31 @@ int splicing_matchIso(const splicing_gff_t *gff, int gene,
 int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
 			     const splicing_vector_int_t *position,
 			     const char **cigarstr, int readLength,
-			     const splicing_vector_t *insertProb,
-			     int insertStart, double normalMean,
+			     const splicing_vector_t *fragmentProb,
+			     int fragmentStart, double normalMean,
 			     double normalVar, double numDevs,
 			     splicing_matrix_t *result, 
-			     splicing_matrix_int_t *insertLength) {
+			     splicing_matrix_int_t *fragmentLength) {
   
   size_t r, i, noreads=splicing_vector_int_size(position);
   splicing_matrix_int_t isopos;
   size_t noiso;
   size_t il;
-  splicing_vector_t *myinsertProb=(splicing_vector_t*) insertProb,
-    vinsertProb;
+  splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
+    vfragmentProb;
 
-  if (!insertProb) { 
-    myinsertProb=&vinsertProb;
-    SPLICING_CHECK(splicing_vector_init(&vinsertProb, 0));
-    SPLICING_FINALLY(splicing_vector_destroy, &vinsertProb);
-    SPLICING_CHECK(splicing_normal_insert(normalMean, normalVar, numDevs, 
-					  myinsertProb, &insertStart));
-    splicing_vector_scale(myinsertProb, 
-			  1.0/splicing_vector_sum(myinsertProb));
+  if (!fragmentProb) { 
+    myfragmentProb=&vfragmentProb;
+    SPLICING_CHECK(splicing_vector_init(&vfragmentProb, 0));
+    SPLICING_FINALLY(splicing_vector_destroy, &vfragmentProb);
+    SPLICING_CHECK(splicing_normal_fragment(normalMean, normalVar, numDevs, 
+					    2*readLength, myfragmentProb,
+					    &fragmentStart));
+    splicing_vector_scale(myfragmentProb, 
+			  1.0/splicing_vector_sum(myfragmentProb));
   }
 
-  il=splicing_vector_size(myinsertProb);
+  il=splicing_vector_size(myfragmentProb);
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
   
@@ -117,19 +118,19 @@ int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
   SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, result));
   
   SPLICING_CHECK(splicing_matrix_resize(result, noiso, noreads/2));
-  if (insertLength) {
-    SPLICING_CHECK(splicing_matrix_int_resize(insertLength, noiso, 
+  if (fragmentLength) {
+    SPLICING_CHECK(splicing_matrix_int_resize(fragmentLength, noiso, 
 					      noreads/2));
   }
   
   for (r=0; r<noreads/2; r++) {
     for (i=0; i<noiso; i++) {
-      int ins=MATRIX(isopos, i, 2*r+1) - MATRIX(isopos, i, 2*r) - readLength;
-      if (insertLength) { MATRIX(*insertLength, i, r) = ins; }
-      if (ins < insertStart || ins >= il + insertStart) { 
+      int frag=MATRIX(isopos, i, 2*r+1) - MATRIX(isopos, i, 2*r) +readLength;
+      if (fragmentLength) { MATRIX(*fragmentLength, i, r) = frag; }
+      if (frag < fragmentStart || frag >= il + fragmentStart) { 
 	MATRIX(*result, i, r) = 0.0;
       } else {
-	MATRIX(*result, i, r) = VECTOR(*myinsertProb)[ins-insertStart];
+	MATRIX(*result, i, r) = VECTOR(*myfragmentProb)[frag-fragmentStart];
       }
     }
   }    
@@ -137,8 +138,8 @@ int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
   splicing_matrix_int_destroy(&isopos);
   SPLICING_FINALLY_CLEAN(1);
   
-  if (!insertProb) {
-    splicing_vector_destroy(myinsertProb); 
+  if (!fragmentProb) {
+    splicing_vector_destroy(myfragmentProb); 
     SPLICING_FINALLY_CLEAN(1);
   }
 
@@ -240,8 +241,8 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       int readLength, 
 			       const splicing_vector_int_t *position,
 			       const char **cigarstr,
-			       const splicing_vector_t *insertProb,
-			       int insertStart, double normalMean,
+			       const splicing_vector_t *fragmentProb,
+			       int fragmentStart, double normalMean,
 			       double normalVar, double numDevs,
 			       splicing_matrix_t *match_matrix,
 			       splicing_matrix_t *assignment_matrix,
@@ -258,7 +259,7 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
   double rnorm;
 
   SPLICING_CHECK(splicing_paired_assignment_matrix(gff, gene, readLength, 
-						   insertProb, insertStart,
+						   fragmentProb, fragmentStart,
 						   normalMean, normalVar,
 						   numDevs,
 						   assignment_matrix));
@@ -267,8 +268,8 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 
   /* Calculate match vector from match matrix */
   SPLICING_CHECK(splicing_matchIso_paired(gff, gene, position, cigarstr, 
-					  readLength, insertProb, 
-					  insertStart, normalMean, 
+					  readLength, fragmentProb, 
+					  fragmentStart, normalMean, 
 					  normalVar, numDevs, match_matrix, 
 					  0));
   SPLICING_CHECK(splicing_vector_init(&match, no_classes));

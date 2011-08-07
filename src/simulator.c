@@ -189,21 +189,22 @@ int splicing_simulate_reads(const splicing_gff_t *gff, int gene,
   return 0;
 }
 
-int splicing_normal_insert(double normalMean, double normalVar, 
-			   double numDevs, splicing_vector_t *insertProb,
-			   int *insertStart) {
+int splicing_normal_fragment(double normalMean, double normalVar, 
+			     double numDevs, int minLength, 
+			     splicing_vector_t *fragmentProb,
+			     int *fragmentStart) {
 
   double normalSd=sqrt(normalVar);
-  int insertEnd = normalMean + normalSd * numDevs;
+  int fragmentEnd = normalMean + normalSd * numDevs;
   int i, j;
 
-  *insertStart = normalMean - normalSd * numDevs;
-  if (*insertStart < 0) *insertStart = 0;
+  *fragmentStart = normalMean - normalSd * numDevs;
+  if (*fragmentStart < minLength) *fragmentStart = minLength;
   
-  SPLICING_CHECK(splicing_vector_resize(insertProb,
-					insertEnd - *insertStart + 1));
-  for (i=*insertStart, j=0; i<=insertEnd; i++, j++) {
-    VECTOR(*insertProb)[j] = splicing_dnorm(i, normalMean, normalSd);
+  SPLICING_CHECK(splicing_vector_resize(fragmentProb,
+					fragmentEnd - *fragmentStart + 1));
+  for (i=*fragmentStart, j=0; i<=fragmentEnd; i++, j++) {
+    VECTOR(*fragmentProb)[j] = splicing_dnorm(i, normalMean, normalSd);
   }
   
   return 0;
@@ -212,8 +213,8 @@ int splicing_normal_insert(double normalMean, double normalVar,
 int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
 				   const splicing_vector_t *expression,
 				   int noreads, int readLength,
-				   const splicing_vector_t *insertProb,
-				   int insertStart, double normalMean,
+				   const splicing_vector_t *fragmentProb,
+				   int fragmentStart, double normalMean,
 				   double normalVar, double numDevs,
 				   splicing_vector_int_t *isoform,
 				   splicing_vector_int_t *position,
@@ -226,8 +227,8 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
   splicing_vector_int_t isolen;
   int goodiso=0;
   splicing_vector_int_t exstart, exend, exidx;
-  splicing_vector_t *myinsertProb=(splicing_vector_t*) insertProb,
-    vinsertProb;
+  splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
+    vfragmentProb;
 
   SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
   if (gene < 0 || gene >= nogenes) {
@@ -236,22 +237,23 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
 
   /* TODO: more error checks */
 
-  if (!insertProb) { 
-    myinsertProb=&vinsertProb;
-    SPLICING_CHECK(splicing_vector_init(&vinsertProb, 0));
-    SPLICING_FINALLY(splicing_vector_destroy, &vinsertProb);
-    SPLICING_CHECK(splicing_normal_insert(normalMean, normalVar, numDevs, 
-					  myinsertProb, &insertStart));
-    splicing_vector_scale(myinsertProb, 
-			  1.0/splicing_vector_sum(myinsertProb));
+  if (!fragmentProb) { 
+    myfragmentProb=&vfragmentProb;
+    SPLICING_CHECK(splicing_vector_init(&vfragmentProb, 0));
+    SPLICING_FINALLY(splicing_vector_destroy, &vfragmentProb);
+    SPLICING_CHECK(splicing_normal_fragment(normalMean, normalVar, numDevs, 
+					    2*readLength, myfragmentProb,
+					    &fragmentStart));
+    splicing_vector_scale(myfragmentProb, 
+			  1.0/splicing_vector_sum(myfragmentProb));
   }
 
-  il=splicing_vector_size(myinsertProb);
+  il=splicing_vector_size(myfragmentProb);
   
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
     
-  if ( fabs(splicing_vector_sum(myinsertProb) - 1.0) > 1e-13 ) {
-    SPLICING_ERROR("Insert length distribution does not sum up to 1", 
+  if ( fabs(splicing_vector_sum(myfragmentProb) - 1.0) > 1e-13 ) {
+    SPLICING_ERROR("Fragment length distribution does not sum up to 1", 
 		   SPLICING_EINVAL);
   }
 
@@ -259,7 +261,7 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
   SPLICING_FINALLY(splicing_vector_int_destroy, &isolen);
   SPLICING_CHECK(splicing_gff_isolength_one(gff, gene, &isolen));
   
-  SPLICING_CHECK(splicing_vector_copy(&px, myinsertProb));
+  SPLICING_CHECK(splicing_vector_copy(&px, myfragmentProb));
   SPLICING_FINALLY(splicing_vector_destroy, &px);
   SPLICING_CHECK(splicing_vector_init(&cpx, il));
   SPLICING_FINALLY(splicing_vector_destroy, &cpx);
@@ -278,10 +280,10 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
   for (i=0; i<noiso; i++) {
     double sp=0.0;
     int j, efflen=VECTOR(isolen)[i] - 2 * readLength;
-    if (il+insertStart < efflen) {
-      sp=efflen-il-insertStart+1 + sumpx;
+    if (il+fragmentStart-2*readLength < efflen) {
+      sp=efflen-il-(fragmentStart-2*readLength)+1 + sumpx;
     } else if (efflen != 0) {
-      sp=VECTOR(cpx)[efflen-insertStart];
+      sp=VECTOR(cpx)[efflen-(fragmentStart-2*readLength)];
     }
     VECTOR(sampleprob)[i] = sp * VECTOR(*expression)[i];
     if (VECTOR(sampleprob)[i] != 0) { goodiso += 1; }
@@ -329,15 +331,15 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
 					     gene));
   
   /* Positions in isoform coordinates first. 
-     These are sampled based on the insert length distribution. */
+     These are sampled based on the fragment length distribution. */
 
   for (i=0, j=0; i<noreads; i++) {
     int iso=VECTOR(*isoform)[2*i];
     int efflen=VECTOR(isolen)[iso] - 2 * readLength+1;
-    int nounr=efflen-il-insertStart;
-    int pos, insert;
+    int nounr=efflen-il-(fragmentStart-2*readLength);
+    int pos, fragment;
     double rand;
-    if (il+insertStart < efflen) {
+    if (il+(fragmentStart-2*readLength) < efflen) {
       rand=RNG_UNIF(0, sumpx*nounr + sumpx);
       if (rand < sumpx*nounr) {
 	pos=RNG_INTEGER(0, nounr-1);
@@ -347,9 +349,11 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
 	pos += nounr;
       }
     } else {
-      rand=RNG_UNIF(0, VECTOR(cpx)[il-1] - VECTOR(cpx)[il+insertStart-efflen]);
-      rand += VECTOR(cpx)[il+insertStart-efflen-1];
-      for (pos=il+insertStart-efflen; rand > VECTOR(cpx)[pos]; pos++) ;
+      rand=RNG_UNIF(0, VECTOR(cpx)[il-1] - 
+		    VECTOR(cpx)[il+(fragmentStart-2*readLength)-efflen]);
+      rand += VECTOR(cpx)[il+(fragmentStart-2*readLength)-efflen-1];
+      for (pos=il+(fragmentStart-2*readLength)-efflen; 
+	   rand > VECTOR(cpx)[pos]; pos++) ;
     }
     
     if (pos+il < efflen) { 
@@ -357,11 +361,11 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
     } else {
       rand=RNG_UNIF(0, VECTOR(px)[efflen-pos]);
     }
-    for (insert=0; rand > VECTOR(px)[insert]; insert++) ;
-    insert += insertStart;
+    for (fragment=0; rand > VECTOR(px)[fragment]; fragment++) ;
+    fragment += (fragmentStart-2*readLength);
 
     VECTOR(*position)[j++] = pos+1;
-    VECTOR(*position)[j++] = pos+1+insert+readLength;
+    VECTOR(*position)[j++] = pos+1+fragment+readLength;
   }
   
   /* Translate positions to genomic coordinates */
@@ -406,8 +410,8 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
   splicing_vector_int_destroy(&isolen);
   SPLICING_FINALLY_CLEAN(6);
 
-  if (!insertProb) { 
-    splicing_vector_destroy(myinsertProb); 
+  if (!fragmentProb) { 
+    splicing_vector_destroy(myfragmentProb); 
     SPLICING_FINALLY_CLEAN(1);
   }
 

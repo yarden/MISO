@@ -267,27 +267,28 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 
 int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 				      int readLength, 
-				      const splicing_vector_t *insertProb,
-				      int insertStart, double normalMean,
+				      const splicing_vector_t *fragmentProb,
+				      int fragmentStart, double normalMean,
 				      double normalVar, double numDevs,
 				      splicing_matrix_t *matrix) {
   size_t noiso;
   int i, il;
   splicing_matrix_t tmpmat;
-  splicing_vector_t *myinsertProb=(splicing_vector_t*) insertProb,
-    vinsertProb;
+  splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
+    vfragmentProb;
 
-  if (!insertProb) { 
-    myinsertProb=&vinsertProb;
-    SPLICING_CHECK(splicing_vector_init(&vinsertProb, 0));
-    SPLICING_FINALLY(splicing_vector_destroy, &vinsertProb);
-    SPLICING_CHECK(splicing_normal_insert(normalMean, normalVar, numDevs,
-					  myinsertProb, &insertStart));
-    splicing_vector_scale(myinsertProb, 
-			  1.0/splicing_vector_sum(myinsertProb));
+  if (!fragmentProb) { 
+    myfragmentProb=&vfragmentProb;
+    SPLICING_CHECK(splicing_vector_init(&vfragmentProb, 0));
+    SPLICING_FINALLY(splicing_vector_destroy, &vfragmentProb);
+    SPLICING_CHECK(splicing_normal_fragment(normalMean, normalVar, numDevs,
+					    2*readLength, myfragmentProb, 
+					    &fragmentStart));
+    splicing_vector_scale(myfragmentProb, 
+			  1.0/splicing_vector_sum(myfragmentProb));
   }
 
-  il=splicing_vector_size(myinsertProb);
+  il=splicing_vector_size(myfragmentProb);
 
   SPLICING_CHECK(splicing_matrix_init(&tmpmat, 0, 0));
   SPLICING_FINALLY(splicing_matrix_destroy, &tmpmat);
@@ -297,8 +298,10 @@ int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   for (i=0; i<il; i++) {
 
     int c, tmpncol, m, mncol=splicing_matrix_ncol(matrix);
-    int myrl=readLength * 2 + i + insertStart;
-    double fact=VECTOR(*myinsertProb)[i];
+    int myrl=i + fragmentStart;
+    double fact=VECTOR(*myfragmentProb)[i];
+
+    if (myrl < 2*readLength) { continue; }
 
     SPLICING_CHECK(splicing_assignment_matrix(gff, gene, myrl, &tmpmat));
     tmpncol=splicing_matrix_ncol(&tmpmat);
@@ -332,8 +335,8 @@ int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   splicing_matrix_destroy(&tmpmat);
   SPLICING_FINALLY_CLEAN(1);
 
-  if (!insertProb) { 
-    splicing_vector_destroy(myinsertProb); 
+  if (!fragmentProb) { 
+    splicing_vector_destroy(myfragmentProb); 
     SPLICING_FINALLY_CLEAN(1);
   }
 

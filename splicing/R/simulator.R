@@ -49,8 +49,8 @@ getExonLength <- function(gff3, gene) {
 ## Generate reads for a single gene
 
 simulateReads <- function(geneStructure, gene=1, expression,
-                          noReads, readLength, paired=FALSE, insertProb=NULL,
-                          insertStart=0L, normalMean, normalVar, numDevs) {
+                          noReads, readLength, paired=FALSE, fragmentProb=NULL,
+                          fragmentStart=0L, normalMean, normalVar, numDevs) {
 
   if (!paired) {
     res <- .Call("R_splicing_simulate_reads", geneStructure,
@@ -59,11 +59,11 @@ simulateReads <- function(geneStructure, gene=1, expression,
                  PACKAGE="splicing")
     res$paired <- FALSE
   } else {
-    if (!is.null(insertProb)) { insertProb <- as.double(insertProb) }
+    if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
     res <- .Call("R_splicing_simulate_paired_reads", geneStructure,
                  as.integer(gene), as.double(expression),
                  as.integer(noReads), as.integer(readLength),
-                 insertProb, as.integer(insertStart), as.double(normalMean),
+                 fragmentProb, as.integer(fragmentStart), as.double(normalMean),
                  as.double(normalVar), as.double(numDevs))
     res$paired <- TRUE
   }

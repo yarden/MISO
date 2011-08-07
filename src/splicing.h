@@ -133,11 +133,11 @@ int splicing_matchIso(const splicing_gff_t *gff, int gene,
 int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
 			     const splicing_vector_int_t *position,
 			     const char **cigarstr, int readLength,
-			     const splicing_vector_t *insertProb,
-			     int insertStart, double normalMean,
+			     const splicing_vector_t *fragmentProb,
+			     int fragmentStart, double normalMean,
 			     double normalVar, double numDevs,
 			     splicing_matrix_t *result,
-			     splicing_matrix_int_t *insertLengths);
+			     splicing_matrix_int_t *fragmentLengths);
 
 int splicing_parse_cigar(const char **cigar, size_t noreads,
 			 splicing_vector_int_t *numcigar,
@@ -159,7 +159,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const char **cigarstr, int readLength, 
 			 int noIterations, int noBurnIn, int noLag,
 			 const splicing_vector_t *hyperp,
-			 const splicing_vector_t *insertProb, int insertStart,
+			 const splicing_vector_t *fragmentProb, int fragmentStart,
 			 double normalMean, double normalVar, double numDevs,
 			 splicing_matrix_t *samples, 
 			 splicing_vector_t *logLik, 
@@ -241,15 +241,16 @@ int splicing_simulate_reads(const splicing_gff_t *gff, int gene,
 			    splicing_vector_int_t *position, 
 			    splicing_strvector_t *cigar);
 
-int splicing_normal_insert(double normalMean, double normalVar, 
-			   double numDevs, splicing_vector_t *insertProb,
-			   int *insertStart);
+int splicing_normal_fragment(double normalMean, double normalVar, 
+			     double numDevs, int minLength,
+			     splicing_vector_t *fragmentProb,
+			     int *fragmentStart);
 
 int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
 				   const splicing_vector_t *expression,
 				   int noreads, int readLength,
-				   const splicing_vector_t *insertProb,
-				   int insertStart, double normalMean,
+				   const splicing_vector_t *fragmentProb,
+				   int fragmentStart, double normalMean,
 				   double normalVar, double numDevs,
 				   splicing_vector_int_t *isoform,
 				   splicing_vector_int_t *position,
@@ -275,8 +276,8 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       int readLength, 
 			       const splicing_vector_int_t *position,
 			       const char **cigarstr,
-			       const splicing_vector_t *insertProb,
-			       int insertStart, double normalMean,
+			       const splicing_vector_t *fragmentProb,
+			       int fragmentStart, double normalMean,
 			       double normalVar, double numDevs,
 			       splicing_matrix_t *match_matrix,
 			       splicing_matrix_t *assignment_matrix,
@@ -295,8 +296,8 @@ int splicing_genomic_to_iso(const splicing_gff_t *gff, size_t gene,
 
 int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 				      int readLength, 
-				      const splicing_vector_t *insertProb,
-				      int insertStart, double normalMean,
+				      const splicing_vector_t *fragmentProb,
+				      int fragmentStart, double normalMean,
 				      double normalVar, double numDevs,
 				      splicing_matrix_t *matrix);
 
@@ -304,7 +305,7 @@ int splicing_reassign_samples_paired(
 			     const splicing_matrix_t *matches, 
 			     const splicing_vector_int_t *match_order,
 			     const splicing_vector_t *psi, 
-			     int noiso, int insertStart, 
+			     int noiso, int fragmentStart, 
 			     splicing_vector_int_t *result);
 
 int splicing_score_iso_paired(const splicing_vector_t *psi, int noiso, 
@@ -319,8 +320,8 @@ int splicing_score_joint_paired(const splicing_vector_int_t *assignment,
 				const splicing_vector_int_t *isolen,
 				const splicing_matrix_t *isoscores, 
 				const splicing_vector_t *assscores,
-				const splicing_matrix_int_t *insertLength,
-				int insertStart, double *score);
+				const splicing_matrix_int_t *fragmentLength,
+				int fragmentStart, double *score);
 
 int splicing_metropolis_hastings_ratio_paired(
 			      const splicing_vector_int_t *ass,
@@ -333,8 +334,8 @@ int splicing_metropolis_hastings_ratio_paired(
 			      const splicing_vector_t *hyperp, 
 			      const splicing_matrix_t *isoscores,
 			      const splicing_vector_t *assscores,
-			      const splicing_matrix_int_t *insertLength,
-			      int insertStart, int full, double *acceptP, 
+			      const splicing_matrix_int_t *fragmentLength,
+			      int fragmentStart, int full, double *acceptP, 
 			      double *pcJS, double *ppJS);
 
 int splicing_dgesdd(const splicing_matrix_t *matrix, 
@@ -350,8 +351,8 @@ typedef enum { SPLICING_NORM_2,
 int splicing_gene_complexity(const splicing_gff_t *gff, size_t gene,
 			     int readLength, splicing_complexity_t type,
 			     splicing_norm_t norm,
-			     int paired, const splicing_vector_t *insertProb,
-			     int insertStart, double normalMean, 
+			     int paired, const splicing_vector_t *fragmentProb,
+			     int fragmentStart, double normalMean, 
 			     double normalVar, double numDevs,
 			     double *complexity);
 
