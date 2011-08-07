@@ -23,9 +23,9 @@ matchIso <- function(geneStructure, gene=1, reads, paired=reads$paired,
   }
 }
 
-solveIsoOne <- function(geneStructure, gene=1L, reads, readLength=33L,
-                        paired=FALSE, insertProb=NULL, insertStart=0L,
-                        normalMean, normalVar, numDev) {
+solveIso <- function(geneStructure, gene=1L, reads, readLength=33L,
+                     paired=FALSE, insertProb=NULL, insertStart=0L,
+                     normalMean, normalVar, numDevs) {
 
   if (!is.null(insertProb)) { insertProb <- as.double(insertProb) }
 
@@ -39,7 +39,7 @@ solveIsoOne <- function(geneStructure, gene=1L, reads, readLength=33L,
           as.integer(readLength), as.integer(reads$position),
           as.character(reads$cigar), insertProb,
           as.integer(insertStart), as.double(normalMean),
-          as.double(normalVar), as.double(numDev),
+          as.double(normalVar), as.double(numDevs),
           PACKAGE="splicing")
   }
 }

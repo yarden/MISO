@@ -20,5 +20,5 @@ S3method("runData", "MISOresult")
 
 export(condIso, assignmentMatrix)
 
-export(matchIso, solveIsoOne)
+export(matchIso, solveIso)
 
