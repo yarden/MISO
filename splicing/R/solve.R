@@ -1,18 +1,25 @@
 
-matchIso <- function(geneStructure, gene=1, reads) {
+matchIso <- function(geneStructure, gene=1, reads, paired=reads$paired,
+                     insertProb=NULL, insertStart=0L,
+                     normalMean, normalVar, numDevs) {
 
-  res <- .Call("R_splicing_matchIso", geneStructure, as.integer(gene),
-               as.integer(reads$position), as.character(reads$cigar),
-               PACKAGE="splicing")
-
-  paired <- attr(reads, "paired")
-  if (!is.null(paired) && paired) {
-    res <- (res[,seq(1,ncol(res),by=2)] & res[,seq(2,ncol(res),by=2)]) + 0
-    res <- apply(res, 2, paste, collapse="")
-    res <- rep(res, each=2)
-    res
+  if (paired) {
+    getreadlength <- function(cig) {
+      sum(as.numeric(strsplit(gsub("[0-9]+[ABCDEFGHIJKLNOPQRSTUVWXYZ]", "",
+                                   cig), "M")[[1]]))
+    }
+    readLength=getreadlength(reads$cigar[1])
+    if (!is.null(insertProb)) { insertProb <- as.numeric(insertProb) }
+    .Call("R_splicing_matchIso_paired", geneStructure, as.integer(gene),
+          as.integer(reads$position), as.character(reads$cigar),
+          as.integer(readLength), insertProb, as.integer(insertStart),
+          as.numeric(normalMean), as.numeric(normalVar),
+          as.numeric(numDevs),
+          PACKAGE="splicing")
   } else {
-    apply(res, 2, paste, collapse="")
+    .Call("R_splicing_matchIso", geneStructure, as.integer(gene),
+          as.integer(reads$position), as.character(reads$cigar),
+          PACKAGE="splicing")
   }
 }
 
