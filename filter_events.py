@@ -224,10 +224,14 @@ def fix_bayes_factor(bayes_factor):
     If one of the bayes factors is 'inf' we get a string instead of a 
     tuple back. This is hacky but fixes that.
     """
-    if type(bayes_factor) is type(" "):
+    # Maximum cut off for Bayes factor value
+    max_bf = 1e12
+    
+    if type(bayes_factor) == str:
         bayes_factor = bayes_factor.split(",")
-        bayes_factor = [float(x) for x in bayes_factor]
+        bayes_factor = [min(float(x), max_bf) for x in bayes_factor]
         bayes_factor = tuple(bayes_factor)
+        bayes_factor = bayes_factor[0]
 
     return bayes_factor
 
@@ -245,7 +249,6 @@ def filter_events(data, h, num_total, num_inc, num_exc, num_sum,
         raise Exception, "Error: delta psi value outside [0, 1]." 
 
     for event in data:
-
         # Sometimes the bayes factor is not formatted correctly, this fixes that
         event['bayes_factor'] = fix_bayes_factor(event['bayes_factor'])
 
@@ -271,9 +274,7 @@ def filter_events(data, h, num_total, num_inc, num_exc, num_sum,
 
             if not dp_pass:
                 continue
-
         else:
-
             # Get delta Psi
             delta_psi = float(event['diff'])
             bayes_factor = float(event['bayes_factor'])
