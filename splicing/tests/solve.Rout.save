@@ -26,19 +26,36 @@ Type 'q()' to quit R.
 +                    list(c(1,2), c(1,3), c(1,2,3)))
 > 
 > reads <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
-+                        noReads=100L, readLength=20)
++                        noReads=1000L, readLength=20)
 > 
 > mres <- solveIso(gene, reads=reads, readLength=20L)
 > mres$expression
-[1] 0.1667444 0.2782573 0.5549983
+[1] 0.1480842 0.3399616 0.5119542
 > 
 > reads2 <- simulateReads(gene, expression=c(2/10, 3/10, 5/10), paired=TRUE,
-+                         noReads=100L, readLength=20, normalMean=90,
++                         noReads=1000L, readLength=20, normalMean=90,
 +                         normalVar=50, numDevs=4)
 > 
 > mres2 <- solveIso(gene, reads=reads2, readLength=20L, paired=TRUE,
 +                   normalMean=90, normalVar=50, numDevs=4)
 > mres2$expression
-[1] 0.5537537 0.3014040 0.1448422
+[1] 0.2059162 0.2943647 0.4997191
 > 
+> assmat <- assignmentMatrix(gene, readLength=20, paired=TRUE,
++                            normalMean=90, normalVar=50, numDevs=4)
+> 
+> matchmat <- matchIso(gene, reads=reads2, normalMean=90, normalVar=50,
++                      numDevs=4)
+> 
+> matchstr <- table(apply((matchmat[[1]] != 0) + 0, 2, paste, collapse=""))
+> 
+> matchstr <- matchstr[colnames(assmat)]
+> 
+> fit <- lsfit(t(assmat), matchstr, intercept=FALSE)
+> 
+> n <- function(x) x/sum(x)
+> 
+> n(fit$coefficients)
+       X1        X2        X3 
+0.2059162 0.2943647 0.4997191 
 > 
