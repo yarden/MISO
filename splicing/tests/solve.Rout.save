@@ -39,6 +39,6 @@ Type 'q()' to quit R.
 > mres2 <- solveIso(gene, reads=reads2, readLength=20L, paired=TRUE,
 +                   normalMean=90, normalVar=50, numDevs=4)
 > mres2$expression
-[1] 0.5693711 0.2624719 0.1681570
+[1] 0.5537537 0.3014040 0.1448422
 > 
 > 

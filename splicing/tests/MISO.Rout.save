@@ -41,6 +41,6 @@ Type 'q()' to quit R.
 +               fragmentStart=0L, normalVar=50, numDevs=4)
 > 
 > postMean(mres2)
-[1] 0.6027453 0.1934744 0.2037803
+[1] 0.4499902 0.2669311 0.2830786
 > 
 > 
