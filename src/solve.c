@@ -283,7 +283,7 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 					  0));
   SPLICING_CHECK(splicing_vector_init(&match, no_classes));
   SPLICING_FINALLY(splicing_vector_destroy, &match);
-  for (r=0; r<no_reads; r++) {
+  for (r=0; r<no_reads/2; r++) {
     size_t cl, found;
     for (cl=0, found=0; !found && cl < no_classes; cl++) {
       size_t i;
@@ -292,6 +292,10 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 	double m2=MATRIX(*assignment_matrix, i, cl);
 	found = (m1 > 0 && m2 > 0) || (m1 == 0 && m2 == 0);
       }
+    }
+    if (!found) {
+      SPLICING_ERROR("Read does not match any assignment class", 
+		     SPLICING_EINTERNAL);
     }
     VECTOR(match)[cl-1] += 1;
   }
