@@ -301,8 +301,6 @@ int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
     int myrl=i + fragmentStart;
     double fact=VECTOR(*myfragmentProb)[i];
 
-    if (myrl < 2*readLength) { continue; }
-
     SPLICING_CHECK(splicing_assignment_matrix(gff, gene, myrl, &tmpmat));
     tmpncol=splicing_matrix_ncol(&tmpmat);
     for (c=0; c<tmpncol; c++) {
