@@ -117,7 +117,6 @@ int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
   
   SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, result));
   
-  SPLICING_CHECK(splicing_matrix_resize(result, noiso, noreads/2));
   if (fragmentLength) {
     SPLICING_CHECK(splicing_matrix_int_resize(fragmentLength, noiso, 
 					      noreads/2));
@@ -125,15 +124,25 @@ int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
   
   for (r=0; r<noreads/2; r++) {
     for (i=0; i<noiso; i++) {
-      int frag=MATRIX(isopos, i, 2*r+1) - MATRIX(isopos, i, 2*r) +readLength;
-      if (fragmentLength) { MATRIX(*fragmentLength, i, r) = frag; }
-      if (frag < fragmentStart || frag >= il + fragmentStart) { 
-	MATRIX(*result, i, r) = 0.0;
+      if (MATRIX(*result, i, 2*r) && MATRIX(*result, i, 2*r+1)) {
+	int frag=MATRIX(isopos, i, 2*r+1) - MATRIX(isopos, i, 2*r) +
+	  readLength;
+	if (frag < fragmentStart || frag >= il + fragmentStart) { 
+	  MATRIX(*result, i, r) = 0.0;
+	  if (fragmentLength) { MATRIX(*fragmentLength, i, r) = -1; }
+	} else {
+	  MATRIX(*result, i, r) = 
+	    VECTOR(*myfragmentProb)[frag-fragmentStart];
+	  if (fragmentLength) { MATRIX(*fragmentLength, i, r) = frag; }
+	}
       } else {
-	MATRIX(*result, i, r) = VECTOR(*myfragmentProb)[frag-fragmentStart];
+	MATRIX(*result, i, r) = 0.0;
+	if (fragmentLength) { MATRIX(*fragmentLength, i, r) = -1; }
       }
     }
   }    
+
+  splicing_matrix_resize(result, noiso, noreads/2);
   
   splicing_matrix_int_destroy(&isopos);
   SPLICING_FINALLY_CLEAN(1);
