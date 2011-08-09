@@ -393,7 +393,7 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
   SPLICING_CHECK(splicing_strvector_reserve(cigar, 2*noreads));
   for (j=0; j<2*noreads; j++) {
     char tmp[1000], *tmp2=tmp;
-    int iso=VECTOR(*isoform)[j/2];
+    int iso=VECTOR(*isoform)[j];
     size_t rs=VECTOR(*position)[j];
     int ex=0;
     int rl=readLength;
