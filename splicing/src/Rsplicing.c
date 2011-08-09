@@ -1058,6 +1058,7 @@ SEXP R_splicing_simulate_paired_reads(SEXP pgff, SEXP pgene, SEXP pexpression,
   double numDevs=REAL(pnumDevs)[0];
   splicing_vector_int_t isoform, position;
   splicing_strvector_t cigar;
+  splicing_vector_t sampleprob;
   
   R_splicing_begin();
   
@@ -1069,26 +1070,31 @@ SEXP R_splicing_simulate_paired_reads(SEXP pgff, SEXP pgene, SEXP pexpression,
   splicing_vector_int_init(&isoform, 0);
   splicing_vector_int_init(&position, 0);
   splicing_strvector_init(&cigar, 0);
+  splicing_vector_init(&sampleprob, 0);
   
   splicing_simulate_paired_reads(&gff, gene, &expression, noreads, 
 				 readLength, 
 				 isNull(pfragmentProb) ? 0 : &fragmentProb, 
 				 fragmentStart, normalMean, normalVar, 
-				 numDevs, &isoform, &position, &cigar);
+				 numDevs, &isoform, &position, &cigar, 
+				 &sampleprob);
   
-  PROTECT(result=NEW_LIST(3));
+  PROTECT(result=NEW_LIST(4));
   SET_VECTOR_ELT(result, 0, R_splicing_vector_int_to_SEXP(&isoform));
   SET_VECTOR_ELT(result, 1, R_splicing_vector_int_to_SEXP(&position));
   SET_VECTOR_ELT(result, 2, R_splicing_strvector_to_SEXP(&cigar));
-  PROTECT(names=NEW_CHARACTER(3));
+  SET_VECTOR_ELT(result, 3, R_splicing_vector_to_SEXP(&sampleprob));
+  PROTECT(names=NEW_CHARACTER(4));
   SET_STRING_ELT(names, 0, mkChar("isoform"));
   SET_STRING_ELT(names, 1, mkChar("position"));
   SET_STRING_ELT(names, 2, mkChar("cigar"));
+  SET_STRING_ELT(names, 3, mkChar("sampleProb"));
   SET_NAMES(result, names);
   
   splicing_strvector_destroy(&cigar);
   splicing_vector_int_destroy(&position);
   splicing_vector_int_destroy(&isoform);
+  splicing_vector_destroy(&sampleprob);
   
   R_splicing_end();
   

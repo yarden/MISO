@@ -408,7 +408,7 @@ static PyObject* pysplicing_simulate_paired_reads(PyObject *self,
 						  /*insertStart=*/ 0,
 						  normalMean, normalVar,
 						  numDevs, &isoform, 
-						  &position, &cigar));
+						  &position, &cigar, 0));
 
   r1=pysplicing_from_vector_int(&isoform);
   r2=pysplicing_from_vector_int(&position);
