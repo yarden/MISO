@@ -8,6 +8,65 @@ from scipy import *
 from scipy import linalg
 import sys
 
+def make_errorbar_plot(labels, bar_locations,
+                       bar_values, bar_errors,
+                       colors=None, width=0.2):
+    """
+    Make a bar plot.
+    """
+    assert(len(bar_values) == len(bar_locations))
+    assert(len(bar_errors) == len(bar_values))
+
+    if colors == None:
+        colors = ['k'] * len(bar_locations)
+    
+    for n, val in enumerate(bar_values):
+	plt.bar([bar_locations[n]], [val], width, yerr=[bar_errors[n]],
+		color=colors[n], align='center', ecolor='k', label=labels[n])\
+                
+
+def make_grouped_bar_plot(ax, x_axis_labels, group_labels, group_values,
+                          group_errs, width, group_colors=None, x_offset_val=None,
+                          with_legend=True):
+    """
+    Make grouped bar plot, where group_labels are the labels for each group
+    (to appear on x-axis), the group values is a list of N lists, each of length N,
+    where N is the number of groups.  
+    """
+    all_rects = []
+
+    if x_offset_val == None:
+        x_offset_val = width
+
+    num_items_on_x_axis = len(x_axis_labels)
+    num_groups = len(group_labels)
+    
+    ind = arange(num_items_on_x_axis)
+    
+    for group_num, group_vals in enumerate(group_values):
+        group_len = len(group_vals)
+        gene_rects = ax.bar(ind, group_vals, width, color=group_colors[group_num],
+                            yerr=group_errs[group_num], label=group_labels[group_num],
+                            ecolor='k')
+        
+        # Advance x-axis offset
+        ind = ind + x_offset_val
+        all_rects.append(gene_rects)
+
+    if with_legend:
+#        x_label_offset = (num_items_on_x_axis * width) / num_items_on_x_axis
+        x_label_offset = (num_groups / 2.) * width #num_items_on_x_axis
+        xticks = arange(num_items_on_x_axis) + x_label_offset
+        ax.set_xticks(xticks)
+        plt.xlim([0 - width, max(xticks) + (group_num * width)])
+        ax.set_xticklabels(x_axis_labels)
+        ax.legend(tuple([rect[0] for rect in all_rects]), group_labels,
+                  borderpad=0.01, labelspacing=.003, handlelength=1.0, loc='upper left', numpoints=1,
+                  handletextpad=0.3)
+
+    return ax
+        
+
 def show_spines(ax,spines):
     for loc, spine in ax.spines.iteritems():
         if loc not in spines:

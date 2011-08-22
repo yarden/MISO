@@ -8,7 +8,25 @@ from numpy import *
 from scipy import *
 import time
 import csv
+from collections import defaultdict
 
+def index_dictlist_by_field(dictlist, field_name,
+                            collapse=False):
+    """
+    Index dict list by field_name (collapsing values with identical field
+    names into a list if asked)
+    """
+    if collapse:
+        indexed_dictlist = defaultdict(list)
+        for entry in dictlist:
+            indexed_dictlist[entry[field_name]].append(entry)
+    else:
+        indexed_dictlist = dict([(entry[field_name], entry) \
+                                 for entry in dictlist])
+
+    return indexed_dictlist
+    
+    
 def dictlist2csv(filename, dictlist, header_fields, delimiter='\t'):
     """
     Serialize a list of dictionaries into the output
