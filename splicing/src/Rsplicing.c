@@ -157,6 +157,54 @@ SEXP R_splicing_miso_rundata_to_SEXP(const splicing_miso_rundata_t *data) {
   return result;
 }
 
+SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads) {
+  SEXP result, names, class;
+  
+  PROTECT(result=NEW_LIST(16));
+  SET_VECTOR_ELT(result, 0, R_splicing_strvector_to_SEXP(&reads->chrname));
+  SET_VECTOR_ELT(result, 1, R_splicing_vector_int_to_SEXP(&reads->chrlen));
+  SET_VECTOR_ELT(result, 2, R_splicing_vector_int_to_SEXP(&reads->chr));
+  SET_VECTOR_ELT(result, 3, R_splicing_strvector_to_SEXP(&reads->qname));
+  SET_VECTOR_ELT(result, 4, R_splicing_strvector_to_SEXP(&reads->cigar));
+  SET_VECTOR_ELT(result, 5, R_splicing_vector_int_to_SEXP(&reads->position));
+  SET_VECTOR_ELT(result, 6, R_splicing_vector_int_to_SEXP(&reads->flags));
+  SET_VECTOR_ELT(result, 7, R_splicing_vector_int_to_SEXP(&reads->pairpos));
+  SET_VECTOR_ELT(result, 8, ScalarInteger(reads->noPairs));
+  SET_VECTOR_ELT(result, 9, ScalarInteger(reads->noSingles));
+  SET_VECTOR_ELT(result, 10, ScalarLogical(reads->paired));
+  SET_VECTOR_ELT(result, 11, R_splicing_vector_int_to_SEXP(&reads->mapq));
+  SET_VECTOR_ELT(result, 12, R_splicing_vector_int_to_SEXP(&reads->rnext));
+  SET_VECTOR_ELT(result, 13, R_splicing_vector_int_to_SEXP(&reads->tlen));
+  SET_VECTOR_ELT(result, 14, R_splicing_strvector_to_SEXP(&reads->seq));
+  SET_VECTOR_ELT(result, 15, R_splicing_strvector_to_SEXP(&reads->qual));
+
+  PROTECT(names=NEW_CHARACTER(16));
+  SET_STRING_ELT(names, 0, mkChar("chrname"));
+  SET_STRING_ELT(names, 1, mkChar("chrlen"));
+  SET_STRING_ELT(names, 2, mkChar("chr"));
+  SET_STRING_ELT(names, 3, mkChar("qname"));
+  SET_STRING_ELT(names, 4, mkChar("cigar"));
+  SET_STRING_ELT(names, 5, mkChar("position"));
+  SET_STRING_ELT(names, 6, mkChar("flag"));
+  SET_STRING_ELT(names, 7, mkChar("pairpos"));
+  SET_STRING_ELT(names, 8, mkChar("noPairs"));
+  SET_STRING_ELT(names, 9, mkChar("noSingles"));
+  SET_STRING_ELT(names, 10, mkChar("paired"));
+  SET_STRING_ELT(names, 11, mkChar("mapq"));
+  SET_STRING_ELT(names, 12, mkChar("rnext"));
+  SET_STRING_ELT(names, 13, mkChar("tlen"));
+  SET_STRING_ELT(names, 14, mkChar("seq"));
+  SET_STRING_ELT(names, 15, mkChar("qual"));
+  SET_NAMES(result, names);
+
+  PROTECT(class=NEW_CHARACTER(1));
+  SET_STRING_ELT(class, 0, mkChar("splicing.sam.bam"));
+  SET_CLASS(result, class);
+
+  UNPROTECT(3);
+  return result;
+}
+
 int R_splicing_SEXP_to_vector_int(SEXP pv, splicing_vector_int_t *v) {
   v->stor_begin = INTEGER(pv);
   v->stor_end = v->end = v->stor_begin + GET_LENGTH(pv);
@@ -1476,83 +1524,18 @@ SEXP R_splicing_gene_complexity(SEXP pgff, SEXP pgene,
 
 SEXP R_splicing_read_sambam(SEXP pfilename) {
   const char *filename=CHAR(STRING_ELT(pfilename, 0));
-  splicing_strvector_t chrname, cigar, qname, seq, qual;
-  splicing_vector_int_t chr, position, flag, pairpos, chrlen, mapq, rnext, 
-    tlen;
-  int noPairs, noSingles, paired;
-  SEXP result, names, class;
+  splicing_reads_t reads;
+  SEXP result;
   
   R_splicing_begin();
 
-  splicing_strvector_init(&qual, 0);
-  splicing_strvector_init(&seq, 0);
-  splicing_vector_int_init(&tlen, 0);
-  splicing_vector_int_init(&rnext, 0);
-  splicing_vector_int_init(&mapq, 0);
-  splicing_vector_int_init(&pairpos, 0);
-  splicing_vector_int_init(&flag, 0);
-  splicing_vector_int_init(&position, 0);
-  splicing_strvector_init(&cigar, 0);
-  splicing_vector_int_init(&chr, 0);
-  splicing_vector_int_init(&chrlen, 0);
-  splicing_strvector_init(&chrname, 0);
+  splicing_reads_init(&reads);
+  splicing_read_sambam(filename, &reads);
+  PROTECT(result=R_splicing_reads_to_SEXP(&reads));
+  splicing_reads_destroy(&reads);
   
-  splicing_read_sambam(filename, &chrname, &chrlen, &chr, &qname, &cigar,
-		       &position, &flag, &pairpos, &noPairs, &noSingles,
-		       &paired, &mapq, &rnext, &tlen, &seq, &qual);
-  
-  PROTECT(result=NEW_LIST(16));
-  SET_VECTOR_ELT(result, 0, R_splicing_strvector_to_SEXP(&chrname));
-  splicing_strvector_destroy(&chrname);
-  SET_VECTOR_ELT(result, 1, R_splicing_vector_int_to_SEXP(&chrlen));
-  splicing_vector_int_destroy(&chrlen);
-  SET_VECTOR_ELT(result, 2, R_splicing_vector_int_to_SEXP(&chr));
-  splicing_vector_int_destroy(&chr);
-  SET_VECTOR_ELT(result, 3, R_splicing_strvector_to_SEXP(&qname));
-  splicing_strvector_destroy(&qname);
-  SET_VECTOR_ELT(result, 4, R_splicing_strvector_to_SEXP(&cigar));
-  splicing_strvector_destroy(&cigar);
-  SET_VECTOR_ELT(result, 5, R_splicing_vector_int_to_SEXP(&position));
-  splicing_vector_int_destroy(&position);
-  SET_VECTOR_ELT(result, 6, R_splicing_vector_int_to_SEXP(&flag));
-  splicing_vector_int_destroy(&flag);
-  SET_VECTOR_ELT(result, 7, R_splicing_vector_int_to_SEXP(&pairpos));
-  splicing_vector_int_destroy(&pairpos);
-  SET_VECTOR_ELT(result, 8, ScalarInteger(noPairs));
-  SET_VECTOR_ELT(result, 9, ScalarInteger(noSingles));
-  SET_VECTOR_ELT(result, 10, ScalarLogical(paired));
-  SET_VECTOR_ELT(result, 11, R_splicing_vector_int_to_SEXP(&mapq));
-  splicing_vector_int_destroy(&mapq);
-  SET_VECTOR_ELT(result, 12, R_splicing_vector_int_to_SEXP(&rnext));
-  splicing_vector_int_destroy(&rnext);
-  SET_VECTOR_ELT(result, 13, R_splicing_vector_int_to_SEXP(&tlen));
-  splicing_vector_int_destroy(&tlen);
-  SET_VECTOR_ELT(result, 14, R_splicing_strvector_to_SEXP(&seq));
-  splicing_strvector_destroy(&seq);
-  SET_VECTOR_ELT(result, 15, R_splicing_strvector_to_SEXP(&qual));
-  splicing_strvector_destroy(&qual);
-
-  PROTECT(names=NEW_CHARACTER(16));
-  SET_STRING_ELT(names, 0, mkChar("chrname"));
-  SET_STRING_ELT(names, 1, mkChar("chrlen"));
-  SET_STRING_ELT(names, 2, mkChar("chr"));
-  SET_STRING_ELT(names, 3, mkChar("qname"));
-  SET_STRING_ELT(names, 4, mkChar("cigar"));
-  SET_STRING_ELT(names, 5, mkChar("position"));
-  SET_STRING_ELT(names, 6, mkChar("flag"));
-  SET_STRING_ELT(names, 7, mkChar("pairpos"));
-  SET_STRING_ELT(names, 8, mkChar("noPairs"));
-  SET_STRING_ELT(names, 9, mkChar("noSingles"));
-  SET_STRING_ELT(names, 10, mkChar("paired"));
-  SET_STRING_ELT(names, 11, mkChar("mapq"));
-  SET_STRING_ELT(names, 12, mkChar("rnext"));
-  SET_STRING_ELT(names, 13, mkChar("tlen"));
-  SET_STRING_ELT(names, 14, mkChar("seq"));
-  SET_STRING_ELT(names, 15, mkChar("qual"));
-  SET_NAMES(result, names);
-
   R_splicing_end();
 
-  UNPROTECT(2);
+  UNPROTECT(1);
   return result;
 }
