@@ -46,10 +46,15 @@ typedef struct splicing_reads_t {
   splicing_strvector_t qual;
 } splicing_reads_t;
 
+typedef enum { SPLICING_SAMBAM_AUTO, 
+	       SPLICING_SAMBAM_SAM,
+	       SPLICING_SAMBAM_BAM } splicing_sambam_type_t;
+
 int splicing_reads_init(splicing_reads_t *reads);
 void splicing_reads_destroy(splicing_reads_t *reads);
 int splicing_read_sambam(const char *filename,
-			 splicing_reads_t *reads);
+			 splicing_reads_t *reads,
+			 splicing_sambam_type_t filetype);
 
 SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads);
 

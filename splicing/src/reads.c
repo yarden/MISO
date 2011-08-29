@@ -1,10 +1,12 @@
 
 #include <ctype.h>
+#include <string.h>
 
 #include "splicing.h"
 #include "splicing_error.h"
 
 #include "sam.h"
+#include "Rsplicing.h"
 
 int splicing_reads_init(splicing_reads_t *reads) {
   reads->noPairs = reads->noSingles = 0;
@@ -96,7 +98,8 @@ int splicing_i_cmp_reads(void *pdata, const void *a, const void *b) {
 /* TODO: use qname as well for pairing */
 
 int splicing_read_sambam(const char *filename,
-			 splicing_reads_t *reads) {
+			 splicing_reads_t *reads, 
+			 splicing_sambam_type_t filetype) {
 
   samfile_t *infile=0;
   int bytesread;
@@ -104,6 +107,7 @@ int splicing_read_sambam(const char *filename,
   char buffer[4096];
   char *cigarcode="MIDNSHP";
   int i;
+  char *mode_r="r", *mode_rb="rb", *mode=mode_rb;
 
   SPLICING_FINALLY(splicing_i_bam_destroy1, read);
   
@@ -122,7 +126,23 @@ int splicing_read_sambam(const char *filename,
   splicing_strvector_clear(&reads->qual);
   reads->noPairs = reads->noSingles = 0;
 
-  infile=samopen(filename, "r", /*aux=*/ 0);
+  switch (filetype) {
+    int flen;
+  case SPLICING_SAMBAM_AUTO:
+    flen=strlen(filename);
+    if (flen >= 4 && !strncmp(filename + flen - 4, ".sam", 4)) { 
+      mode = mode_r; 
+    }
+    break;
+  case SPLICING_SAMBAM_SAM:
+    mode = mode_r;
+    break;
+  case SPLICING_SAMBAM_BAM:
+    mode = mode_rb;
+    break;
+  }
+
+  infile=samopen(filename, mode, /*aux=*/ 0);
   if (!infile) { 
     SPLICING_ERROR("Cannot open SAM/BAM file", SPLICING_EFILE);
   }

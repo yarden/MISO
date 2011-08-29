@@ -1530,7 +1530,7 @@ SEXP R_splicing_read_sambam(SEXP pfilename) {
   R_splicing_begin();
 
   splicing_reads_init(&reads);
-  splicing_read_sambam(filename, &reads);
+  splicing_read_sambam(filename, &reads, SPLICING_SAMBAM_AUTO);
   PROTECT(result=R_splicing_reads_to_SEXP(&reads));
   splicing_reads_destroy(&reads);
   
