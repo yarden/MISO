@@ -53,6 +53,7 @@ typedef enum { SPLICING_SAMBAM_AUTO,
 int splicing_reads_init(splicing_reads_t *reads);
 void splicing_reads_destroy(splicing_reads_t *reads);
 int splicing_read_sambam(const char *filename,
+			 const char *indexfile,
 			 splicing_reads_t *reads,
 			 splicing_sambam_type_t filetype);
 

@@ -8,6 +8,8 @@
 #include "sam.h"
 #include "Rsplicing.h"
 
+bam_index_t *bam_index_load_core(FILE *fp);
+
 int splicing_reads_init(splicing_reads_t *reads) {
   reads->noPairs = reads->noSingles = 0;
   reads->paired = 0;
@@ -98,6 +100,7 @@ int splicing_i_cmp_reads(void *pdata, const void *a, const void *b) {
 /* TODO: use qname as well for pairing */
 
 int splicing_read_sambam(const char *filename,
+			 const char *indexfile,
 			 splicing_reads_t *reads, 
 			 splicing_sambam_type_t filetype) {
 
@@ -108,9 +111,11 @@ int splicing_read_sambam(const char *filename,
   char *cigarcode="MIDNSHP";
   int i;
   char *mode_r="r", *mode_rb="rb", *mode=mode_rb;
+  char *myindexfile=(char*) indexfile;
+  bam_index_t *idx=0;
 
   SPLICING_FINALLY(splicing_i_bam_destroy1, read);
-  
+
   splicing_strvector_clear(&reads->chrname);
   splicing_vector_int_clear(&reads->chrlen);
   splicing_vector_int_clear(&reads->chr);
@@ -132,6 +137,9 @@ int splicing_read_sambam(const char *filename,
     flen=strlen(filename);
     if (flen >= 4 && !strncmp(filename + flen - 4, ".sam", 4)) { 
       mode = mode_r; 
+      filetype=SPLICING_SAMBAM_SAM;
+    } else {
+      filetype=SPLICING_SAMBAM_BAM;
     }
     break;
   case SPLICING_SAMBAM_SAM:
@@ -140,6 +148,29 @@ int splicing_read_sambam(const char *filename,
   case SPLICING_SAMBAM_BAM:
     mode = mode_rb;
     break;
+  }
+
+  /* Load index, if available */
+
+  if (filetype == SPLICING_SAMBAM_BAM) { 
+    FILE * ifp;
+    if (!indexfile) { 
+      int flen=strlen(filename);
+      myindexfile = malloc(flen + 5);
+      strcpy(myindexfile, filename);
+      strcat(myindexfile, ".bai");
+    }
+    ifp = fopen(myindexfile, "rb");
+    if (!indexfile) { free(myindexfile); }
+    if (ifp) { 
+      idx = bam_index_load_core(ifp);
+      fclose(ifp);
+    }
+    if (!idx) {
+      if (indexfile) { 
+	SPLICING_ERROR("Cannot read BAM index file", SPLICING_EFILE);
+      }
+    }
   }
 
   infile=samopen(filename, mode, /*aux=*/ 0);
