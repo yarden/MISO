@@ -53,9 +53,13 @@ typedef enum { SPLICING_SAMBAM_AUTO,
 int splicing_reads_init(splicing_reads_t *reads);
 void splicing_reads_destroy(splicing_reads_t *reads);
 int splicing_read_sambam(const char *filename,
-			 const char *indexfile,
-			 splicing_reads_t *reads,
-			 splicing_sambam_type_t filetype);
+			 splicing_sambam_type_t filetype,
+			 splicing_reads_t *reads);
+int splicing_read_sambam_region(const char *filename,
+				const char *indexfile,
+				splicing_sambam_type_t filetype,
+				const char *region,
+				splicing_reads_t *reads);
 
 SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads);
 

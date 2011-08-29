@@ -1530,13 +1530,32 @@ SEXP R_splicing_read_sambam(SEXP pfilename) {
   R_splicing_begin();
 
   splicing_reads_init(&reads);
-  splicing_read_sambam(filename, /*indexfile=*/ 0, &reads, 
-		       SPLICING_SAMBAM_AUTO);
+  splicing_read_sambam(filename, SPLICING_SAMBAM_AUTO, &reads);
   PROTECT(result=R_splicing_reads_to_SEXP(&reads));
   splicing_reads_destroy(&reads);
   
   R_splicing_end();
 
+  UNPROTECT(1);
+  return result;
+}
+
+SEXP R_splicing_read_sambam_region(SEXP pfilename, SEXP pregion) {
+  const char *filename=CHAR(STRING_ELT(pfilename, 0));
+  const char *region=CHAR(STRING_ELT(pregion, 0));
+  splicing_reads_t reads;
+  SEXP result;
+  
+  R_splicing_begin();
+  
+  splicing_reads_init(&reads);
+  splicing_read_sambam_region(filename, /*indexfile=*/ 0, 
+			      SPLICING_SAMBAM_AUTO, region, &reads);
+  PROTECT(result=R_splicing_reads_to_SEXP(&reads));
+  splicing_reads_destroy(&reads);
+  
+  R_splicing_end();
+  
   UNPROTECT(1);
   return result;
 }

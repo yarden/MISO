@@ -1,7 +1,12 @@
 
-readSAM <- function(filename) {
-  .Call("R_splicing_read_sambam", as.character(filename),
-        PACKAGE="splicing")
+readSAM <- function(filename, region=NULL) {
+  if (is.null(region)) {
+    .Call("R_splicing_read_sambam", as.character(filename),
+          PACKAGE="splicing")
+  } else {
+    .Call("R_splicing_read_sambam_region", as.character(filename),
+          as.character(region), PACKAGE="splicing")
+  }
 }
 
 .SQ <- list('Mus musculus'='@SQ\tSN:mm9_allJxns.1e6.withSG.35.4.fa\tLN:547718976
