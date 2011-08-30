@@ -29,6 +29,7 @@ import sys
 import re
 import pickle_utils
 from urllib import quote as url_quote, unquote as url_unquote
+import pysplicing
 
 from collections import defaultdict
 
@@ -166,6 +167,44 @@ class GFFDatabase:
 	self.from_filename = filename
         FILE.close()
 
+    def from_c(self, gff):
+        """Convert a C GFF object to a Python GFF object."""
+
+        SEQIDS=0 ; SOURCES=1 ; SEQID=4 ; SOURCE=5  ; TYPE=6
+        START=7  ; END=8     ; SCORE=9 ; STRAND=10 ; PHASE=11
+        ID=12    ; PARENT=13
+        types=('gene', 'mRNA', 'exon', 'CDS', 'start_codon', 'end_codon')
+
+        gff=pysplicing.i_fromGFF(gff)
+        gene_idx=-1
+        for i in range(len(gff[TYPE])):
+            type=types[gff[TYPE][i]]
+            if type == "gene":
+                gene_idx += 1
+
+            attributes = { 'ID': gff[ID][i] }
+            if gff[PARENT][i] >= 0:
+                attributes['Parent'] = gff[ID][gff[PARENT][i]]
+
+            newrec=GFF(gff[SEQIDS][gff[SEQID][gene_idx]], 
+                       gff[SOURCES][gff[SOURCE][gene_idx]],
+                       type, gff[START][i], gff[END][i], 
+                       gff[SCORE][i], gff[STRAND][gene_idx],
+                       gff[PHASE][i], attributes)
+
+            if newrec.type == "gene":
+                self.genes.append(newrec)
+            elif newrec.type == "mRNA":
+                self.mRNAs.append(newrec)
+                self.mRNAs_by_gene[newrec.get_parent()].append(newrec)
+            elif newrec.type == "exon":
+                self.exons.append(newrec)
+                self.exons_by_mRNA[newrec.get_parent()].append(newrec)
+            elif newrec.type == "CDS":
+                self.cdss.append(newrec)
+                self.cdss_by_exon[newrec.get_parent()].append(newrec)
+            self.__entries.append(newrec)
+            
     def get_genes_records(self, genes):
 	"""
 	Return all the relevant records for a set of genes.

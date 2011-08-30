@@ -1,0 +1,42 @@
+
+R version 2.13.0 (2011-04-13)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> library(splicing)
+> 
+> set.seed(42)
+> options(width=60)
+> 
+> gene <- createGene(list(c(1,100), c(201,300), c(401,500)),
++                    list(c(1,2), c(1,3), c(1,2,3)))
+> 
+> condIso(gene, readLength=33L)
+[1] 4.823051
+> condIso(gene, readLength=33L, paired=TRUE, normalMean=166, normalVar=100,
++         numDevs=4)
+[1] 3.249358
+> 
+> M1 <- assignmentMatrix(gene, readLength=33L)
+> M2 <- assignmentMatrix(gene, readLength=33L, paired=TRUE,
++                        normalMean=166, normalVar=100, numDevs=4)
+> kappa(M1, exact=TRUE)
+[1] 4.823051
+> kappa(M2, exact=TRUE)
+[1] 3.249358
+> 
+> 
