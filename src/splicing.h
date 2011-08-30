@@ -254,7 +254,8 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
 				   double normalVar, double numDevs,
 				   splicing_vector_int_t *isoform,
 				   splicing_vector_int_t *position,
-				   splicing_strvector_t *cigar);
+				   splicing_strvector_t *cigar, 
+				   splicing_vector_t *sampleprob);
 
 int nnls_(double *a, long int *mda, long int *m, long int *n, double *b,
 	  double *x, double *rnorm, double *w, double *zz, long int *index, 

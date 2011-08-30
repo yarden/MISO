@@ -27,21 +27,40 @@ int R_splicing_SEXP_to_strvector(SEXP pv, splicing_strvector_t *v);
 int R_splicing_SEXP_to_exons(SEXP pexons, splicing_vector_int_t *exons);
 int R_splicing_SEXP_to_isoforms(SEXP piso, splicing_vector_int_t *iso);
 
-int splicing_read_sambam(const char *filename, 
-			 splicing_strvector_t *chrname, 
-			 splicing_vector_int_t *chrlen,
-			 splicing_vector_int_t *chr,
-			 splicing_strvector_t *qname,
-			 splicing_strvector_t *cigar,
-			 splicing_vector_int_t *position, 
-			 splicing_vector_int_t *flag,
-			 splicing_vector_int_t *pairpos,
-			 int *noPairs, int *noSingles, int *paired,
-			 splicing_vector_int_t *mapq,
-			 splicing_vector_int_t *rnext,
-			 splicing_vector_int_t *tlen,
-			 splicing_strvector_t *seq,
-			 splicing_strvector_t *qual);
+/* These are not needed in Python, SAM/BAM is handled differently there */
 
+typedef struct splicing_reads_t {
+  int noPairs, noSingles, paired;
+  splicing_strvector_t chrname;
+  splicing_vector_int_t chrlen;
+  splicing_vector_int_t chr;
+  splicing_strvector_t qname;
+  splicing_strvector_t cigar;
+  splicing_vector_int_t position;
+  splicing_vector_int_t flags;
+  splicing_vector_int_t pairpos;
+  splicing_vector_int_t mapq;
+  splicing_vector_int_t rnext;
+  splicing_vector_int_t tlen;
+  splicing_strvector_t seq;
+  splicing_strvector_t qual;
+} splicing_reads_t;
+
+typedef enum { SPLICING_SAMBAM_AUTO, 
+	       SPLICING_SAMBAM_SAM,
+	       SPLICING_SAMBAM_BAM } splicing_sambam_type_t;
+
+int splicing_reads_init(splicing_reads_t *reads);
+void splicing_reads_destroy(splicing_reads_t *reads);
+int splicing_read_sambam(const char *filename,
+			 splicing_sambam_type_t filetype,
+			 splicing_reads_t *reads);
+int splicing_read_sambam_region(const char *filename,
+				const char *indexfile,
+				splicing_sambam_type_t filetype,
+				const char *region,
+				splicing_reads_t *reads);
+
+SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads);
 
 #endif
