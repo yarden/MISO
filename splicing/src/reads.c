@@ -95,7 +95,7 @@ int splicing_i_cmp_reads(void *pdata, const void *a, const void *b) {
   const splicing_i_read_sambam_sort_data_t *data = 
     (splicing_i_read_sambam_sort_data_t *) pdata;
   int aa = *(int*) a, bb = *(int*) b;
-  int apos, bpos, arpos, brpos;
+  int apos, bpos, arpos, brpos, aapos, bbpos;
 
   if (VECTOR(*data->chr)[aa] < VECTOR(*data->chr)[bb]) { 
     return -1; 
@@ -103,14 +103,17 @@ int splicing_i_cmp_reads(void *pdata, const void *a, const void *b) {
     return 1;
   }
   
-  apos=VECTOR(*data->pos)[aa];
-  bpos=VECTOR(*data->pos)[bb];
+  aapos=apos=VECTOR(*data->pos)[aa];
+  bbpos=bpos=VECTOR(*data->pos)[bb];
 
-  arpos=VECTOR(*data->pairpos)[aa]; if (arpos > apos) { arpos=apos; }
-  brpos=VECTOR(*data->pairpos)[bb]; if (brpos > bpos) { brpos=bpos; }
+  arpos=VECTOR(*data->pairpos)[aa]; 
+  if (arpos > apos) { int tmp=arpos; arpos=apos; apos=tmp; } 
+  brpos=VECTOR(*data->pairpos)[bb];
+  if (brpos > bpos) { int tmp=brpos; brpos=bpos; bpos=tmp; } 
 
   if (arpos < brpos) { return -1; } else if (arpos > brpos) { return 1; }
   if (apos  < bpos ) { return -1; } else if (apos  > bpos ) { return 1; }
+  if (aapos < bbpos) { return -1; } else if (aapos > bbpos) { return 1; }  
   
   return 0;
 }
@@ -190,10 +193,11 @@ int splicing_i_order_reads(splicing_reads_t *reads) {
   splicing_vector_char_t taken;
   splicing_vector_int_t idx;
   splicing_vector_t idx2;
-  size_t i, pos, noReads=(reads->noPairs) * 2 + (reads->noSingles);
+  size_t i, pos, noReads=splicing_vector_int_size(&reads->position);
   splicing_i_read_sambam_sort_data_t data = 
     { &reads->chr, &reads->position, &reads->flags, &reads->pairpos };
-  
+  int nonpaired_mask = ~0x1;
+
   SPLICING_CHECK(splicing_vector_int_init(&idx, noReads));
   SPLICING_FINALLY(splicing_vector_int_destroy, &idx);
   SPLICING_CHECK(splicing_vector_init(&idx2, noReads));
@@ -209,30 +213,42 @@ int splicing_i_order_reads(splicing_reads_t *reads) {
     if (VECTOR(reads->pairpos)[curr] == 0) { 
       /* has no pair, add it */
       VECTOR(idx2)[pos++] = curr;
+    } else if (VECTOR(reads->pairpos)[curr] < VECTOR(reads->position)[curr] 
+	       && !VECTOR(taken)[curr])  {
+      /* pair is missing */
+      VECTOR(idx2)[pos++] = curr;
+      VECTOR(reads->pairpos)[curr] = 0;
+      VECTOR(reads->flags)[curr] &= nonpaired_mask;
+      reads->noPairs--;
+      reads->noSingles++;
     } else if (VECTOR(reads->pairpos)[curr] < 
-	       VECTOR(reads->position)[curr])  {
-      /* read and pair already counted, do nothing */
+	       VECTOR(reads->position)[curr]) {
+      /* already done, do nothing */
     } else {
-      /* search for pair */
+      /* search for pair, forward */
       int needle=VECTOR(reads->pairpos)[curr], ppos, found;
       for (ppos=i+1, found=0; ! found && ppos < noReads; ppos++) {
 	int rp=VECTOR(idx)[ppos];
 	found = VECTOR(reads->position)[rp] == needle && 
 	  VECTOR(reads->pairpos)[rp] == VECTOR(reads->position)[curr] &&
-	  0x80 & VECTOR(reads->flags)[rp] && 
-	  ! VECTOR(taken)[rp];
+	  0x80 & VECTOR(reads->flags)[rp] && ! VECTOR(taken)[rp];
       }
-      if (!found) { 
-	SPLICING_WARNING("Fragment missing from read pair");
-      } else { 
+      if (found) { 
 	int rp=VECTOR(idx)[ppos-1];
 	VECTOR(idx2)[pos++] = curr;
 	VECTOR(idx2)[pos++] = rp;
 	VECTOR(taken)[rp] = 1;
+      } else {
+	/* pair is missing */
+	VECTOR(idx2)[pos++] = curr;
+	VECTOR(reads->pairpos)[curr] = 0;
+	VECTOR(reads->flags)[curr] &= nonpaired_mask;
+	reads->noPairs--;
+	reads->noSingles++;
       }
     }
   }
-  
+
   splicing_vector_char_destroy(&taken);
   SPLICING_FINALLY_CLEAN(1);
   
@@ -262,6 +278,8 @@ int splicing_read_sambam(const char *filename,
   bam1_t *read = bam_init1();
   int i;
   char *mode_r="r", *mode_rb="rb", *mode=mode_rb;
+
+  bam_verbose=0;
 
   SPLICING_FINALLY(splicing_i_bam_destroy1, read);
 
@@ -303,9 +321,6 @@ int splicing_read_sambam(const char *filename,
     SPLICING_CHECK(splicing_i_add_read(reads, read));
   }
 
-  reads->noPairs /= 2;
-  reads->paired = reads->noPairs ? 1 : 0;
-
   if (bytesread < -1) {
     SPLICING_WARNING("Truncated SAM/BAM file");
   }
@@ -318,6 +333,9 @@ int splicing_read_sambam(const char *filename,
   if (reads->noPairs != 0) {
     SPLICING_CHECK(splicing_i_order_reads(reads));
   }
+
+  reads->noPairs /= 2;
+  reads->paired = reads->noPairs ? 1 : 0;
     
   bam_destroy1(read);
   SPLICING_FINALLY_CLEAN(1);
@@ -346,6 +364,8 @@ int splicing_read_sambam_region(const char *filename,
   char *myindexfile=(char*) indexfile;
   bam_index_t *idx=0;
   int tid, beg, end, result;
+
+  bam_verbose=0;
 
   SPLICING_FINALLY(splicing_i_bam_destroy1, read);
 
@@ -417,17 +437,17 @@ int splicing_read_sambam_region(const char *filename,
 		   SPLICING_EINVAL);
   }
 
-  reads->noPairs /= 2;
-  reads->paired = reads->noPairs ? 1 : 0;
-
   /* We need to find the pairs of the paired-end reads, if there is any.
      For this we first order the reads according to their RNAME
      (chromosome), plus their position. Then we search for the second
      pair of each first pair. */
 
   if (reads->noPairs != 0) {
-    /* SPLICING_CHECK(splicing_i_order_reads(reads)); */
+    SPLICING_CHECK(splicing_i_order_reads(reads));
   }
+
+  reads->noPairs /= 2;
+  reads->paired = reads->noPairs ? 1 : 0;
   
   if (idx) {
     bam_index_destroy(idx);
