@@ -104,7 +104,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   r4=pysplicing_from_vector(&class_counts);
   splicing_vector_destroy(&class_counts); SPLICING_FINALLY_CLEAN(1);
 
-  r3=pysplicing_from_matrix(&class_templates);
+  r3=pysplicing_from_matrix_transposed(&class_templates);
   splicing_matrix_destroy(&class_templates); SPLICING_FINALLY_CLEAN(1);
 
   r2=pysplicing_from_vector(&logLik);
@@ -206,7 +206,7 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   r4=pysplicing_from_vector(&class_counts);
   splicing_vector_destroy(&class_counts); SPLICING_FINALLY_CLEAN(1);
 
-  r3=pysplicing_from_matrix(&class_templates);
+  r3=pysplicing_from_matrix_transposed(&class_templates);
   splicing_matrix_destroy(&class_templates); SPLICING_FINALLY_CLEAN(1);
 
   r2=pysplicing_from_vector(&logLik);

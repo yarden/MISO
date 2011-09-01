@@ -115,6 +115,23 @@ PyObject *pysplicing_from_matrix(const splicing_matrix_t *m) {
   return o;
 }
 
+PyObject *pysplicing_from_matrix_transposed(const splicing_matrix_t *m) {
+  int i, j;
+  int nrow=splicing_matrix_nrow(m);
+  int ncol=splicing_matrix_ncol(m);
+  PyObject *o=PyTuple_New(ncol);
+  for (i=0; i<ncol; i++) {
+    PyObject *r=PyTuple_New(nrow);
+    for (j=0; j<nrow; j++) {
+      PyObject *it=PyFloat_FromDouble(MATRIX(*m, j, i));
+      PyTuple_SetItem(r, j, it);
+    }
+    PyTuple_SetItem(o, i, r);
+  }
+  
+  return o;
+}
+
 PyObject *pysplicing_from_vector_int(const splicing_vector_int_t *v) {
   int i, n=splicing_vector_int_size(v);
   PyObject *o=PyTuple_New(n);
@@ -124,6 +141,7 @@ PyObject *pysplicing_from_vector_int(const splicing_vector_int_t *v) {
   }
   return o;
 }
+
 
 PyObject *pysplicing_from_strvector(const splicing_strvector_t *v) {
   int i, n=splicing_strvector_size(v);
