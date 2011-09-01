@@ -899,23 +899,7 @@ class MISOSampler:
             self.miso_logger.info(one_iso_msg)
             self.miso_logger.error(one_iso_msg)
             return
-
-        print "read_positions: ", read_positions
-        print "read_cigars: ", read_cigars
-        assert(len(read_positions) == len(read_cigars))
-
-        c_params = [self.read_len, num_iters, burn_in, lag]
-
-        for k in c_params:
-            print type(k)
-
-        print type(prior_params)
-        print "=>", gene
-#        c_gene=pysplicing.createGene( ((1,100), (201,300), (401,500)),
-#                                      ((0,1), (0,2), (0,1,2)) )
-
-        t1 = time.time()
-
+        
         # Convert Python Gene object to C
         c_gene = py2c_gene(gene)
 
@@ -927,19 +911,20 @@ class MISOSampler:
                                        long(lag),
                                        prior_params)
 
-        t2 = time.time()
+        psi_vectors, kept_log_scores, run_stats = miso_results
 
-        print "MISO took %.2f seconds" %(t2 - t1)
+        rejected_proposals = run_stats[4]
+        accepted_proposals = run_stats[5]
         
         percent_acceptance = (float(accepted_proposals)/(accepted_proposals + \
                                                          rejected_proposals))*100
         self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
         self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
-        self.miso_logger.info("Mean of all Psi proposals (accepted or rejected): %s" \
-                              %(str(mean(array(all_psi_proposals)))))
         # Write output to file
 	print "Outputting samples to: %s..." %(output_file)
         self.miso_logger.info("Outputting samples to: %s" %(output_file))
+        assignments = []
+        total_log_scores = []
         self.output_miso_results(output_file, gene, reads, assignments, psi_vectors,
                                  kept_log_scores, total_log_scores, num_iters, burn_in, lag,
                                  percent_acceptance, proposal_type)

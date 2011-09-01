@@ -277,7 +277,6 @@ def pair_sam_reads(samfile, filter_reads=True,
 
     # Delete reads that are on the same strand
     for del_key in to_delete:
-        print "deleting: ", del_key
         del paired_reads[del_key]
 
     print "Filtered out %d read pairs that were on same strand." %(len(to_delete))

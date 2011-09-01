@@ -7,6 +7,7 @@ from parse_csv import *
 from json_utils import *
 import pprint
 
+import pysplicing
 
 class Interval:
     def __init__(self, start, end):
@@ -116,7 +117,22 @@ def py2c_gene(py_gene):
     Convert a Python Gene object to a C gene object for use
     with C MISO.
     """
-    exon_lens = py_gene
+    # Description of exon lens
+    CMISO_exon_lens = tuple([(part.start, part.end) \
+                             for part in py_gene.parts])
+    
+    # Description of isoforms of gene
+    isoforms_desc = []
+    for isoform in py_gene.isoforms:
+        curr_iso_desc = tuple([py_gene.parts.index(iso_part) \
+                               for iso_part in isoform.parts])
+        isoforms_desc.append(curr_iso_desc)
+        
+    CMISO_isoforms_desc = tuple(isoforms_desc)
+    c_gene = pysplicing.createGene(CMISO_exon_lens,
+                                   CMISO_isoforms_desc)
+    return c_gene
+    
     
 class Gene:
     """
@@ -307,9 +323,12 @@ class Gene:
 
     def create_isoforms(self):
         self.isoforms = []
+
+        self.isoforms_numeric_desc = []
 	for iso in self.isoform_desc:
             isoform_parts = []
 	    isoform_seq = ""
+            
 	    for part_label in iso.split('_'):
 		# retrieve part 
 		part = self.get_part_by_label(part_label)
@@ -318,12 +337,15 @@ class Gene:
                           %(part, part_label, self.label)
                 isoform_parts.append(part)
 		isoform_seq += part.seq
+                
 	    # make isoform with the given parts
 	    isoform = Isoform(self, isoform_parts, seq=isoform_seq)
 	    isoform.desc = iso
 	    self.isoforms.append(isoform)
 	    self.iso_lens.append(isoform.len)
+            
         self.iso_lens = array(self.iso_lens)
+        
 
     def set_sequence(self, exon_id, seq):
         """
