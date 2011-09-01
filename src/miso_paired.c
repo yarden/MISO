@@ -207,6 +207,9 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 double normalVar, double numDevs,
 			 splicing_matrix_t *samples, 
 			 splicing_vector_t *logLik,
+			 splicing_matrix_t *match_matrix, 
+			 splicing_matrix_t *class_templates,
+			 splicing_vector_t *class_counts,
 			 splicing_miso_rundata_t *rundata) {
 
   double acceptP, cJS, pJS, sigma;
@@ -217,7 +220,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
     *psi=&vpsi, *psiNew=&vpsiNew, *alpha=&valpha, *alphaNew=&valphaNew;
   int noSamples = (noIterations - noBurnIn + 1) / noLag;
   int i, j, m, lagCounter=0, noS=0;
-  splicing_matrix_t matches;
+  splicing_matrix_t *mymatch_matrix=match_matrix, vmatch_matrix;
   splicing_vector_int_t match_order;
   splicing_vector_int_t isolen;
   splicing_matrix_t isoscores;
@@ -226,6 +229,11 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   int il;
   splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
     vfragmentProb;
+
+  if ( (class_templates ? 1 : 0) + (class_counts ? 1 : 0) == 1) {
+    SPLICING_ERROR("Only one of `class_templates' and `class_counts' is "
+		   "given", SPLICING_EINVAL);
+  }
 
   if (!fragmentProb) { 
     myfragmentProb=&vfragmentProb;
@@ -259,17 +267,28 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_vector_init(&valphaNew, noiso-1));
   SPLICING_FINALLY(splicing_vector_destroy, &valphaNew);
 
-  SPLICING_CHECK(splicing_matrix_init(&matches, noiso, noReads));
-  SPLICING_FINALLY(splicing_matrix_destroy, &matches);
+  if (match_matrix) { 
+    SPLICING_CHECK(splicing_matrix_resize(match_matrix, noiso, noReads));
+  } else {
+    mymatch_matrix=&vmatch_matrix;
+    SPLICING_CHECK(splicing_matrix_init(mymatch_matrix, noiso, noReads));
+    SPLICING_FINALLY(splicing_matrix_destroy, mymatch_matrix);
+  }
   SPLICING_CHECK(splicing_vector_int_init(&match_order, noReads));
   SPLICING_FINALLY(splicing_vector_int_destroy, &match_order);
   SPLICING_CHECK(splicing_matrix_int_init(&fragmentLength, noiso, noReads));
   SPLICING_FINALLY(splicing_matrix_int_destroy, &fragmentLength);
   SPLICING_CHECK(splicing_matchIso_paired(gff, gene, position, cigarstr, 
 					  readLength, myfragmentProb, 
-					  fragmentStart, normalMean, normalVar,
-					  numDevs, &matches, &fragmentLength));
-  SPLICING_CHECK(splicing_order_matches(&matches, &match_order));
+					  fragmentStart, normalMean, 
+					  normalVar, numDevs, mymatch_matrix,
+					  &fragmentLength));
+  SPLICING_CHECK(splicing_order_matches(mymatch_matrix, &match_order));
+
+  if (class_templates && class_counts) { 
+    SPLICING_CHECK(splicing_i_miso_classes(mymatch_matrix, &match_order, 
+					   class_templates, class_counts));
+  }
 
   SPLICING_CHECK(splicing_vector_int_init(&isolen, noiso));
   SPLICING_FINALLY(splicing_vector_int_destroy, &isolen);
@@ -302,7 +321,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   
   /* Initialize assignments of reads */  
   
-  SPLICING_CHECK(splicing_reassign_samples_paired(&matches, &match_order, 
+  SPLICING_CHECK(splicing_reassign_samples_paired(mymatch_matrix,
+						  &match_order, 
 						  psi, noiso, fragmentStart,
 						  &ass));
   
@@ -344,7 +364,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
       }
     }
     
-    SPLICING_CHECK(splicing_reassign_samples_paired(&matches, &match_order,
+    SPLICING_CHECK(splicing_reassign_samples_paired(mymatch_matrix,
+						    &match_order,
 						    psi, noiso, fragmentStart,
 						    &ass));
 
@@ -355,13 +376,17 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   splicing_vector_int_destroy(&isolen);
   splicing_matrix_int_destroy(&fragmentLength);
   splicing_vector_int_destroy(&match_order);
-  splicing_matrix_destroy(&matches);
+  SPLICING_FINALLY_CLEAN(5);
+  if (!match_matrix) {
+    splicing_matrix_destroy(mymatch_matrix);
+    SPLICING_FINALLY_CLEAN(1);
+  }
   splicing_vector_destroy(&valphaNew);
   splicing_vector_destroy(&valpha);
   splicing_vector_destroy(&vpsiNew);
   splicing_vector_destroy(&vpsi);
   splicing_vector_int_destroy(&ass);
-  SPLICING_FINALLY_CLEAN(11);
+  SPLICING_FINALLY_CLEAN(5);
 
   if (!fragmentProb) { 
     splicing_vector_destroy(&vfragmentProb);

@@ -146,6 +146,11 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 int splicing_order_matches(const splicing_matrix_t *matches,
 			   splicing_vector_int_t *order);
 
+int splicing_i_miso_classes(const splicing_matrix_t *match_matrix,
+			    const splicing_vector_int_t *match_order,
+			    splicing_matrix_t *class_templates,
+			    splicing_vector_t *class_counts);
+
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
 		  const char **cigarstr, int readLength, 
@@ -166,6 +171,9 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 double normalMean, double normalVar, double numDevs,
 			 splicing_matrix_t *samples, 
 			 splicing_vector_t *logLik, 
+			 splicing_matrix_t *match_matrix,
+			 splicing_matrix_t *class_templates,
+			 splicing_vector_t *class_counts,
 			 splicing_miso_rundata_t *rundata);
 
 int splicing_reassign_samples(const splicing_matrix_t *matches, 
