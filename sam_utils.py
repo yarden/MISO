@@ -159,7 +159,6 @@ def paired_read_to_isoforms(paired_read, gene, read_len,
     
 #     return alignment, frag_lens
                          
-
 def load_bam_reads(bam_filename,
                    template=None):
     """
@@ -173,25 +172,12 @@ def load_bam_reads(bam_filename,
     print "Loading took %.2f seconds" %(t2 - t1)
     return bamfile
 
-
-def load_sam_reads(sam_filename, template=None):
-    """
-    Load a set of SAM reads.
-    """
-    print "Loading SAM filename from: %s" %(sam_filename)
-    t1 = time.time()
-    print "Using header: ", template
-    samfile = pysam.Samfile(sam_filename, "r",
-                            template=template)
-    t2 = time.time()
-    print "Loading took %.2f seconds" %(t2 - t1)
-    return samfile
-
 def fetch_bam_reads_in_region(bamfile, chrom, start, end, gene=None):
     """
     Align BAM reads to the gene model.
     """
     gene_reads = []
+
     if chrom in bamfile.references:
         pass
     else:
@@ -203,6 +189,8 @@ def fetch_bam_reads_in_region(bamfile, chrom, start, end, gene=None):
         print "Cannot fetch reads in region: %s:%d-%d" %(chrom,
                                                          start,
                                                          end)
+    print "never got here?"
+
     return gene_reads
 
     
@@ -269,6 +257,8 @@ def pair_sam_reads(samfile, filter_reads=True,
         if len(read) != 2:
             unpaired_reads[read_name] = read
             num_unpaired += 1
+            # Delete unpaired reads
+            to_delete.append(read_name)
             continue
         left_read, right_read = read[0], read[1]
 
@@ -286,6 +276,7 @@ def pair_sam_reads(samfile, filter_reads=True,
 
     # Delete reads that are on the same strand
     for del_key in to_delete:
+        print "deleting: ", del_key
         del paired_reads[del_key]
 
     print "Filtered out %d read pairs that were on same strand." %(len(to_delete))
@@ -296,6 +287,53 @@ def pair_sam_reads(samfile, filter_reads=True,
     else:
         return paired_reads, unpaired_reads
 
+
+# Global variable containing CIGAR types for conversion
+CIGAR_TYPES = ('M', 'I', 'D', 'N', 'S', 'H', 'P')
+
+def sam_cigar_to_str(sam_cigar):
+    """
+    Convert pysam CIGAR list to string format.
+    """
+    # First element in sam CIGAR list is the CIGAR type
+    # (e.g. match or insertion) and the second is
+    # the number of nucleotides
+    cigar_str = "".join(["%d%s" %(c[1], c[0]) for c in sam_cigar])
+    print "GOT: ", cigar_str, " for ", sam_cigar
+    return cigar_str
+    
+    
+def sam_parse_reads(samfile, paired_end=False):
+    reads = []
+    num_reads = 0
+    
+    if paired_end:
+        # Pair up the reads 
+        paired_reads = pair_sam_reads(samfile)
+
+        # Process them into format required by fastmiso
+        # MISO C engine requires pairs to follow each other in order.
+        # Unpaired reads are not supported.
+        for read_id, read_info in paired_reads.iteritems():
+            if len(read_info) < 2:
+                print read_id
+                raise Exception, "unpared"
+            read1, read2 = read_info
+            print "Read1: ", read1
+            raise Exception
+            reads.append([read1.pos, sam_cigar_to_str(read1.cigar)])
+            reads.append([read2.pos, sam_cigar_to_str(read2.cigar)])
+            num_reads += 1
+    else:
+        # Single-end
+        reads = [[read.pos, sam_cigar_to_str(read.cigar)] \
+                 for read in reads]
+
+    print "reads: ", reads, reads[0]
+        
+    return array(reads), num_reads
+
+    
 
 def sam_pe_reads_to_isoforms(samfile, gene, read_len, overhang_len):
     """

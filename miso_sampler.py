@@ -6,19 +6,9 @@
 ## The sampler uses a Metropolis-Hastings sampling scheme, combined with
 ## a Gibbs sampling step.
 ##
-import pygsl
 import scipy
 import numpy.ma as ma
 from reads_utils import count_aligned_reads, count_isoform_assignments
-from scipy.maxentropy import logsumexp
-from pygsl.rng import dirichlet_lnpdf, binomial_pdf, negative_binomial_pdf
-from pygsl.sf import gamma
-from numpy.random import multinomial
-from numpy.random import multivariate_normal
-from numpy.random import normal
-from numpy.random.mtrand import dirichlet
-from scipy.stats.distributions import binom
-from scipy.stats import lognorm, nbinom, norm
 from read_simulator import simulate_reads, print_reads_summary, read_counts_to_read_list, \
      get_reads_summary
 from scipy import *
@@ -903,17 +893,13 @@ class MISOSampler:
         filtered_reads = array(filtered_reads)
         return filtered_reads
                 
-    
+
     def run_sampler(self, num_iters, reads, gene, hyperparameters, params,
                     output_file, burn_in=1000, lag=2):
         """
-        Main Metropolis-Hastings loop:
+        Fast version of MISO MCMC sampler.
 
-        (1) Initialize Psi values and assignments (uniformly).
-
-        (2) Propose Psi_next and accept with MH ratio.
-
-        (3) For each read, sample reassignment to one of the available isoforms.
+        Calls C version and returns results.
         """
         num_isoforms = len(gene.isoforms)
         self.num_isoforms = num_isoforms
@@ -921,19 +907,12 @@ class MISOSampler:
         if self.paired_end:
             reads = self.filter_improbable_reads(reads)
 
-            # Construct a matrix of considered fragment lengths by the number
-            # of isoforms (for vectorization purposes)
-            self.frag_range_matrix = transpose(tile(self.frag_range,
-                                                    [num_isoforms, 1]))
-
         if len(reads) == 0:
             print "No reads for gene: %s" %(gene.label)
             return
 
         self.num_reads = len(reads)
-            
-        #output_file = output_file + ".%d_iters.%d_burnin.%d_lag" %(num_iters, burn_in, lag)
-        # Don't need to put parameters in filename
+
         output_file = output_file + ".miso"
 	# If output filename exists, don't run sampler
 	if os.path.isfile(os.path.normpath(output_file)):
@@ -953,7 +932,6 @@ class MISOSampler:
         self.miso_logger.info("  - lag: " + str(lag))
 	self.miso_logger.info("  - paired-end? " + str(self.paired_end))
 	self.miso_logger.info("  - gene: " + str(gene))
-#	self.miso_logger.info("  - reads: " + str(reads))
         rejected_proposals = 0
         accepted_proposals = 0
         psi_vectors = []
@@ -968,144 +946,16 @@ class MISOSampler:
             self.miso_logger.debug("  - sigma_proposal: " + str(params['sigma_proposal']))
 	    proposal_type = "drift"	    
         init_psi = ones(num_isoforms)/float(num_isoforms)
-        # Initialize randomly the starting Psi vector if it's the two isoform case
-        if num_isoforms == 2:
-            init_psi = dirichlet(ones(num_isoforms)/float(num_isoforms))
         # Do not process genes with one isoform
-        elif num_isoforms == 1:
+        if num_isoforms == 1:
             one_iso_msg = "Gene %s has only one isoform; skipping..." \
                           %(gene.label)
             self.miso_logger.info(one_iso_msg)
             self.miso_logger.error(one_iso_msg)
             return
-            
-        curr_psi_vector = init_psi
-        self.miso_logger.debug("Init psi: " + str(init_psi))
-        # Initialize assignments of reads to isoforms in a consistent way
-	assignments = self.initialize_valid_assignments(reads, gene)
-	#self.miso_logger.debug("Initial assignments of reads to isoforms: " + str(assignments))
-        #print_assignment_summary(assignments)
-        # Main sampler loop
-        lag_counter = 0
-        #curr_alpha_vector = [1/float(num_isoforms)]*(num_isoforms-1)
-        #curr_alpha_vector = curr_psi_vector[0:num_isoforms-1]
-	##
-        ## Initial alpha vector to be all ones
-	##
-        curr_alpha_vector = log(ones(num_isoforms - 1) * (float(1)/(num_isoforms-1)))
-	#curr_alpha_vector = (ones(num_isoforms-1) * (float(1)/(num_isoforms-1)))
-	##
-	## Change to initial condition of alpha vector!  Make it equivalent to the initial Psi value
-	##
-	#curr_alpha_vector = log(init_psi[:-1])
-        burn_in_counter = 0
-        total_log_scores = []
-        kept_log_scores = []
-        print_iters = False
-        if num_iters >= 500:
-            print_iters = True
-        # Compute Metropolis ratio
-        if params['uniform_proposal']:
-            proposal_score_func = self.log_score_psi_vector_proposal
-        else:
-            proposal_score_func = self.log_score_norm_drift_proposal
-	# Set Psi vectors from proposal
-	new_psi_vector, new_alpha_vector = self.propose_psi_vector(curr_psi_vector, curr_alpha_vector)
-	curr_psi_vector = new_psi_vector
-	curr_alpha_vector = new_alpha_vector
-        
-        already_warned = False
-        for curr_iter in xrange(num_iters):
-            if print_iters:
-                if curr_iter > burn_in and curr_iter % 200 == 0:
-		    self.miso_logger.info('On iteration: %d, Paired-End = %s' %(curr_iter, self.paired_end))
-		    mean_psi_vectors = mean(psi_vectors, 0)
-		    #mean_psi_str = float_array_to_str(mean_psi_vectors)
-		    print 'Current mean: %s, num_samples: %d' %(str(mean_psi_vectors), len(psi_vectors))
-		    self.miso_logger.info('Current mean: %s, num_samples: %d' %(str(mean_psi_vectors),
-                                                                                len(psi_vectors)))
-            # Propose a Psi value
-            new_psi_vector, new_alpha_vector = self.propose_psi_vector(curr_psi_vector, curr_alpha_vector)
-            all_psi_proposals.append(new_psi_vector[0])
-	    if curr_iter > 0:
-		m_ratio, curr_joint_score, proposed_joint_score = \
-			 self.compute_metropolis_ratio(reads, assignments,
-						       new_psi_vector, new_alpha_vector,
-						       curr_psi_vector, curr_alpha_vector,
-						       proposal_score_func, gene, hyperparameters)
-	    else:
-		m_ratio, curr_joint_score, proposed_joint_score = \
-			 self.compute_metropolis_ratio(reads, assignments,
-						       new_psi_vector, new_alpha_vector,
-						       curr_psi_vector, curr_alpha_vector,
-						       proposal_score_func, gene, hyperparameters, full_metropolis=False)
-            if m_ratio == 0:
-                if not already_warned:
-                    self.miso_logger.warn("MH ratio is ~0! Gene: %s" %(gene.label))
-                    self.miso_logger.error("MH ratio is ~0!\ncurr_joint_score: %.2f\n"
-                                           "proposed_joint_score: %.2f\nGene: %s" \
-                                           %(curr_joint_score, proposed_joint_score,
-                                             gene.label))
-                    print "MH ratio is ~0!"
-                    already_warned = True
-		    raise Exception, "MH ratio is ~0!"
-                
-		#raise Exception, "MH ratio is ~0!"
-            acceptance_prob = min(1, m_ratio)
-            if rand() < acceptance_prob:
-		#self.miso_logger.debug("  - Accepted proposal: " + str(new_psi_vector))
-		#self.miso_logger.debug("  - Previous Psi was: " + str(curr_psi_vector))
-                jscore = proposed_joint_score
-                # Accept sample
-                curr_psi_vector = new_psi_vector
-                curr_alpha_vector = new_alpha_vector
-                accepted_proposals += 1
-            else:
-                jscore = curr_joint_score
-                rejected_proposals += 1
 
-            # Error check the log joint score
-            if isnan(jscore):
-                self.miso_logger.error("Unable to get log joint score for gene %s" \
-                                       %(gene.label))
-                raise Exception, "Crap"
-            
-            if burn_in_counter >= burn_in:
-                # Accumulate Psi vectors
-                if (lag_counter == lag - 1):
-                    lag_counter = 0
-                    psi_vectors.append(curr_psi_vector)
-                    kept_log_scores.append(jscore)
-                    curr_joint_score = self.log_score_joint(reads, assignments, curr_psi_vector, gene,
-                                                            hyperparameters)
-                    log_scores[curr_joint_score] = [curr_psi_vector, assignments]
-                else:
-                    lag_counter += 1
-            else:
-                curr_joint_score = self.log_score_joint(reads, assignments, curr_psi_vector, gene,
-                                                        hyperparameters)
-                log_scores[curr_joint_score] = [curr_psi_vector, assignments]
-            total_log_scores.append(jscore)            
-            burn_in_counter += 1
+        print "Running on reads: ", reads
 
-            # For each read, sample its reassignment to one of the gene's isoforms
-            reassignments = self.sample_reassignments(reads, curr_psi_vector, gene)
-	    if len(reassignments) == 0:
-                empty_reassign_msg = "Empty reassignments for reads! " + str(reads)
-                self.miso_logger.error(empty_reassign_msg)
-		raise Exception, empty_reassign_msg
-            curr_joint_score = self.log_score_joint(reads, assignments, curr_psi_vector, gene,
-                                                    hyperparameters)
-            if curr_joint_score == -inf:
-		self.miso_logger.error("Moved to impossible state!")
-		self.miso_logger.error("reassignments: " + str(reassignments))
-		self.miso_logger.error("reads: " + str(reads))
-                raise Exception, "Moved to impossible state!"
-            assignments = reassignments
-
-        if accepted_proposals == 0:
-	    self.miso_logger.error("0 proposals accepted!")
-            raise Exception, "0 proposals accepted!"
         percent_acceptance = (float(accepted_proposals)/(accepted_proposals + rejected_proposals))*100
         self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
         self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
@@ -1118,6 +968,222 @@ class MISOSampler:
                                  kept_log_scores, total_log_scores, num_iters, burn_in, lag,
                                  percent_acceptance, proposal_type)
         print >> sys.stderr, "\nSamples outputted to: %s\n" %(output_file)
+        
+    
+#     def run_sampler(self, num_iters, reads, gene, hyperparameters, params,
+#                     output_file, burn_in=1000, lag=2):
+#         """
+#         Main Metropolis-Hastings loop:
+
+#         (1) Initialize Psi values and assignments (uniformly).
+
+#         (2) Propose Psi_next and accept with MH ratio.
+
+#         (3) For each read, sample reassignment to one of the available isoforms.
+#         """
+#         num_isoforms = len(gene.isoforms)
+#         self.num_isoforms = num_isoforms
+
+#         if self.paired_end:
+#             reads = self.filter_improbable_reads(reads)
+
+#             # Construct a matrix of considered fragment lengths by the number
+#             # of isoforms (for vectorization purposes)
+#             self.frag_range_matrix = transpose(tile(self.frag_range,
+#                                                     [num_isoforms, 1]))
+
+#         if len(reads) == 0:
+#             print "No reads for gene: %s" %(gene.label)
+#             return
+
+#         self.num_reads = len(reads)
+            
+#         #output_file = output_file + ".%d_iters.%d_burnin.%d_lag" %(num_iters, burn_in, lag)
+#         # Don't need to put parameters in filename
+#         output_file = output_file + ".miso"
+# 	# If output filename exists, don't run sampler
+# 	if os.path.isfile(os.path.normpath(output_file)):
+# 	    print "Output filename %s exists, not running MISO." %(output_file)
+# 	    return None
+# 	self.params['iters'] = num_iters
+# 	self.params['burn_in'] = burn_in
+# 	self.params['lag'] = lag
+
+#         # Define local variables related to reads and overhang
+#         self.overhang_len = self.params['overhang_len']
+#         self.read_len = self.params['read_len']
+        
+# 	self.miso_logger.info("Running sampler...")
+#         self.miso_logger.info("  - num_iters: " + str(num_iters))
+#         self.miso_logger.info("  - burn-in: " + str(burn_in))
+#         self.miso_logger.info("  - lag: " + str(lag))
+# 	self.miso_logger.info("  - paired-end? " + str(self.paired_end))
+# 	self.miso_logger.info("  - gene: " + str(gene))
+# #	self.miso_logger.info("  - reads: " + str(reads))
+#         rejected_proposals = 0
+#         accepted_proposals = 0
+#         psi_vectors = []
+#         log_scores = {}
+#         all_psi_proposals = []
+
+#         if params['uniform_proposal']:
+#             self.miso_logger.debug("UNIFORM independent proposal being used.")
+# 	    proposal_type = "unif"	    
+#         else:
+#             self.miso_logger.debug("Non-uniform proposal being used.")
+#             self.miso_logger.debug("  - sigma_proposal: " + str(params['sigma_proposal']))
+# 	    proposal_type = "drift"	    
+#         init_psi = ones(num_isoforms)/float(num_isoforms)
+#         # Initialize randomly the starting Psi vector if it's the two isoform case
+#         if num_isoforms == 2:
+#             init_psi = dirichlet(ones(num_isoforms)/float(num_isoforms))
+#         # Do not process genes with one isoform
+#         elif num_isoforms == 1:
+#             one_iso_msg = "Gene %s has only one isoform; skipping..." \
+#                           %(gene.label)
+#             self.miso_logger.info(one_iso_msg)
+#             self.miso_logger.error(one_iso_msg)
+#             return
+            
+#         curr_psi_vector = init_psi
+#         self.miso_logger.debug("Init psi: " + str(init_psi))
+#         # Initialize assignments of reads to isoforms in a consistent way
+# 	assignments = self.initialize_valid_assignments(reads, gene)
+# 	#self.miso_logger.debug("Initial assignments of reads to isoforms: " + str(assignments))
+#         #print_assignment_summary(assignments)
+#         # Main sampler loop
+#         lag_counter = 0
+#         #curr_alpha_vector = [1/float(num_isoforms)]*(num_isoforms-1)
+#         #curr_alpha_vector = curr_psi_vector[0:num_isoforms-1]
+# 	##
+#         ## Initial alpha vector to be all ones
+# 	##
+#         curr_alpha_vector = log(ones(num_isoforms - 1) * (float(1)/(num_isoforms-1)))
+# 	#curr_alpha_vector = (ones(num_isoforms-1) * (float(1)/(num_isoforms-1)))
+# 	##
+# 	## Change to initial condition of alpha vector!  Make it equivalent to the initial Psi value
+# 	##
+# 	#curr_alpha_vector = log(init_psi[:-1])
+#         burn_in_counter = 0
+#         total_log_scores = []
+#         kept_log_scores = []
+#         print_iters = False
+#         if num_iters >= 500:
+#             print_iters = True
+#         # Compute Metropolis ratio
+#         if params['uniform_proposal']:
+#             proposal_score_func = self.log_score_psi_vector_proposal
+#         else:
+#             proposal_score_func = self.log_score_norm_drift_proposal
+# 	# Set Psi vectors from proposal
+# 	new_psi_vector, new_alpha_vector = self.propose_psi_vector(curr_psi_vector, curr_alpha_vector)
+# 	curr_psi_vector = new_psi_vector
+# 	curr_alpha_vector = new_alpha_vector
+        
+#         already_warned = False
+#         for curr_iter in xrange(num_iters):
+#             if print_iters:
+#                 if curr_iter > burn_in and curr_iter % 200 == 0:
+# 		    self.miso_logger.info('On iteration: %d, Paired-End = %s' %(curr_iter, self.paired_end))
+# 		    mean_psi_vectors = mean(psi_vectors, 0)
+# 		    #mean_psi_str = float_array_to_str(mean_psi_vectors)
+# 		    print 'Current mean: %s, num_samples: %d' %(str(mean_psi_vectors), len(psi_vectors))
+# 		    self.miso_logger.info('Current mean: %s, num_samples: %d' %(str(mean_psi_vectors),
+#                                                                                 len(psi_vectors)))
+#             # Propose a Psi value
+#             new_psi_vector, new_alpha_vector = self.propose_psi_vector(curr_psi_vector, curr_alpha_vector)
+#             all_psi_proposals.append(new_psi_vector[0])
+# 	    if curr_iter > 0:
+# 		m_ratio, curr_joint_score, proposed_joint_score = \
+# 			 self.compute_metropolis_ratio(reads, assignments,
+# 						       new_psi_vector, new_alpha_vector,
+# 						       curr_psi_vector, curr_alpha_vector,
+# 						       proposal_score_func, gene, hyperparameters)
+# 	    else:
+# 		m_ratio, curr_joint_score, proposed_joint_score = \
+# 			 self.compute_metropolis_ratio(reads, assignments,
+# 						       new_psi_vector, new_alpha_vector,
+# 						       curr_psi_vector, curr_alpha_vector,
+# 						       proposal_score_func, gene, hyperparameters, full_metropolis=False)
+#             if m_ratio == 0:
+#                 if not already_warned:
+#                     self.miso_logger.warn("MH ratio is ~0! Gene: %s" %(gene.label))
+#                     self.miso_logger.error("MH ratio is ~0!\ncurr_joint_score: %.2f\n"
+#                                            "proposed_joint_score: %.2f\nGene: %s" \
+#                                            %(curr_joint_score, proposed_joint_score,
+#                                              gene.label))
+#                     print "MH ratio is ~0!"
+#                     already_warned = True
+# 		    raise Exception, "MH ratio is ~0!"
+                
+# 		#raise Exception, "MH ratio is ~0!"
+#             acceptance_prob = min(1, m_ratio)
+#             if rand() < acceptance_prob:
+# 		#self.miso_logger.debug("  - Accepted proposal: " + str(new_psi_vector))
+# 		#self.miso_logger.debug("  - Previous Psi was: " + str(curr_psi_vector))
+#                 jscore = proposed_joint_score
+#                 # Accept sample
+#                 curr_psi_vector = new_psi_vector
+#                 curr_alpha_vector = new_alpha_vector
+#                 accepted_proposals += 1
+#             else:
+#                 jscore = curr_joint_score
+#                 rejected_proposals += 1
+
+#             # Error check the log joint score
+#             if isnan(jscore):
+#                 self.miso_logger.error("Unable to get log joint score for gene %s" \
+#                                        %(gene.label))
+#                 raise Exception, "Crap"
+            
+#             if burn_in_counter >= burn_in:
+#                 # Accumulate Psi vectors
+#                 if (lag_counter == lag - 1):
+#                     lag_counter = 0
+#                     psi_vectors.append(curr_psi_vector)
+#                     kept_log_scores.append(jscore)
+#                     curr_joint_score = self.log_score_joint(reads, assignments, curr_psi_vector, gene,
+#                                                             hyperparameters)
+#                     log_scores[curr_joint_score] = [curr_psi_vector, assignments]
+#                 else:
+#                     lag_counter += 1
+#             else:
+#                 curr_joint_score = self.log_score_joint(reads, assignments, curr_psi_vector, gene,
+#                                                         hyperparameters)
+#                 log_scores[curr_joint_score] = [curr_psi_vector, assignments]
+#             total_log_scores.append(jscore)            
+#             burn_in_counter += 1
+
+#             # For each read, sample its reassignment to one of the gene's isoforms
+#             reassignments = self.sample_reassignments(reads, curr_psi_vector, gene)
+# 	    if len(reassignments) == 0:
+#                 empty_reassign_msg = "Empty reassignments for reads! " + str(reads)
+#                 self.miso_logger.error(empty_reassign_msg)
+# 		raise Exception, empty_reassign_msg
+#             curr_joint_score = self.log_score_joint(reads, assignments, curr_psi_vector, gene,
+#                                                     hyperparameters)
+#             if curr_joint_score == -inf:
+# 		self.miso_logger.error("Moved to impossible state!")
+# 		self.miso_logger.error("reassignments: " + str(reassignments))
+# 		self.miso_logger.error("reads: " + str(reads))
+#                 raise Exception, "Moved to impossible state!"
+#             assignments = reassignments
+
+#         if accepted_proposals == 0:
+# 	    self.miso_logger.error("0 proposals accepted!")
+#             raise Exception, "0 proposals accepted!"
+#         percent_acceptance = (float(accepted_proposals)/(accepted_proposals + rejected_proposals))*100
+#         self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
+#         self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
+#         self.miso_logger.info("Mean of all Psi proposals (accepted or rejected): %s" \
+#                               %(str(mean(array(all_psi_proposals)))))
+#         # Write output to file
+# 	print "Outputting samples to: %s..." %(output_file)
+#         self.miso_logger.info("Outputting samples to: %s" %(output_file))
+#         self.output_miso_results(output_file, gene, reads, assignments, psi_vectors,
+#                                  kept_log_scores, total_log_scores, num_iters, burn_in, lag,
+#                                  percent_acceptance, proposal_type)
+#         print >> sys.stderr, "\nSamples outputted to: %s\n" %(output_file)
         
 
     def output_miso_results(self, output_file, gene, reads, assignments, psi_vectors,
