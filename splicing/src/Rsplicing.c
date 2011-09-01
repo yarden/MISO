@@ -198,7 +198,7 @@ SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads) {
   SET_NAMES(result, names);
 
   PROTECT(class=NEW_CHARACTER(1));
-  SET_STRING_ELT(class, 0, mkChar("splicing.sam.bam"));
+  SET_STRING_ELT(class, 0, mkChar("splicingSAM"));
   SET_CLASS(result, class);
 
   UNPROTECT(3);

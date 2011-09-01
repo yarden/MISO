@@ -8,7 +8,16 @@ export(isGFF3, noGenes, seqIds, geneIds, selectGenes, noIso, geneTypes,
 export(createGene, mergeGenes, rpk, realPsi,
        simulateReads)
 
-export(sam2bam, readSAM, writeSAM)
+export(readSAM, noReads, isPaired, isMixed, noPairs, noSingles, toTable,
+       writeSAM)
+
+S3method("noReads", "splicingSAM")
+S3method("isPaired", "splicingSAM")
+S3method("isMixed", "splicingSAM")
+S3method("noPairs", "splicingSAM")
+S3method("noSingles", "splicingSAM")
+S3method("toTable", "splicingSAM")
+S3method("writeSAM", "splicingSAM")
 
 export(plotIso, plotIsoSize, plotIsoPDF)
 

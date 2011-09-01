@@ -1,4 +1,6 @@
 
+## TODO: attributes
+
 readSAM <- function(filename, region=NULL) {
   if (is.null(region)) {
     .Call("R_splicing_read_sambam", as.character(filename),
@@ -33,73 +35,84 @@ readSAM <- function(filename, region=NULL) {
 @SQ\tSN:chr18\tLN:90772031
 @SQ\tSN:chr19\tLN:61342430')
 
-writeSAM <- function(sam, file, SQ, organism, ...) {
+noReads <- function(reads)
+  UseMethod("noReads")
 
-  if (!inherits(sam, "sam")) {
-    stop("Not a SAM object")
-  }
-
-  if (is.character(file)) {
-    file <- file(file, "wt")
-    toClose <- TRUE
-  } else {
-    toClose <- FALSE
-  }
-
-  ## Header
-  HD <- sprintf("@HD\tVN:%s\tSO:%s", attr(sam, "HD_VN"),
-                attr(sam, "HD_SO"))
-  PG <- sprintf("@PG\tID:%s\tVN:%s\tCL:%s", attr(sam, "PG_ID"),
-                attr(sam, "PG_VN"), attr(sam, "PG_CL"))
-  cat(HD, file=file, sep="\n")
-
-  ## SQ lines, this is organism specific information
-  if (!missing(SQ)) {
-    cat(SQ, file=file, sep="\n")
-  } else if (!missing(organism)) {
-    if (! organism %in% names(.SQ)) {
-      stop("Unknown organism")
-    }
-    cat(.SQ[[organism]], file=file, sep="\n")
-  } else {
-    warning("@SQ headers are not written, give `SQ' or `organism'")
-  }
-
-  cat(PG, file=file, sep="\n")
-  
-  ## Data
-  if (attr(sam, "paired")) {
-    QNAME <- rep(paste(attr(sam, "QNAME"), sep=".", seq_len(nrow(sam)/2)),
-                 each=2)
-  } else {
-    QNAME <- paste(attr(sam, "QNAME"), sep=".", seq_len(nrow(sam)))
-  }
-  tab <- data.frame(QNAME=QNAME,
-                    FLAG=sam$FLAG,
-                    RNAME=sam$RNAME,
-                    POS=sam$position,
-                    MAPQ=255,
-                    CIGAR=sam$cigar,
-                    RNEXT='=',
-                    PNEXT=if ('PNEXT' %in% names(sam)) sam$PNEXT else 0,
-                    TLEN= if ('TLEN' %in% names(sam)) sam$TLEN else 0,
-                    SEQ='*',
-                    QUAL='*',
-                    XI=paste(sep="", "XI:i:", sam$isoform, "\tXS:A:",
-                      ifelse(bitAnd(16, sam$FLAG), "-", "+")))
-
-  write.table(tab, file=file, sep="\t", quote=FALSE,
-              row.names=FALSE, col.names=FALSE, ...)
-
-  if (toClose) { close(file) }
-
-  invisible(NULL)
+noReads.splicingSAM <- function(reads) {
+  length(reads$position)
 }
 
-sam2bam <- function(samfile, bamdir, misoDir,
-                    python="/usr/bin/env python") {
+isPaired <- function(reads)
+  UseMethod("isPaired")
 
-  cmd <- sprintf("%s '%s/sam_to_bam.py' --convert %s %s",
-                 python, misoDir, samfile, bamdir)
-  system(cmd)  
+isPaired.splicingSAM <- function(reads) {
+  reads$paired
+}
+
+isMixed <- function(reads)
+  UseMethod("isMixed")
+
+isMixed.splicingSAM <- function(reads) {
+  reads$noPairs > 0 && reads$noSingles > 0
+}
+
+noPairs <- function(reads)
+  UseMethod("noPairs")
+
+noPairs.splicingSAM <- function(reads) {
+  reads$noPairs
+}
+
+noSingles <- function(reads)
+  UseMethod("noSingles")
+
+noSingles.splicingSAM <- function(reads) {
+  reads$noSingles
+}
+
+toTable <- function(reads, ...)
+  UseMethod("toTable")
+
+splicing.i.SAMheader <- function(reads) {
+  paste(sep="\n", collapse="\n",
+        "@HD\tVN:1.0\tSO:unsorted",
+        sprintf("@SQ\tSN:%s\tLN:%i", reads$chrname, reads$chrlen))
+} 
+
+## TODO: attributes
+
+toTable.splicingSAM <- function(reads, ...) {  
+  tab <- data.frame(QNAME=reads$qname,
+                    FLAG=reads$flag,
+                    RNAME=reads$chrname[reads$chr+1],
+                    POS=reads$position,
+                    MAPQ=reads$mapq,
+                    CIGAR=reads$cigar,
+                    RNEXT=reads$rnext,
+                    PNEXT=reads$pairpos,
+                    TLEN=reads$tlen,
+                    SEQ=reads$seq,
+                    QUAL=reads$qual,
+                    ...)
+
+
+  attr(tab, "header") <- splicing.i.SAMheader(reads)
+  tab
+}
+
+writeSAM <- function(reads, conn)
+  UseMethod("writeSAM")
+
+## TODO: attributes
+
+writeSAM.splicingSAM <- function(reads, conn) {
+  header <- splicing.i.SAMheader(reads)
+  tab <- sprintf("%s\t%i\t%s\t%i\t%i\t%s\t%s\t%s\t%i\t%s\t%s",
+                 as.character(reads$qname), as.integer(reads$flag),
+                 as.character(reads$chrname[reads$chr+1]),
+                 as.integer(reads$position), as.integer(reads$mapq),
+                 as.character(reads$cigar), as.character(reads$rnext),
+                 as.character(reads$pairpos), as.integer(reads$tlen),
+                 as.character(reads$seq), as.character(reads$qual))
+  cat(file=conn, header, "\n", sep="", paste(tab, collapse="\n"), "\n")
 }
