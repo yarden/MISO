@@ -49,8 +49,9 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   splicing_vector_t logLik;
   splicing_matrix_t class_templates;
   splicing_vector_t class_counts;
+  splicing_vector_int_t assignment;
   splicing_miso_rundata_t rundata;
-  PyObject *r1, *r2, *r3, *r4, *r5;
+  PyObject *r1, *r2, *r3, *r4, *r5, *r6;
   
   if (!PyArg_ParseTuple(args, "OiOOi|iiiO", &gff, &gene, &readpos, &readcigar,
 			&readLength, &noIterations, &noBurnIn, &noLag, 
@@ -66,6 +67,8 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   SPLICING_FINALLY(splicing_matrix_destroy, &class_templates);
   SPLICING_PYCHECK(splicing_vector_init(&class_counts, 0));
   SPLICING_FINALLY(splicing_vector_destroy, &class_counts);
+  SPLICING_PYCHECK(splicing_vector_int_init(&assignment, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &assignment);
   if (pysplicing_to_vector_int(readpos, &myreadpos)) { return NULL; }
   SPLICING_FINALLY(splicing_vector_int_destroy, &myreadpos);
   if (hyperp) { 
@@ -86,14 +89,17 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
 				 readLength, noIterations, noBurnIn, noLag,
 				 &myhyperp, &samples, &logLik, 
 				 /*match_matrix=*/ 0, &class_templates,
-				 &class_counts, &rundata));
+				 &class_counts, &assignment, &rundata));
 
   splicing_vector_destroy(&myhyperp);
   splicing_vector_int_destroy(&myreadpos);
   splicing_strvector_destroy(&myreadcigar);
   SPLICING_FINALLY_CLEAN(3);
   
-  r5=pysplicing_from_miso_rundata(&rundata);
+  r6=pysplicing_from_miso_rundata(&rundata);
+
+  r5=pysplicing_from_vector_int(&assignment);
+  splicing_vector_int_destroy(&assignment); SPLICING_FINALLY_CLEAN(1);
 
   r4=pysplicing_from_vector(&class_counts);
   splicing_vector_destroy(&class_counts); SPLICING_FINALLY_CLEAN(1);
@@ -107,7 +113,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   r1=pysplicing_from_matrix(&samples);
   splicing_matrix_destroy(&samples); SPLICING_FINALLY_CLEAN(1);
   
-  return Py_BuildValue("OOOOO", r1, r2, r3, r4, r5);
+  return Py_BuildValue("OOOOOO", r1, r2, r3, r4, r5, r6);
 }
 
 static PyObject* pysplicing_write_gff(PyObject *self, PyObject *args) {
@@ -141,8 +147,9 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_vector_t logLik;
   splicing_matrix_t class_templates;
   splicing_vector_t class_counts;
+  splicing_vector_int_t assignment;
   splicing_miso_rundata_t rundata;
-  PyObject *r1, *r2, *r3, *r4, *r5;
+  PyObject *r1, *r2, *r3, *r4, *r5, *r6;
   
   if (!PyArg_ParseTuple(args, "OiOOiddd|iiiO", &gff, &gene, &readpos, 
 			&readcigar, &readLength, &normalMean, &normalVar,
@@ -159,6 +166,8 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   SPLICING_FINALLY(splicing_matrix_destroy, &class_templates);
   SPLICING_PYCHECK(splicing_vector_init(&class_counts, 0));
   SPLICING_FINALLY(splicing_vector_destroy, &class_counts);
+  SPLICING_PYCHECK(splicing_vector_int_init(&assignment, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &assignment);
   
   if (pysplicing_to_vector_int(readpos, &myreadpos)) { return NULL; }
   SPLICING_FINALLY(splicing_vector_int_destroy, &myreadpos);
@@ -182,14 +191,17 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
 		       /*insertProb=*/ 0, /*insertStart=*/ 0,
 		       normalMean, normalVar, numDevs, &samples, &logLik,
 		       /*match_matrix=*/ 0, &class_templates, &class_counts,
-		       &rundata);
+		       &assignment, &rundata);
   
   splicing_vector_destroy(&myhyperp);
   splicing_vector_int_destroy(&myreadpos);
   splicing_strvector_destroy(&myreadcigar);
   SPLICING_FINALLY_CLEAN(3);
   
-  r5=pysplicing_from_miso_rundata(&rundata);
+  r6=pysplicing_from_miso_rundata(&rundata);
+
+  r5=pysplicing_from_vector_int(&assignment);
+  splicing_vector_int_destroy(&assignment); SPLICING_FINALLY_CLEAN(1);
 
   r4=pysplicing_from_vector(&class_counts);
   splicing_vector_destroy(&class_counts); SPLICING_FINALLY_CLEAN(1);
@@ -203,7 +215,7 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   r1=pysplicing_from_matrix(&samples);
   splicing_matrix_destroy(&samples); SPLICING_FINALLY_CLEAN(1);
   
-  return Py_BuildValue("OOOOO", r1, r2, r3, r4, r5);
+  return Py_BuildValue("OOOOOO", r1, r2, r3, r4, r5, r6);
 }
 
 static PyObject* pysplicing_create_gene(PyObject *self, PyObject *args) {

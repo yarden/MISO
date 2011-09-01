@@ -160,6 +160,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  splicing_matrix_t *match_matrix,
 		  splicing_matrix_t *class_templates,
 		  splicing_vector_t *class_counts,
+		  splicing_vector_int_t *assignment,
 		  splicing_miso_rundata_t *rundata);
 
 int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
@@ -174,6 +175,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 splicing_matrix_t *match_matrix,
 			 splicing_matrix_t *class_templates,
 			 splicing_vector_t *class_counts,
+			 splicing_vector_int_t *assignment,
 			 splicing_miso_rundata_t *rundata);
 
 int splicing_reassign_samples(const splicing_matrix_t *matches, 
