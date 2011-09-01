@@ -525,12 +525,18 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   int noLag=INTEGER(pnoLag)[0];
   splicing_vector_t hyperp;
   int i, noReads=GET_LENGTH(cigar);
+  splicing_matrix_t match_matrix;
+  splicing_matrix_t class_templates;
+  splicing_vector_t class_counts;
   splicing_miso_rundata_t rundata;
 
   R_splicing_begin();
   
   splicing_matrix_init(&samples, 0, 0);
   splicing_vector_init(&logLik, 0);
+  splicing_matrix_init(&match_matrix, 0, 0);
+  splicing_matrix_init(&class_templates, 0, 0);
+  splicing_vector_init(&class_counts, 0);
 
   R_splicing_SEXP_to_gff(pgff, &gff);
   R_splicing_SEXP_to_vector_int(R_splicing_getListElement(preads, "position"),
@@ -543,20 +549,30 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   }
 
   splicing_miso(&gff, gene, &position, cigarstr, readLength, noIterations,
-		noBurnIn, noLag, &hyperp, &samples, &logLik, &rundata);
+		noBurnIn, noLag, &hyperp, &samples, &logLik, 
+		&match_matrix, &class_templates, &class_counts, &rundata);
   
-  PROTECT(result=NEW_LIST(3));
+  PROTECT(result=NEW_LIST(6));
   SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&samples));
+  splicing_matrix_destroy(&samples);
   SET_VECTOR_ELT(result, 1, R_splicing_vector_to_SEXP(&logLik));
-  SET_VECTOR_ELT(result, 2, R_splicing_miso_rundata_to_SEXP(&rundata));
-  PROTECT(names=NEW_CHARACTER(3));
+  splicing_vector_destroy(&logLik);
+  SET_VECTOR_ELT(result, 2, R_splicing_matrix_to_SEXP(&match_matrix));
+  splicing_matrix_destroy(&match_matrix);
+  SET_VECTOR_ELT(result, 3, R_splicing_matrix_to_SEXP(&class_templates));
+  splicing_matrix_destroy(&class_templates);
+  SET_VECTOR_ELT(result, 4, R_splicing_vector_to_SEXP(&class_counts));
+  splicing_vector_destroy(&class_counts);
+  SET_VECTOR_ELT(result, 5, R_splicing_miso_rundata_to_SEXP(&rundata));
+
+  PROTECT(names=NEW_CHARACTER(6));
   SET_STRING_ELT(names, 0, mkChar("samples"));
   SET_STRING_ELT(names, 1, mkChar("logLik"));
-  SET_STRING_ELT(names, 2, mkChar("runData"));
+  SET_STRING_ELT(names, 2, mkChar("matchMatrix"));
+  SET_STRING_ELT(names, 3, mkChar("classTemplates"));
+  SET_STRING_ELT(names, 4, mkChar("classCounts"));
+  SET_STRING_ELT(names, 5, mkChar("runData"));
   SET_NAMES(result, names);
-
-  splicing_vector_destroy(&logLik);
-  splicing_matrix_destroy(&samples);
 
   PROTECT(class=ScalarString(mkChar("MISOresult")));
   SET_CLASS(result, class);

@@ -152,6 +152,9 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  int noIterations, int noBurnIn, int noLag,
 		  const splicing_vector_t *hyperp, 
 		  splicing_matrix_t *samples, splicing_vector_t *logLik, 
+		  splicing_matrix_t *match_matrix,
+		  splicing_matrix_t *class_templates,
+		  splicing_vector_t *class_counts,
 		  splicing_miso_rundata_t *rundata);
 
 int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,

@@ -319,12 +319,60 @@ int splicing_metropolis_hastings_ratio(const splicing_vector_int_t *ass,
   return 0;
 }
 
+int splicing_i_miso_classes(const splicing_matrix_t *match_matrix,
+			    const splicing_vector_int_t *match_order,
+			    splicing_matrix_t *class_templates,
+			    splicing_vector_t *class_counts) {
+  
+  int noiso=splicing_matrix_nrow(match_matrix);
+
+  if (splicing_matrix_size(match_matrix) == 0) { 
+
+    /* Special case: no reads */
+    splicing_matrix_resize(class_templates, noiso, 0);
+    splicing_vector_resize(class_counts, 0);
+
+  } else { 
+
+    int i, noreads=splicing_vector_int_size(match_order);
+    int lastclass=0;
+    double *prev, *curr;
+    int *order=VECTOR(*match_order);
+
+    splicing_matrix_resize(class_templates, noiso, 1);
+    splicing_vector_resize(class_counts, 1);
+    
+    memcpy(&MATRIX(*class_templates, 0, lastclass), 
+	   &MATRIX(*match_matrix, 0, order[0]), 
+	   sizeof(double) * noiso);
+    prev = &MATRIX(*class_templates, 0, lastclass);
+	   
+    for (i=0; i<noreads; i++) {
+      curr = &MATRIX(*match_matrix, 0, order[i]);
+      if (memcmp(prev, curr, sizeof(double)*noiso) != 0) {
+	SPLICING_CHECK(splicing_matrix_add_cols(class_templates, 1));
+	SPLICING_CHECK(splicing_vector_push_back(class_counts, 0));
+	lastclass++;
+	prev = &MATRIX(*class_templates, 0, lastclass);
+	memcpy(prev, curr, sizeof(double) * noiso);
+      }
+      VECTOR(*class_counts)[lastclass] += 1;
+    }
+
+  } 
+
+  return 0;
+}
+
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
 		  const char **cigarstr, int readLength, 
 		  int noIterations, int noBurnIn, int noLag,
 		  const splicing_vector_t *hyperp, 
 		  splicing_matrix_t *samples, splicing_vector_t *logLik,
+		  splicing_matrix_t *match_matrix, 
+		  splicing_matrix_t *class_templates,
+		  splicing_vector_t *class_counts,
 		  splicing_miso_rundata_t *rundata) {
 
   double acceptP, cJS, pJS, sigma;
@@ -335,10 +383,15 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
     *psi=&vpsi, *psiNew=&vpsiNew, *alpha=&valpha, *alphaNew=&valphaNew;
   int noSamples = (noIterations - noBurnIn + 1) / noLag;
   int i, m, lagCounter=0, noS=0;
-  splicing_matrix_t matches;
+  splicing_matrix_t *mymatch_matrix=match_matrix, vmatch_matrix;
   splicing_vector_int_t match_order;
   splicing_vector_int_t effisolen;
   splicing_vector_t isoscores;
+
+  if ( (class_templates ? 1 : 0) + (class_counts ? 1 : 0) == 1) {
+    SPLICING_ERROR("Only one of `class_templates' and `class_counts' is "
+		   "given", SPLICING_EINVAL);
+  }
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
 
@@ -358,13 +411,24 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   SPLICING_FINALLY(splicing_vector_destroy, &valpha);
   SPLICING_CHECK(splicing_vector_init(&valphaNew, noiso-1));
   SPLICING_FINALLY(splicing_vector_destroy, &valphaNew);
-
-  SPLICING_CHECK(splicing_matrix_init(&matches, noiso, noReads));
-  SPLICING_FINALLY(splicing_matrix_destroy, &matches);
+  
+  if (match_matrix) { 
+    SPLICING_CHECK(splicing_matrix_resize(match_matrix, noiso, noReads));
+  } else {
+    mymatch_matrix=&vmatch_matrix;
+    SPLICING_CHECK(splicing_matrix_init(mymatch_matrix, noiso, noReads));
+    SPLICING_FINALLY(splicing_matrix_destroy, mymatch_matrix);
+  }
   SPLICING_CHECK(splicing_vector_int_init(&match_order, noReads));
   SPLICING_FINALLY(splicing_vector_int_destroy, &match_order);
-  SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, &matches));
-  SPLICING_CHECK(splicing_order_matches(&matches, &match_order));
+  SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, 
+				   mymatch_matrix));
+  SPLICING_CHECK(splicing_order_matches(mymatch_matrix, &match_order));
+
+  if (class_templates && class_counts) { 
+    SPLICING_CHECK(splicing_i_miso_classes(mymatch_matrix, &match_order, 
+					   class_templates, class_counts));
+  }
 
   SPLICING_CHECK(splicing_vector_int_init(&effisolen, noiso));
   SPLICING_FINALLY(splicing_vector_int_destroy, &effisolen);
@@ -389,7 +453,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   
   /* Initialize assignments of reads */  
   
-  SPLICING_CHECK(splicing_reassign_samples(&matches, &match_order, psi, 
+  SPLICING_CHECK(splicing_reassign_samples(mymatch_matrix, &match_order, psi, 
 					   noiso, &ass));
   
   /* foreach Iteration m=1, ..., M do */
@@ -430,21 +494,25 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
       }
     }
     
-    SPLICING_CHECK(splicing_reassign_samples(&matches, &match_order, psi, 
-					     noiso, &ass));
+    SPLICING_CHECK(splicing_reassign_samples(mymatch_matrix, &match_order, 
+					     psi, noiso, &ass));
 
   } /* for m < noIterations */
 
   splicing_vector_destroy(&isoscores);
   splicing_vector_int_destroy(&effisolen);
   splicing_vector_int_destroy(&match_order);
-  splicing_matrix_destroy(&matches);
+  SPLICING_FINALLY_CLEAN(3);
+  if (!match_matrix) {
+    splicing_matrix_destroy(mymatch_matrix);
+    SPLICING_FINALLY_CLEAN(1);
+  }
   splicing_vector_destroy(&valphaNew);
   splicing_vector_destroy(&valpha);
   splicing_vector_destroy(&vpsiNew);
   splicing_vector_destroy(&vpsi);
   splicing_vector_int_destroy(&ass);
-  SPLICING_FINALLY_CLEAN(9);
+  SPLICING_FINALLY_CLEAN(5);
 
   return 0;
 }
