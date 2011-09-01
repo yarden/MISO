@@ -344,6 +344,9 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
 
     min_event_reads = Settings.get_min_event_reads()
 
+    mean_frag_len = None
+    frag_variance = None
+
     if paired_end:
         mean_frag_len = int(paired_end[0])
         frag_variance = power(int(paired_end[1]), 2)
@@ -388,8 +391,6 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
         paired_end = True
         reads, num_raw_reads = sam_utils.sam_parse_reads(gene_reads,
                                                          paired_end=paired_end)
-
-        print "reads --> ", reads
                                    
         # Skip gene if none of the reads align to gene boundaries
         if num_raw_reads < min_event_reads:
@@ -434,9 +435,8 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
             
         output_filename = os.path.join(chrom_dir, gene_obj.label)
 
-        sampler.run_sampler(num_iters, reads, gene_obj,
-                            hyperparameters, sampler_params,
-                            output_filename, burn_in=burn_in,
+        sampler.run_sampler(num_iters, reads, gene_obj, hyperparameters,
+                            sampler_params, output_filename, burn_in=burn_in,
                             lag=lag)
         
 	    

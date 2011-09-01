@@ -24,12 +24,16 @@ import os
 import sys
 from read_simulator import simulate_two_iso_reads
 from psi_estimators import transformed_psi_bayes
-from Gene import Gene, Exon
+from Gene import Gene, Exon, py2c_gene
 import samples_plotter as sp 
 from collections import defaultdict
 import glob
 import logging
 import logging.handlers
+
+# C MISO interface
+import pysplicing
+import ctypes
 
 ## 
 ## Ignore division error in numpy
@@ -225,23 +229,6 @@ class MISOSampler:
                       "running in sampler on paired-end data."
 	    self.mean_frag_len = self.params['mean_frag_len']
 	    self.frag_variance = self.params['frag_variance']
-
-            # Choose a range of fragment lengths to consider when
-            # computing the probability of an isoform. Consider
-            # the mean plus num_deviations-many standard deviations out.
-            num_devs = 4
-            out_range = int(round(num_devs * sqrt(self.frag_variance)))
-            
-            # Don't consider fragment lengths smaller than 20 nucleotides
-            min_frag_range = max(self.mean_frag_len - out_range, 20)
-            max_frag_range = self.mean_frag_len + out_range
-
-            self.frag_range = array(range(min_frag_range, max_frag_range + 1))
-            self.frag_range_len = len(self.frag_range)
-            
-	# for paired-end, set the default fragment length distribution
-	# to use the passed in fragment length and variance
-	self.log_frag_len_prob = log_normal_frag_prob
 
         # Record logs if asked
         self.log_dir = os.path.abspath(os.path.expanduser(log_dir))
@@ -849,53 +836,9 @@ class MISOSampler:
         assignments = array(assignments, dtype=int)
 	return assignments
     
-
-    def filter_improbable_reads(self, reads):
-        """
-        Filter improbable reads based on fragment lengths, i.e.
-        reads that are probabilistically inconsistent with all
-        isoforms.
-        """
-        if len(reads) == 0:
-            return array([])
-        
-        pe_reads = reads[:, 0]
-        frag_lens = reads[:, 1]
-        filtered_reads = []
-        num_skipped = 0
-        
-        for r, frags in zip(pe_reads, frag_lens):
-            valid_assignments = nonzero(array(r))[0]
-            assignment_frag_lens = frags[valid_assignments]
-            len_scores = []
-            
-            for v, frag_len in zip(valid_assignments,
-                                   assignment_frag_lens):
-                # compute the prior probability of the fragment lengths each
-                # read posits for each isoform
-                frag_len_score = exp(self.log_frag_len_prob(frag_len, self.mean_frag_len,
-                                                            self.frag_variance))
-                len_scores.append(frag_len_score)
-
-            len_scores = array(len_scores)
-
-            # If the read posits improbable fragment lengths for each isoform,
-            # discard it
-            if all(len_scores == 0):
-                num_skipped += 1
-                continue
-            else:
-                filtered_reads.append([r, frags])
-
-        print "Filtered out %d reads that posited improbable fragment lengths with " \
-              "with all isoforms." %(num_skipped)
-
-        filtered_reads = array(filtered_reads)
-        return filtered_reads
-                
-
     def run_sampler(self, num_iters, reads, gene, hyperparameters, params,
-                    output_file, burn_in=1000, lag=2):
+                    output_file, burn_in=1000, lag=2,
+                    prior_params=None):
         """
         Fast version of MISO MCMC sampler.
 
@@ -904,14 +847,17 @@ class MISOSampler:
         num_isoforms = len(gene.isoforms)
         self.num_isoforms = num_isoforms
 
-        if self.paired_end:
-            reads = self.filter_improbable_reads(reads)
+        if prior_params == None:
+            prior_params = (1.0, 1.0, 1.0)
 
-        if len(reads) == 0:
+        read_positions = reads[0]
+        read_cigars = reads[1]
+
+        self.num_reads = len(read_positions)
+
+        if self.num_reads == 0:
             print "No reads for gene: %s" %(gene.label)
             return
-
-        self.num_reads = len(reads)
 
         output_file = output_file + ".miso"
 	# If output filename exists, don't run sampler
@@ -954,9 +900,39 @@ class MISOSampler:
             self.miso_logger.error(one_iso_msg)
             return
 
-        print "Running on reads: ", reads
+        print "read_positions: ", read_positions
+        print "read_cigars: ", read_cigars
+        assert(len(read_positions) == len(read_cigars))
 
-        percent_acceptance = (float(accepted_proposals)/(accepted_proposals + rejected_proposals))*100
+        c_params = [self.read_len, num_iters, burn_in, lag]
+
+        for k in c_params:
+            print type(k)
+
+        print type(prior_params)
+        print "=>", gene
+#        c_gene=pysplicing.createGene( ((1,100), (201,300), (401,500)),
+#                                      ((0,1), (0,2), (0,1,2)) )
+
+        t1 = time.time()
+
+        # Convert Python Gene object to C
+        c_gene = py2c_gene(gene)
+
+        # Run C MISO
+        miso_results = pysplicing.MISO(c_gene, 0L, read_positions, read_cigars,
+                                       long(self.read_len),
+                                       long(num_iters),
+                                       long(burn_in),
+                                       long(lag),
+                                       prior_params)
+
+        t2 = time.time()
+
+        print "MISO took %.2f seconds" %(t2 - t1)
+        
+        percent_acceptance = (float(accepted_proposals)/(accepted_proposals + \
+                                                         rejected_proposals))*100
         self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
         self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
         self.miso_logger.info("Mean of all Psi proposals (accepted or rejected): %s" \

@@ -111,6 +111,13 @@ class Intron(Interval):
 	    return True
 	return False
 
+def py2c_gene(py_gene):
+    """
+    Convert a Python Gene object to a C gene object for use
+    with C MISO.
+    """
+    exon_lens = py_gene
+    
 class Gene:
     """
     A representation of a gene and its isoforms.  If a gene has two isoforms, make the inclusive

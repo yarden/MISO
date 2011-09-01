@@ -8,6 +8,7 @@ from Gene import load_genes_from_gff
 import time
 import pysam
 import binascii
+import ctypes
 
 from numpy import array
 from scipy import *
@@ -303,7 +304,8 @@ def sam_cigar_to_str(sam_cigar):
     return cigar_str
     
 def sam_parse_reads(samfile, paired_end=False):
-    reads = []
+    read_positions = []
+    read_cigars = []
     num_reads = 0
     
     if paired_end:
@@ -315,15 +317,21 @@ def sam_parse_reads(samfile, paired_end=False):
         # Unpaired reads are not supported.
         for read_id, read_info in paired_reads.iteritems():
             read1, read2 = read_info
-            reads.append([int(read1.pos), sam_cigar_to_str(read1.cigar)])
-            reads.append([int(read2.pos), sam_cigar_to_str(read2.cigar)])
+            read_positions.extend([int(read1.pos), int(read2.pos)])
+            read_cigars.extend([sam_cigar_to_str(read1.cigar),
+                                sam_cigar_to_str(read2.cigar)])
             num_reads += 1
     else:
         # Single-end
-        reads = [[int(read.pos), sam_cigar_to_str(read.cigar)] \
-                 for read in reads]
-        
-    return array(reads), num_reads
+        for read in samfile:
+            read_positions.append(int(read.pos))
+            read_cigars.append(sam_cigar_to_str(read.cigar))
+            num_reads += 1
+
+    reads = (tuple(read_positions),
+             tuple(read_cigars))
+
+    return reads, num_reads
 
     
 
