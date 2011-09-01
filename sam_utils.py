@@ -298,10 +298,9 @@ def sam_cigar_to_str(sam_cigar):
     # First element in sam CIGAR list is the CIGAR type
     # (e.g. match or insertion) and the second is
     # the number of nucleotides
-    cigar_str = "".join(["%d%s" %(c[1], c[0]) for c in sam_cigar])
-    print "GOT: ", cigar_str, " for ", sam_cigar
+    cigar_str = "".join(["%d%s" %(c[1], CIGAR_TYPES[c[0]]) \
+                         for c in sam_cigar])
     return cigar_str
-    
     
 def sam_parse_reads(samfile, paired_end=False):
     reads = []
@@ -315,21 +314,14 @@ def sam_parse_reads(samfile, paired_end=False):
         # MISO C engine requires pairs to follow each other in order.
         # Unpaired reads are not supported.
         for read_id, read_info in paired_reads.iteritems():
-            if len(read_info) < 2:
-                print read_id
-                raise Exception, "unpared"
             read1, read2 = read_info
-            print "Read1: ", read1
-            raise Exception
-            reads.append([read1.pos, sam_cigar_to_str(read1.cigar)])
-            reads.append([read2.pos, sam_cigar_to_str(read2.cigar)])
+            reads.append([int(read1.pos), sam_cigar_to_str(read1.cigar)])
+            reads.append([int(read2.pos), sam_cigar_to_str(read2.cigar)])
             num_reads += 1
     else:
         # Single-end
-        reads = [[read.pos, sam_cigar_to_str(read.cigar)] \
+        reads = [[int(read.pos), sam_cigar_to_str(read.cigar)] \
                  for read in reads]
-
-    print "reads: ", reads, reads[0]
         
     return array(reads), num_reads
 
