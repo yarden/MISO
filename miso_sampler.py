@@ -903,7 +903,7 @@ class MISOSampler:
         # Convert Python Gene object to C
         c_gene = py2c_gene(gene)
 
-        # Run C MISO
+        # Run C MISO (single-end)x
         miso_results = pysplicing.MISO(c_gene, 0L, read_positions, read_cigars,
                                        long(self.read_len),
                                        long(num_iters),
@@ -911,23 +911,37 @@ class MISOSampler:
                                        long(lag),
                                        prior_params)
 
-        psi_vectors, kept_log_scores, run_stats = miso_results
+        print "miso_results: ",
 
-        rejected_proposals = run_stats[4]
-        accepted_proposals = run_stats[5]
+        print miso_results
+
+        # For single-end, parse C MISO results
+        psi_vectors, kept_log_scores, read_classes, read_assignments,\
+                     run_stats = miso_results
+
+        # Assignments of reads to classes.
+        # read_classes[n] represents the read class that has
+        # read_assignments[n]-many reads.
+        assignments = (read_classes, read_assignments)
+
+#        psi_vectors, kept_log_scores, run_stats = miso_results
+
+#        rejected_proposals = run_stats[4]
+#        accepted_proposals = run_stats[5]
         
         percent_acceptance = (float(accepted_proposals)/(accepted_proposals + \
-                                                         rejected_proposals))*100
+                                                         rejected_proposals)) * 100
         self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
         self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
-        # Write output to file
+        
+        # Write MISO output to file
 	print "Outputting samples to: %s..." %(output_file)
         self.miso_logger.info("Outputting samples to: %s" %(output_file))
         assignments = []
         total_log_scores = []
         self.output_miso_results(output_file, gene, reads, assignments, psi_vectors,
-                                 kept_log_scores, total_log_scores, num_iters, burn_in, lag,
-                                 percent_acceptance, proposal_type)
+                                 kept_log_scores, total_log_scores, num_iters, burn_in,
+                                 lag, percent_acceptance, proposal_type)
         print >> sys.stderr, "\nSamples outputted to: %s\n" %(output_file)
         
     
@@ -1147,8 +1161,8 @@ class MISOSampler:
 #         print >> sys.stderr, "\nSamples outputted to: %s\n" %(output_file)
         
 
-    def output_miso_results(self, output_file, gene, reads, assignments, psi_vectors,
-                            kept_log_scores, total_log_scores, num_iters, burn_in, lag,
+    def output_miso_results(self, output_file, gene, reads, assignments,
+                            psi_vectors, kept_log_scores, num_iters, burn_in, lag,
                             percent_acceptance, proposal_type):
         """
         Output results of MISO to a file.
@@ -1156,12 +1170,14 @@ class MISOSampler:
         output = open(output_file, 'w')
         
         # Get a string representation of the isoforms
-        str_isoforms = '[' + ",".join(["\'" + iso.desc + "\'" for iso in gene.isoforms]) + ']'
+        str_isoforms = '[' + ",".join(["\'" + iso.desc + "\'" \
+                                       for iso in gene.isoforms]) + ']'
 
         num_isoforms = len(gene.isoforms)
 
         # And of the exon lengths
-        exon_lens = ",".join(["(\'%s\',%d)" %(p.label, p.len) for p in gene.parts])
+        exon_lens = ",".join(["(\'%s\',%d)" %(p.label, p.len) \
+                              for p in gene.parts])
 
         # Compile header with information about isoforms and internal parameters used
         # by the sampler, and also information about read counts and number of
@@ -1178,16 +1194,18 @@ class MISOSampler:
             read_counts_list.append(count_info)
         read_counts_str = ",".join(read_counts_list)
 
+        print "read_counts_str: ", read_counts_str
+
         # Get number of reads assigned to each isoform
-        assigned_counts = count_isoform_assignments(assignments,
-                                                    num_isoforms)
         assigned_counts_str = ",".join(["%d:%d" %(c[0], c[1]) \
                                         for c in assigned_counts])
         
-        header = "#isoforms=%s\texon_lens=%s\titers=%d\tburn_in=%d\tlag=%d\tpercent_accept=%.2f\tproposal_type=%s\t" \
+        header = "#isoforms=%s\texon_lens=%s\titers=%d\tburn_in=%d\tlag=%d\t" \
+                 "percent_accept=%.2f\tproposal_type=%s\t" \
                  "counts=%s\tassigned_counts=%s\n" \
-                 %(str_isoforms, exon_lens, num_iters, burn_in, lag, percent_acceptance,
-                   proposal_type, read_counts_str, assigned_counts_str)
+                 %(str_isoforms, exon_lens, num_iters, burn_in, lag,
+                   percent_acceptance, proposal_type, read_counts_str,
+                   assigned_counts_str)
         output.write(header)
             
         # Output samples and their associated log scores, as well as read counts
@@ -1199,8 +1217,7 @@ class MISOSampler:
             output_line = "%s\t%.4f\n" %(psi_sample_str, curr_log_score)
             output.write(output_line)
         output.close()
-        return [percent_acceptance, array(psi_vectors),
-                array(total_log_scores), array(kept_log_scores)]
+#        return [percent_acceptance, array(psi_vectors), array(kept_log_scores)]
 
 def run_sampler_on_event(gene, ni, ne, nb, read_len, overhang_len, num_iters,
                          output_dir, confidence_level=.95):
