@@ -17,7 +17,7 @@ mm <- matchIso(gene, reads=reads)
 il <- isoLength(gene)[[1]]
 
 set.seed(42)
-mres2 <- MISO.Trinity(mm, il, readLength=35L)
+mres2 <- MISO.Trinity(mm, isoLength=il, readLength=35L)
 
 all(postMean(mres1) == postMean(mres2))
 
@@ -37,8 +37,9 @@ mm <- matchIso(gene, reads=reads2, paired=TRUE, normalMean=116, normalVar=50,
 il <- isoLength(gene)[[1]]
 
 set.seed(42)
-dres2 <- MISO.Trinity(mm[[1]], il, readLength=33L, normalMean=116,
-                      paired=TRUE, fragmentStart=0L, normalVar=50, numDevs=4)
+dres2 <- MISO.Trinity(mm[[1]], fragmentLength=mm[[2]], il, readLength=33L,
+                      normalMean=116, paired=TRUE, fragmentStart=0L,
+                      normalVar=50, numDevs=4)
 
 all(postMean(dres1) == postMean(dres2))
 

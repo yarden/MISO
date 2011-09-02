@@ -225,6 +225,14 @@ int R_splicing_SEXP_to_matrix(SEXP pm, splicing_matrix_t *m) {
   return 0;
 }
 
+int R_splicing_SEXP_to_matrix_int(SEXP pm, splicing_matrix_int_t *m) {
+  int *dim=INTEGER(GET_DIM(pm));
+  R_splicing_SEXP_to_vector_int(pm, &m->data);
+  m->nrow=dim[0];
+  m->ncol=dim[1];
+  return 0;
+}
+
 /* We construct a strvector by hand */
 
 int R_splicing_SEXP_to_strvector(SEXP pv, splicing_strvector_t *v) {
@@ -738,7 +746,9 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
   return result;
 }
 
-SEXP R_splicing_miso_paired_trinity(SEXP pmatch_matrix, SEXP pisolen,
+SEXP R_splicing_miso_paired_trinity(SEXP pmatch_matrix, 
+				    SEXP pfragment_length,
+				    SEXP pisolen,
 				    SEXP preadLength, SEXP pnoIterations, 
 				    SEXP pnoBurnIn, SEXP pnoLag, 
 				    SEXP phyperp, 
@@ -749,6 +759,7 @@ SEXP R_splicing_miso_paired_trinity(SEXP pmatch_matrix, SEXP pisolen,
   SEXP result, names, class;
 
   splicing_matrix_t match_matrix;
+  splicing_matrix_int_t fragment_length;
   splicing_vector_int_t isolen;
   int readLength=INTEGER(preadLength)[0];
   int noIterations=INTEGER(pnoIterations)[0];
@@ -775,6 +786,7 @@ SEXP R_splicing_miso_paired_trinity(SEXP pmatch_matrix, SEXP pisolen,
   splicing_vector_init(&class_counts, 0);
 
   R_splicing_SEXP_to_matrix(pmatch_matrix, &match_matrix);
+  R_splicing_SEXP_to_matrix_int(pfragment_length, &fragment_length);
   R_splicing_SEXP_to_vector_int(pisolen, &isolen);
   R_splicing_SEXP_to_vector(phyperp, &hyperp);
 
@@ -782,8 +794,9 @@ SEXP R_splicing_miso_paired_trinity(SEXP pmatch_matrix, SEXP pisolen,
     R_splicing_SEXP_to_vector(pfragmentProb, &fragmentProb);
   }
 
-  splicing_miso_paired_trinity(&match_matrix, &isolen, readLength,
-			       noIterations, noBurnIn, noLag, &hyperp, 
+  splicing_miso_paired_trinity(&match_matrix, &fragment_length, &isolen, 
+			       readLength, noIterations, noBurnIn, noLag, 
+			       &hyperp, 
 			       isNull(pfragmentProb) ? 0 : &fragmentProb, 
 			       fragmentStart, normalMean, normalVar, numDevs,
 			       &samples, &logLik, &class_templates,

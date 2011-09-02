@@ -27,9 +27,9 @@ MISO <- function(geneStructure, gene=1L, reads, readLength,
   res
 }
 
-MISO.Trinity <- function(matchMatrix, isoLength, readLength,
-                         noIterations=5000, noBurnIn=500, noLag=10,
-                         hyperparameters=rep(1, length(isoLength)),
+MISO.Trinity <- function(matchMatrix, fragmentLength=NULL, isoLength,
+                         readLength, noIterations=5000, noBurnIn=500,
+                         noLag=10, hyperparameters=rep(1, length(isoLength)),
                          paired=FALSE, fragmentProb=NULL, fragmentStart,
                          normalMean, normalVar, numDevs) {
   if (!paired) {
@@ -40,7 +40,8 @@ MISO.Trinity <- function(matchMatrix, isoLength, readLength,
                  PACKAGE="splicing")
   } else {
     if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
-    res <- .Call("R_splicing_miso_paired_trinity", matchMatrix,
+    res <- .Call("R_splicing_miso_paired_trinity",
+                 matchMatrix, fragmentLength,
                  as.integer(isoLength), as.integer(readLength),
                  as.integer(noIterations), as.integer(noBurnIn),
                  as.integer(noLag), as.double(hyperparameters), fragmentProb,

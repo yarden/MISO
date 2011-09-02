@@ -190,6 +190,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 splicing_miso_rundata_t *rundata);
 
 int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
+				 const splicing_matrix_int_t *fragmentLength,
 				 const splicing_vector_int_t *isolen,
 				 int readLength, int noIterations, 
 				 int noBurnIn, int noLag, 

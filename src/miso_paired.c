@@ -407,6 +407,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 }
 
 int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
+				 const splicing_matrix_int_t *fragmentLength,
 				 const splicing_vector_int_t *isolen,
 				 int readLength, int noIterations, 
 				 int noBurnIn, int noLag, 
@@ -431,7 +432,6 @@ int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
   int i, j, m, lagCounter=0, noS=0;
   splicing_vector_int_t match_order;
   splicing_matrix_t isoscores;
-  splicing_matrix_int_t fragmentLength;
   splicing_vector_t assscores;
   int il;
   splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
@@ -480,8 +480,6 @@ int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
 
   SPLICING_CHECK(splicing_vector_int_init(&match_order, noReads));
   SPLICING_FINALLY(splicing_vector_int_destroy, &match_order);
-  SPLICING_CHECK(splicing_matrix_int_init(&fragmentLength, noiso, noReads));
-  SPLICING_FINALLY(splicing_matrix_int_destroy, &fragmentLength);
   SPLICING_CHECK(splicing_order_matches(match_matrix, &match_order));
   
   if (class_templates && class_counts) { 
@@ -534,7 +532,7 @@ int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
 					     psiNew, alphaNew, psi, alpha,
 					     sigma, noiso, isolen, hyperp, 
 					     &isoscores, &assscores,
-					     &fragmentLength, fragmentStart,
+					     fragmentLength, fragmentStart,
 					     m > 0 ? 1 : 0, 
 					     &acceptP, &cJS, &pJS));
     
@@ -569,13 +567,12 @@ int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
 
   splicing_vector_destroy(&assscores);
   splicing_matrix_destroy(&isoscores);
-  splicing_matrix_int_destroy(&fragmentLength);
   splicing_vector_int_destroy(&match_order);
   splicing_vector_destroy(&valphaNew);
   splicing_vector_destroy(&valpha);
   splicing_vector_destroy(&vpsiNew);
   splicing_vector_destroy(&vpsi);
-  SPLICING_FINALLY_CLEAN(8);
+  SPLICING_FINALLY_CLEAN(7);
   if (!assignment) { 
     splicing_vector_int_destroy(myass);
     SPLICING_FINALLY_CLEAN(1);
