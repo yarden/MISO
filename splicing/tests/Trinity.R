@@ -20,3 +20,25 @@ set.seed(42)
 mres2 <- MISO.Trinity(mm, il, readLength=35L)
 
 all(postMean(mres1) == postMean(mres2))
+
+###############
+
+set.seed(42)
+reads2 <- simulateReads(gene, expression=c(2/10, 3/10, 5/10), paired=TRUE,
+                        noReads=1000L, readLength=33, normalMean=116,
+                        normalVar=50, numDevs=4)
+
+set.seed(42)
+dres1 <- MISO(gene, reads=reads2, readLength=33L, normalMean=116, paired=TRUE,
+              fragmentStart=0L, normalVar=50, numDevs=4)
+
+mm <- matchIso(gene, reads=reads2, paired=TRUE, normalMean=116, normalVar=50,
+               numDevs=4)
+il <- isoLength(gene)[[1]]
+
+set.seed(42)
+dres2 <- MISO.Trinity(mm[[1]], il, readLength=33L, normalMean=116,
+                      paired=TRUE, fragmentStart=0L, normalVar=50, numDevs=4)
+
+all(postMean(dres1) == postMean(dres2))
+

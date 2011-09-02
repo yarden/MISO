@@ -189,6 +189,21 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 splicing_vector_int_t *assignment,
 			 splicing_miso_rundata_t *rundata);
 
+int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
+				 const splicing_vector_int_t *isolen,
+				 int readLength, int noIterations, 
+				 int noBurnIn, int noLag, 
+				 const splicing_vector_t *hyperp,
+				 const splicing_vector_t *fragmentProb,
+				 int fragmentStart, double normalMean,
+				 double normalVar, double numDevs,
+				 splicing_matrix_t *samples,
+				 splicing_vector_t *logLik,
+				 splicing_matrix_t *class_templates,
+				 splicing_vector_t *class_counts,
+				 splicing_vector_int_t *assignment,
+				 splicing_miso_rundata_t *rundata);
+
 int splicing_reassign_samples(const splicing_matrix_t *matches, 
 			      const splicing_vector_int_t *match_order,
 			      const splicing_vector_t *psi, 
