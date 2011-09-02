@@ -910,24 +910,35 @@ class MISOSampler:
                                        long(burn_in),
                                        long(lag),
                                        prior_params)
-
         print "miso_results: ",
 
-        print miso_results
+        print miso_results 
 
-        # For single-end, parse C MISO results
-        psi_vectors, kept_log_scores, read_classes, read_assignments,\
-                     run_stats = miso_results
+        # Psi samples
+        psi_vectors = transpose(array(miso_results[0]))
+
+        # Log scores of accepted samples
+        kept_log_scores = transpose(array(miso_results[1]))
+
+        # Read classes 
+        read_classes = miso_results[2]
+
+        # Read class statistics
+        read_class_data = miso_results[3]
+
+        # Assignments of reads to isoforms
+        assignments = miso_results[4]
+
+        # Statistics and parameters about sampler run
+        run_stats = miso_results[5]
 
         # Assignments of reads to classes.
         # read_classes[n] represents the read class that has
         # read_assignments[n]-many reads.
-        assignments = (read_classes, read_assignments)
+        reads_data = (read_classes, read_class_data)
 
-#        psi_vectors, kept_log_scores, run_stats = miso_results
-
-#        rejected_proposals = run_stats[4]
-#        accepted_proposals = run_stats[5]
+        rejected_proposals = run_stats[4]
+        accepted_proposals = run_stats[5]
         
         percent_acceptance = (float(accepted_proposals)/(accepted_proposals + \
                                                          rejected_proposals)) * 100
@@ -937,10 +948,9 @@ class MISOSampler:
         # Write MISO output to file
 	print "Outputting samples to: %s..." %(output_file)
         self.miso_logger.info("Outputting samples to: %s" %(output_file))
-        assignments = []
-        total_log_scores = []
-        self.output_miso_results(output_file, gene, reads, assignments, psi_vectors,
-                                 kept_log_scores, total_log_scores, num_iters, burn_in,
+        assignments = array(assignments)
+        self.output_miso_results(output_file, gene, reads_data, assignments, psi_vectors,
+                                 kept_log_scores, num_iters, burn_in,
                                  lag, percent_acceptance, proposal_type)
         print >> sys.stderr, "\nSamples outputted to: %s\n" %(output_file)
         
@@ -1161,7 +1171,7 @@ class MISOSampler:
 #         print >> sys.stderr, "\nSamples outputted to: %s\n" %(output_file)
         
 
-    def output_miso_results(self, output_file, gene, reads, assignments,
+    def output_miso_results(self, output_file, gene, reads_data, assignments,
                             psi_vectors, kept_log_scores, num_iters, burn_in, lag,
                             percent_acceptance, proposal_type):
         """
@@ -1173,29 +1183,43 @@ class MISOSampler:
         str_isoforms = '[' + ",".join(["\'" + iso.desc + "\'" \
                                        for iso in gene.isoforms]) + ']'
 
+        
+
         num_isoforms = len(gene.isoforms)
 
         # And of the exon lengths
         exon_lens = ",".join(["(\'%s\',%d)" %(p.label, p.len) \
                               for p in gene.parts])
 
-        # Compile header with information about isoforms and internal parameters used
-        # by the sampler, and also information about read counts and number of
-        # reads assigned to each isoform.
+        ## Compile header with information about isoforms and internal parameters used
+        ## by the sampler, and also information about read counts and number of
+        ## reads assigned to each isoform.
+
+        read_classes, read_class_counts = reads_data
+        read_counts_list = []
+
+        for class_num, class_type in enumerate(read_classes):
+            class_counts = read_class_counts[class_num]
+
+            # Get the read class type in string format
+            class_str = str(tuple([int(c) for c in class_type])).replace(" ", "")
+
+            # Get the read class counts in string format
+            class_counts_str = "%s" %(int(read_class_counts[class_num]))
+
+            # Put class and counts together
+            curr_str = "%s:%s" %(class_str,
+                                 class_counts_str)
+            read_counts_list.append(curr_str)
         
         # Get a summary of the raw read counts supporting each isoform
-        read_counts = count_aligned_reads(reads, paired_end=self.paired_end)
-        read_counts_list = []
-        for counts in read_counts:
-            # Remove whitespace from read count
-            read_type = str(counts[0]).replace(" ", "")
-            read_count = str(counts[1])
-            count_info = "%s:%s" %(read_type, read_count)
-            read_counts_list.append(count_info)
         read_counts_str = ",".join(read_counts_list)
 
-        print "read_counts_str: ", read_counts_str
+        print assignments
 
+        assigned_counts = count_isoform_assignments(assignments)
+
+        print "assigned_counts: ", assigned_counts
         # Get number of reads assigned to each isoform
         assigned_counts_str = ",".join(["%d:%d" %(c[0], c[1]) \
                                         for c in assigned_counts])
