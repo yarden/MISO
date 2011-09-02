@@ -584,6 +584,69 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   return result;
 }
 
+SEXP R_splicing_miso_trinity(SEXP pmatch_matrix, SEXP pisolen, 
+			     SEXP preadlength, SEXP pnoiterations,
+			     SEXP pnoburnin, SEXP pnolag, SEXP phyperp) {
+  
+  SEXP result, names, class;
+  splicing_matrix_t match_matrix;
+  splicing_vector_int_t isolen;
+  int readlength=INTEGER(preadlength)[0];
+  int noiterations=INTEGER(pnoiterations)[0];
+  int noburnin=INTEGER(pnoburnin)[0];
+  int nolag=INTEGER(pnolag)[0];
+  splicing_vector_t hyperp;
+  
+  splicing_matrix_t samples;
+  splicing_vector_t logLik;
+  splicing_matrix_t class_templates;
+  splicing_vector_t class_counts;
+  splicing_miso_rundata_t rundata;
+
+  R_splicing_begin();
+  
+  splicing_matrix_init(&samples, 0, 0);
+  splicing_vector_init(&logLik, 0);
+  splicing_matrix_init(&class_templates, 0, 0);
+  splicing_vector_init(&class_counts, 0);
+
+  R_splicing_SEXP_to_matrix(pmatch_matrix, &match_matrix);
+  R_splicing_SEXP_to_vector_int(pisolen, &isolen);
+  R_splicing_SEXP_to_vector(phyperp, &hyperp);
+  
+  splicing_miso_trinity(&match_matrix, &isolen, readlength, noiterations,
+			noburnin, nolag, &hyperp, &samples, &logLik, 
+			&class_templates, &class_counts, /*assignment=*/ 0,
+			&rundata);
+  
+  PROTECT(result=NEW_LIST(5));
+  SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&samples));
+  splicing_matrix_destroy(&samples);
+  SET_VECTOR_ELT(result, 1, R_splicing_vector_to_SEXP(&logLik));
+  splicing_vector_destroy(&logLik);
+  SET_VECTOR_ELT(result, 2, R_splicing_matrix_to_SEXP(&class_templates));
+  splicing_matrix_destroy(&class_templates);
+  SET_VECTOR_ELT(result, 3, R_splicing_vector_to_SEXP(&class_counts));
+  splicing_vector_destroy(&class_counts);
+  SET_VECTOR_ELT(result, 4, R_splicing_miso_rundata_to_SEXP(&rundata));
+
+  PROTECT(names=NEW_CHARACTER(5));
+  SET_STRING_ELT(names, 0, mkChar("samples"));
+  SET_STRING_ELT(names, 1, mkChar("logLik"));
+  SET_STRING_ELT(names, 2, mkChar("classTemplates"));
+  SET_STRING_ELT(names, 3, mkChar("classCounts"));
+  SET_STRING_ELT(names, 4, mkChar("runData"));
+  SET_NAMES(result, names);
+
+  PROTECT(class=ScalarString(mkChar("MISOresult")));
+  SET_CLASS(result, class);
+
+  R_splicing_end();
+  
+  UNPROTECT(3);
+  return result;
+}  
+
 SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads, 
 			    SEXP preadLength, SEXP pnoIterations, 
 			    SEXP pnoBurnIn, SEXP pnoLag, SEXP phyperp, 

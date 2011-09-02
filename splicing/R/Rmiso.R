@@ -27,6 +27,24 @@ MISO <- function(geneStructure, gene=1L, reads, readLength,
   res
 }
 
+MISO.Trinity <- function(matchMatrix, isoLength, readLength,
+                         noIterations=5000, noBurnIn=500, noLag=10,
+                         hyperparameters=rep(1, length(isoLength)),
+                         paired=FALSE, fragmentProb=NULL, fragmentStart,
+                         normalMean, normalVar, numDevs) {
+  if (!paired) {
+    res <- .Call("R_splicing_miso_trinity", matchMatrix,
+                 as.integer(isoLength), as.integer(readLength),
+                 as.integer(noIterations), as.integer(noBurnIn),
+                 as.integer(noLag), as.double(hyperparameters),
+                 PACKAGE="splicing")
+  } else {
+    ## TODO
+  }
+
+  res
+}
+
 postMean <- function(misoResult)
   UseMethod("postMean")
 
