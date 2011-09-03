@@ -388,7 +388,6 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
         #reads = sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj, read_len,
         #                                        overhang_len,
         #                                        paired_end=paired_end)
-        paired_end = True
         reads, num_raw_reads = sam_utils.sam_parse_reads(gene_reads,
                                                          paired_end=paired_end)
                                    
