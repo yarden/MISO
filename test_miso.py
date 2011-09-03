@@ -98,19 +98,25 @@ class TestMISO(unittest.TestCase):
 
         print "Executing: %s" %(index_cmd)
         os.system(index_cmd)
-        return
 
         output_dir = os.path.join(self.tests_output_dir, "gene-psi-output")
         
+#        miso_cmd = "%s --compute-genes-psi %s %s --output-dir %s --read-len %d " \
+#                   " --paired-end %d %d" \
+#                   %(self.events_analysis_cmd,
+#                     gff_index_dir,
+#                     bam_filename,
+#                     output_dir,
+#                     read_len,
+#                     insert_mean,
+#                     insert_sd)
         miso_cmd = "%s --compute-genes-psi %s %s --output-dir %s --read-len %d " \
-                   " --paired-end %d %d" \
                    %(self.events_analysis_cmd,
                      gff_index_dir,
                      bam_filename,
                      output_dir,
-                     read_len,
-                     insert_mean,
-                     insert_sd)
+                     read_len)
+
         print "Executing: %s" %(miso_cmd)
         os.system(miso_cmd)
 

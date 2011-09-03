@@ -903,8 +903,11 @@ class MISOSampler:
         # Convert Python Gene object to C
         c_gene = py2c_gene(gene)
 
-        # Run C MISO (single-end)x
-        miso_results = pysplicing.MISO(c_gene, 0L, read_positions, read_cigars,
+        # Run C MISO (single-end)
+
+        miso_results = pysplicing.MISO(c_gene, 0L,
+                                       read_positions,
+                                       read_cigars,
                                        long(self.read_len),
                                        long(num_iters),
                                        long(burn_in),
