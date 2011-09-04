@@ -46,7 +46,8 @@ def single_end_read_to_isoforms(read, gene, read_len, overhang_len=1):
     
     assert(start < end)
 
-    alignment, isoform_coords = gene.align_read_to_isoforms_with_cigar(read.cigar, start, end, read_len,
+    alignment, isoform_coords = gene.align_read_to_isoforms_with_cigar(read.cigar, start, end,
+                                                                       read_len,
                                                                        overhang_len)
     return alignment
 
