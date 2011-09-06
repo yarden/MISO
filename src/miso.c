@@ -60,7 +60,7 @@ int splicing_reassign_samples(const splicing_matrix_t *matches,
     if (memcmp(prev, curr, sizeof(double)*noiso) != 0) { CUMSUM(); }
 
     if (noValid == 0) {
-      SPLICING_ERROR("Cannot assign read to any isoforms", SPLICING_EINVAL);
+      VECTOR(*result)[order[i]] = -1;
     } else if (noValid == 1) {
       VECTOR(*result)[order[i]] = VECTOR(validIso)[0];
     } else if (noValid == 2) { 
@@ -146,7 +146,9 @@ int splicing_score_iso(const splicing_vector_t *psi, int noiso,
   
   /* Calculate score, based on assignments */
   for (score=0.0, i=0; i<noreads; i++) {
-    score += VECTOR(logpsi)[ VECTOR(*assignment)[i] ];
+    if (VECTOR(*assignment)[i] != -1) {
+      score += VECTOR(logpsi)[ VECTOR(*assignment)[i] ];
+    }
   }
 
   splicing_vector_destroy(&logpsi);
@@ -220,7 +222,9 @@ int splicing_score_joint(const splicing_vector_int_t *assignment,
   
   /* Scores the reads */
   for (i=0; i<no_reads; i++) {
-    readProb += VECTOR(*isoscores)[ VECTOR(*assignment)[i] ];
+    if (VECTOR(*assignment)[i] != -1) {
+      readProb += VECTOR(*isoscores)[ VECTOR(*assignment)[i] ];
+    }
   }
   
   /* Score isoforms */
