@@ -55,7 +55,9 @@ int splicing_reassign_samples_paired(
     /* Maybe we need to update the cumulative sum */
     if (memcmp(prev, curr, sizeof(double)*noiso) != 0) { CUMSUM(); }
     
-    if (noValid == 1) {
+    if (noValid == 0) {
+      SPLICING_ERROR("Cannot assign read to any isoforms", SPLICING_EINVAL);
+    } else if (noValid == 1) {
       VECTOR(*result)[order[i]] = VECTOR(validIso)[0];
     } else if (noValid == 2) { 
       rand = RNG_UNIF01() * sumpsi;

@@ -22,6 +22,11 @@
   } while (0)
 
 
+/* TODO: we could actually speed this up, by storing the 
+   indices where the cumulative sum vector must be updated. 
+   These indices do not change at all. With this we can spare
+   the memcmp operations. */
+
 int splicing_reassign_samples(const splicing_matrix_t *matches, 
 			      const splicing_vector_int_t *match_order,
 			      const splicing_vector_t *psi, 
@@ -53,8 +58,10 @@ int splicing_reassign_samples(const splicing_matrix_t *matches,
 
     /* Maybe we need to update the cumulative sum */
     if (memcmp(prev, curr, sizeof(double)*noiso) != 0) { CUMSUM(); }
-    
-    if (noValid == 1) {
+
+    if (noValid == 0) {
+      SPLICING_ERROR("Cannot assign read to any isoforms", SPLICING_EINVAL);
+    } else if (noValid == 1) {
       VECTOR(*result)[order[i]] = VECTOR(validIso)[0];
     } else if (noValid == 2) { 
       rand = RNG_UNIF01() * sumpsi;
