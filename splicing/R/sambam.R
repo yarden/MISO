@@ -42,6 +42,18 @@ noReads.splicingSAM <- function(reads) {
   length(reads$position)
 }
 
+print.splicingSAM <- function(reads) {
+  if (isPaired(reads)) {
+    mess <- sprintf("SAM/BAM %i read pairs, %i single reads, %i sequences",
+                    noPairs(reads), noSingles(reads),
+                    length(seqNames(reads)))
+  } else {
+    mess <- sprintf("SAM/BAM %i single-end reads, %i sequences",
+                    noSingles(reads), length(seqNames(reads)))
+  }
+  cat(mess, "\n")
+}
+
 isPaired <- function(reads)
   UseMethod("isPaired")
 
@@ -68,6 +80,23 @@ noSingles <- function(reads)
 
 noSingles.splicingSAM <- function(reads) {
   reads$noSingles
+}
+
+seqNames <- function(reads)
+  UseMethod("seqNames")
+
+seqNames.splicingSAM <- function(reads) {
+  reads$chrname
+}
+
+readLength <- function(reads)
+  UseMethod("readLength")
+
+readLength.splicingSAM <- function(reads) {
+  len <- strsplit(reads$cigar, "[A-Z]")
+  typ <- lapply(strsplit(reads$cigar, "[0-9]+"), "[", -1)
+  res <- mapply(len, typ, FUN=function(l, t) sum(as.numeric(l[t=="M"])))
+  sort(unique(res))
 }
 
 toTable <- function(reads, ...)
