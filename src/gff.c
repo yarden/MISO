@@ -558,8 +558,55 @@ size_t splicing_gff_size(const splicing_gff_t *gff) {
   return gff->n;
 }
 
+int splicing_i_gff_exon_start_end_sort_cmp(void *data, const void *a, 
+					   const void *b) {
+
+  int *start=(int*) data;
+  int aa=*(int*)a, bb=*(int*)b;
+  int sa=start[aa];
+  int sb=start[bb];
+  
+  if (sa < sb) {
+    return -1;
+  } else if (sa > sb) { 
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+int splicing_i_gff_exon_start_end_sort(const splicing_vector_int_t *start,
+				       const splicing_vector_int_t *end,
+				       const splicing_vector_int_t *idx, 
+				       int iso, splicing_vector_int_t *tmp, 
+				       splicing_vector_int_t *tmp2) {
+  
+  int i, j, from=VECTOR(*idx)[iso], to=VECTOR(*idx)[iso+1], len=to-from;  
+
+  SPLICING_CHECK(splicing_vector_int_resize(tmp, len));
+  SPLICING_CHECK(splicing_vector_int_resize(tmp2, len));
+  for (i=0; i<len; i++) { VECTOR(*tmp)[i]=i; }
+  splicing_qsort_r(VECTOR(*tmp), len, sizeof(int), 
+		   (void*) (VECTOR(*start)+from),
+		   splicing_i_gff_exon_start_end_sort_cmp);
+  
+  /* Store the order */
+  for (i=0, j=from; i<len; i++, j++) { VECTOR(*tmp2)[i]=VECTOR(*start)[j]; }
+  for (i=0, j=from; i<len; i++, j++) { 
+    VECTOR(*start)[j] = VECTOR(*tmp2)[ VECTOR(*tmp)[i] ];
+  }
+  for (i=0, j=from; i<len; i++, j++) { VECTOR(*tmp2)[i]=VECTOR(*end)[j]; }
+  for (i=0, j=from; i<len; i++, j++) { 
+    VECTOR(*end)[j] = VECTOR(*tmp2)[ VECTOR(*tmp)[i] ];
+  }
+
+  return 0;
+}
+
 /* Return the start coordinates of all exons, in each isoform, 
-   for a given gene. */
+   for a given gene. This function also makes sure that the 
+   exons are ordered according to their start coordinate, within each
+   isoform. */
 
 int splicing_gff_exon_start_end(const splicing_gff_t *gff, 
 				splicing_vector_int_t *start,
@@ -571,6 +618,12 @@ int splicing_gff_exon_start_end(const splicing_gff_t *gff,
   int i=0, p=0, n=splicing_gff_size(gff);
   int pos;
   size_t nogenes;
+  splicing_vector_int_t tmp, tmp2;
+
+  SPLICING_CHECK(splicing_vector_int_init(&tmp, 10));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &tmp);
+  SPLICING_CHECK(splicing_vector_int_init(&tmp2, 10));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &tmp2);
 
   SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
   if (gene < 0 || gene >= nogenes) { 
@@ -590,14 +643,25 @@ int splicing_gff_exon_start_end(const splicing_gff_t *gff,
       SPLICING_CHECK(splicing_vector_int_push_back(start, s)); p++;
       SPLICING_CHECK(splicing_vector_int_push_back(end, e));
     } else if (VECTOR(gff->type)[pos] == SPLICING_TYPE_MRNA) {
-      VECTOR(*idx)[i++] = p;
+      VECTOR(*idx)[i] = p;
+      if (i!=0) { 
+	SPLICING_CHECK(splicing_i_gff_exon_start_end_sort(start, end, idx, 
+							  i-1, &tmp, &tmp2));
+      }
+      i++;
     } else if (VECTOR(gff->type)[pos] == SPLICING_TYPE_GENE) {
       break;
     }
     pos++;
   }
   VECTOR(*idx)[i] = p;
-  
+  SPLICING_CHECK(splicing_i_gff_exon_start_end_sort(start, end, idx, i-1, 
+						    &tmp, &tmp2));
+
+  splicing_vector_int_destroy(&tmp2);
+  splicing_vector_int_destroy(&tmp);
+  SPLICING_FINALLY_CLEAN(1);
+
   return 0;
 }
 
