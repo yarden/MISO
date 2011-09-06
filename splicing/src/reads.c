@@ -40,8 +40,10 @@ int splicing_reads_init(splicing_reads_t *reads) {
   SPLICING_FINALLY(splicing_strvector_destroy, &reads->seq);
   SPLICING_CHECK(splicing_strvector_init(&reads->qual, 0));
   SPLICING_FINALLY(splicing_strvector_destroy, &reads->qual);
+  SPLICING_CHECK(splicing_vector_int_init(&reads->mypair, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &reads->mypair);
   
-  SPLICING_FINALLY_CLEAN(13);
+  SPLICING_FINALLY_CLEAN(14);
 
   return 0;
 }
@@ -60,6 +62,7 @@ void splicing_reads_destroy(splicing_reads_t *reads) {
   splicing_vector_int_destroy(&reads->tlen);
   splicing_strvector_destroy(&reads->seq);
   splicing_strvector_destroy(&reads->qual);
+  splicing_vector_int_destroy(&reads->mypair);
 }
 
 int splicing_reads_clear(splicing_reads_t *reads) {
@@ -76,6 +79,7 @@ int splicing_reads_clear(splicing_reads_t *reads) {
   splicing_vector_int_clear(&reads->tlen);
   splicing_strvector_clear(&reads->seq);
   splicing_strvector_clear(&reads->qual);
+  splicing_vector_int_clear(&reads->mypair);
   reads->noPairs = reads->noSingles = 0;
   return 0;
 }
@@ -179,6 +183,8 @@ int splicing_i_add_read(splicing_reads_t *reads, const bam1_t *read) {
     SPLICING_CHECK(splicing_strvector_append2(&reads->qual, buffer,
 					      bufptr-buffer));
   }
+
+  SPLICING_CHECK(splicing_vector_int_push_back(&reads->mypair, -1));
   
   if (read->core.mpos < 0) {
     reads->noSingles  += 1;
@@ -212,10 +218,12 @@ int splicing_i_order_reads(splicing_reads_t *reads) {
     int curr=VECTOR(idx)[i];
     if (VECTOR(reads->pairpos)[curr] == 0) { 
       /* has no pair, add it */
+      VECTOR(reads->mypair)[pos] = -1;
       VECTOR(idx2)[pos++] = curr;
     } else if (VECTOR(reads->pairpos)[curr] < VECTOR(reads->position)[curr] 
 	       && !VECTOR(taken)[curr])  {
       /* pair is missing */
+      VECTOR(reads->mypair)[pos] = -1;
       VECTOR(idx2)[pos++] = curr;
       VECTOR(reads->pairpos)[curr] = 0;
       VECTOR(reads->flags)[curr] &= nonpaired_mask;
@@ -235,11 +243,14 @@ int splicing_i_order_reads(splicing_reads_t *reads) {
       }
       if (found) { 
 	int rp=VECTOR(idx)[ppos-1];
+	VECTOR(reads->mypair)[pos] = pos+1;
 	VECTOR(idx2)[pos++] = curr;
+	VECTOR(reads->mypair)[pos] = pos-1;
 	VECTOR(idx2)[pos++] = rp;
 	VECTOR(taken)[rp] = 1;
       } else {
 	/* pair is missing */
+	VECTOR(reads->mypair)[pos] = -1;
 	VECTOR(idx2)[pos++] = curr;
 	VECTOR(reads->pairpos)[curr] = 0;
 	VECTOR(reads->flags)[curr] &= nonpaired_mask;

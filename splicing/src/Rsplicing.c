@@ -160,7 +160,7 @@ SEXP R_splicing_miso_rundata_to_SEXP(const splicing_miso_rundata_t *data) {
 SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads) {
   SEXP result, names, class;
   
-  PROTECT(result=NEW_LIST(16));
+  PROTECT(result=NEW_LIST(17));
   SET_VECTOR_ELT(result, 0, R_splicing_strvector_to_SEXP(&reads->chrname));
   SET_VECTOR_ELT(result, 1, R_splicing_vector_int_to_SEXP(&reads->chrlen));
   SET_VECTOR_ELT(result, 2, R_splicing_vector_int_to_SEXP(&reads->chr));
@@ -177,8 +177,9 @@ SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads) {
   SET_VECTOR_ELT(result, 13, R_splicing_vector_int_to_SEXP(&reads->tlen));
   SET_VECTOR_ELT(result, 14, R_splicing_strvector_to_SEXP(&reads->seq));
   SET_VECTOR_ELT(result, 15, R_splicing_strvector_to_SEXP(&reads->qual));
+  SET_VECTOR_ELT(result, 16, R_splicing_vector_int_to_SEXP(&reads->mypair));
 
-  PROTECT(names=NEW_CHARACTER(16));
+  PROTECT(names=NEW_CHARACTER(17));
   SET_STRING_ELT(names, 0, mkChar("chrname"));
   SET_STRING_ELT(names, 1, mkChar("chrlen"));
   SET_STRING_ELT(names, 2, mkChar("chr"));
@@ -195,6 +196,7 @@ SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads) {
   SET_STRING_ELT(names, 13, mkChar("tlen"));
   SET_STRING_ELT(names, 14, mkChar("seq"));
   SET_STRING_ELT(names, 15, mkChar("qual"));
+  SET_STRING_ELT(names, 16, mkChar("mypair"));
   SET_NAMES(result, names);
 
   PROTECT(class=NEW_CHARACTER(1));
