@@ -49,23 +49,53 @@ getExonLength <- function(gff3, gene) {
 ## Generate reads for a single gene
 
 simulateReads <- function(geneStructure, gene=1, expression,
-                          noReads, readLength, paired=FALSE, fragmentProb=NULL,
-                          fragmentStart=0L, normalMean, normalVar, numDevs) {
+                          noReads, readLength, paired=FALSE, chrname="seq1",
+                          chrlen=geneLength(geneStructure)[gene],
+                          qname="read-%s",
+                          fragmentProb=NULL, fragmentStart=0L,
+                          normalMean, normalVar, numDevs) {
 
   if (!paired) {
     res <- .Call("R_splicing_simulate_reads", geneStructure,
                  as.integer(gene), as.double(expression),
                  as.integer(noReads), as.integer(readLength),
                  PACKAGE="splicing")
-    res$paired <- FALSE
+
+    realNoReads <- length(res$cigar)
+    res <- list(chrname=as.character(chrname), chrlen=as.integer(chrlen),
+                chr=rep(0L, realNoReads),
+                qname=sprintf(qname, seq_len(realNoReads)),
+                cigar=res$cigar, position=res$position,
+                flag=rep(0L, realNoReads), pairpos=rep(0L, realNoReads),
+                noPairs=0L, noSingles=as.integer(realNoReads), paired=FALSE,
+                mapq=rep(255L, realNoReads), rnext=rep(0L, realNoReads),
+                tlen=rep(0L, realNoReads), seq=rep("*", realNoReads),
+                qual=rep("*", realNoReads), mypair=rep(-1L, realNoReads))
+    class(res) <- "splicingSAM"
   } else {
     if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
     res <- .Call("R_splicing_simulate_paired_reads", geneStructure,
                  as.integer(gene), as.double(expression),
                  as.integer(noReads), as.integer(readLength),
-                 fragmentProb, as.integer(fragmentStart), as.double(normalMean),
-                 as.double(normalVar), as.double(numDevs))
-    res$paired <- TRUE
+                 fragmentProb, as.integer(fragmentStart),
+                 as.double(normalMean), as.double(normalVar),
+                 as.double(numDevs))
+    realNoReads <- length(res$cigar)
+    res <- list(chrname=as.character(chrname), chrlen=as.integer(chrlen),
+                chr=rep(0L, realNoReads),
+                qname=paste(sprintf(qname, rep(seq_len(realNoReads/2),
+                  each=2)), sep="/", rep(1:2, realNoReads/2)),
+                cigar=res$cigar, position=res$position,
+                flag=rep(c(99L,147L), realNoReads/2), ## TODO
+                pairpos=c(res$position[seq.int(2,by=2,length=realNoReads/2)],
+                  res$position[seq.int(1, by=2,length=realNoReads/2)]),
+                noPairs=as.integer(realNoReads/2), noSingles=0L, paired=TRUE,
+                mapq=rep(255L, realNoReads), rnext=rep(0L, realNoReads),
+                tlen=rep(0L, realNoReads), ## TODO
+                seq=rep("*", realNoReads), qual=rep("*", realNoReads),
+                mypair=as.integer(t(matrix(seq_len(realNoReads),
+                  nc=2, byrow=TRUE)[,2:1]-1)))
+    class(res) <- "splicingSAM"
   }
 
   res
