@@ -306,13 +306,21 @@ int splicing_io_get_real_na(FILE *input, double *real, char delim,
   return 0;
 }
 
-/* Skip the newline character(s) on the input */
+/* Skip the newline character(s) on the input, 
+   plus any lines starting with a '#' character */
 
-int splicing_io_skip_newline(FILE *input) {
+int splicing_io_skip_newline_and_comments(FILE *input) {
   int c;
-  do { 
+
+  do {
     c=fgetc(input);
+    if (c=='#') { 
+      do {
+	c=fgetc(input);
+      } while (c != '\n' && c != '\r');
+    }
   } while (c != EOF && (c=='\n' || c=='\r'));
+
   if (c != EOF) { 
     ungetc(c, input);
     return 0;
@@ -371,7 +379,7 @@ int splicing_gff_read(FILE *input, splicing_gff_t *gff) {
 
   do { 
 
-    eof = eof || splicing_io_skip_newline(input);
+    eof = eof || splicing_io_skip_newline_and_comments(input);
     eof = eof || splicing_io_get_string(input, seqid, 
 					sizeof(seqid)/sizeof(char), &len, 
 					/*delim=*/ '\t', /*newline=*/ 0);
@@ -431,7 +439,7 @@ int splicing_gff_read(FILE *input, splicing_gff_t *gff) {
 				       end, score, realstrand, phase, ID,
 				       parent));
     
-    eof = splicing_io_skip_newline(input);
+    eof = splicing_io_skip_newline_and_comments(input);
 
   } while (!eof);
   
