@@ -906,7 +906,7 @@ class MISOSampler:
         # Run C MISO (single-end)
 
         miso_results = pysplicing.MISO(c_gene, 0L,
-                                       read_positions,
+                                       tuple([r+1 for r in read_positions]),
                                        read_cigars,
                                        long(self.read_len),
                                        long(num_iters),
