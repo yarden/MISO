@@ -121,6 +121,14 @@ int splicing_gff_gene_start_end(const splicing_gff_t *gff,
 				splicing_vector_int_t *start,
 				splicing_vector_int_t *end);
 
+int splicing_gff_fprint_gene(const splicing_gff_t *gff, 
+			     FILE *outfile, int gene);
+int splicing_gff_print_gene(const splicing_gff_t *gff, 
+			    int gene);
+int splicing_gff_fprint(const splicing_gff_t *gff, 
+			FILE *outfile);
+int splicing_gff_print(const splicing_gff_t *gff);
+
 typedef struct splicing_miso_rundata_t {
   int noIso, noIters, noBurnIn, noLag, noAccepted, noRejected;
 } splicing_miso_rundata_t;

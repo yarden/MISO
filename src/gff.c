@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 
 const char *splicing_types[] = { "gene", "mRNA", "exon", "CDS", 
 				 "start_codon", "stop_codon" };
@@ -876,4 +877,63 @@ int splicing_genomic_to_iso(const splicing_gff_t *gff, size_t gene,
 
   return 0;
 }
-			    
+	
+int splicing_gff_fprint_gene(const splicing_gff_t *gff, 
+			     FILE *outfile, int gene) {
+
+  size_t nogenes, noiso;
+  int i, j;
+  splicing_vector_int_t start, end, idx;
+
+  SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
+  
+  if (gene < 0 || gene >= nogenes) { 
+    SPLICING_ERROR("Invalid gene ID", SPLICING_EINVAL);
+  }
+
+  SPLICING_CHECK(splicing_vector_int_init(&start, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &start);
+  SPLICING_CHECK(splicing_vector_int_init(&end, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &end);
+  SPLICING_CHECK(splicing_vector_int_init(&idx, 0));  
+  SPLICING_FINALLY(splicing_vector_int_destroy, &idx);
+
+  SPLICING_CHECK(splicing_gff_exon_start_end(gff, &start, &end, &idx, gene));
+  noiso = splicing_vector_int_size(&idx)-1;
+  
+  fprintf(outfile, "===\nGene with %i isoforms:\n", (int) noiso);
+  for (i=0; i<noiso; i++) {
+    fprintf(outfile, "  Isoform %i:\n", i);
+    for (j=VECTOR(idx)[i]; j<VECTOR(idx)[i+1]; j++) {
+      fprintf(outfile, "    %i-%i\n", VECTOR(start)[j], VECTOR(end)[j]);
+    }
+  }
+  
+  splicing_vector_int_destroy(&idx);
+  splicing_vector_int_destroy(&end);
+  splicing_vector_int_destroy(&start);
+  SPLICING_FINALLY_CLEAN(3);
+  
+  return 0;    
+}
+
+int splicing_gff_print_gene(const splicing_gff_t *gff, 
+			    int gene) {
+  return splicing_gff_fprint_gene(gff, stdout, gene);
+}
+		    
+int splicing_gff_fprint(const splicing_gff_t *gff, 
+			FILE *outfile) {
+
+  size_t i, n;
+  SPLICING_CHECK(splicing_gff_nogenes(gff, &n));
+  for (i=0; i<n; i++) {
+    SPLICING_CHECK(splicing_gff_fprint_gene(gff, outfile, i));
+  }
+  
+  return 0;
+}
+
+int splicing_gff_print(const splicing_gff_t *gff) {
+  return splicing_gff_fprint(gff, stdout);
+}
