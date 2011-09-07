@@ -940,8 +940,8 @@ class MISOSampler:
         # read_assignments[n]-many reads.
         reads_data = (read_classes, read_class_data)
 
-        rejected_proposals = run_stats[4]
-        accepted_proposals = run_stats[5]
+        accepted_proposals = run_stats[4]
+        rejected_proposals = run_stats[5]
         
         percent_acceptance = (float(accepted_proposals)/(accepted_proposals + \
                                                          rejected_proposals)) * 100
