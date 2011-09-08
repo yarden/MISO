@@ -235,7 +235,6 @@ def pair_sam_reads(samfile, filter_reads=True,
     """
     Pair reads from a SAM file together.
     """
-#    print "Pairing SAM reads..."
     paired_reads = defaultdict(list)
     unpaired_reads = {}
 
