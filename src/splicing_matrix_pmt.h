@@ -119,6 +119,8 @@ int FUNCTION(splicing_matrix,which_minmax)(const TYPE(splicing_matrix) *m,
 
 int FUNCTION(splicing_matrix,order_cols)(const TYPE(splicing_matrix) *m, 
 					 splicing_vector_int_t *order);
+int FUNCTION(splicing_matrix,binorder_cols)(const TYPE(splicing_matrix) *m, 
+					    splicing_vector_int_t *order);
 int FUNCTION(splicing_matrix,sort_cols)(TYPE(splicing_matrix) *m);
 
 /*-------------------*/

@@ -760,7 +760,9 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
 		       isNull(pfragmentProb) ? 0 : &fragmentProb, 
 		       fragmentStart, normalMean, normalVar, numDevs,
 		       &samples, &logLik, &match_matrix, &class_templates,
-		       &class_counts, /*assignment=*/ 0, &rundata);
+		       &class_counts, /*bin_class_templates=*/ 0, 
+		       /*bin_class_counts=*/ 0, /*assignment=*/ 0,
+		       &rundata);
   
   PROTECT(result=NEW_LIST(6));
   SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&samples));
@@ -847,7 +849,9 @@ SEXP R_splicing_miso_paired_trinity(SEXP pmatch_matrix,
 			       isNull(pfragmentProb) ? 0 : &fragmentProb, 
 			       fragmentStart, normalMean, normalVar, numDevs,
 			       &samples, &logLik, &class_templates,
-			       &class_counts, /*assignment=*/ 0, &rundata);
+			       &class_counts, /*bin_class_templates=*/ 0,
+			       /*bin_class_counts=*/ 0, /*assignment=*/ 0, 
+			       &rundata);
   
   PROTECT(result=NEW_LIST(5));
   SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&samples));

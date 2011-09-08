@@ -216,6 +216,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 splicing_matrix_t *match_matrix, 
 			 splicing_matrix_t *class_templates,
 			 splicing_vector_t *class_counts,
+			 splicing_matrix_t *bin_class_templates,
+			 splicing_vector_t *bin_class_counts,
 			 splicing_vector_int_t *assignment,
 			 splicing_miso_rundata_t *rundata) {
 
@@ -240,6 +242,10 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   if ( (class_templates ? 1 : 0) + (class_counts ? 1 : 0) == 1) {
     SPLICING_ERROR("Only one of `class_templates' and `class_counts' is "
 		   "given", SPLICING_EINVAL);
+  }
+  if ( (bin_class_templates ? 1 : 0) + (bin_class_counts ? 1 : 0) == 1) {
+    SPLICING_ERROR("Only one of `bin_class_templates' and "
+		   "`bin_class_counts' is given", SPLICING_EINVAL);
   }
 
   if (!fragmentProb) { 
@@ -298,9 +304,11 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 					  &fragmentLength));
   SPLICING_CHECK(splicing_order_matches(mymatch_matrix, &match_order));
 
-  if (class_templates && class_counts) { 
+  if (class_templates || bin_class_templates) {
     SPLICING_CHECK(splicing_i_miso_classes(mymatch_matrix, &match_order, 
-					   class_templates, class_counts));
+					   class_templates, class_counts,
+					   bin_class_templates, 
+					   bin_class_counts));
   }
 
   SPLICING_CHECK(splicing_vector_int_init(&isolen, noiso));
@@ -425,6 +433,8 @@ int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
 				 splicing_vector_t *logLik,
 				 splicing_matrix_t *class_templates,
 				 splicing_vector_t *class_counts,
+				 splicing_matrix_t *bin_class_templates,
+				 splicing_vector_t *bin_class_counts,
 				 splicing_vector_int_t *assignment,
 				 splicing_miso_rundata_t *rundata) {
   
@@ -446,6 +456,10 @@ int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
   if ( (class_templates ? 1 : 0) + (class_counts ? 1 : 0) == 1) {
     SPLICING_ERROR("Only one of `class_templates' and `class_counts' is "
 		   "given", SPLICING_EINVAL);
+  }
+  if ( (bin_class_templates ? 1 : 0) + (bin_class_counts ? 1 : 0) == 1) {
+    SPLICING_ERROR("Only one of `bin_class_templates' and "
+		   "`bin_class_counts' is given", SPLICING_EINVAL);
   }
 
   if (!fragmentProb) { 
@@ -488,9 +502,11 @@ int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
   SPLICING_FINALLY(splicing_vector_int_destroy, &match_order);
   SPLICING_CHECK(splicing_order_matches(match_matrix, &match_order));
   
-  if (class_templates && class_counts) { 
+  if (class_templates || bin_class_templates) {
     SPLICING_CHECK(splicing_i_miso_classes(match_matrix, &match_order, 
-					   class_templates, class_counts));
+					   class_templates, class_counts,
+					   bin_class_templates, 
+					   bin_class_counts));
   }
 
   SPLICING_CHECK(splicing_matrix_init(&isoscores, il, noiso));
@@ -591,3 +607,132 @@ int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
   
   return 0;
 }
+
+int splicing_i_miso_classes1(const splicing_matrix_t *match_matrix,
+			     const splicing_vector_int_t *match_order,
+			     splicing_matrix_t *class_templates,
+			     splicing_vector_t *class_counts) {
+  
+  int noiso=splicing_matrix_nrow(match_matrix);
+  
+  if (splicing_matrix_size(match_matrix) == 0) { 
+
+    /* Special case: no reads */
+    splicing_matrix_resize(class_templates, noiso, 0);
+    splicing_vector_resize(class_counts, 0);
+
+  } else { 
+
+    int i, noreads=splicing_vector_int_size(match_order);
+    int lastclass=0;
+    double *prev, *curr;
+    int *order=VECTOR(*match_order);
+
+    SPLICING_CHECK(splicing_matrix_resize(class_templates, noiso, 1));
+    SPLICING_CHECK(splicing_vector_resize(class_counts, 1));
+    
+    memcpy(&MATRIX(*class_templates, 0, lastclass), 
+	   &MATRIX(*match_matrix, 0, order[0]), 
+	   sizeof(double) * noiso);
+    prev = &MATRIX(*class_templates, 0, lastclass);
+	   
+    for (i=0; i<noreads; i++) {
+      curr = &MATRIX(*match_matrix, 0, order[i]);
+      if (memcmp(prev, curr, sizeof(double)*noiso) != 0) {
+	SPLICING_CHECK(splicing_matrix_add_cols(class_templates, 1));
+	SPLICING_CHECK(splicing_vector_push_back(class_counts, 0));
+	lastclass++;
+	prev = &MATRIX(*class_templates, 0, lastclass);
+	memcpy(prev, curr, sizeof(double) * noiso);
+      }
+      VECTOR(*class_counts)[lastclass] += 1;
+    }
+
+  } 
+
+  return 0;
+}
+
+#define SETCOL(to, from) do {						\
+  int j;								\
+  for (j=0; j<noiso; j++) {						\
+    MATRIX(*class_templates, j, to) =					\
+      MATRIX(*match_matrix, j, from) != 0;				\
+  } } while (0)    
+
+int splicing_i_miso_classes2(const splicing_matrix_t *match_matrix,
+			     splicing_matrix_t *class_templates,
+			     splicing_vector_t *class_counts) {
+
+  int noiso=splicing_matrix_nrow(match_matrix);
+  
+  if (splicing_matrix_size(match_matrix) == 0) { 
+
+    /* Special case: no reads */
+    SPLICING_CHECK(splicing_matrix_resize(class_templates, noiso, 0));
+    SPLICING_CHECK(splicing_vector_resize(class_counts, 0));
+
+  } else { 
+
+    int i, j, noreads=splicing_matrix_ncol(match_matrix);
+    int lastclass=0;
+    double *prev, *curr;
+    splicing_vector_int_t match_order;
+    int *order;
+
+    SPLICING_CHECK(splicing_vector_int_init(&match_order, noreads));
+    SPLICING_FINALLY(splicing_vector_int_destroy, &match_order);
+
+    SPLICING_CHECK(splicing_matrix_binorder_cols(match_matrix, &match_order));
+    order=VECTOR(match_order);
+ 
+    SPLICING_CHECK(splicing_matrix_resize(class_templates, noiso, 1));
+    SPLICING_CHECK(splicing_vector_resize(class_counts, 1));
+   
+    SETCOL(lastclass, order[0]);
+    prev=&MATRIX(*class_templates, 0, lastclass);
+    
+    for (i=0; i<noreads; i++) {
+      int same=1;
+      curr=&MATRIX(*match_matrix, 0, order[i]);
+      for (j=0; same && j<noiso; j++) { 
+	same=(prev[j] && curr[j]) || (!prev[j] && !curr[j]);
+      }
+      if (!same) {
+	SPLICING_CHECK(splicing_matrix_add_cols(class_templates, 1));
+	SPLICING_CHECK(splicing_vector_push_back(class_counts, 0));
+	lastclass++;
+	prev = &MATRIX(*class_templates, 0, lastclass);
+	SETCOL(lastclass, order[i]);
+      }
+      VECTOR(*class_counts)[lastclass] += 1;
+    }
+    
+    splicing_vector_int_destroy(&match_order);
+    SPLICING_FINALLY_CLEAN(1);
+  }  
+  
+  return 0;
+}
+
+#undef SETCOL
+
+int splicing_i_miso_classes(const splicing_matrix_t *match_matrix,
+			    const splicing_vector_int_t *match_order,
+			    splicing_matrix_t *class_templates,
+			    splicing_vector_t *class_counts, 
+			    splicing_matrix_t *bin_class_templates,
+			    splicing_vector_t *bin_class_counts) {
+
+  if (class_templates) { 
+    SPLICING_CHECK(splicing_i_miso_classes1(match_matrix, match_order,
+					    class_templates, class_counts));
+  }
+  if (bin_class_templates) { 
+    SPLICING_CHECK(splicing_i_miso_classes2(match_matrix,
+					    bin_class_templates, 
+					    bin_class_counts));
+  }
+  return 0;
+}
+
