@@ -913,22 +913,14 @@ class MISOSampler:
             # to isoforms
             num_sds = 4L
 
-            # Setting n_reads to 100 yields malloc error
-            # n_reads = 100
-            n_reads = 10
-
-            rp = read_positions[0:n_reads]
-            rc = read_cigars[0:n_reads]
-            
             # Run paired-end
             miso_results = pysplicing.MISOPaired(c_gene, 0L,
-                                                 rp, rc,
-#                                                 read_positions,
-#                                                 read_cigars,
+                                                 read_positions,
+                                                 read_cigars,
                                                  long(self.read_len),
-                                                 long(self.mean_frag_len),
-                                                 long(self.frag_variance),
-                                                 num_sds,
+                                                 float(self.mean_frag_len),
+                                                 float(self.frag_variance),
+                                                 float(num_sds),
                                                  long(num_iters),
                                                  long(burn_in),
                                                  long(lag),
