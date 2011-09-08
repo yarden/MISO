@@ -11,30 +11,6 @@ readSAM <- function(filename, region=NULL) {
   }
 }
 
-.SQ <- list('Mus musculus'='@SQ\tSN:mm9_allJxns.1e6.withSG.35.4.fa\tLN:547718976
-@SQ\tSN:chrRibo\tLN:45309
-@SQ\tSN:chr1\tLN:197195432
-@SQ\tSN:chr2\tLN:181748087
-@SQ\tSN:chr3\tLN:159599783
-@SQ\tSN:chr4\tLN:155630120
-@SQ\tSN:chr5\tLN:152537259
-@SQ\tSN:chr6\tLN:149517037
-@SQ\tSN:chr7\tLN:152524553
-@SQ\tSN:chr8\tLN:131738871
-@SQ\tSN:chr9\tLN:124076172
-@SQ\tSN:chrM\tLN:16299
-@SQ\tSN:chrX\tLN:166650296
-@SQ\tSN:chr10\tLN:129993255
-@SQ\tSN:chr11\tLN:121843856
-@SQ\tSN:chr12\tLN:121257530
-@SQ\tSN:chr13\tLN:120284312
-@SQ\tSN:chr14\tLN:125194864
-@SQ\tSN:chr15\tLN:103494974
-@SQ\tSN:chr16\tLN:98319150
-@SQ\tSN:chr17\tLN:95272651
-@SQ\tSN:chr18\tLN:90772031
-@SQ\tSN:chr19\tLN:61342430')
-
 noReads <- function(reads)
   UseMethod("noReads")
 
@@ -144,4 +120,163 @@ writeSAM.splicingSAM <- function(reads, conn) {
                  as.character(reads$pairpos), as.integer(reads$tlen),
                  as.character(reads$seq), as.character(reads$qual))
   cat(file=conn, header, "\n", sep="", paste(tab, collapse="\n"), "\n")
+}
+
+delbit <- function(v, bit) {
+  .Call("R_splicing_delbit", v, bit,
+        PACKAGE="splicing")
+}
+
+getbit <- function(v, bit) {
+  .Call("R_splicing_getbit", v, bit,
+        PACKAGE="splicing")
+}
+
+selectReads <- function(reads, idx)
+  UseMethod("selectReads")
+
+selectReads.splicingSAM <- function(reads, idx) {
+  no <- noReads(reads)
+  res <- list(chrname=reads$chrname, chrlen=reads$chrlen,
+              chr=reads$chr[idx], qname=reads$chr[idx],
+              cigar=reads$cigar[idx], position=reads$position[idx],
+              flag=reads$flag[idx], pairpos=reads$pairpos[idx],
+              noPairs=0L, noSingles=0L, paired=reads$paired,
+              mapq=reads$mapq[idx], rnext=reads$rnext[idx],
+              tlen=reads$tlen[idx], seq=reads$seq[idx], qual=reads$qual[idx],
+              mypair=reads$mypair[idx])
+  no2 <- length(res$cigar)
+  class(res) <- class(reads)
+
+  ## Fix 1) number of pairs, 2) number of singles, 3) paired, 4) flags,
+  ## 5) pairpos and 6) mate pointers
+
+  if (isPaired(reads)) {
+    keep <- sort(seq_len(no)[idx])
+    tran <- integer(no)
+    tran[keep] <- seq_along(keep)
+    tran <- tran-1L
+
+    res$mypair <- tran[reads$mypair+1]
+    res$noPairs <- as.integer(sum(res$mypair != -1)/2)
+    res$noSingles <- as.integer(no2 - 2 * res$noPairs)
+    res$paired <- res$noPairs != 0
+    res$pairpos[res$mypair==-1] <- 0
+    res$flag[res$mypair==-1] <- delbit(res$flag[res$mypair==-1], 1L)
+    
+  } else {
+    res$noSingles <- as.integer(no2)
+  }
+  
+  res
+}
+
+filterReads <- function(reads, ...)
+  UseMethod("filterReads")
+
+## Remove all paired-end reads
+
+filter.noPaired <- function(reads) {
+  selectReads(reads, which(reads$pairpos==0))
+}
+
+## Remove all single-end reads
+
+filter.noSingle <- function(reads) {
+  selectReads(reads, which(reads$pairpos!=0))
+  reads
+}
+
+## Remove paired-end reads where the mates are
+## not on the opposite strand. Based on attributes.
+
+filter.notOppositeStrand <- function(reads) {
+  ## Keep single reads
+  keep1 <- which(reads$pairpos==0)
+
+  ## And the appropriate paired reads
+  paired <- which(reads$pairpos!=0)
+  strand <- getbit(reads$flag, 5L)
+  keep2 <- paired[which(strand[paired] != strand[reads$mypair[paired]+1])]
+  
+  selectReads(reads, sort(c(keep1, keep2)))
+}
+
+## Remove reads that do not match any isoform of a given
+## gene
+
+filter.notMatching <- function(reads, gff, paired=reads$paired, ...) {
+  
+  mat <- matchIso(geneStructure=gff, reads=reads, paired=paired, ...)
+
+  if (paired) { 
+    keep <- which(colSums(mat[[1]]) != 0)
+  } else {
+    keep <- which(colSums(mat) != 0)
+  }
+  
+  selectReads(reads, keep)
+}
+
+## Remove inconsistent reads, where the flags do not match
+## the rest of the read
+
+filter.badFlags <- function(reads) {
+
+  pflag <- getbit(reads$flag, 1L)
+  keep <- which((!pflag & reads$pairpos==0) |
+                ( pflag & reads$pairpos!=0))
+  
+  selectReads(reads, keep)
+}
+
+myfilters <- list(noPaired=filter.noPaired,
+                  noSingle=filter.noSingle,
+                  notOppositeStrand=filter.notOppositeStrand,
+                  notMatching=filter.notMatching,
+                  badFlags=filter.badFlags)
+
+FILTER <- function(name, ...) {
+  if (! name %in% names(myfilters)) {
+    stop("Unknown filter: ", name)
+  }
+  res <- list(name=name, args=list(...))
+  class(res) <- "splicingReadFilter"
+  res
+}
+
+filterReads.splicingSAM <- function(reads, ..., verbose=TRUE) {
+
+  is.filter <- function(x) {
+    inherits(x, "splicingReadFilter")
+  }
+  
+  filters <- list(...)
+  if ( !all(sapply(filters, is.character) | sapply(filters, is.filter)) ) {
+    stop("Only character and FILTER() objects are allowed as filters")
+  }
+
+  sapply(filters[sapply(filters, is.character)], function(x) {
+    if (length(x)!=1) { stop("Invalid filter: ", x) }
+    if (!x %in% names(myfilters)) { stop("Unknown filter: ", x) }
+  })
+  
+  for (i in seq_along(filters)) {
+    origlen <- noReads(reads)
+    if (is.character(filters[[i]])) {
+      name <- filters[[i]]
+      reads <- myfilters[[ filters[[i]] ]](reads)
+    } else {
+      name <- filters[[i]]$name
+      reads <- do.call(myfilters[[ filters[[i]]$name ]],
+                       c(list(reads=reads), filters[[i]]$args))
+    }
+    newlen <- noReads(reads)
+    if (verbose) {
+      message(sprintf("`%s' filtered out %i reads, %i remaining",
+                      name, origlen-newlen, newlen))
+    }
+  }
+
+  reads
 }

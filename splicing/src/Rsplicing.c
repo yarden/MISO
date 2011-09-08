@@ -388,6 +388,51 @@ SEXP R_splicing_gff_to_SEXP(splicing_gff_t *gff) {
   return result;
 }
 
+SEXP R_splicing_delbit(SEXP pv, SEXP pbit) {
+  int *v=INTEGER(pv);
+  int bit=INTEGER(pbit)[0]-1;
+  int mask=~(1L << bit);
+  int i, n=GET_LENGTH(pv);
+  SEXP result;
+  int *res;
+
+  R_splicing_begin();
+  
+  PROTECT(result=NEW_INTEGER(n));
+  res=INTEGER(result);
+  
+  for (i=0; i<n; i++) {
+    res[i]=v[i] & mask;
+  }
+
+  R_splicing_end();
+
+  UNPROTECT(1);
+  return result;
+}
+
+SEXP R_splicing_getbit(SEXP pv, SEXP pbit) {
+  int *v=INTEGER(pv);
+  int bit=INTEGER(pbit)[0]-1;
+  int i, n=GET_LENGTH(pv);
+  SEXP result;
+  int *res;
+  
+  R_splicing_begin();
+  
+  PROTECT(result=NEW_INTEGER(n));
+  res=INTEGER(result);
+  
+  for (i=0; i<n; i++) {
+    res[i]=(v[i] >> bit) & 1;
+  }
+  
+  R_splicing_end();
+  
+  UNPROTECT(1);
+  return result;
+} 
+
 SEXP R_splicing_read_gff(SEXP file) {
   const char *filename=CHAR(STRING_ELT(file, 0));
   FILE *input=fopen(filename, "r");
