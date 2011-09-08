@@ -132,6 +132,13 @@ getbit <- function(v, bit) {
         PACKAGE="splicing")
 }
 
+getStrand <- function(reads)
+  UseMethod("getStrand")
+
+getStrand.splicingSAM <- function(reads) {
+  getbit(reads$flag, 5L)
+}
+
 selectReads <- function(reads, idx)
   UseMethod("selectReads")
 
@@ -196,7 +203,7 @@ filter.notOppositeStrand <- function(reads) {
 
   ## And the appropriate paired reads
   paired <- which(reads$pairpos!=0)
-  strand <- getbit(reads$flag, 5L)
+  strand <- getStrand(reads)
   keep2 <- paired[which(strand[paired] != strand[reads$mypair[paired]+1])]
   
   selectReads(reads, sort(c(keep1, keep2)))
