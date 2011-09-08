@@ -1,7 +1,12 @@
 #!/bin/bash
 
+
 # convert file
-#python sam_to_bam.py --convert test-data/sam-data/c2c12.Atp2b1.sam indexed-sam
+python sam_to_bam.py --convert test-data/sam-data/c2c12.Atp2b1.sam indexed-sam
+
+# index gene
+python index_gff.py --index gff-events/mm9/genes/Atp2b1.mm9.gff indexed-gff/
+
 
 # Run MISO
 #python run_events_analysis.py --compute-genes-psi indexed-gff/ indexed-sam/ --output-dir test-output/ \

@@ -926,7 +926,9 @@ class MISOSampler:
                                                  long(lag),
                                                  prior_params)
             print "PAIRED-END results: "
-            print miso_results
+
+            for n, x in enumerate(miso_results):
+                print "%d: " %(n), x
         else:
             # Run single-end
             miso_results = pysplicing.MISO(c_gene, 0L,
