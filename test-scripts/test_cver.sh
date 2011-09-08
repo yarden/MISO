@@ -8,7 +8,17 @@
 #--read-len 36
 
 ### C-version
-python /Users/yarden/Projects/fastmiso/MISO/run_miso.py --compute-gene-psi "ENSMUSG00000019943" "/Users/yarden/Projects/fastmiso/MISO/indexed-gff/chr10/ENSMUSG00000019943.pickle" indexed-sam/c2c12.Atp2b1.sorted.bam /Users/yarden/Projects/fastmiso/MISO/test-output --read-len 36 --settings-filename /Users/yarden/Projects/fastmiso/MISO/settings/miso_settings.txt
+rm ~/Projects/fastmiso/MISO/test-output/chr10/ENSMUSG00000019943.miso
+
+# Single-end
+#echo "Testing single-end"
+#python /Users/yarden/Projects/fastmiso/MISO/run_miso.py --compute-gene-psi "ENSMUSG00000019943" "/Users/yarden/Projects/fastmiso/MISO/indexed-gff/chr10/ENSMUSG00000019943.pickle" indexed-sam/c2c12.Atp2b1.sorted.bam /Users/yarden/Projects/fastmiso/MISO/test-output --read-len 36 --settings-filename /Users/yarden/Projects/fastmiso/MISO/settings/miso_settings.txt
+
+rm ~/Projects/fastmiso/MISO/test-output/chr10/ENSMUSG00000019943.miso
+
+# Paired-end
+echo "Testing paired-end"
+python /Users/yarden/Projects/fastmiso/MISO/run_miso.py --compute-gene-psi "ENSMUSG00000019943" "/Users/yarden/Projects/fastmiso/MISO/indexed-gff/chr10/ENSMUSG00000019943.pickle" indexed-sam/c2c12.Atp2b1.sorted.bam /Users/yarden/Projects/fastmiso/MISO/test-output --paired-end 250 30 --read-len 36 --settings-filename /Users/yarden/Projects/fastmiso/MISO/settings/miso_settings.txt
 
 
 ##

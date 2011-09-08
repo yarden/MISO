@@ -903,19 +903,40 @@ class MISOSampler:
         # Convert Python Gene object to C
         c_gene = py2c_gene(gene)
 
-        # Run C MISO (single-end)
-
-        miso_results = pysplicing.MISO(c_gene, 0L,
-                                       tuple([r+1 for r in read_positions]),
-                                       read_cigars,
-                                       long(self.read_len),
-                                       long(num_iters),
-                                       long(burn_in),
-                                       long(lag),
-                                       prior_params)
-        print "miso_results: ",
-
-        print miso_results 
+        ##
+        ## Run C MISO
+        ##
+        read_positions = tuple([r+1 for r in read_positions])
+        if self.paired_end:
+            # Number of standard deviations in insert length
+            # distribution to consider when assigning reads
+            # to isoforms
+            num_sds = 4L
+            
+            # Run paired-end
+            miso_results = pysplicing.MISOPaired(c_gene, 0L,
+                                                 read_positions,
+                                                 read_cigars,
+                                                 long(self.read_len),
+                                                 long(self.mean_frag_len),
+                                                 long(self.frag_variance),
+                                                 num_sds,
+                                                 long(num_iters),
+                                                 long(burn_in),
+                                                 long(lag),
+                                                 prior_params)
+            print "PAIRED-END results: "
+            print miso_results
+        else:
+            # Run single-end
+            miso_results = pysplicing.MISO(c_gene, 0L,
+                                           read_positions,
+                                           read_cigars,
+                                           long(self.read_len),
+                                           long(num_iters),
+                                           long(burn_in),
+                                           long(lag),
+                                           prior_params)
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0]))
@@ -1217,8 +1238,6 @@ class MISOSampler:
         
         # Get a summary of the raw read counts supporting each isoform
         read_counts_str = ",".join(read_counts_list)
-
-        print assignments
 
         assigned_counts = count_isoform_assignments(assignments)
 
