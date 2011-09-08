@@ -344,6 +344,9 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
 
     min_event_reads = Settings.get_min_event_reads()
 
+    mean_frag_len = None
+    frag_variance = None
+
     if paired_end:
         mean_frag_len = int(paired_end[0])
         frag_variance = power(int(paired_end[1]), 2)
@@ -355,6 +358,15 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
     gff_genes = gff_utils.load_indexed_gff_file(gff_index_filename)
 #    t2 = time.time()
 #    print "  - Loading took: %.2f seconds" %(t2 - t1)
+
+    # If given a template for the SAM file, use it
+    template = None
+
+    if settings and "sam_template" in settings:
+        template = settings["sam_template"]
+        
+    # Load the BAM file upfront
+    bamfile = sam_utils.load_bam_reads(bam_filename, template=template)
         
     for gene_id, gene_info in gff_genes.iteritems():
         if gene_id not in gene_ids:
@@ -367,34 +379,24 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
         # Find the most inclusive transcription start and end sites for each gene
         tx_start, tx_end = gff_utils.get_inclusive_txn_bounds(gene_info['hierarchy'][gene_id])
 
-        # If given a template for the SAM file, use it
-        template = None
-        
-        if settings and "sam_template" in settings:
-            template = settings["sam_template"]
-        
-        # Load the BAM file
-        bamfile = sam_utils.load_bam_reads(bam_filename, template=template)
-
         # Fetch reads aligning to the gene boundaries
         gene_reads = sam_utils.fetch_bam_reads_in_gene(bamfile, gene_obj.chrom,
                                                        tx_start, tx_end,
                                                        gene_obj)
 
         # Align the reads to the isoforms
-        reads = sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj, read_len,
-                                                overhang_len,
-                                                paired_end=paired_end)
-
-        num_raw_reads = len(reads)
-
+        #reads = sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj, read_len,
+        #                                        overhang_len,
+        #                                        paired_end=paired_end)
+        reads, num_raw_reads = sam_utils.sam_parse_reads(gene_reads,
+                                                         paired_end=paired_end)
+                                   
         # Skip gene if none of the reads align to gene boundaries
         if num_raw_reads < min_event_reads:
             print "Only %d reads in gene, skipping (needed >= %d reads)" \
                   %(num_raw_reads, min_event_reads)
             continue
 
-        reads = array(reads)
         num_isoforms = len(gene_obj.isoforms)
         hyperparameters = ones(num_isoforms)
 
@@ -432,9 +434,8 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
             
         output_filename = os.path.join(chrom_dir, gene_obj.label)
 
-        sampler.run_sampler(num_iters, reads, gene_obj,
-                            hyperparameters, sampler_params,
-                            output_filename, burn_in=burn_in,
+        sampler.run_sampler(num_iters, reads, gene_obj, hyperparameters,
+                            sampler_params, output_filename, burn_in=burn_in,
                             lag=lag)
         
 	    

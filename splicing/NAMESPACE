@@ -1,0 +1,40 @@
+
+export(listGTFs, downloadGTF, gtf2gff3, gff32gtf, readGFF3, writeGFF3,
+       writeGTF)
+
+export(isGFF3, noGenes, seqIds, geneIds, selectGenes, noIso, geneTypes,
+       noExons, getIso, geneLength, isoLength, totalExonLength)
+
+export(createGene, mergeGenes, rpk, realPsi,
+       simulateReads)
+
+export(readSAM, noReads, isPaired, isMixed, noPairs, noSingles, toTable,
+       writeSAM, readLength, seqNames, selectReads, filterReads, FILTER,
+       getStrand)
+
+S3method("noReads", "splicingSAM")
+S3method("isPaired", "splicingSAM")
+S3method("isMixed", "splicingSAM")
+S3method("noPairs", "splicingSAM")
+S3method("noSingles", "splicingSAM")
+S3method("toTable", "splicingSAM")
+S3method("writeSAM", "splicingSAM")
+S3method("print", "splicingSAM")
+S3method("readLength", "splicingSAM")
+S3method("seqNames", "splicingSAM")
+S3method("selectReads", "splicingSAM")
+S3method("filterReads", "splicingSAM")
+S3method("getStrand", "splicingSAM")
+
+export(plotIso, plotIsoSize, plotIsoPDF)
+
+export(MISO, MISO.Trinity, postMean, runData)
+
+S3method("postMean", "MISOresult")
+S3method("logLik", "MISOresult")
+S3method("runData", "MISOresult")
+
+export(condIso, assignmentMatrix)
+
+export(matchIso, solveIso)
+

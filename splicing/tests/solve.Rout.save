@@ -1,0 +1,61 @@
+
+R version 2.13.0 (2011-04-13)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> library(splicing)
+> 
+> set.seed(42)
+> options(width=60)
+> 
+> gene <- createGene(list(c(1,100), c(201,300), c(401,500)),
++                    list(c(1,2), c(1,3), c(1,2,3)))
+> 
+> reads <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
++                        noReads=1000L, readLength=20)
+> 
+> mres <- solveIso(gene, reads=reads, readLength=20L)
+> mres$expression
+[1] 0.1480842 0.3399616 0.5119542
+> 
+> reads2 <- simulateReads(gene, expression=c(2/10, 3/10, 5/10), paired=TRUE,
++                         noReads=1000L, readLength=20, normalMean=90,
++                         normalVar=50, numDevs=4)
+> 
+> mres2 <- solveIso(gene, reads=reads2, readLength=20L, paired=TRUE,
++                   normalMean=90, normalVar=50, numDevs=4)
+> mres2$expression
+[1] 0.2059162 0.2943647 0.4997191
+> 
+> assmat <- assignmentMatrix(gene, readLength=20, paired=TRUE,
++                            normalMean=90, normalVar=50, numDevs=4)
+> 
+> matchmat <- matchIso(gene, reads=reads2, normalMean=90, normalVar=50,
++                      numDevs=4)
+> 
+> matchstr <- table(apply((matchmat[[1]] != 0) + 0, 2, paste, collapse=""))
+> 
+> matchstr <- matchstr[colnames(assmat)]
+> 
+> fit <- lsfit(t(assmat), matchstr, intercept=FALSE)
+> 
+> n <- function(x) x/sum(x)
+> 
+> n(fit$coefficients)
+       X1        X2        X3 
+0.2059162 0.2943647 0.4997191 
+> 

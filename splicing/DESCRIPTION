@@ -1,0 +1,11 @@
+Package: splicing
+Type: Package
+Title: Various functions to study alternative splicing.
+Version: 0.1
+Date: 2011-03-30
+Author: Gabor Csardi <gcsardi@stat.harvard.edu>
+Maintainer: Gabor Csardi <gcsardi@stat.harvard.edu>
+Suggests: RCurl, MASS, nnls
+Description: Various functions to study alternative splicing.
+License: GPL (>=2)
+LazyLoad: yes

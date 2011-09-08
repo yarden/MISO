@@ -7,6 +7,7 @@ from parse_csv import *
 from json_utils import *
 import pprint
 
+import pysplicing
 
 class Interval:
     def __init__(self, start, end):
@@ -111,6 +112,28 @@ class Intron(Interval):
 	    return True
 	return False
 
+def py2c_gene(py_gene):
+    """
+    Convert a Python Gene object to a C gene object for use
+    with C MISO.
+    """
+    # Description of exon lens
+    CMISO_exon_lens = tuple([(part.start, part.end) \
+                             for part in py_gene.parts])
+    
+    # Description of isoforms of gene
+    isoforms_desc = []
+    for isoform in py_gene.isoforms:
+        curr_iso_desc = tuple([py_gene.parts.index(iso_part) \
+                               for iso_part in isoform.parts])
+        isoforms_desc.append(curr_iso_desc)
+        
+    CMISO_isoforms_desc = tuple(isoforms_desc)
+    c_gene = pysplicing.createGene(CMISO_exon_lens,
+                                   CMISO_isoforms_desc)
+    return c_gene
+    
+    
 class Gene:
     """
     A representation of a gene and its isoforms.  If a gene has two isoforms, make the inclusive
@@ -300,9 +323,12 @@ class Gene:
 
     def create_isoforms(self):
         self.isoforms = []
+
+        self.isoforms_numeric_desc = []
 	for iso in self.isoform_desc:
             isoform_parts = []
 	    isoform_seq = ""
+            
 	    for part_label in iso.split('_'):
 		# retrieve part 
 		part = self.get_part_by_label(part_label)
@@ -311,12 +337,15 @@ class Gene:
                           %(part, part_label, self.label)
                 isoform_parts.append(part)
 		isoform_seq += part.seq
+                
 	    # make isoform with the given parts
 	    isoform = Isoform(self, isoform_parts, seq=isoform_seq)
 	    isoform.desc = iso
 	    self.isoforms.append(isoform)
 	    self.iso_lens.append(isoform.len)
+            
         self.iso_lens = array(self.iso_lens)
+        
 
     def set_sequence(self, exon_id, seq):
         """
@@ -339,9 +368,6 @@ class Gene:
         right = self.align_read_to_isoforms_with_cigar(
             right_cigar, genomic_right_read_start, genomic_right_read_end,
             read_len, overhang)
-
-#        print "left: ", left
-#        print "right: ", right
     
         for lal, lco, ral, rco in zip(left[0], left[1], right[0], right[1]):
             if lal and ral:
@@ -409,11 +435,9 @@ class Gene:
 	alignments = []
 	isoforms_coords = []
 	for read_coords in read_genomic_coords:
-#	    print "aligning: ", read_coords
 	    genomic_read_start, genomic_read_end = read_coords
 	    alignment, isoform_coords = self.align_read_to_isoforms(genomic_read_start, genomic_read_end,
                                                                     overhang=overhang, read_len=read_len)
-#	    print " - aligned isoform coords: ", isoform_coords
 	    alignments.append(alignment)
 	    isoforms_coords.append(isoform_coords)
 	return (array(alignments), isoforms_coords)
