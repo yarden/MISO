@@ -546,6 +546,23 @@ int FUNCTION(splicing_matrix,order_cols_cmp)(void *data,
   return 0;
 }
 
+int FUNCTION(splicing_matrix,binorder_cols_cmp)(void *data, 
+						const void *a,
+						const void *b) {
+  TYPE(splicing_matrix) *m=(TYPE(splicing_matrix) *) data;
+  int aa=*(int*)a, bb=*(int*)b;
+  BASE *aaa=&MATRIX(*m, 0, aa);
+  BASE *bbb=&MATRIX(*m, 0, bb);
+  int i;
+  size_t nrow=FUNCTION(splicing_matrix,nrow)(m);
+  
+  for (i=0; i<nrow; i++) { 
+    if (aaa[i] == 0 && bbb[i] != 0) { return -1; }
+    if (aaa[i] != 0 && bbb[i] == 0) { return  1; }
+  }
+  return 0;
+}
+
 int FUNCTION(splicing_matrix,order_cols)(const TYPE(splicing_matrix) *m, 
 					 splicing_vector_int_t *order) {
   size_t i, ncol=FUNCTION(splicing_matrix,ncol)(m);
@@ -558,6 +575,19 @@ int FUNCTION(splicing_matrix,order_cols)(const TYPE(splicing_matrix) *m,
   return 0;
 }
 					
+int FUNCTION(splicing_matrix,binorder_cols)(const TYPE(splicing_matrix) *m, 
+					    splicing_vector_int_t *order) {
+  size_t i, ncol=FUNCTION(splicing_matrix,ncol)(m);
+
+  SPLICING_CHECK(splicing_vector_int_resize(order, ncol));
+  for (i=0; i<ncol; i++) { VECTOR(*order)[i] = i; }
+  
+  splicing_qsort_r(VECTOR(*order), ncol, sizeof(int), (void*) m, 
+		   FUNCTION(splicing_matrix,binorder_cols_cmp));
+  return 0;
+}
+					
+
 int FUNCTION(splicing_matrix,sort_cols)(TYPE(splicing_matrix) *m) {
   splicing_vector_int_t order;
   int ncol=FUNCTION(splicing_matrix,ncol)(m);

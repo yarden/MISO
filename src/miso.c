@@ -330,51 +330,6 @@ int splicing_metropolis_hastings_ratio(const splicing_vector_int_t *ass,
   return 0;
 }
 
-int splicing_i_miso_classes(const splicing_matrix_t *match_matrix,
-			    const splicing_vector_int_t *match_order,
-			    splicing_matrix_t *class_templates,
-			    splicing_vector_t *class_counts) {
-  
-  int noiso=splicing_matrix_nrow(match_matrix);
-
-  if (splicing_matrix_size(match_matrix) == 0) { 
-
-    /* Special case: no reads */
-    splicing_matrix_resize(class_templates, noiso, 0);
-    splicing_vector_resize(class_counts, 0);
-
-  } else { 
-
-    int i, noreads=splicing_vector_int_size(match_order);
-    int lastclass=0;
-    double *prev, *curr;
-    int *order=VECTOR(*match_order);
-
-    splicing_matrix_resize(class_templates, noiso, 1);
-    splicing_vector_resize(class_counts, 1);
-    
-    memcpy(&MATRIX(*class_templates, 0, lastclass), 
-	   &MATRIX(*match_matrix, 0, order[0]), 
-	   sizeof(double) * noiso);
-    prev = &MATRIX(*class_templates, 0, lastclass);
-	   
-    for (i=0; i<noreads; i++) {
-      curr = &MATRIX(*match_matrix, 0, order[i]);
-      if (memcmp(prev, curr, sizeof(double)*noiso) != 0) {
-	SPLICING_CHECK(splicing_matrix_add_cols(class_templates, 1));
-	SPLICING_CHECK(splicing_vector_push_back(class_counts, 0));
-	lastclass++;
-	prev = &MATRIX(*class_templates, 0, lastclass);
-	memcpy(prev, curr, sizeof(double) * noiso);
-      }
-      VECTOR(*class_counts)[lastclass] += 1;
-    }
-
-  } 
-
-  return 0;
-}
-
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
 		  const char **cigarstr, int readLength, 
@@ -445,7 +400,9 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 
   if (class_templates && class_counts) { 
     SPLICING_CHECK(splicing_i_miso_classes(mymatch_matrix, &match_order, 
-					   class_templates, class_counts));
+					   class_templates, class_counts, 
+					   /*bin_class_templates=*/ 0,
+					   /*bin_class_counts=*/ 0));
   }
 
   SPLICING_CHECK(splicing_vector_int_init(&effisolen, noiso));
@@ -603,7 +560,9 @@ int splicing_miso_trinity(const splicing_matrix_t *match_matrix,
 
   if (class_templates && class_counts) { 
     SPLICING_CHECK(splicing_i_miso_classes(match_matrix, &match_order, 
-					   class_templates, class_counts));
+					   class_templates, class_counts, 
+					   /*bin_class_templates=*/ 0, 
+					   /*bin_class_counts=*/ 0));
   }
 
   SPLICING_CHECK(splicing_vector_int_init(&effisolen, noiso));

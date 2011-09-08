@@ -157,7 +157,9 @@ int splicing_order_matches(const splicing_matrix_t *matches,
 int splicing_i_miso_classes(const splicing_matrix_t *match_matrix,
 			    const splicing_vector_int_t *match_order,
 			    splicing_matrix_t *class_templates,
-			    splicing_vector_t *class_counts);
+			    splicing_vector_t *class_counts, 
+			    splicing_matrix_t *bin_class_templates,
+			    splicing_vector_t *bin_class_counts);
 
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
@@ -194,6 +196,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 splicing_matrix_t *match_matrix,
 			 splicing_matrix_t *class_templates,
 			 splicing_vector_t *class_counts,
+			 splicing_matrix_t *bin_class_templates,
+			 splicing_vector_t *bin_class_count,
 			 splicing_vector_int_t *assignment,
 			 splicing_miso_rundata_t *rundata);
 
@@ -210,6 +214,8 @@ int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
 				 splicing_vector_t *logLik,
 				 splicing_matrix_t *class_templates,
 				 splicing_vector_t *class_counts,
+				 splicing_matrix_t *bin_class_templates,
+				 splicing_vector_t *bin_class_count,
 				 splicing_vector_int_t *assignment,
 				 splicing_miso_rundata_t *rundata);
 

@@ -146,8 +146,8 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_vector_t myhyperp;
   splicing_matrix_t samples;
   splicing_vector_t logLik;
-  splicing_matrix_t class_templates;
-  splicing_vector_t class_counts;
+  splicing_matrix_t bin_class_templates;
+  splicing_vector_t bin_class_counts;
   splicing_vector_int_t assignment;
   splicing_miso_rundata_t rundata;
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
@@ -163,10 +163,10 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   SPLICING_FINALLY(splicing_matrix_destroy, &samples);
   SPLICING_PYCHECK(splicing_vector_init(&logLik, 0));
   SPLICING_FINALLY(splicing_vector_destroy, &logLik);
-  SPLICING_PYCHECK(splicing_matrix_init(&class_templates, 0, 0));
-  SPLICING_FINALLY(splicing_matrix_destroy, &class_templates);
-  SPLICING_PYCHECK(splicing_vector_init(&class_counts, 0));
-  SPLICING_FINALLY(splicing_vector_destroy, &class_counts);
+  SPLICING_PYCHECK(splicing_matrix_init(&bin_class_templates, 0, 0));
+  SPLICING_FINALLY(splicing_matrix_destroy, &bin_class_templates);
+  SPLICING_PYCHECK(splicing_vector_init(&bin_class_counts, 0));
+  SPLICING_FINALLY(splicing_vector_destroy, &bin_class_counts);
   SPLICING_PYCHECK(splicing_vector_int_init(&assignment, 0));
   SPLICING_FINALLY(splicing_vector_int_destroy, &assignment);
   
@@ -191,8 +191,9 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
 		       noIterations, noBurnIn, noLag, &myhyperp, 
 		       /*insertProb=*/ 0, /*insertStart=*/ 0,
 		       normalMean, normalVar, numDevs, &samples, &logLik,
-		       /*match_matrix=*/ 0, &class_templates, &class_counts,
-		       &assignment, &rundata);
+		       /*match_matrix=*/ 0, /*class_templates=*/ 0, 
+		       /*class_counts=*/ 0, &bin_class_templates, 
+		       &bin_class_counts, &assignment, &rundata);
   
   splicing_vector_destroy(&myhyperp);
   splicing_vector_int_destroy(&myreadpos);
@@ -204,12 +205,12 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   r5=pysplicing_from_vector_int(&assignment);
   splicing_vector_int_destroy(&assignment); SPLICING_FINALLY_CLEAN(1);
 
-  r4=pysplicing_from_vector(&class_counts);
-  splicing_vector_destroy(&class_counts); SPLICING_FINALLY_CLEAN(1);
+  r4=pysplicing_from_vector(&bin_class_counts);
+  splicing_vector_destroy(&bin_class_counts); SPLICING_FINALLY_CLEAN(1);
 
-  splicing_matrix_transpose(&class_templates);
-  r3=pysplicing_from_matrix(&class_templates);
-  splicing_matrix_destroy(&class_templates); SPLICING_FINALLY_CLEAN(1);
+  splicing_matrix_transpose(&bin_class_templates);
+  r3=pysplicing_from_matrix(&bin_class_templates);
+  splicing_matrix_destroy(&bin_class_templates); SPLICING_FINALLY_CLEAN(1);
 
   r2=pysplicing_from_vector(&logLik);
   splicing_vector_destroy(&logLik); SPLICING_FINALLY_CLEAN(1);
