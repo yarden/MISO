@@ -912,11 +912,15 @@ class MISOSampler:
             # distribution to consider when assigning reads
             # to isoforms
             num_sds = 4L
+
+            rp = read_positions[0:2]
+            rc = read_cigars[0:2]
             
             # Run paired-end
             miso_results = pysplicing.MISOPaired(c_gene, 0L,
-                                                 read_positions,
-                                                 read_cigars,
+                                                 rp, rc,
+#                                                 read_positions,
+#                                                 read_cigars,
                                                  long(self.read_len),
                                                  long(self.mean_frag_len),
                                                  long(self.frag_variance),
