@@ -70,7 +70,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
 
     if use_cluster:
         # Threshold for putting jobs in the long queue
-        long_thresh = 50
+        long_thresh = 400
 
         # Delay between jobs
         delay_constant = 0.9
