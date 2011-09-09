@@ -38,41 +38,6 @@ class TestMISO(unittest.TestCase):
         assert(os.path.exists(os.path.join(output_dir,
                                            "c2c12.Atp2b1.sorted.bam")))
 
-
-        
-    def test_single_end_SE(self):
-        """
-        Test skipped exons using single-end event counts files.
-        """
-        print "Testing single-end SE event interface..."
-        sample_name = "se-sample"
-        counts_filename = os.path.join(self.tests_data_dir,
-                                       "se-counts",
-                                       "se_test.counts")
-        output_dir = os.path.join(self.tests_output_dir, "SE-output")
-
-        read_len = 35
-        overhang_len = 4
-
-        event_type = "SE"
-        
-        miso_cmd = "%s --compute-events-psi %s %s --output-dir %s --read-len %d --overhang-len %d " \
-                   " --event-type %s" %(self.events_analysis_cmd,
-                                        sample_name,
-                                        counts_filename,
-                                        output_dir,
-                                        read_len,
-                                        overhang_len,
-                                        event_type)
-        print "Executing: %s" %(miso_cmd)
-        os.system(miso_cmd)
-
-    def test_paired_end_scoring(self):
-        """
-        Test scoring functions on synthetic gene model.
-        """
-        pass
-
         
     def test_z_gene_psi(self):
         """
