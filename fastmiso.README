@@ -1,0 +1,33 @@
+USING THE C VERSION OF MISO:
+
+1. Get the C version from github, as follows.  First check out the MISO repository, if you haven't already:
+
+$ git clone git@github.com:yarden/MISO.git
+
+Then checkout the "fastmiso" branch:
+
+$ git checkout fastmiso
+
+Now compile the relevant packages:
+
+$ make
+
+Then compile the Python interface
+
+$ cd pysplicing/
+$ python setup.py install 
+
+Note: if you are compiling on a Unix system where you do not have root access, use the --prefix option, e.g.:
+
+$ python setup.py install --prefix=~/ 
+
+to install the Python interface in your home directory.
+
+Test that the version works through Python:
+
+$ cd ~/
+$ python
+>> import pysplicing
+>>
+
+If you get an error after the import, something went wrong. 
