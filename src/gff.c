@@ -661,7 +661,7 @@ int splicing_gff_exon_start_end(const splicing_gff_t *gff,
 
   splicing_vector_int_destroy(&tmp2);
   splicing_vector_int_destroy(&tmp);
-  SPLICING_FINALLY_CLEAN(1);
+  SPLICING_FINALLY_CLEAN(2);
 
   return 0;
 }
