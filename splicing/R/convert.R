@@ -1,5 +1,7 @@
 
-listGTFs <- function(baseURL="ftp://ftp.ensembl.org/pub/current_gtf/") {
+listEnsemblGenes <- function(baseURL="ftp://ftp.ensembl.org/pub/current_gtf/") {
+
+  require(RCurl)
   
   list <- getURL(baseURL)
   list <- strsplit(list, "\n")[[1]]
@@ -14,26 +16,35 @@ listGTFs <- function(baseURL="ftp://ftp.ensembl.org/pub/current_gtf/") {
 ## Function to download a GTF file from ensemble and
 ## convert it to a GFF3.
 
-downloadGTF <- function(speciesName, 
-                        baseURL="ftp://ftp.ensembl.org/pub/current_gtf/",
-                        verbose=FALSE) {
+getEnsemblGenes <- function(speciesName, 
+                            baseURL="ftp://ftp.ensembl.org/pub/current_gtf/",
+                            verbose=TRUE) {
+
+  require(RCurl)
+
+  ## Create the URL
   
-  speciesName <- gsub(" ", "_", tolower(speciesName))
+  speciesName2 <- gsub(" ", "_", tolower(speciesName))
   list <- getURL(baseURL)
-  if (!any(grepl(speciesName, list))) {
+  if (!any(grepl(speciesName2, list))) {
     stop("Unknown species")
   }
   
-  list2 <- getURL(paste(baseURL, sep="/", speciesName, ""))
+  list2 <- getURL(paste(baseURL, sep="/", speciesName2, ""))
   fname <- tail(strsplit(list2, " ")[[1]], 1)
+
+  ## Download the file
   
   tmp <- tempfile()
   if (verbose) { message("Downloading file") }
-  download.file(paste(baseURL, sep="/", speciesName, fname), tmp,
+  download.file(paste(baseURL, sep="/", speciesName2, fname), tmp,
                 quiet=!verbose)
   if (verbose) { message("Uncompresssing and parsing file") }
-  lines <- read.delim(gzfile(tmp), header=FALSE)
-
+  ## TODO: close tmp
+  ## TODO: something faster
+  lines <- read.delim(gzfile(tmp), header=FALSE, stringsAsFactors=FALSE)
+  unlink(tmp)
+  
   cn <- c("seqname", "source", "feature", "start", "end", "score", "strand",
           "frame")
   if (ncol(lines) < 8) {
@@ -44,41 +55,13 @@ downloadGTF <- function(speciesName,
   if (ncol(lines) > 9) { cn <- c(cn, "comments") }
   if (ncol(lines) > 10) { warning("More than ten columns in GTF file") }
   colnames(lines) <- cn
-
-  lines
+  attr(lines, "species") <- speciesName
+  
+  gtf2gff3(lines)
 }
-
-addGidTid <- function(gff3) {
-  gff3$gid <- which(gff3$type==SPLICING_GENE)-1L
-  gff3$tid <- which(gff3$type==SPLICING_MRNA)-1L
-  if (! "ID" %in% names(gff3)) {
-    gff3$ID <- sub(".*ID=([^;]+);?.*", "\\1", gff3$attributes)
-  }
-  if (! "parent" %in% names(gff3)) {
-    gff3$parent <- sub(".*;Parent=([^;]+);?.*", "\\1", gff3$attributes)
-    gff3$parent <- match(gff3$parent, gff3$ID)-1L
-  }
-  gff3
-}
-
-## This is the new version. We order the lines, according to seqname,
-## gene_id, feature
-
-## TODO: rewrite
 
 gtf2gff3 <- function(gtf, verbose=TRUE) {
 
-  if (!is.data.frame(gtf)) {
-    stop("Not a data frame")
-  }
-
-  reqcol <- c("seqname", "source", "feature", "start", "end", "score",
-              "strand", "frame", "attributes")
-  if (any(!reqcol %in% colnames(gtf))) {
-    stop("Some columns are not present, required columns:",
-         paste(reqcol, collapse=", ", reqcol))
-  }
-  
   ## Empty input is special case
   if (nrow(gtf)==0) {
     res <- list(seqid=character(), source=character(), type=character(),
@@ -106,32 +89,43 @@ gtf2gff3 <- function(gtf, verbose=TRUE) {
                PACKAGE="splicing")
   res <- res[ res$start != -1, ]
   
-  class(res) <- c("gff3", "data.frame")
+  class(res) <- c("gff3")
+
+  types <- c(gene=SPLICING_GENE, mRNA=SPLICING_MRNA,
+             exon=SPLICING_EXON, CDS=SPLICING_CDS,
+             start_codon=SPLICING_START_CODON,
+             stop_codon=SPLICING_STOP_CODON)
+  strands <- c("+"=SPLICING_STRAND_PLUS,
+               "-"=SPLICING_STRAND_MINUS,
+               "."=SPLICING_STRAND_UNKNOWN)
+             
+  res$seqid_str <- unique(res$seqid)
+  res$seqid <- match(res$seqid, res$seqid_str)-1L
+  res$source_str <- unique(res$source)
+  res$source <- match(res$source, res$source_str)-1L
+  res$type <- types[res$type]
+  res$strand <- strands[res$strand]
+  res$phase[res$phase=="."] <- "-1"
+  res$phase <- as.integer(res$phase)
+  res$species <- attr(gtf, "species")
+  
   res <- addGidTid(res)
   
   res
 }
 
-## TODO: rewrite
-
-gff32gtf <- function(gff3, verbose=TRUE) {
-  if (!isGFF3(gff3)) {
-    stop("Not a GFF3 object")
+addGidTid <- function(gff3) {
+  gff3$gid <- which(gff3$type==SPLICING_GENE)-1L
+  gff3$tid <- which(gff3$type==SPLICING_MRNA)-1L
+  if (! "ID" %in% names(gff3)) {
+    gff3$ID <- sub(".*ID=([^;]+);?.*", "\\1", gff3$attributes)
   }
-
-  gff3$start <- as.integer(gff3$start)
-  gff3$end   <- as.integer(gff3$end)
-  gff3$phase <- as.character(gff3$phase)
-  
-  gid <- names(attr(gff3, "gid"))
-  tid <- names(attr(gff3, "tid"))
-
-  res <- .Call("R_splicing_gff32gtf", gff3, gid, tid,
-               PACKAGE="splicing")
-  res
+  if (! "parent" %in% names(gff3)) {
+    gff3$parent <- sub(".*;Parent=([^;]+);?.*", "\\1", gff3$attributes)
+    gff3$parent <- match(gff3$parent, gff3$ID)-1L
+  }
+  gff3
 }
-
-## TODO: make it faster
 
 readGFF3 <- function(file) {
   .Call("R_splicing_read_gff", as.character(file),
@@ -147,15 +141,12 @@ writeGFF3 <- function(gff3, file) {
   invisible(res)
 }
 
-writeGTF <- function(gtf, file, sep="\t", quote=FALSE, row.names=FALSE,
-                      col.names=FALSE, ...) {
-  write.table(gtf, file=file, sep=sep, quote=quote, row.names=row.names,
-              col.names=col.names, ...)
-}  
-
 ## Gives number of genes
 
-noGenes <- function(gff3) {
+noGenes <- function(gff3)
+  UseMethod("noGenes")
+
+noGenes.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
@@ -164,7 +155,10 @@ noGenes <- function(gff3) {
 
 ## Sequence ids
 
-seqIds <- function(gff3) {
+seqIds <- function(gff3)
+  UseMethod("seqIds")
+
+seqIds.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
@@ -173,7 +167,10 @@ seqIds <- function(gff3) {
 
 ## Gives the gene ids
 
-geneIds <- function(gff3) {
+geneIds <- function(gff3)
+  UseMethod("geneIds")
+
+geneIds.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
@@ -182,7 +179,10 @@ geneIds <- function(gff3) {
 
 ## Select some genes, based on index, or ID
 
-selectGenes <- function(gff3, idx) {
+selectGenes <- function(gff3, idx)
+  UseMethod("selectGenes")
+
+selectGenes.gff3 <- function(gff3, idx) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
@@ -216,7 +216,10 @@ selectGenes <- function(gff3, idx) {
 
 ## Number of isoforms
 
-noIso <- function(gff3) {
+noIso <- function(gff3)
+  UseMethod("noIso")
+
+noIso.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
@@ -226,7 +229,10 @@ noIso <- function(gff3) {
 ## Number of exons, exons are different if they have a different
 ## start position
 
-noExons <- function(gff3) {
+noExons <- function(gff3)
+  UseMethod("noExons")
+
+noExons.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
@@ -245,7 +251,10 @@ noExons <- function(gff3) {
 
 ## TODO: rewrite
 
-totalExonLength <- function(gff3, overlap=TRUE) {
+totalExonLength <- function(gff3, overlap=TRUE)
+  UseMethod("totalExonLength")
+
+totalExonLength.gff3 <- function(gff3, overlap=TRUE) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
@@ -283,7 +292,10 @@ totalExonLength <- function(gff3, overlap=TRUE) {
 
 ## Get the names of isoforms for all genes
 
-getIso <- function(gff3, collapse=FALSE) {
+getIso <- function(gff3, collapse=FALSE)
+  UseMethod("getIso")
+
+getIso.gff3 <- function(gff3, collapse=FALSE) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
@@ -308,7 +320,10 @@ isGFF3 <- function(object) {
 
 ## What type of genes?
 
-geneTypes <- function(gff3) {
+geneTypes <- function(gff3)
+  UseMethod("geneTypes")
+
+geneTypes.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
@@ -317,7 +332,10 @@ geneTypes <- function(gff3) {
 
 ## The length of the gene(s)
 
-geneLength <- function(gff3) {
+geneLength <- function(gff)
+  UseMethod("geneLength")
+
+geneLength.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
@@ -327,6 +345,36 @@ geneLength <- function(gff3) {
 
 ## The length of the different isoforms, after splicing
 
-isoLength <- function(gff3) {
+isoLength <- function(gff3)
+  UseMethod("isoLength")
+
+isoLength.gff3 <- function(gff3) {
   .Call("R_splicing_gff_isolength", gff3, PACKAGE="splicing")
 }
+
+getSpecies <- function(gff3)
+  UseMethod("getSpecies")
+
+getSpecies.gff3 <- function(gff3) {
+  res <- gff3$species
+  if (is.null(res)) NA else res
+}
+
+print.gff3 <- function(gff3, verbose=TRUE) {
+  nog <- noGenes(gff3)
+  spec <- getSpecies(gff3)
+  if (is.na(spec)) { spec <- "Unknown species" }
+  if (nog != 1 || !verbose) {
+    cat(sprintf('GFF3 %s, %i genes, %i transcripts.\n', spec, nog,
+                length(gff3$tid)))
+  } else {
+    cat(sprintf('GFF3 %s gene, %i isoforms.\n', spec, length(gff3$tid)))
+    ## TODO: more
+  }
+}
+
+
+##############
+'
+GFF3 Caenorhabditis_elegans, 45461 genes, 54959 transcripts.
+'

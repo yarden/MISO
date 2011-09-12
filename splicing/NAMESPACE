@@ -1,9 +1,22 @@
 
-export(listGTFs, downloadGTF, gtf2gff3, gff32gtf, readGFF3, writeGFF3,
-       writeGTF)
+export(listEnsemblGenes, getEnsemblGenes, readGFF3, writeGFF3)
 
 export(isGFF3, noGenes, seqIds, geneIds, selectGenes, noIso, geneTypes,
-       noExons, getIso, geneLength, isoLength, totalExonLength)
+       noExons, getIso, geneLength, isoLength, totalExonLength, getSpecies)
+
+S3method("noGenes", "gff3")
+S3method("seqIds", "gff3")
+S3method("geneIds", "gff3")
+S3method("selectGenes", "gff3")
+S3method("noIso", "gff3")
+S3method("geneTypes", "gff3")
+S3method("noExons", "gff3")
+S3method("getIso", "gff3")
+S3method("geneLength", "gff3")
+S3method("isoLength", "gff3")
+S3method("totalExonLength", "gff3")
+S3method("print", "gff3")
+S3method("getSpecies", "gff3")
 
 export(createGene, mergeGenes, rpk, realPsi,
        simulateReads)
@@ -37,4 +50,3 @@ S3method("runData", "MISOresult")
 export(condIso, assignmentMatrix)
 
 export(matchIso, solveIso)
-

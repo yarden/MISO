@@ -1798,3 +1798,217 @@ SEXP R_splicing_read_sambam_region(SEXP pfilename, SEXP pregion) {
   UNPROTECT(1);
   return result;
 }
+
+SEXP R_splicing_gtf2gff3(SEXP gtf, SEXP gid, SEXP tid) {
+  SEXP result, rownames, colnames;
+  SEXP Tseqname, Tsource, Tfeature, Tstart, Tend, Tscore, Tstrand, Tframe;
+  SEXP Fseqid, Fsource, Ftype, Fstart, Fend, Fscore, Fstrand, Fphase, 
+    Fattributes;
+    
+  int Tnrow=GET_LENGTH(gid), Fnrow=0;
+  int noGenes=1, noTranscripts=1, i=0, j=0;
+  const char *acttid, *actgid;
+  int gStart, gEnd, tStart, tEnd; 
+  double min, max;
+  char attr[2000];
+
+  /* Input fields */
+
+  Tseqname = R_splicing_getListElement(gtf, "seqname");
+  Tsource  = R_splicing_getListElement(gtf, "source");
+  Tfeature = R_splicing_getListElement(gtf, "feature");
+  Tstart   = R_splicing_getListElement(gtf, "start");
+  Tend     = R_splicing_getListElement(gtf, "end");
+  Tscore   = R_splicing_getListElement(gtf, "score");
+  Tstrand  = R_splicing_getListElement(gtf, "strand");
+  Tframe   = R_splicing_getListElement(gtf, "frame");
+
+  /* --------------------------------------------------------------- */
+  /* Set up output                                                   */
+  /* --------------------------------------------------------------- */
+
+  /* Count number of unique genes, number of unique transcripts
+     We use that '(gid, tid)' is sorted, first according to 'gid',
+     then according to 'tid' */
+
+  actgid=CHARACTER_VALUE(STRING_ELT(gid, 0));
+  acttid=CHARACTER_VALUE(STRING_ELT(tid, 0));
+  for (i=1; i<Tnrow; i++) {
+    const char *mgid=CHARACTER_VALUE(STRING_ELT(gid, i));
+    const char *mtid=CHARACTER_VALUE(STRING_ELT(tid, i));
+    if (strcmp(actgid, mgid)) { noGenes++;       actgid=mgid; }
+    if (strcmp(acttid, mtid)) { noTranscripts++; acttid=mtid; }
+  }
+  Fnrow = Tnrow + noGenes + noTranscripts;
+  
+  /* Allocate memory for the new rows */
+
+  PROTECT(result=NEW_LIST(9));
+  SET_VECTOR_ELT(result, 0, NEW_CHARACTER(Fnrow)); /* seqid */
+  SET_VECTOR_ELT(result, 1, NEW_CHARACTER(Fnrow)); /* source */
+  SET_VECTOR_ELT(result, 2, NEW_CHARACTER(Fnrow)); /* type */
+  SET_VECTOR_ELT(result, 3, NEW_INTEGER(Fnrow));   /* start */
+  SET_VECTOR_ELT(result, 4, NEW_INTEGER(Fnrow));   /* end */
+  SET_VECTOR_ELT(result, 5, NEW_CHARACTER(Fnrow)); /* score */
+  SET_VECTOR_ELT(result, 6, NEW_CHARACTER(Fnrow)); /* strand */
+  SET_VECTOR_ELT(result, 7, NEW_CHARACTER(Fnrow)); /* phase */
+  SET_VECTOR_ELT(result, 8, NEW_CHARACTER(Fnrow)); /* attributes */
+  Fseqid      = VECTOR_ELT(result, 0);
+  Fsource     = VECTOR_ELT(result, 1);
+  Ftype       = VECTOR_ELT(result, 2);
+  Fstart      = VECTOR_ELT(result, 3);
+  Fend        = VECTOR_ELT(result, 4);
+  Fscore      = VECTOR_ELT(result, 5);
+  Fstrand     = VECTOR_ELT(result, 6);
+  Fphase      = VECTOR_ELT(result, 7);
+  Fattributes = VECTOR_ELT(result, 8);
+
+  /* Names */
+
+  PROTECT(colnames=NEW_CHARACTER(9));
+  SET_STRING_ELT(colnames, 0, mkChar("seqid"));
+  SET_STRING_ELT(colnames, 1, mkChar("source"));
+  SET_STRING_ELT(colnames, 2, mkChar("type"));
+  SET_STRING_ELT(colnames, 3, mkChar("start"));
+  SET_STRING_ELT(colnames, 4, mkChar("end"));
+  SET_STRING_ELT(colnames, 5, mkChar("score"));
+  SET_STRING_ELT(colnames, 6, mkChar("strand"));
+  SET_STRING_ELT(colnames, 7, mkChar("phase"));
+  SET_STRING_ELT(colnames, 8, mkChar("attributes"));
+  SET_NAMES(result, colnames);
+
+  PROTECT(rownames = NEW_INTEGER(Fnrow));
+  for (i=0, j=1; i<Fnrow; i++, j++) { INTEGER(rownames)[i]=j; }
+  SET_ATTR(result, install("row.names"), rownames);
+
+  /* Class */
+
+  SET_CLASS(result, ScalarString(CREATE_STRING_VECTOR("data.frame")));  
+  
+  /* --------------------------------------------------------------- */
+  /* Conversion                                                      */
+  /* --------------------------------------------------------------- */
+
+  /* We just go over the original data, and add the gene and mRNA
+     entries. For this we need to find where each transcript and gene 
+     starts and ends. */
+
+#define GID(I) CHARACTER_VALUE(STRING_ELT(gid, (I)))
+#define TID(I) CHARACTER_VALUE(STRING_ELT(tid, (I)))
+
+  /* Macro from an abstract read.
+     Place the beginning of the gene in 'S', the end in 'E', 
+     start searching from 'F', and also place start position in 'min'
+     and end position in 'max'. */
+
+#define READ_GENE(S,E,F,MIN,MAX)			                  \
+  if ((F) >= Tnrow) {  							  \
+    (S)=-1;                                                               \
+  } else {                                                                \
+    int from=(F);							  \
+    (MIN)=INTEGER(Tstart)[from];                                          \
+    (MAX)=INTEGER(Tend)[from];				                  \
+    (S)=from; (E)=from+1;				                  \
+    while ((E) < Tnrow && !strcmp(GID(S), GID(E))) {                      \
+      if (INTEGER(Tstart)[(E)] < (MIN)) { (MIN)=INTEGER(Tstart)[(E)]; }   \
+      if (INTEGER(Tend)[(E)] > (MAX)) { (MAX)=INTEGER(Tend)[(E)]; }       \
+      (E)=(E)+1;					                  \
+    }                                                                     \
+    (E)=(E)-1;						                  \
+  }
+
+#define READ_ISOFORM(S,E,F,O,MIN,MAX)                                     \
+  if ((F) > (O)) {                                                        \
+    (S)=-1;                                                               \
+  } else {                                                                \
+    int from=(F);                                                         \
+    (S)=from; (E)=from+1;                                                 \
+    while ((E) <= (O) && !strcmp(TID(S), TID(E))) {                       \
+      (E)=(E)+1;                                                          \
+    }                                                                     \
+    (E)=(E)-1;                                                            \
+  }
+
+  i=0;
+  READ_GENE(gStart, gEnd, 0, min, max);
+  while (gStart != -1) {
+
+    /* Allow CTRL + C */
+    R_CheckUserInterrupt();
+
+    /* Entry for 'gene' */
+    SET_STRING_ELT(Fseqid, i, STRING_ELT(Tseqname, gStart));
+    SET_STRING_ELT(Fsource, i, STRING_ELT(Tsource, gStart));
+    SET_STRING_ELT(Ftype, i, mkChar("gene"));
+    INTEGER(Fstart)[i]=min;
+    INTEGER(Fend)[i]=max;
+    SET_STRING_ELT(Fscore, i, STRING_ELT(Tscore, gStart));
+    SET_STRING_ELT(Fstrand, i, STRING_ELT(Tstrand, gStart));
+    SET_STRING_ELT(Fphase, i, STRING_ELT(Tframe, gStart));
+    snprintf(attr, sizeof(attr)/sizeof(char)-sizeof(char), 
+	     "ID=%s", GID(gStart));
+    SET_STRING_ELT(Fattributes, i, mkChar(attr));
+    i++;
+
+    /* Do the individual isoforms */
+    READ_ISOFORM(tStart, tEnd, gStart, gEnd, min, max);
+    while (tStart != -1) {
+      int no, nExon=1, nCDS=1, nStartC=1, nStopC=1, nOther=1;
+      
+      /* Do the isoform */
+      SET_STRING_ELT(Fseqid, i, STRING_ELT(Tseqname, tStart));
+      SET_STRING_ELT(Fsource, i, STRING_ELT(Tsource, tStart));
+      SET_STRING_ELT(Ftype, i, mkChar("mRNA"));
+      INTEGER(Fstart)[i]=min;
+      INTEGER(Fend)[i]=max;
+      SET_STRING_ELT(Fscore, i, STRING_ELT(Tscore, tStart));
+      SET_STRING_ELT(Fstrand, i, STRING_ELT(Tstrand, tStart));
+      SET_STRING_ELT(Fphase, i, STRING_ELT(Tframe, tStart));
+      snprintf(attr, sizeof(attr)/sizeof(char)-sizeof(char), 
+	       "ID=%s;Parent=%s", TID(tStart), GID(tStart));
+      SET_STRING_ELT(Fattributes, i, mkChar(attr));
+      i++;
+      for (j=tStart; j<=tEnd; j++) {
+	SET_STRING_ELT(Fseqid, i, STRING_ELT(Tseqname, j));
+	SET_STRING_ELT(Fsource, i, STRING_ELT(Tsource, j));
+	SET_STRING_ELT(Ftype, i, STRING_ELT(Tfeature, j));
+	INTEGER(Fstart)[i]=INTEGER(Tstart)[j];
+	INTEGER(Fend)[i]=INTEGER(Tend)[j];
+	SET_STRING_ELT(Fscore, i, STRING_ELT(Tscore, j));
+	SET_STRING_ELT(Fstrand, i, STRING_ELT(Tstrand, j));
+	SET_STRING_ELT(Fphase, i, STRING_ELT(Tframe, j));
+	if (!strcmp(CHARACTER_VALUE(STRING_ELT(Tfeature, j)), "exon")) {
+	  no=nExon++;
+	} else if (!strcmp(CHARACTER_VALUE(STRING_ELT(Tfeature, j)), 
+			   "CDS")) {
+	  no=nCDS++;
+	} else if (!strcmp(CHARACTER_VALUE(STRING_ELT(Tfeature, j)), 
+			   "start_codon")) {
+	  no=nStartC++;
+	} else if (!strcmp(CHARACTER_VALUE(STRING_ELT(Tfeature, j)), 
+			   "stop_codon")) {
+	  no=nStopC++;
+	} else {
+	  no=nOther++;
+	}
+	snprintf(attr, sizeof(attr)/sizeof(char)-sizeof(char),
+		 "ID=%s:%s:%i;Parent=%s", TID(j), 
+		 CHARACTER_VALUE(STRING_ELT(Tfeature, j)),
+		 no, TID(j));
+	SET_STRING_ELT(Fattributes, i, mkChar(attr));
+	i++;
+      }
+      
+      READ_ISOFORM(tStart, tEnd, tEnd+1, gEnd, min, max);
+    }
+
+    READ_GENE(gStart, gEnd, gEnd+1, min, max);
+  }
+
+  for (; i<Fnrow; i++) {
+    INTEGER(Fstart)[i] = -1;
+  }
+
+  UNPROTECT(3);
+  return result;
+}
