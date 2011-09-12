@@ -1,6 +1,6 @@
 
-matchIso <- function(geneStructure, gene=1, reads, paired=reads$paired,
-                     fragmentProb=NULL, fragmentStart=0L,
+matchIso <- function(geneStructure, gene=1, reads, overHang=1L,
+                     paired=reads$paired, fragmentProb=NULL, fragmentStart=0L,
                      normalMean, normalVar, numDevs) {
 
   if (paired) {
@@ -12,32 +12,33 @@ matchIso <- function(geneStructure, gene=1, reads, paired=reads$paired,
     if (!is.null(fragmentProb)) { fragmentProb <- as.numeric(fragmentProb) }
     .Call("R_splicing_matchIso_paired", geneStructure, as.integer(gene),
           as.integer(reads$position), as.character(reads$cigar),
-          as.integer(readLength), fragmentProb, as.integer(fragmentStart),
-          as.numeric(normalMean), as.numeric(normalVar),
-          as.numeric(numDevs),
+          as.integer(readLength), as.integer(overHang), fragmentProb,
+          as.integer(fragmentStart), as.numeric(normalMean),
+          as.numeric(normalVar), as.numeric(numDevs),
           PACKAGE="splicing")
   } else {
     .Call("R_splicing_matchIso", geneStructure, as.integer(gene),
           as.integer(reads$position), as.character(reads$cigar),
+          as.integer(overHang),
           PACKAGE="splicing")
   }
 }
 
 solveIso <- function(geneStructure, gene=1L, reads, readLength=33L,
-                     paired=FALSE, fragmentProb=NULL, fragmentStart=0L,
-                     normalMean, normalVar, numDevs) {
+                     overHang=1L, paired=FALSE, fragmentProb=NULL,
+                     fragmentStart=0L, normalMean, normalVar, numDevs) {
 
   if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
 
   if (!paired) { 
     .Call("R_splicing_solve_gene", geneStructure, as.integer(gene),
           as.integer(readLength), as.integer(reads$position),
-          as.character(reads$cigar),
+          as.character(reads$cigar), as.integer(overHang),
           PACKAGE="splicing")
   } else {
     .Call("R_splicing_solve_gene_paired", geneStructure, as.integer(gene),
-          as.integer(readLength), as.integer(reads$position),
-          as.character(reads$cigar), fragmentProb,
+          as.integer(readLength), as.integer(overHang),
+          as.integer(reads$position), as.character(reads$cigar), fragmentProb,
           as.integer(fragmentStart), as.double(normalMean),
           as.double(normalVar), as.double(numDevs),
           PACKAGE="splicing")

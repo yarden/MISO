@@ -6,14 +6,20 @@
 #include <ctype.h>
 
 int splicing_matchIso(const splicing_gff_t *gff, int gene, 
-		      const splicing_vector_int_t *position,
-		      const char **cigarstr,
+		      const splicing_vector_int_t *position, 
+		      const char **cigarstr, int overHang,
 		      splicing_matrix_t *result) {
 
   int noreads=splicing_vector_int_size(position);
   int r, i;
   splicing_vector_int_t exstart, exend, exidx, cigar, cigaridx;  
   size_t noiso;
+
+  if (overHang==0) { overHang=1; }
+  if (overHang < 1) {
+    SPLICING_ERROR("Overhang length invalid. Must be positive", 
+		   SPLICING_EINVAL);
+  }
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
   SPLICING_CHECK(splicing_vector_int_init(&exstart, 0));
@@ -36,36 +42,48 @@ int splicing_matchIso(const splicing_gff_t *gff, int gene,
   for (r=0; r<noreads; r++) {
     int *mycig=VECTOR(cigar) + VECTOR(cigaridx)[r];
     int ex, nocig=VECTOR(cigaridx)[r+1] - VECTOR(cigaridx)[r];
-    for (i=0; i<noiso; i++) {
-      int c, pos=VECTOR(*position)[r];
-      int ex=VECTOR(exidx)[i];
 
-      /* Look for the exon where the read starts */
-      while (VECTOR(exstart)[ex] >= 0 &&
-	     (pos < VECTOR(exstart)[ex] || VECTOR(exend)[ex] < pos)) {
-	ex++;
-      }
-      if (ex >= VECTOR(exidx)[i+1]) { MATRIX(*result, i, r)=0; continue; }
+    /* We can filter out the reads that do not satisfy the overhang 
+       constraint here. We assume that the CIGAR string starts and ends 
+       with a match (of non-zero length). */
+    
+    if (mycig[0] < overHang || mycig[nocig-1] < overHang) {
+      for (i=0; i<noiso; i++) { MATRIX(*result, i, r)=0; }
+    } else {
 
-      /* Got it, match cigar string to exons */
-      MATRIX(*result, i, r)=1;
-      for (c=0; c<nocig; c++) {
-	if (mycig[c] > 0) { /* exon */
-	  if (pos + mycig[c] - 1 > VECTOR(exend)[ex]) { 
-	    MATRIX(*result, i, r)=0; break;
-	  }
-	  pos += mycig[c];
-	} else {	  	   /* intron */
-	  if (pos != VECTOR(exend)[ex]+1) { MATRIX(*result, i, r)=0; break; }
-	  pos -= mycig[c];
-	  ex += 1;
-	  if (ex >= VECTOR(exidx)[i+1] || pos != VECTOR(exstart)[ex]) {
-	    MATRIX(*result, i, r)=0; break;
+      for (i=0; i<noiso; i++) {
+	int c, pos=VECTOR(*position)[r];
+	int ex=VECTOR(exidx)[i];
+	
+	/* Look for the exon where the read starts */
+	while (VECTOR(exstart)[ex] >= 0 &&
+	       (pos < VECTOR(exstart)[ex] || VECTOR(exend)[ex] < pos)) {
+	  ex++;
+	}
+	if (ex >= VECTOR(exidx)[i+1]) { MATRIX(*result, i, r)=0; continue; }
+	
+	/* Got it, match cigar string to exons */
+	MATRIX(*result, i, r)=1;
+	for (c=0; c<nocig; c++) {
+	  if (mycig[c] > 0) { /* exon */
+	    if (pos + mycig[c] - 1 > VECTOR(exend)[ex]) { 
+	      MATRIX(*result, i, r)=0; break;
+	    }
+	    pos += mycig[c];
+	  } else {	  	   /* intron */
+	    if (pos != VECTOR(exend)[ex]+1) {
+	      MATRIX(*result, i, r)=0; break; 
+	    }
+	    pos -= mycig[c];
+	    ex += 1;
+	    if (ex >= VECTOR(exidx)[i+1] || pos != VECTOR(exstart)[ex]) {
+	      MATRIX(*result, i, r)=0; break;
+	    }
 	  }
 	}
-      }
-    } /* i < noiso */
-  }   /* r < noreads */
+      } /* i < noiso */
+    }   /* r < noreads */
+  }	/* if overhang os OK */
 
   splicing_vector_int_destroy(&cigaridx);
   splicing_vector_int_destroy(&cigar);
@@ -81,7 +99,8 @@ int splicing_matchIso(const splicing_gff_t *gff, int gene,
 
 int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
 			     const splicing_vector_int_t *position,
-			     const char **cigarstr, int readLength,
+			     const char **cigarstr, int readLength, 
+			     int overHang,
 			     const splicing_vector_t *fragmentProb,
 			     int fragmentStart, double normalMean,
 			     double normalVar, double numDevs,
@@ -115,7 +134,8 @@ int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
   SPLICING_FINALLY(splicing_matrix_int_destroy, &isopos);
   SPLICING_CHECK(splicing_genomic_to_iso(gff, gene, position, &isopos));
   
-  SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, result));
+  SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, overHang,
+				   result));
   
   if (fragmentLength) {
     SPLICING_CHECK(splicing_matrix_int_resize(fragmentLength, noiso, 
@@ -186,7 +206,7 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 }
 
 int splicing_solve_gene(const splicing_gff_t *gff, size_t gene, 
-			int readLength,
+			int readLength, int overHang,
 			const splicing_vector_int_t *position, 
 			const char **cigarstr,
 			splicing_matrix_t *match_matrix,
@@ -203,13 +223,13 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
   long int nsetp;
   double rnorm;
 
-  SPLICING_CHECK(splicing_assignment_matrix(gff, gene, readLength, 
+  SPLICING_CHECK(splicing_assignment_matrix(gff, gene, readLength, overHang,
 					    assignment_matrix));
   no_classes=splicing_matrix_ncol(assignment_matrix);
   noiso=splicing_matrix_nrow(assignment_matrix);
 
   /* Calculate match vector from match matrix */
-  SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr,
+  SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, overHang,
 				   match_matrix));
   SPLICING_CHECK(splicing_vector_init(&match, no_classes));
   SPLICING_FINALLY(splicing_vector_destroy, &match);
@@ -247,7 +267,7 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 }
 
 int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
-			       int readLength, 
+			       int readLength, int overHang,
 			       const splicing_vector_int_t *position,
 			       const char **cigarstr,
 			       const splicing_vector_t *fragmentProb,
@@ -268,7 +288,8 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
   double rnorm;
 
   SPLICING_CHECK(splicing_paired_assignment_matrix(gff, gene, readLength, 
-						   fragmentProb, fragmentStart,
+						   overHang, fragmentProb,
+						   fragmentStart,
 						   normalMean, normalVar,
 						   numDevs,
 						   assignment_matrix));
@@ -277,7 +298,7 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 
   /* Calculate match vector from match matrix */
   SPLICING_CHECK(splicing_matchIso_paired(gff, gene, position, cigarstr, 
-					  readLength, fragmentProb, 
+					  readLength, overHang, fragmentProb,
 					  fragmentStart, normalMean, 
 					  normalVar, numDevs, match_matrix, 
 					  0));

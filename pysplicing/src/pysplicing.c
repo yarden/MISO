@@ -41,6 +41,7 @@ static PyObject* pysplicing_read_gff(PyObject *self, PyObject *args) {
 static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   PyObject *gff, *readpos, *readcigar, *hyperp=0;
   int gene, readLength, noIterations=5000, noBurnIn=500, noLag=10;
+  int overhang=1;
   splicing_gff_t *mygff;
   splicing_strvector_t myreadcigar;
   splicing_vector_int_t myreadpos;
@@ -53,9 +54,9 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   splicing_miso_rundata_t rundata;
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
   
-  if (!PyArg_ParseTuple(args, "OiOOi|iiiO", &gff, &gene, &readpos, &readcigar,
+  if (!PyArg_ParseTuple(args, "OiOOi|iiiOi", &gff, &gene, &readpos, &readcigar,
 			&readLength, &noIterations, &noBurnIn, &noLag, 
-			&hyperp)) { return NULL; }
+			&hyperp, &overhang)) { return NULL; }
   
   mygff=PyCObject_AsVoidPtr(gff);
 
@@ -86,7 +87,8 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   
   SPLICING_PYCHECK(splicing_miso(mygff, gene, &myreadpos, 
 				 (const char**) myreadcigar.table, 
-				 readLength, noIterations, noBurnIn, noLag,
+				 readLength, overhang,
+				 noIterations, noBurnIn, noLag,
 				 &myhyperp, &samples, &logLik, 
 				 /*match_matrix=*/ 0, &class_templates,
 				 &class_counts, &assignment, &rundata));
@@ -139,6 +141,7 @@ static PyObject* pysplicing_write_gff(PyObject *self, PyObject *args) {
 static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   PyObject *gff, *readpos, *readcigar, *hyperp=0;
   int gene, readLength, noIterations=5000, noBurnIn=500, noLag=10;
+  int overhang=1;
   double normalMean, normalVar, numDevs;
   splicing_gff_t *mygff;
   splicing_strvector_t myreadcigar;
@@ -152,10 +155,10 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_miso_rundata_t rundata;
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
   
-  if (!PyArg_ParseTuple(args, "OiOOiddd|iiiO", &gff, &gene, &readpos, 
+  if (!PyArg_ParseTuple(args, "OiOOiddd|iiiOi", &gff, &gene, &readpos, 
 			&readcigar, &readLength, &normalMean, &normalVar,
 			&numDevs, &noIterations, &noBurnIn, &noLag,
-			&hyperp)) { return NULL; }
+			&hyperp, &overhang)) { return NULL; }
 
   mygff=PyCObject_AsVoidPtr(gff);
   
@@ -188,7 +191,7 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   
   splicing_miso_paired(mygff, gene, &myreadpos,
 		       (const char**) myreadcigar.table, readLength,
-		       noIterations, noBurnIn, noLag, &myhyperp, 
+		       overhang, noIterations, noBurnIn, noLag, &myhyperp, 
 		       /*insertProb=*/ 0, /*insertStart=*/ 0,
 		       normalMean, normalVar, numDevs, &samples, &logLik,
 		       /*match_matrix=*/ 0, /*class_templates=*/ 0, 
@@ -301,12 +304,13 @@ static PyObject* pysplicing_simulate_reads(PyObject *self, PyObject *args) {
 static PyObject* pysplicing_assignment_matrix(PyObject *self, 
 					      PyObject *args) {
   PyObject *gff;
-  int gene, readlength;
+  int gene, readlength, overhang=1;
   splicing_matrix_t matrix;
   PyObject *rmatrix;
   splicing_gff_t *mygff;
   
-  if (!PyArg_ParseTuple(args, "Oii", &gff, &gene, &readlength)) { 
+  if (!PyArg_ParseTuple(args, "Oii|i", &gff, &gene, &readlength, 
+			&overhang)) { 
     return NULL; 
   }
   
@@ -315,7 +319,7 @@ static PyObject* pysplicing_assignment_matrix(PyObject *self,
   SPLICING_FINALLY(splicing_matrix_destroy, &matrix);
   
   SPLICING_PYCHECK(splicing_assignment_matrix(mygff, gene, readlength, 
-					      &matrix));
+					      overhang, &matrix));
   
   rmatrix = pysplicing_from_matrix(&matrix);
   splicing_matrix_destroy(&matrix);
@@ -375,7 +379,7 @@ static PyObject* pysplicing_gff_isolength(PyObject *self, PyObject *args) {
 static PyObject* pysplicing_solve_gene(PyObject *self, PyObject *args) {
   
   PyObject *gff, *readcigar, *position;
-  int gene, readLength;
+  int gene, readLength, overhang=1;
   splicing_gff_t *mygff;
   splicing_vector_int_t myposition;
   splicing_strvector_t myreadcigar;
@@ -383,8 +387,8 @@ static PyObject* pysplicing_solve_gene(PyObject *self, PyObject *args) {
   splicing_vector_t expression;
   PyObject *r1, *r2, *r3;
   
-  if (!PyArg_ParseTuple(args, "OiiOO", &gff, &gene, &readLength, &position,
-			&readcigar)) { return NULL; }
+  if (!PyArg_ParseTuple(args, "OiiOO|i", &gff, &gene, &readLength, &position,
+			&readcigar, &overhang)) { return NULL; }
   
   mygff=PyCObject_AsVoidPtr(gff);
   if (pysplicing_to_vector_int(position, &myposition)) { return NULL; }
@@ -399,7 +403,8 @@ static PyObject* pysplicing_solve_gene(PyObject *self, PyObject *args) {
   SPLICING_PYCHECK(splicing_vector_init(&expression, 0));
   SPLICING_FINALLY(splicing_vector_destroy, &expression);
 
-  SPLICING_PYCHECK(splicing_solve_gene(mygff, gene, readLength, &myposition, 
+  SPLICING_PYCHECK(splicing_solve_gene(mygff, gene, readLength, overhang,
+				       &myposition, 
 				       (const char **) myreadcigar.table,
 				       &match_matrix, &assignment_matrix,
 				       &expression));
@@ -468,19 +473,19 @@ static PyObject* pysplicing_simulate_paired_reads(PyObject *self,
 static PyObject* pysplicing_gene_complexity(PyObject *self, PyObject *args) {
   
   PyObject *gff;
-  int gene, readlength, type, norm, paired;
+  int gene, readlength, type, norm, paired, overhang=1;
   double normalMean, normalVar, numDevs;
   splicing_gff_t *mygff;
   double complexity;
   
-  if (!PyArg_ParseTuple(args, "Oiiiiiddd", &gff, &gene, &readlength, 
+  if (!PyArg_ParseTuple(args, "Oiiiiiddd|i", &gff, &gene, &readlength, 
 			&type, &norm, &paired, &normalMean, &normalVar,
-			&numDevs)) { return NULL; }
+			&numDevs, &overhang)) { return NULL; }
   
   mygff=PyCObject_AsVoidPtr(gff);
   
   SPLICING_PYCHECK(splicing_gene_complexity(mygff, gene, readlength,
-					    type, norm, paired, 
+					    overhang, type, norm, paired, 
 					    /*insertProb=*/ 0, 0,
 					    normalMean, normalVar, numDevs,
 					    &complexity));

@@ -110,6 +110,9 @@ int splicing_gff_isolength(const splicing_gff_t *gff,
 			   splicing_vector_int_t *isolength_idx);
 int splicing_gff_nogenes(const splicing_gff_t *gff, size_t *nogenes);
 
+int splicing_gff_noexons_one(const splicing_gff_t *gff, size_t gene,
+			     splicing_vector_int_t *noexons);
+
 int splicing_gff_exon_start_end(const splicing_gff_t *gff, 
 				splicing_vector_int_t *start,
 				splicing_vector_int_t *end,
@@ -135,12 +138,13 @@ typedef struct splicing_miso_rundata_t {
 
 int splicing_matchIso(const splicing_gff_t *gff, int gene, 
 		      const splicing_vector_int_t *position,
-		      const char **cigarstr,
+		      const char **cigarstr, int overHang,
 		      splicing_matrix_t *result);
 
 int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
 			     const splicing_vector_int_t *position,
 			     const char **cigarstr, int readLength,
+			     int overHang, 
 			     const splicing_vector_t *fragmentProb,
 			     int fragmentStart, double normalMean,
 			     double normalVar, double numDevs,
@@ -163,7 +167,7 @@ int splicing_i_miso_classes(const splicing_matrix_t *match_matrix,
 
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
-		  const char **cigarstr, int readLength, 
+		  const char **cigarstr, int readLength, int overHang,
 		  int noIterations, int noBurnIn, int noLag,
 		  const splicing_vector_t *hyperp, 
 		  splicing_matrix_t *samples, splicing_vector_t *logLik, 
@@ -186,7 +190,7 @@ int splicing_miso_trinity(const splicing_matrix_t *match_matrix,
 
 int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const splicing_vector_int_t *position,
-			 const char **cigarstr, int readLength, 
+			 const char **cigarstr, int readLength, int overHang,
 			 int noIterations, int noBurnIn, int noLag,
 			 const splicing_vector_t *hyperp,
 			 const splicing_vector_t *fragmentProb, int fragmentStart,
@@ -274,7 +278,8 @@ int splicing_metropolis_hastings_ratio(const splicing_vector_int_t *ass,
 				       double *pcJS, double *ppJS);
 
 int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
-			       int readLength, splicing_matrix_t *matrix);
+			       int readLength, int overHang, 
+			       splicing_matrix_t *matrix);
 
 int splicing_numeric_cigar(const splicing_vector_int_t *exstart, 
 			   const splicing_vector_int_t *exend,
@@ -320,7 +325,7 @@ int splicing_nnls(splicing_matrix_t *A, splicing_vector_t *B,
 		  splicing_vector_long_t *index, long int *nsetp);
 
 int splicing_solve_gene(const splicing_gff_t *gff, size_t gene, 
-			int readLength,
+			int readLength, int overHang,
 			const splicing_vector_int_t *position, 
 			const char **cigarstr,
 			splicing_matrix_t *match_matrix,
@@ -328,7 +333,7 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 			splicing_vector_t *expression);
 
 int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
-			       int readLength, 
+			       int readLength, int overHang,
 			       const splicing_vector_int_t *position,
 			       const char **cigarstr,
 			       const splicing_vector_t *fragmentProb,
@@ -350,7 +355,7 @@ int splicing_genomic_to_iso(const splicing_gff_t *gff, size_t gene,
 			    splicing_matrix_int_t *isopos);
 
 int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
-				      int readLength, 
+				      int readLength, int overHang,
 				      const splicing_vector_t *fragmentProb,
 				      int fragmentStart, double normalMean,
 				      double normalVar, double numDevs,
@@ -404,9 +409,10 @@ typedef enum { SPLICING_NORM_2,
 	       SPLICING_NORM_INFINITY } splicing_norm_t;
 
 int splicing_gene_complexity(const splicing_gff_t *gff, size_t gene,
-			     int readLength, splicing_complexity_t type,
-			     splicing_norm_t norm,
-			     int paired, const splicing_vector_t *fragmentProb,
+			     int readLength, int overHang, 
+			     splicing_complexity_t type,
+			     splicing_norm_t norm, int paired, 
+			     const splicing_vector_t *fragmentProb,
 			     int fragmentStart, double normalMean, 
 			     double normalVar, double numDevs,
 			     double *complexity);

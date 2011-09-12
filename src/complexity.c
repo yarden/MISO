@@ -3,7 +3,8 @@
 #include "splicing_error.h"
 
 int splicing_gene_complexity(const splicing_gff_t *gff, size_t gene,
-			     int readLength, splicing_complexity_t type,
+			     int readLength, int overHang,
+			     splicing_complexity_t type,
 			     splicing_norm_t norm, int paired,
 			     const splicing_vector_t *fragmentProb,
 			     int fragmentStart, double normalMean, 
@@ -17,10 +18,10 @@ int splicing_gene_complexity(const splicing_gff_t *gff, size_t gene,
 
   if (!paired) {
     SPLICING_CHECK(splicing_assignment_matrix(gff, gene, readLength, 
-					      &assignment_matrix));
+					      overHang, &assignment_matrix));
   } else {
     SPLICING_CHECK(splicing_paired_assignment_matrix(gff, gene, readLength, 
-						     fragmentProb, 
+						     overHang, fragmentProb, 
 						     fragmentStart,
 						     normalMean, normalVar,
 						     numDevs, 

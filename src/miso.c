@@ -332,7 +332,7 @@ int splicing_metropolis_hastings_ratio(const splicing_vector_int_t *ass,
 
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
-		  const char **cigarstr, int readLength, 
+		  const char **cigarstr, int readLength, int overHang,
 		  int noIterations, int noBurnIn, int noLag,
 		  const splicing_vector_t *hyperp, 
 		  splicing_matrix_t *samples, splicing_vector_t *logLik,
@@ -354,10 +354,17 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   splicing_vector_int_t match_order;
   splicing_vector_int_t effisolen;
   splicing_vector_t isoscores;
+  splicing_vector_int_t noexons;
 
   if ( (class_templates ? 1 : 0) + (class_counts ? 1 : 0) == 1) {
     SPLICING_ERROR("Only one of `class_templates' and `class_counts' is "
 		   "given", SPLICING_EINVAL);
+  }
+
+  if (overHang==0) { overHang=1; }
+  if (overHang < 1 || overHang >= readLength / 2) {
+    SPLICING_ERROR("Overhang length invalid. Must be between 0 and "
+		   "readLength/2", SPLICING_EINVAL);
   }
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
@@ -395,7 +402,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_vector_int_init(&match_order, noReads));
   SPLICING_FINALLY(splicing_vector_int_destroy, &match_order);
   SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, 
-				   mymatch_matrix));
+				   overHang, mymatch_matrix));
   SPLICING_CHECK(splicing_order_matches(mymatch_matrix, &match_order));
 
   if (class_templates && class_counts) { 
@@ -410,11 +417,17 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_vector_init(&isoscores, noiso));
   SPLICING_FINALLY(splicing_vector_destroy, &isoscores);
   SPLICING_CHECK(splicing_gff_isolength_one(gff, gene, &effisolen));
+  SPLICING_CHECK(splicing_vector_int_init(&noexons, noiso));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &noexons);
+  SPLICING_CHECK(splicing_gff_noexons_one(gff, gene, &noexons));
   for (i=0; i<noiso; i++) { 
-    int l=VECTOR(effisolen)[i]-readLength+1;
+    int nox=VECTOR(noexons)[i];
+    int l=VECTOR(effisolen)[i] - readLength+1 - 2*(nox-1)*(overHang-1);
     VECTOR(effisolen)[i] = l > 0 ? l : 0;
     VECTOR(isoscores)[i] = -log((double) l);
   }
+  splicing_vector_int_destroy(&noexons);
+  SPLICING_FINALLY_CLEAN(1);
 
   SPLICING_CHECK(splicing_matrix_resize(samples, noiso, noSamples));
   SPLICING_CHECK(splicing_vector_resize(logLik, noSamples));

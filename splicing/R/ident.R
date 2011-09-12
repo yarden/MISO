@@ -1,20 +1,22 @@
 
 assignmentMatrix <- function(geneStructure, gene=1L, readLength=33L,
-                             paired=FALSE, fragmentProb=NULL, fragmentStart=0L,
-                             normalMean, normalVar, numDevs) {
+                             overHang=1L, paired=FALSE, fragmentProb=NULL,
+                             fragmentStart=0L, normalMean, normalVar,
+                             numDevs) {
 
   if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
   
   if (!paired) { 
     res <- .Call("R_splicing_assignment_matrix", geneStructure,
                  as.integer(gene), as.integer(readLength),
+                 as.integer(overHang),
                  PACKAGE="splicing")
   } else {
     res <- .Call("R_splicing_paired_assignment_matrix", geneStructure,
                  as.integer(gene), as.integer(readLength),
-                 fragmentProb, as.integer(fragmentStart),
-                 as.double(normalMean), as.double(normalVar),
-                 as.double(numDevs),
+                 as.integer(overHang), fragmentProb,
+                 as.integer(fragmentStart), as.double(normalMean),
+                 as.double(normalVar), as.double(numDevs),
                  PACKAGE="splicing")
   }
   
@@ -24,7 +26,7 @@ assignmentMatrix <- function(geneStructure, gene=1L, readLength=33L,
   res
 }
 
-condIso <- function(geneStructure, gene=1, readLength,
+condIso <- function(geneStructure, gene=1, readLength, overHang=1L,
                     type=c("relative", "absolute"),
                     norm=c("2","1","inf"), paired=FALSE,
                     fragmentProb=NULL, fragmentStart=0L, normalMean,
@@ -38,8 +40,9 @@ condIso <- function(geneStructure, gene=1, readLength,
   if (missing(numDevs)) { numDevs <- 0 }
 
   .Call("R_splicing_gene_complexity", geneStructure, as.integer(gene),
-        as.integer(readLength), as.integer(type), as.integer(norm),
-        as.logical(paired), fragmentProb, as.integer(fragmentStart),
-        as.double(normalMean), as.double(normalVar), as.double(numDevs),
+        as.integer(readLength), as.integer(overHang), as.integer(type),
+        as.integer(norm), as.logical(paired), fragmentProb,
+        as.integer(fragmentStart), as.double(normalMean),
+        as.double(normalVar), as.double(numDevs),
         PACKAGE="splicing")
 } 

@@ -493,6 +493,41 @@ int splicing_i_gff_noiso_one(const splicing_gff_t *gff, size_t gene,
   return 0;
 }
 
+int splicing_gff_noexons_one(const splicing_gff_t *gff, size_t gene,
+			     splicing_vector_int_t *noexons) {
+
+  size_t nogenes, idx1, idx2, noiso, pos, il;
+  SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
+  
+  if (gene < 0 || gene >= nogenes) {
+    SPLICING_ERROR("Invalid gene id", SPLICING_EINVAL);
+  }
+
+  idx1=VECTOR(gff->genes)[gene];
+  idx2= gene+1 == nogenes ? gff->n : VECTOR(gff->genes)[gene+1];
+  
+  for (noiso=0; idx1 < idx2; idx1++) {
+    if (VECTOR(gff->type)[idx1] == SPLICING_TYPE_MRNA) { noiso += 1; }    
+  }
+
+  SPLICING_CHECK(splicing_vector_int_resize(noexons, noiso));
+
+  idx1=VECTOR(gff->genes)[gene];
+  idx2= gene+1 == nogenes ? gff->n : VECTOR(gff->genes)[gene+1];
+  for (; idx1 < idx2 && VECTOR(gff->type)[idx1] != SPLICING_TYPE_MRNA; 
+       idx1++) ;
+  idx1++;
+  for (pos=0, il=0; idx1 < idx2; idx1++) {
+    if (VECTOR(gff->type)[idx1] == SPLICING_TYPE_MRNA) {
+      VECTOR(*noexons)[pos++]=il;
+      il=0;
+    } else if (VECTOR(gff->type)[idx1] == SPLICING_TYPE_EXON) { il++; }
+  }
+  VECTOR(*noexons)[pos++]=il;
+
+  return 0;
+}
+
 /* TODO: error checks */
 
 int splicing_gff_noiso(const splicing_gff_t *gff, 

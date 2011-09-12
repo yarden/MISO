@@ -471,12 +471,13 @@ SEXP R_splicing_write_gff(SEXP pgff, SEXP file) {
 }
 
 SEXP R_splicing_matchIso(SEXP pgff, SEXP pgene, SEXP pposition, 
-			 SEXP pcigar) {
+			 SEXP pcigar, SEXP poverhang) {
 
   int i, noreads=GET_LENGTH(pcigar);
   int gene=INTEGER(pgene)[0]-1;
   splicing_vector_int_t exstart, exend, position;
   splicing_gff_t gff;
+  int overhang=INTEGER(poverhang)[0];
   splicing_matrix_t res;
   SEXP result;
   const char **cigarstr;
@@ -492,7 +493,7 @@ SEXP R_splicing_matchIso(SEXP pgff, SEXP pgene, SEXP pposition,
     cigarstr[i] = CHAR(STRING_ELT(pcigar, i));
   }
 
-  splicing_matchIso(&gff, gene, &position, cigarstr, &res);
+  splicing_matchIso(&gff, gene, &position, cigarstr, overhang, &res);
 
   PROTECT(result = R_splicing_matrix_to_SEXP(&res));
 
@@ -564,7 +565,7 @@ SEXP R_splicing_order_matches(SEXP pmatches) {
 
 SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength, 
 		     SEXP pnoIterations, SEXP pnoBurnIn, SEXP pnoLag,
-		     SEXP phyperp) {
+		     SEXP phyperp, SEXP poverhang) {
   
   size_t gene=INTEGER(pgene)[0]-1;
   SEXP result, names, class;
@@ -579,6 +580,7 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   int noBurnIn=INTEGER(pnoBurnIn)[0];
   int noLag=INTEGER(pnoLag)[0];
   splicing_vector_t hyperp;
+  int overhang=INTEGER(poverhang)[0];
   int i, noReads=GET_LENGTH(cigar);
   splicing_matrix_t match_matrix;
   splicing_matrix_t class_templates;
@@ -603,8 +605,8 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
     cigarstr[i] = CHAR(STRING_ELT(cigar, i));
   }
 
-  splicing_miso(&gff, gene, &position, cigarstr, readLength, noIterations,
-		noBurnIn, noLag, &hyperp, &samples, &logLik, 
+  splicing_miso(&gff, gene, &position, cigarstr, readLength, overhang,
+		noIterations, noBurnIn, noLag, &hyperp, &samples, &logLik, 
 		&match_matrix, &class_templates, &class_counts, 
 		/*assignment=*/ 0, &rundata);
   
@@ -641,7 +643,8 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
 
 SEXP R_splicing_miso_trinity(SEXP pmatch_matrix, SEXP pisolen, 
 			     SEXP preadlength, SEXP pnoiterations,
-			     SEXP pnoburnin, SEXP pnolag, SEXP phyperp) {
+			     SEXP pnoburnin, SEXP pnolag, SEXP phyperp, 
+			     SEXP poverhang) {
   
   SEXP result, names, class;
   splicing_matrix_t match_matrix;
@@ -707,7 +710,7 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
 			    SEXP pnoBurnIn, SEXP pnoLag, SEXP phyperp, 
 			    SEXP pfragmentProb, SEXP pfragmentStart, 
 			    SEXP pnormalMean, SEXP pnormalVar, 
-			    SEXP pnumDevs) {
+			    SEXP pnumDevs, SEXP poverhang) {
   
   size_t gene=INTEGER(pgene)[0]-1;
   SEXP result, names, class;
@@ -718,6 +721,7 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
   const char **cigarstr;
   SEXP cigar=R_splicing_getListElement(preads, "cigar");
   int readLength=INTEGER(preadLength)[0];
+  int overHang=INTEGER(poverhang)[0];
   int noIterations=INTEGER(pnoIterations)[0];
   int noBurnIn=INTEGER(pnoBurnIn)[0];
   int noLag=INTEGER(pnoLag)[0];
@@ -756,7 +760,7 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
   }
 
   splicing_miso_paired(&gff, gene, &position, cigarstr, readLength,
-		       noIterations, noBurnIn, noLag, &hyperp, 
+		       overHang, noIterations, noBurnIn, noLag, &hyperp, 
 		       isNull(pfragmentProb) ? 0 : &fragmentProb, 
 		       fragmentStart, normalMean, normalVar, numDevs,
 		       &samples, &logLik, &match_matrix, &class_templates,
@@ -803,7 +807,7 @@ SEXP R_splicing_miso_paired_trinity(SEXP pmatch_matrix,
 				    SEXP phyperp, 
 				    SEXP pfragmentProb, SEXP pfragmentStart, 
 				    SEXP pnormalMean, SEXP pnormalVar, 
-				    SEXP pnumDevs) {
+				    SEXP pnumDevs, SEXP poverhang) {
   
   SEXP result, names, class;
 
@@ -1233,19 +1237,21 @@ SEXP R_splicing_numeric_cigar(SEXP pexstart, SEXP pexend, SEXP pexidx,
   return result;
 }
 
-SEXP R_splicing_assignment_matrix(SEXP pgff, SEXP pgene, SEXP preadlength) {
+SEXP R_splicing_assignment_matrix(SEXP pgff, SEXP pgene, SEXP preadlength, 
+				  SEXP poverhang) {
   SEXP result;
   splicing_matrix_t matrix;
   splicing_gff_t gff;
   int gene=INTEGER(pgene)[0]-1;
   int readlength=INTEGER(preadlength)[0];
+  int overhang=INTEGER(poverhang)[0];
   
   R_splicing_begin();
   
   R_splicing_SEXP_to_gff(pgff, &gff);
   splicing_matrix_init(&matrix, 0, 0);
   
-  splicing_assignment_matrix(&gff, gene, readlength, &matrix);
+  splicing_assignment_matrix(&gff, gene, readlength, overhang, &matrix);
   
   PROTECT(result=R_splicing_matrix_to_SEXP(&matrix));
   
@@ -1435,13 +1441,14 @@ SEXP R_splicing_gff_isolength(SEXP pgff) {
 }
 
 SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength, 
-			   SEXP pposition, SEXP pcigar) {
+			   SEXP pposition, SEXP pcigar, SEXP poverhang) {
 
   splicing_gff_t gff;
   int gene=INTEGER(pgene)[0]-1;
   int readLength=INTEGER(preadLength)[0];
   splicing_vector_int_t position;
   const char **cigarstr;
+  int overhang=INTEGER(poverhang)[0];
   int i, noReads=GET_LENGTH(pcigar);
   splicing_matrix_t match_matrix, assignment_matrix;
   splicing_vector_t expression;
@@ -1460,7 +1467,7 @@ SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength,
     cigarstr[i] = CHAR(STRING_ELT(pcigar, i));
   }
   
-  splicing_solve_gene(&gff, gene, readLength, &position, cigarstr, 
+  splicing_solve_gene(&gff, gene, readLength, overhang, &position, cigarstr, 
 		      &match_matrix, &assignment_matrix, &expression);
   
   PROTECT(result=NEW_LIST(3));
@@ -1484,7 +1491,7 @@ SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength,
 }
 
 SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength, 
-				  SEXP pposition, SEXP pcigar, 
+				  SEXP poverhang, SEXP pposition, SEXP pcigar,
 				  SEXP pfragmentprob, SEXP pfragmentstart, 
 				  SEXP pnormalMean, SEXP pnormalVar, 
 				  SEXP pnumDevs) {
@@ -1492,6 +1499,7 @@ SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength,
   splicing_gff_t gff;
   int gene=INTEGER(pgene)[0]-1;
   int readLength=INTEGER(preadLength)[0];
+  int overhang=INTEGER(poverhang)[0];
   splicing_vector_int_t position;
   const char **cigarstr;
   int i, noReads=GET_LENGTH(pcigar);
@@ -1520,7 +1528,8 @@ SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength,
     cigarstr[i] = CHAR(STRING_ELT(pcigar, i));
   }
   
-  splicing_solve_gene_paired(&gff, gene, readLength, &position, cigarstr, 
+  splicing_solve_gene_paired(&gff, gene, readLength, overhang, &position,
+			     cigarstr, 
 			     isNull(pfragmentprob) ? 0 : &fragmentprob, 
 			     fragmentstart, normalMean, normalVar, numDevs,
 			     &match_matrix, &assignment_matrix, &expression);
@@ -1601,6 +1610,7 @@ SEXP R_splicing_genomic_to_iso(SEXP pgff, SEXP pgene, SEXP pposition) {
 
 SEXP R_splicing_matchIso_paired(SEXP pgff, SEXP pgene, SEXP pposition,
 				SEXP pcigar, SEXP preadlength, 
+				SEXP poverhang,
 				SEXP pfragmentprob, SEXP pfragmentstart, 
 				SEXP pnormalMean, SEXP pnormalVar,
 				SEXP pnumDevs) {
@@ -1610,6 +1620,7 @@ SEXP R_splicing_matchIso_paired(SEXP pgff, SEXP pgene, SEXP pposition,
   size_t i, noreads=GET_LENGTH(pposition);
   const char **cigarstr;
   int readlength=INTEGER(preadlength)[0];
+  int overhang=INTEGER(poverhang)[0];
   splicing_vector_t fragmentprob;
   int fragmentstart=INTEGER(pfragmentstart)[0];
   double normalMean=REAL(pnormalMean)[0];
@@ -1634,6 +1645,7 @@ SEXP R_splicing_matchIso_paired(SEXP pgff, SEXP pgene, SEXP pposition,
   splicing_matrix_int_init(&fragmentLength, 0, 0);
   
   splicing_matchIso_paired(&gff, gene, &position, cigarstr, readlength, 
+			   overhang, 
 			   isNull(pfragmentprob) ? 0 : &fragmentprob, 
 			   fragmentstart, normalMean, normalVar, numDevs,
 			   &result, &fragmentLength);
@@ -1652,7 +1664,7 @@ SEXP R_splicing_matchIso_paired(SEXP pgff, SEXP pgene, SEXP pposition,
 }
 
 SEXP R_splicing_paired_assignment_matrix(SEXP pgff, SEXP pgene, 
-					 SEXP preadlength, 
+					 SEXP preadlength, SEXP poverhang,
 					 SEXP pfragmentprob,
 					 SEXP pfragmentstart, 
 					 SEXP pnormalMean, SEXP pnormalVar,
@@ -1660,6 +1672,7 @@ SEXP R_splicing_paired_assignment_matrix(SEXP pgff, SEXP pgene,
   splicing_gff_t gff;
   int gene=INTEGER(pgene)[0]-1;
   int readlength=INTEGER(preadlength)[0];
+  int overhang=INTEGER(poverhang)[0];
   splicing_vector_t fragmentprob;
   double normalMean=REAL(pnormalMean)[0];
   double normalVar=REAL(pnormalVar)[0];
@@ -1676,7 +1689,7 @@ SEXP R_splicing_paired_assignment_matrix(SEXP pgff, SEXP pgene,
   }
   splicing_matrix_init(&matrix, 0, 0);
   
-  splicing_paired_assignment_matrix(&gff, gene, readlength, 
+  splicing_paired_assignment_matrix(&gff, gene, readlength, overhang, 
 				    isNull(pfragmentprob) ? 0 : &fragmentprob,
 				    fragmentstart, normalMean, normalVar,
 				    numDevs, &matrix);
@@ -1723,7 +1736,8 @@ SEXP R_splicing_normal_fragment(SEXP pnormalMean, SEXP pnormalVar,
 }
 
 SEXP R_splicing_gene_complexity(SEXP pgff, SEXP pgene, 
-				SEXP preadlength, SEXP ptype, 
+				SEXP preadlength, 
+				SEXP poverhang, SEXP ptype, 
 				SEXP pnorm, SEXP ppaired, SEXP pfragmentprob,
 				SEXP pfragmentstart, SEXP pnormalmean,
 				SEXP pnormalvar, SEXP pnumdevs) {
@@ -1731,6 +1745,7 @@ SEXP R_splicing_gene_complexity(SEXP pgff, SEXP pgene,
   splicing_gff_t gff;
   int gene=INTEGER(pgene)[0]-1;
   int readlength=INTEGER(preadlength)[0];
+  int overhang=INTEGER(poverhang)[0];
   splicing_complexity_t type=INTEGER(ptype)[0];
   splicing_norm_t norm=INTEGER(pnorm)[0];
   int paired=LOGICAL(ppaired)[0];
@@ -1748,8 +1763,8 @@ SEXP R_splicing_gene_complexity(SEXP pgff, SEXP pgene,
     R_splicing_SEXP_to_vector(pfragmentprob, &fragmentprob);
   }
   
-  splicing_gene_complexity(&gff, gene, readlength, type, norm, paired,
-			   isNull(pfragmentprob) ? 0 : &fragmentprob,
+  splicing_gene_complexity(&gff, gene, readlength, overhang, type, norm, 
+			   paired, isNull(pfragmentprob) ? 0 : &fragmentprob,
 			   fragmentstart, normalmean, normalvar, numdevs,
 			   &complexity);
   
@@ -2010,5 +2025,26 @@ SEXP R_splicing_gtf2gff3(SEXP gtf, SEXP gid, SEXP tid) {
   }
 
   UNPROTECT(3);
+  return result;
+}
+
+SEXP R_splicing_noexons_one(SEXP pgff, SEXP pgene) {
+  
+  splicing_gff_t gff;
+  int gene=INTEGER(pgene)[0]-1;
+  splicing_vector_int_t noexons;
+  SEXP result;
+  
+  R_splicing_begin();
+
+  R_splicing_SEXP_to_gff(pgff, &gff);
+  splicing_vector_int_init(&noexons, 0);
+  
+  splicing_gff_noexons_one(&gff, gene, &noexons);
+  
+  PROTECT(result=R_splicing_vector_int_to_SEXP(&noexons));
+  splicing_vector_int_destroy(&noexons);
+  
+  UNPROTECT(1);
   return result;
 }

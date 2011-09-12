@@ -1,7 +1,7 @@
 
 # TODO: better API
 
-MISO <- function(geneStructure, gene=1L, reads, readLength,
+MISO <- function(geneStructure, gene=1L, reads, readLength, overHang=1L,
                  noIterations=5000, noBurnIn=500, noLag=10,
                  hyperparameters=rep(1,noIso(geneStructure)[1]),
                  paired=reads$paired, fragmentProb=NULL, fragmentStart,
@@ -11,7 +11,7 @@ MISO <- function(geneStructure, gene=1L, reads, readLength,
     res <- .Call("R_splicing_miso", geneStructure, as.integer(gene), reads,
                  as.integer(readLength), as.integer(noIterations),
                  as.integer(noBurnIn), as.integer(noLag),
-                 as.double(hyperparameters),
+                 as.double(hyperparameters), as.integer(overHang),
                  PACKAGE="splicing")
   } else {
     if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
@@ -21,6 +21,7 @@ MISO <- function(geneStructure, gene=1L, reads, readLength,
                  as.double(hyperparameters), fragmentProb,
                  as.integer(fragmentStart), as.double(normalMean),
                  as.double(normalVar), as.double(numDevs),
+                 as.integer(overHang),
                  PACKAGE="splicing")
   }
 
@@ -28,8 +29,9 @@ MISO <- function(geneStructure, gene=1L, reads, readLength,
 }
 
 MISO.Trinity <- function(matchMatrix, fragmentLength=NULL, isoLength,
-                         readLength, noIterations=5000, noBurnIn=500,
-                         noLag=10, hyperparameters=rep(1, length(isoLength)),
+                         readLength, overHang=1L, noIterations=5000,
+                         noBurnIn=500, noLag=10,
+                         hyperparameters=rep(1, length(isoLength)),
                          paired=FALSE, fragmentProb=NULL, fragmentStart,
                          normalMean, normalVar, numDevs) {
   if (!paired) {
@@ -37,6 +39,7 @@ MISO.Trinity <- function(matchMatrix, fragmentLength=NULL, isoLength,
                  as.integer(isoLength), as.integer(readLength),
                  as.integer(noIterations), as.integer(noBurnIn),
                  as.integer(noLag), as.double(hyperparameters),
+                 as.integer(overHang),
                  PACKAGE="splicing")
   } else {
     if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
@@ -47,6 +50,7 @@ MISO.Trinity <- function(matchMatrix, fragmentLength=NULL, isoLength,
                  as.integer(noLag), as.double(hyperparameters), fragmentProb,
                  as.integer(fragmentStart), as.double(normalMean),
                  as.double(normalVar), as.double(numDevs),
+                 as.integer(overHang),
                  PACKAGE="splicing")
   }
 

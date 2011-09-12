@@ -205,7 +205,7 @@ int splicing_metropolis_hastings_ratio_paired(
 
 int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const splicing_vector_int_t *position,
-			 const char **cigarstr, int readLength, 
+			 const char **cigarstr, int readLength, int overHang,
 			 int noIterations, int noBurnIn, int noLag,
 			 const splicing_vector_t *hyperp,
 			 const splicing_vector_t *fragmentProb,
@@ -298,7 +298,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_matrix_int_init(&fragmentLength, noiso, noReads));
   SPLICING_FINALLY(splicing_matrix_int_destroy, &fragmentLength);
   SPLICING_CHECK(splicing_matchIso_paired(gff, gene, position, cigarstr, 
-					  readLength, myfragmentProb, 
+					  readLength, overHang, 
+					  myfragmentProb, 
 					  fragmentStart, normalMean, 
 					  normalVar, numDevs, mymatch_matrix,
 					  &fragmentLength));
