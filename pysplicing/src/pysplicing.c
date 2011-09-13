@@ -626,6 +626,8 @@ static PyObject* pysplicing_to_gff(PyObject *self, PyObject *args) {
   Py_DECREF(entries);
   Py_DECREF(IDkey);
   Py_DECREF(Parentkey);
+
+  SPLICING_PYCHECK(splicing_gff_reindex(cgff));
   
   return PyCObject_FromVoidPtr(cgff, splicing_gff_destroy2);
 }
