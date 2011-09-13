@@ -263,6 +263,11 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
 
+  if (splicing_vector_size(hyperp) != noiso) { 
+    SPLICING_ERROR("Invalid hyperparameter vector length", 
+		   SPLICING_EINVAL);
+  }
+
   rundata->noIso=noiso;
   rundata->noIters=noIterations;
   rundata->noBurnIn=noBurnIn;
@@ -461,6 +466,11 @@ int splicing_miso_paired_trinity(const splicing_matrix_t *match_matrix,
   if ( (bin_class_templates ? 1 : 0) + (bin_class_counts ? 1 : 0) == 1) {
     SPLICING_ERROR("Only one of `bin_class_templates' and "
 		   "`bin_class_counts' is given", SPLICING_EINVAL);
+  }
+
+  if (splicing_vector_size(hyperp) != noiso) { 
+    SPLICING_ERROR("Invalid hyperparameter vector length", 
+		   SPLICING_EINVAL);
   }
 
   if (!fragmentProb) { 
