@@ -2304,3 +2304,28 @@ int FUNCTION(splicing_vector,iindex)(TYPE(splicing_vector) *v,
   return 0;
 }
 
+int FUNCTION(splicing_vector,intiindex)(TYPE(splicing_vector) *v,
+				const struct splicing_vector_int_t *idx) {
+  
+  long int i, newlen=splicing_vector_int_size(idx);
+  TYPE(splicing_vector) newv;
+  
+  SPLICING_CHECK(FUNCTION(splicing_vector,copy)(&newv, v));
+  SPLICING_FINALLY(FUNCTION(splicing_vector,destroy), &newv);
+  if (newlen > FUNCTION(splicing_vector,size)(v)) {
+    SPLICING_CHECK(FUNCTION(splicing_vector,resize)(v, newlen));
+  }
+  
+  for (i=0; i<newlen; i++) {
+    long int j=VECTOR(*idx)[i];
+    VECTOR(*v)[i] = VECTOR(newv)[j];
+  }
+
+  FUNCTION(splicing_vector,resize)(v, newlen);
+
+  FUNCTION(splicing_vector,destroy)(&newv);
+  SPLICING_FINALLY_CLEAN(1);
+
+  return 0;
+}
+

@@ -240,3 +240,6 @@ int FUNCTION(splicing_vector,index)(const TYPE(splicing_vector) *v,
 
 int FUNCTION(splicing_vector,iindex)(TYPE(splicing_vector) *v,
 				     const splicing_vector_t *idx);
+struct splicing_vector_int_t;
+int FUNCTION(splicing_vector,intiindex)(TYPE(splicing_vector) *v,
+					const struct splicing_vector_int_t *idx);

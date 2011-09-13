@@ -362,7 +362,90 @@ int splicing_io_parse_attributes(char *attr, char **ID, char**parent) {
   return 0;
 }
 
-/* TODO: sort it */
+#define STR(x) (splicing_strvector_get(&gff->ID, (x)))
+
+int splicing_i_gff_reindex_cmp(void *data, const void *a, const void *b) {
+  splicing_gff_t *gff=(splicing_gff_t *) data;
+  int aa=*(int*)a, bb=*(int*)b;
+  
+  int parent_a=VECTOR(gff->parent)[aa];
+  int parent_b=VECTOR(gff->parent)[bb];
+  int gparent_a= parent_a == -1 ? -1 : VECTOR(gff->parent)[parent_a];
+  int gparent_b= parent_b == -1 ? -1 : VECTOR(gff->parent)[parent_b];
+  
+  const char *a_gene_id, *b_gene_id, *a_mrna_id, *b_mrna_id;
+  int c1, c2;
+
+  /* If gene ids differ */
+  a_gene_id = gparent_a != -1 ? STR(gparent_a) : 
+    (parent_a != -1 ? STR(parent_a) : STR(aa));
+  b_gene_id = gparent_b != -1 ? STR(gparent_b) : 
+    (parent_b != -1 ? STR(parent_b) : STR(bb));
+  c1=strcmp(a_gene_id, b_gene_id); if (c1 != 0) { return c1; }
+
+  /* Or if mRNA ids differ */
+  a_mrna_id = gparent_a != -1 ? STR(parent_a) : STR(aa);
+  b_mrna_id = gparent_b != -1 ? STR(parent_b) : STR(bb);
+  c2=strcmp(a_mrna_id, b_mrna_id); if (c2 != 0) { return c2; }
+  
+  /* Otherwise gene first, then mRNA, then the rest according to
+     start position */
+  if (parent_a == -1 && parent_b != -1) { 
+    return -1; 
+  } else if (parent_a != -1 && parent_b == -1) { 
+    return 1;
+  } else if (gparent_a == -1 && gparent_b != -1) { 
+    return -1;
+  } else if (gparent_a != -1 && gparent_b == -1) { 
+    return 1;
+  } else if (gparent_a != -1 && gparent_b != -1) { 
+    int sa=VECTOR(gff->start)[aa];
+    int sb=VECTOR(gff->start)[bb];
+    if (sa < sb) { return -1; } else if (sa > sb) { return 1; }
+    return 0;
+  } else {
+    SPLICING_ERROR("Invalid GFF file, cannot order records", 
+		   SPLICING_EINVAL);
+  }
+  return 0;
+}
+
+#undef STR
+
+int splicing_gff_reindex(splicing_gff_t *gff) {
+  splicing_vector_int_t index;
+  int i, j, k, n=gff->n;
+  
+  SPLICING_CHECK(splicing_vector_int_init(&index, n));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &index);
+
+  for (i=0; i<n; i++) { VECTOR(index)[i] = i; }
+
+  splicing_qsort_r(VECTOR(index), n, sizeof(int), (void*) gff, 
+		   splicing_i_gff_reindex_cmp);
+
+  splicing_vector_int_intiindex(&gff->seqid, &index);
+  splicing_vector_int_intiindex(&gff->source, &index);
+  splicing_vector_int_intiindex(&gff->type, &index);
+  splicing_vector_int_intiindex(&gff->start, &index);
+  splicing_vector_int_intiindex(&gff->end, &index);
+  splicing_vector_intiindex(&gff->score, &index);
+  splicing_vector_int_intiindex(&gff->strand, &index);
+  splicing_vector_int_intiindex(&gff->phase, &index);
+  splicing_strvector_ipermute(&gff->ID, &index);
+  splicing_vector_int_intiindex(&gff->parent, &index);
+
+  for (i=j=k=0; i<n; i++) { 
+    if (VECTOR(gff->type)[i] == SPLICING_TYPE_GENE) { 
+      VECTOR(gff->genes)[j++] = i;
+    } else if (VECTOR(gff->type)[i] == SPLICING_TYPE_MRNA) { 
+      VECTOR(gff->transcripts)[k++] = i;
+    }
+  }
+
+  splicing_vector_int_destroy(&index);
+  SPLICING_FINALLY_CLEAN(1);
+}
 
 int splicing_gff_read(FILE *input, splicing_gff_t *gff) {
   int eof=!EOF;
@@ -443,7 +526,9 @@ int splicing_gff_read(FILE *input, splicing_gff_t *gff) {
     eof = splicing_io_skip_newline_and_comments(input);
 
   } while (!eof);
-  
+
+  SPLICING_CHECK(splicing_gff_reindex(gff));
+
   return 0;
 }
 
@@ -594,55 +679,8 @@ size_t splicing_gff_size(const splicing_gff_t *gff) {
   return gff->n;
 }
 
-int splicing_i_gff_exon_start_end_sort_cmp(void *data, const void *a, 
-					   const void *b) {
-
-  int *start=(int*) data;
-  int aa=*(int*)a, bb=*(int*)b;
-  int sa=start[aa];
-  int sb=start[bb];
-  
-  if (sa < sb) {
-    return -1;
-  } else if (sa > sb) { 
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-int splicing_i_gff_exon_start_end_sort(const splicing_vector_int_t *start,
-				       const splicing_vector_int_t *end,
-				       const splicing_vector_int_t *idx, 
-				       int iso, splicing_vector_int_t *tmp, 
-				       splicing_vector_int_t *tmp2) {
-  
-  int i, j, from=VECTOR(*idx)[iso], to=VECTOR(*idx)[iso+1], len=to-from;  
-
-  SPLICING_CHECK(splicing_vector_int_resize(tmp, len));
-  SPLICING_CHECK(splicing_vector_int_resize(tmp2, len));
-  for (i=0; i<len; i++) { VECTOR(*tmp)[i]=i; }
-  splicing_qsort_r(VECTOR(*tmp), len, sizeof(int), 
-		   (void*) (VECTOR(*start)+from),
-		   splicing_i_gff_exon_start_end_sort_cmp);
-  
-  /* Store the order */
-  for (i=0, j=from; i<len; i++, j++) { VECTOR(*tmp2)[i]=VECTOR(*start)[j]; }
-  for (i=0, j=from; i<len; i++, j++) { 
-    VECTOR(*start)[j] = VECTOR(*tmp2)[ VECTOR(*tmp)[i] ];
-  }
-  for (i=0, j=from; i<len; i++, j++) { VECTOR(*tmp2)[i]=VECTOR(*end)[j]; }
-  for (i=0, j=from; i<len; i++, j++) { 
-    VECTOR(*end)[j] = VECTOR(*tmp2)[ VECTOR(*tmp)[i] ];
-  }
-
-  return 0;
-}
-
 /* Return the start coordinates of all exons, in each isoform, 
-   for a given gene. This function also makes sure that the 
-   exons are ordered according to their start coordinate, within each
-   isoform. */
+   for a given gene. We assume that the gff is correctly sorted. */
 
 int splicing_gff_exon_start_end(const splicing_gff_t *gff, 
 				splicing_vector_int_t *start,
@@ -680,10 +718,6 @@ int splicing_gff_exon_start_end(const splicing_gff_t *gff,
       SPLICING_CHECK(splicing_vector_int_push_back(end, e));
     } else if (VECTOR(gff->type)[pos] == SPLICING_TYPE_MRNA) {
       VECTOR(*idx)[i] = p;
-      if (i!=0) { 
-	SPLICING_CHECK(splicing_i_gff_exon_start_end_sort(start, end, idx, 
-							  i-1, &tmp, &tmp2));
-      }
       i++;
     } else if (VECTOR(gff->type)[pos] == SPLICING_TYPE_GENE) {
       break;
@@ -691,8 +725,6 @@ int splicing_gff_exon_start_end(const splicing_gff_t *gff,
     pos++;
   }
   VECTOR(*idx)[i] = p;
-  SPLICING_CHECK(splicing_i_gff_exon_start_end_sort(start, end, idx, i-1, 
-						    &tmp, &tmp2));
 
   splicing_vector_int_destroy(&tmp2);
   splicing_vector_int_destroy(&tmp);

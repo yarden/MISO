@@ -155,3 +155,26 @@ int splicing_strvector_permute(splicing_strvector_t *v,
 
   return 0;
 }
+
+int splicing_strvector_ipermute(splicing_strvector_t *v, 
+				const splicing_vector_int_t *idx) {
+
+  char **copy=malloc(v->size * sizeof(char*));
+  size_t i;
+  
+  if (!copy) { 
+    SPLICING_ERROR("Cannot index string vector", SPLICING_ENOMEM); 
+  }
+  SPLICING_FINALLY(splicing_free, copy);
+  memcpy(copy, v->table, v->size * sizeof(char*));
+
+  for (i=0; i < v->size; i++) {
+    size_t w=VECTOR(*idx)[i];
+    v->table[i] = copy[w];
+  }
+  
+  splicing_free(copy);
+  SPLICING_FINALLY_CLEAN(1);
+
+  return 0;
+}

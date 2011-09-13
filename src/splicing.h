@@ -47,6 +47,8 @@ int splicing_strvector_print(const splicing_strvector_t *v);
 int splicing_strvector_clear(splicing_strvector_t *v);
 int splicing_strvector_permute(splicing_strvector_t *v, 
 			       const splicing_vector_t *idx);
+int splicing_strvector_ipermute(splicing_strvector_t *v, 
+				const splicing_vector_int_t *idx);
 
 double splicing_dnorm(double x, double mu, double sigma);
 double splicing_logdnorm(double x, double mu, double sigma);

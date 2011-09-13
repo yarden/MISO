@@ -24,6 +24,6 @@ Type 'q()' to quit R.
 > gff <- readGFF3(gffFile)
 > 
 > .Call("R_splicing_noexons_one", gff, 1L, PACKAGE="splicing")
-[1]  7 21
+[1] 21  7
 > 
 > 
