@@ -22,11 +22,14 @@ splicing/src/%.h: src/%.h
 splicing/src/%.pmt: src/%.pmt
 	cp src/$(@F) $@
 
-tests: Rtests
+tests: Rtests Pythontests
 
 Rtests:
 	cd splicing/tests && echo "tools:::.runPackageTestsR()" | \
         R --no-save && echo
+
+Pythontests:
+	cp pysplicing/test.py /tmp && cd /tmp && python test.py
 
 ########################################################
 
@@ -54,4 +57,4 @@ pysplicing/include/%.h: src/%.h
 pysplicing/include/%.pmt: src/%.pmt
 	cp src/$(@F) $@
 
-.PHONY: all Rpackage tests Rtests Pythonpackage
+.PHONY: all Rpackage tests Rtests Pythonpackage Pythontests
