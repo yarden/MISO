@@ -56,7 +56,7 @@ int splicing_matchIso(const splicing_gff_t *gff, int gene,
 	int ex=VECTOR(exidx)[i];
 	
 	/* Look for the exon where the read starts */
-	while (VECTOR(exstart)[ex] >= 0 &&
+	while (ex < VECTOR(exidx)[i+1] &&
 	       (pos < VECTOR(exstart)[ex] || VECTOR(exend)[ex] < pos)) {
 	  ex++;
 	}
