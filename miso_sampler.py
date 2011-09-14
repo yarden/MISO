@@ -312,7 +312,6 @@ class MISOSampler:
         self.output_miso_results(output_file, gene, reads_data, assignments, psi_vectors,
                                  kept_log_scores, num_iters, burn_in,
                                  lag, percent_acceptance, proposal_type)
-        print >> sys.stderr, "\nSamples outputted to: %s\n" %(output_file)
         
 
     def output_miso_results(self, output_file, gene, reads_data, assignments,
