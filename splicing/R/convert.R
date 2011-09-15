@@ -163,7 +163,9 @@ seqIds.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
-  gff3$seqid_str[gff3$seqid+1]
+  res <- gff3$seqid_str[gff3$seqid+1]
+  names(res) <- geneIds(gff3)
+  res
 }  
 
 ## Gives the gene ids
@@ -328,7 +330,8 @@ geneTypes.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
-  gff3$source_str
+  res <- gff3$source_str
+  names(res) <- geneIds(gff3)
 }
 
 ## The length of the gene(s)
@@ -341,7 +344,9 @@ geneLength.gff3 <- function(gff3) {
     stop("Not a GFF3 object")
   }
   g <- gff3$gid+1
-  gff3$end[g] - gff3$start[g] + 1
+  res <- gff3$end[g] - gff3$start[g] + 1
+  names(res) <- geneIds(gff3)
+  res
 }
 
 ## The length of the different isoforms, after splicing
