@@ -25,9 +25,9 @@ m3 <- matchIso(gene, reads=reads2,
 m3
 
 all(sapply(1:ncol(m3[[1]]),
-           function(x) m3[[1]][,x][ reads2$isoform[2*x-1]+1 ]) != 0)
+           function(x) m3[[1]][,x][ getIsoform(reads2)[2*x-1]+1 ]) != 0)
 all(sapply(1:ncol(m3[[1]]),
-           function(x) m3[[1]][,x][ reads2$isoform[2*x]+1 ]) != 0)
+           function(x) m3[[1]][,x][ getIsoform(reads2)[2*x]+1 ]) != 0)
 
 mean(m3[[2]] [ m3[[1]] != 0 ])
 

@@ -1,5 +1,5 @@
 
-R version 2.13.0 (2011-04-13)
+R version 2.13.1 (2011-07-08)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
@@ -223,10 +223,10 @@ Type 'q()' to quit R.
 
 > 
 > all(sapply(1:ncol(m3[[1]]),
-+            function(x) m3[[1]][,x][ reads2$isoform[2*x-1]+1 ]) != 0)
++            function(x) m3[[1]][,x][ getIsoform(reads2)[2*x-1]+1 ]) != 0)
 [1] TRUE
 > all(sapply(1:ncol(m3[[1]]),
-+            function(x) m3[[1]][,x][ reads2$isoform[2*x]+1 ]) != 0)
++            function(x) m3[[1]][,x][ getIsoform(reads2)[2*x]+1 ]) != 0)
 [1] TRUE
 > 
 > mean(m3[[2]] [ m3[[1]] != 0 ])
