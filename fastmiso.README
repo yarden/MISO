@@ -1,6 +1,14 @@
-USING THE C VERSION OF MISO:
+USING THE C VERSION OF MISO
+===========================
 
-1. If you do not already have the MISO repository, get it from github, as follows.  
+If you do not have the MISO repository checked out from github,
+proceed to step (1).  If you do have the repository but just want to
+access the C version, go to step (2).
+
+Obtaining the MISO repository from github:
+------------------------------------------
+
+If you do not already have the MISO repository, get it from github, as follows.  
 First check out the MISO repository, if you haven't already:
 
 $ git clone git://github.com/yarden/MISO.git
@@ -18,7 +26,8 @@ Then compile the Python interface
 $ cd pysplicing/
 $ python setup.py install 
 
-Note: if you are compiling on a Unix system where you do not have root access, use the --prefix option, e.g.:
+Note: if you are compiling on a Unix system where you do not have root
+access, use the --prefix option, e.g.:
 
 $ python setup.py install --prefix=~/ 
 
@@ -34,13 +43,22 @@ $ python
 If you get an error after the import, something went wrong. 
 
 
-2. If you already have the MISO repository, simply switch to the "fastmiso" branch.  If "MISO" is the location of the MISO repository on your machine, do:
+Getting the C version of MISO if you already have the MISO repository
+---------------------------------------------------------------------
+
+If you already have the MISO repository, simply switch to the
+"fastmiso" branch. If "MISO" is the location of the MISO repository 
+on your machine, do:
 
 $ cd MISO/
 $ git checkout fastmiso
 
 
-3. To get the latest version of the code once you have the "fastmiso" branch of the MISO repository, follow these steps:
+Updating to the latest release of C version of MISO
+---------------------------------------------------
+
+3. To get the latest version of the code once you have the "fastmiso"
+branch of the MISO repository, follow these steps:
 
 (a) Get the latest source:
 
@@ -60,5 +78,6 @@ $ python setup.py clean
 
 $ python setup.py install
 
-As described in (1), use the "--prefix" option to setup.py to install the package in a local directory.
+As described in (1), use the "--prefix" option to setup.py to install
+the package  in a local directory.
 
