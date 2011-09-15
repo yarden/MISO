@@ -17,9 +17,9 @@ S3method("isoLength", "gff3")
 S3method("totalExonLength", "gff3")
 S3method("print", "gff3")
 S3method("getSpecies", "gff3")
+S3method("merge", "gff3")
 
-export(createGene, mergeGenes, rpk, realPsi,
-       simulateReads)
+export(createGene, rpk, realPsi, simulateReads)
 
 export(readSAM, noReads, isPaired, isMixed, noPairs, noSingles, toTable,
        writeSAM, readLength, seqNames, selectReads, filterReads, FILTER,
