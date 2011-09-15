@@ -247,30 +247,30 @@ noExons.gff3 <- function(gff3) {
 
 ## Total length of all exons. Overlapping portions are counted
 ## multiple times.
-## TODO: rewrite in C to make it faster, especially the overlap=FALSE
-##       case
-
-## TODO: rewrite
 
 totalExonLength <- function(gff3, overlap=TRUE)
   UseMethod("totalExonLength")
+
+## TODO: rewrite in C to make it faster, especially the overlap=FALSE
+##       case
 
 totalExonLength.gff3 <- function(gff3, overlap=TRUE) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
-  gs <- attr(gff3, "gid")
-  ex <- which(gff3$type == "exon")
+  gs <- gff3$gid
+  ex <- which(gff3$type == SPLICING_EXON)
   if (overlap) {
     si <- paste(sep="-", gff3$start[ex], gff3$end[ex])
     un <- which(!duplicated(si))
     le <- gff3$end[ex][un] - gff3$start[ex][un] + 1
-    gr <- cut(ex[un], breaks=c(gs, nrow(gff3)+1))
+    gr <- cut(ex[un], breaks=c(gs, length(gff3$start)+1))
     res <- tapply(le, gr, sum)
   } else {
-    gr <- cut(ex, breaks=c(gs, nrow(gff3)+1))
+    gr <- cut(ex, breaks=c(gs, length(gff3$start)+1))
     res <- tapply(ex, gr, function(eidx) {
-      myex <- gff3[eidx,,drop=FALSE]
+      myex <- data.frame(start=gff3$start[eidx],
+                         end=gff3$end[eidx])
       myex <- myex[order(myex$start, myex$end),,drop=FALSE]
       len <- 0
       aex <- c(myex$start[1], myex$end[1])
@@ -328,7 +328,7 @@ geneTypes.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
-  gff3$source_str[gff3$gid+1]
+  gff3$source_str
 }
 
 ## The length of the gene(s)
