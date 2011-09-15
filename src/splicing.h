@@ -300,7 +300,8 @@ int splicing_simulate_reads(const splicing_gff_t *gff, int gene,
 			    int noreads, int readLength,
 			    splicing_vector_int_t *isoform, 
 			    splicing_vector_int_t *position, 
-			    splicing_strvector_t *cigar);
+			    splicing_strvector_t *cigar, 
+			    splicing_vector_t *sample_prob);
 
 int splicing_normal_fragment(double normalMean, double normalVar, 
 			     double numDevs, int minLength,

@@ -70,7 +70,8 @@ int splicing_simulate_reads(const splicing_gff_t *gff, int gene,
 			    int noreads, int readLength,
 			    splicing_vector_int_t *isoform, 
 			    splicing_vector_int_t *position, 
-			    splicing_strvector_t *cigar) {
+			    splicing_strvector_t *cigar, 
+			    splicing_vector_t *sample_prob) {
   
   size_t i, p, noiso, goodiso=0, nogenes;
   splicing_vector_int_t effisolen;
@@ -103,6 +104,10 @@ int splicing_simulate_reads(const splicing_gff_t *gff, int gene,
 
   if (goodiso==0) {
     SPLICING_ERROR("No isoform is possible", SPLICING_FAILURE);
+  }
+
+  if (sample_prob) {
+    SPLICING_CHECK(splicing_vector_update(sample_prob, &sampleprob));
   }
 
   for (i=1; i<noiso; i++) {

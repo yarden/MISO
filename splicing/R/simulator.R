@@ -72,7 +72,7 @@ simulateReads <- function(geneStructure, gene=1, expression,
                 mapq=rep(255L, realNoReads), rnext=rep(0L, realNoReads),
                 tlen=rep(0L, realNoReads), seq=rep("*", realNoReads),
                 qual=rep("*", realNoReads), mypair=rep(-1L, realNoReads),
-                attributes=attr)
+                attributes=attr, sampleProb=res$sampleProb)
     class(res) <- "splicingSAM"
   } else {
     if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
@@ -98,7 +98,7 @@ simulateReads <- function(geneStructure, gene=1, expression,
                 seq=rep("*", realNoReads), qual=rep("*", realNoReads),
                 mypair=as.integer(t(matrix(seq_len(realNoReads),
                   nc=2, byrow=TRUE)[,2:1]-1)),
-                attributes=attr)
+                attributes=attr, sampleProb=res$sampleProb)
     class(res) <- "splicingSAM"
   }
 

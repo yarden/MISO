@@ -283,7 +283,8 @@ static PyObject* pysplicing_simulate_reads(PyObject *self, PyObject *args) {
   
   SPLICING_PYCHECK(splicing_simulate_reads(mygff, gene, &myexpression, 
 					   noreads, readLength,
-					   &isoform, &position, &cigar));
+					   &isoform, &position, &cigar, 
+					   /*sample_prob=*/ 0));
   
   risoform = pysplicing_from_vector_int(&isoform);
   splicing_vector_int_destroy(&isoform);
