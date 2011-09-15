@@ -1,8 +1,9 @@
 USING THE C VERSION OF MISO:
 
-1. Get the C version from github, as follows.  First check out the MISO repository, if you haven't already:
+1. If you do not already have the MISO repository, get it from github, as follows.  
+First check out the MISO repository, if you haven't already:
 
-$ git clone git@github.com:yarden/MISO.git
+$ git clone git://github.com/yarden/MISO.git
 
 Then checkout the "fastmiso" branch:
 
@@ -31,3 +32,33 @@ $ python
 >>
 
 If you get an error after the import, something went wrong. 
+
+
+2. If you already have the MISO repository, simply switch to the "fastmiso" branch.  If "MISO" is the location of the MISO repository on your machine, do:
+
+$ cd MISO/
+$ git checkout fastmiso
+
+
+3. To get the latest version of the code once you have the "fastmiso" branch of the MISO repository, follow these steps:
+
+(a) Get the latest source:
+
+$ cd MISO/
+$ git pull origin fastmiso
+
+(b) Compile it:
+
+$ make
+
+(c) Remove old Python package:
+
+$ cd pysplicing/
+$ python setup.py clean
+
+(d) Recompile the Python package:
+
+$ python setup.py install
+
+As described in (1), use the "--prefix" option to setup.py to install the package in a local directory.
+
