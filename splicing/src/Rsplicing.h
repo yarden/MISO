@@ -46,6 +46,7 @@ typedef struct splicing_reads_t {
   splicing_strvector_t seq;
   splicing_strvector_t qual;
   splicing_vector_int_t mypair;
+  splicing_strvector_t attributes;
 } splicing_reads_t;
 
 typedef enum { SPLICING_SAMBAM_AUTO, 

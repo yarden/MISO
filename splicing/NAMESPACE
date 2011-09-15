@@ -23,7 +23,7 @@ export(createGene, mergeGenes, rpk, realPsi,
 
 export(readSAM, noReads, isPaired, isMixed, noPairs, noSingles, toTable,
        writeSAM, readLength, seqNames, selectReads, filterReads, FILTER,
-       getStrand)
+       getStrand, getAttributes, listAttributes, getAttribute, getIsoform)
 
 S3method("noReads", "splicingSAM")
 S3method("isPaired", "splicingSAM")
@@ -38,6 +38,10 @@ S3method("seqNames", "splicingSAM")
 S3method("selectReads", "splicingSAM")
 S3method("filterReads", "splicingSAM")
 S3method("getStrand", "splicingSAM")
+S3method("getAttributes", "splicingSAM")
+S3method("listAttributes", "splicingSAM")
+S3method("getAttribute", "splicingSAM")
+S3method("getIsoform", "splicingSAM")
 
 export(plotIso, plotIsoSize, plotIsoPDF)
 

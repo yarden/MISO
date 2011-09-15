@@ -42,8 +42,10 @@ int splicing_reads_init(splicing_reads_t *reads) {
   SPLICING_FINALLY(splicing_strvector_destroy, &reads->qual);
   SPLICING_CHECK(splicing_vector_int_init(&reads->mypair, 0));
   SPLICING_FINALLY(splicing_vector_int_destroy, &reads->mypair);
+  SPLICING_CHECK(splicing_strvector_init(&reads->attributes, 0));
+  SPLICING_FINALLY(splicing_strvector_destroy, &reads->attributes);
   
-  SPLICING_FINALLY_CLEAN(14);
+  SPLICING_FINALLY_CLEAN(15);
 
   return 0;
 }
@@ -63,6 +65,7 @@ void splicing_reads_destroy(splicing_reads_t *reads) {
   splicing_strvector_destroy(&reads->seq);
   splicing_strvector_destroy(&reads->qual);
   splicing_vector_int_destroy(&reads->mypair);
+  splicing_strvector_destroy(&reads->attributes);
 }
 
 int splicing_reads_clear(splicing_reads_t *reads) {
@@ -80,6 +83,7 @@ int splicing_reads_clear(splicing_reads_t *reads) {
   splicing_strvector_clear(&reads->seq);
   splicing_strvector_clear(&reads->qual);
   splicing_vector_int_clear(&reads->mypair);
+  splicing_strvector_clear(&reads->attributes);
   reads->noPairs = reads->noSingles = 0;
   return 0;
 }
@@ -122,6 +126,8 @@ int splicing_i_cmp_reads(void *pdata, const void *a, const void *b) {
   return 0;
 }
 
+#define REMAINING (sizeof(buffer)-(bufptr-buffer)*sizeof(char))
+
 int splicing_i_add_read(splicing_reads_t *reads, const bam1_t *read) {
   int i, ncigar=read->core.n_cigar;
   char buffer[4096];
@@ -139,7 +145,7 @@ int splicing_i_add_read(splicing_reads_t *reads, const bam1_t *read) {
     SPLICING_CHECK(splicing_strvector_append(&reads->cigar, "*"));
   } else {
     for (i=0; i<ncigar; i++) {
-      int l=snprintf(bufptr, sizeof(buffer)-(bufptr-buffer)*sizeof(char),
+      int l=snprintf(bufptr, REMAINING,
 		     "%i%c", (int) (actcigar[i] >> BAM_CIGAR_SHIFT), 
 		     cigarcode[actcigar[i] & BAM_CIGAR_MASK]);
       bufptr += l;
@@ -185,6 +191,103 @@ int splicing_i_add_read(splicing_reads_t *reads, const bam1_t *read) {
   }
 
   SPLICING_CHECK(splicing_vector_int_push_back(&reads->mypair, -1));
+
+  /* Extra columns */
+  
+  bufptr = buffer;
+  s = bam1_aux(read);
+  i=0;
+  while (s < read->data + read->data_len) {
+    uint8_t type, key[2];
+    int l;
+    key[0] = s[0]; key[1] = s[1];
+    s += 2; type = *s; ++s;
+    if (i!=0) { *bufptr = '\t'; bufptr++; }
+    l=snprintf(bufptr, REMAINING, "%c%c:", (int) key[0], (int) key[1]);
+    bufptr += l;
+    switch (type) { 
+      uint8_t sub_type;
+      int32_t n;
+      int j;
+    case 'A': 
+      l=snprintf(bufptr, REMAINING, "A:%c", (int) *s); ++s; bufptr += l;
+      break;
+    case 'C':
+      l=snprintf(bufptr, REMAINING, "i:%u", *(uint8_t*)s); ++s; bufptr += l;
+      break;
+    case 'c':
+      l=snprintf(bufptr, REMAINING, "i:%i", *(int8_t*)s); ++s; bufptr += l;
+      break;
+    case 'S':
+      l=snprintf(bufptr, REMAINING, "i:%u", *(uint16_t*)s); s+=2; bufptr += l;
+      break;
+    case 's': 
+      l=snprintf(bufptr, REMAINING, "i:%i", *(int16_t*)s); s+=2; bufptr += l;
+      break;
+    case 'I':
+      l=snprintf(bufptr, REMAINING, "i:%u", *(uint32_t*)s); s+=4; bufptr +=l;
+      break;
+    case 'i':
+      l=snprintf(bufptr, REMAINING, "i:%i", *(int32_t*)s); s+=4; bufptr += l;
+      break;
+    case 'f':
+      l=snprintf(bufptr, REMAINING, "f:%g", *(float*)s); s+=4; bufptr += l;
+      break;
+    case 'd':
+      l=snprintf(bufptr, REMAINING, "d:%lg", *(double*)s); s+=8; bufptr += l;
+      break;
+    case 'z':
+    case 'H':
+      l=snprintf(bufptr, REMAINING, "%c:", type); bufptr += l;
+      while (*s) { 
+	if (REMAINING > 0) { *bufptr = *s; bufptr++; }
+	s++;
+      }
+      break;
+    case 'B':
+      sub_type = *(s++);
+      memcpy(&n, s, 4);
+      s += 4;
+      l=snprintf(bufptr, REMAINING, "%c:%c", type, sub_type); bufptr += l;
+      for (j = 0; j < n; ++j) {
+	l=snprintf(bufptr, REMAINING, ","); bufptr += l;
+	switch (sub_type) {
+	case 'c':
+	  l=snprintf(bufptr, REMAINING, "%i", *(int8_t*)s); ++s; bufptr += l;
+	  break;
+	case 'C': 
+	  l=snprintf(bufptr, REMAINING, "%u", *(uint8_t*)s); ++s; bufptr += l;
+	  break;
+	case 's': 
+	  l=snprintf(bufptr, REMAINING, "%i", *(int16_t*)s); 
+	  s += 2; bufptr += l;
+	  break;
+	case 'S':
+	  l=snprintf(bufptr, REMAINING, "%u", *(uint16_t*)s); 
+	  s += 2; bufptr += l;
+	  break;
+	case 'i': 
+	  l=snprintf(bufptr, REMAINING, "%i", *(int32_t*)s); 
+	  s += 4; bufptr += l;
+	  break;
+	case 'I': 
+	  l=snprintf(bufptr, REMAINING, "%u", *(uint32_t*)s); 
+	  s += 4; bufptr += l;
+	  break;
+	case 'f':
+	  l=snprintf(bufptr, REMAINING, "%g", *(float*)s); 
+	  s += 4; bufptr += l;
+	  break;
+	}
+      }
+    }
+    
+    i++;
+  }
+  SPLICING_CHECK(splicing_strvector_append2(&reads->attributes, buffer, 
+					    bufptr-buffer));
+  
+  /* Single-end or paired-end? */
   
   if (read->core.mpos < 0) {
     reads->noSingles  += 1;
@@ -194,6 +297,8 @@ int splicing_i_add_read(splicing_reads_t *reads, const bam1_t *read) {
   
   return 0;
 }
+
+#undef REMAINING
 
 int splicing_i_order_reads(splicing_reads_t *reads) {
   splicing_vector_char_t taken;
@@ -270,6 +375,7 @@ int splicing_i_order_reads(splicing_reads_t *reads) {
   splicing_vector_int_iindex(&reads->position, &idx2);
   splicing_vector_int_iindex(&reads->flags, &idx2);
   splicing_vector_int_iindex(&reads->pairpos, &idx2);
+  splicing_strvector_permute(&reads->attributes, &idx2);
   
   splicing_vector_destroy(&idx2);
   splicing_vector_int_destroy(&idx);

@@ -61,8 +61,8 @@ simulateReads <- function(geneStructure, gene=1, expression,
                  as.integer(gene), as.double(expression),
                  as.integer(noReads), as.integer(readLength),
                  PACKAGE="splicing")
-
     realNoReads <- length(res$cigar)
+    attr <- sprintf("XI:i:%i", res$isoform)
     res <- list(chrname=as.character(chrname), chrlen=as.integer(chrlen),
                 chr=rep(0L, realNoReads),
                 qname=sprintf(qname, seq_len(realNoReads)),
@@ -71,7 +71,8 @@ simulateReads <- function(geneStructure, gene=1, expression,
                 noPairs=0L, noSingles=as.integer(realNoReads), paired=FALSE,
                 mapq=rep(255L, realNoReads), rnext=rep(0L, realNoReads),
                 tlen=rep(0L, realNoReads), seq=rep("*", realNoReads),
-                qual=rep("*", realNoReads), mypair=rep(-1L, realNoReads))
+                qual=rep("*", realNoReads), mypair=rep(-1L, realNoReads),
+                attributes=attr)
     class(res) <- "splicingSAM"
   } else {
     if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
@@ -81,6 +82,7 @@ simulateReads <- function(geneStructure, gene=1, expression,
                  fragmentProb, as.integer(fragmentStart),
                  as.double(normalMean), as.double(normalVar),
                  as.double(numDevs))
+    attr <- sprintf("XI:i:%i", res$isoform)
     realNoReads <- length(res$cigar)
     res <- list(chrname=as.character(chrname), chrlen=as.integer(chrlen),
                 chr=rep(0L, realNoReads),
@@ -95,7 +97,8 @@ simulateReads <- function(geneStructure, gene=1, expression,
                 tlen=rep(0L, realNoReads), ## TODO
                 seq=rep("*", realNoReads), qual=rep("*", realNoReads),
                 mypair=as.integer(t(matrix(seq_len(realNoReads),
-                  nc=2, byrow=TRUE)[,2:1]-1)))
+                  nc=2, byrow=TRUE)[,2:1]-1)),
+                attributes=attr)
     class(res) <- "splicingSAM"
   }
 

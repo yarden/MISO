@@ -1,6 +1,4 @@
 
-## TODO: attributes
-
 readSAM <- function(filename, region=NULL) {
   if (is.null(region)) {
     .Call("R_splicing_read_sambam", as.character(filename),
@@ -86,19 +84,36 @@ splicing.i.SAMheader <- function(reads) {
 
 ## TODO: attributes
 
-toTable.splicingSAM <- function(reads, ...) {  
-  tab <- data.frame(QNAME=reads$qname,
-                    FLAG=reads$flag,
-                    RNAME=reads$chrname[reads$chr+1],
-                    POS=reads$position,
-                    MAPQ=reads$mapq,
-                    CIGAR=reads$cigar,
-                    RNEXT=reads$rnext,
-                    PNEXT=reads$pairpos,
-                    TLEN=reads$tlen,
-                    SEQ=reads$seq,
-                    QUAL=reads$qual,
-                    ...)
+toTable.splicingSAM <- function(reads, ...) {
+  attrnames <- listAttributes(reads)
+  if (length(attrnames) == 0) { 
+    tab <- data.frame(QNAME=reads$qname,
+                      FLAG=reads$flag,
+                      RNAME=reads$chrname[reads$chr+1],
+                      POS=reads$position,
+                      MAPQ=reads$mapq,
+                      CIGAR=reads$cigar,
+                      RNEXT=reads$rnext,
+                      PNEXT=reads$pairpos,
+                      TLEN=reads$tlen,
+                      SEQ=reads$seq,
+                      QUAL=reads$qual,
+                      ...)
+  } else {
+    tab <- data.frame(QNAME=reads$qname,
+                      FLAG=reads$flag,
+                      RNAME=reads$chrname[reads$chr+1],
+                      POS=reads$position,
+                      MAPQ=reads$mapq,
+                      CIGAR=reads$cigar,
+                      RNEXT=reads$rnext,
+                      PNEXT=reads$pairpos,
+                      TLEN=reads$tlen,
+                      SEQ=reads$seq,
+                      QUAL=reads$qual,
+                      ATTR=getAttributes(reads),
+                      ...)
+  }    
 
 
   attr(tab, "header") <- splicing.i.SAMheader(reads)
@@ -108,17 +123,18 @@ toTable.splicingSAM <- function(reads, ...) {
 writeSAM <- function(reads, conn)
   UseMethod("writeSAM")
 
-## TODO: attributes
-
 writeSAM.splicingSAM <- function(reads, conn) {
   header <- splicing.i.SAMheader(reads)
-  tab <- sprintf("%s\t%i\t%s\t%i\t%i\t%s\t%s\t%s\t%i\t%s\t%s",
+  attr <- getAttributes(reads)
+  if (is.null(attr)) { attr <- "" } else { attr <- paste("\t", sep="", attr) }
+  tab <- sprintf("%s\t%i\t%s\t%i\t%i\t%s\t%s\t%s\t%i\t%s\t%s%s",
                  as.character(reads$qname), as.integer(reads$flag),
                  as.character(reads$chrname[reads$chr+1]),
                  as.integer(reads$position), as.integer(reads$mapq),
                  as.character(reads$cigar), as.character(reads$rnext),
                  as.character(reads$pairpos), as.integer(reads$tlen),
-                 as.character(reads$seq), as.character(reads$qual))
+                 as.character(reads$seq), as.character(reads$qual),
+                 attr)
   cat(file=conn, header, "\n", sep="", paste(tab, collapse="\n"), "\n")
 }
 
@@ -137,6 +153,55 @@ getStrand <- function(reads)
 
 getStrand.splicingSAM <- function(reads) {
   getbit(reads$flag, 5L)
+}
+
+getAttributes <- function(reads)
+  UseMethod("getAttributes")
+
+getAttributes.splicingSAM <- function(reads) {
+  reads$attributes
+}
+
+listAttributes <- function(reads)
+  UseMethod("listAttributes")
+
+listAttributes.splicingSAM <- function(reads) {
+  if (is.null(reads$attributes)) {
+    character()
+  } else { 
+    a <- strsplit(reads$attributes, "\t", fixed=TRUE)
+    unique(unlist(lapply(a, function(x) substr(x, 1, 2))))
+  }
+}
+
+getAttribute <- function(reads, attr)
+  UseMethod("getAttribute")
+
+getAttribute.splicingSAM <- function(reads, attr) {
+  a <- reads$attributes
+  if (is.null(a)) { return(a) }
+  a <- strsplit(a, "\t", fixed=TRUE)
+  attr <- paste("^", attr, ":", sep="")
+  sapply(a, function(x) {
+    g <- grep(attr, x)
+    if (length(g)==0) {
+      NA
+    } else {
+      sp <- strsplit(x[g[1]], ":", fixed=TRUE)[[1]]
+      if (sp[2] %in% c("i", "f")) {
+        as.numeric(sp[3])
+      } else {
+        sp[3]
+      }
+    }
+  })
+}
+
+getIsoform <- function(reads)
+  UseMethod("getIsoform")
+
+getIsoform.splicingSAM <- function(reads) {
+  getAttribute(reads, attr="XI")
 }
 
 selectReads <- function(reads, idx)
