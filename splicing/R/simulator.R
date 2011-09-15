@@ -120,7 +120,9 @@ createGene <- function(exons, isoforms, id="insilicogene",
         PACKAGE="splicing")
 }
 
-mergeGenes <- function(..., mode=c("disjunct")) {
+# TODO: attributes
+
+merge.gff3 <- function(..., mode=c("disjunct")) {
   genes <- list(...)
   if (length(genes)==0) {
     stop("No genes are given")
@@ -148,10 +150,35 @@ mergeGenes <- function(..., mode=c("disjunct")) {
       genes[[i]]$start <- genes[[i]]$start + maxpos[i]
       genes[[i]]$end   <- genes[[i]]$end   + maxpos[i]
     }
-    res <- do.call(rbind, genes)
+    seqid_str <- unique(unlist(lapply(genes, "[[", "seqid_str")))
+    seqid <- match(unlist(lapply(genes, function(x) x$seqid_str[x$seqid+1])),
+                   seqid_str)-1L
+    source_str <- unique(unlist(lapply(genes, "[[", "source_str")))
+    source <- match(unlist(lapply(genes,
+                                  function(x) x$source_str[x$source+1])),
+                    source_str)-1L
+    ID <- unlist(lapply(genes, "[[", "ID"))
+    allparent <- unlist(lapply(genes, function(x) {
+      r <- rep(NA_character_, length(x$parent))
+      r[ x$parent != -1 ] <- x$ID[x$parent+1]
+      r
+    }))
+    parent <- match(allparent, ID)-1L
+    parent[is.na(parent)] <- -1L
+    res <- list(seqid_str=seqid_str, seqid=seqid, source_str=source_str,
+                source=source, type=unlist(lapply(genes, "[[", "type")),
+                start=unlist(lapply(genes, "[[", "start")),
+                end=unlist(lapply(genes, "[[", "end")),
+                score=unlist(lapply(genes, "[[", "score")),
+                strand=unlist(lapply(genes, "[[", "strand")),
+                phase=unlist(lapply(genes, "[[", "phase")),
+                attributes=NULL,
+                gid=NA, tid=NA, ID=ID, parent=parent)
+    
+    res <- addGidTid(res)
+    class(res) <- "gff3"
   }
 
-  res <- addGidTid(res)
   res
 }
 
