@@ -40,9 +40,10 @@ getEnsemblGenes <- function(speciesName,
   download.file(paste(baseURL, sep="/", speciesName2, fname), tmp,
                 quiet=!verbose)
   if (verbose) { message("Uncompresssing and parsing file") }
-  ## TODO: close tmp
   ## TODO: something faster
-  lines <- read.delim(gzfile(tmp), header=FALSE, stringsAsFactors=FALSE)
+  myfile <- gzfile(tmp)
+  lines <- read.delim(myfile, header=FALSE, stringsAsFactors=FALSE)
+  close(myfile)
   unlink(tmp)
   
   cn <- c("seqname", "source", "feature", "start", "end", "score", "strand",
