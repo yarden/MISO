@@ -98,7 +98,6 @@ class TestMISO(unittest.TestCase):
 
         print "Executing: %s" %(index_cmd)
         os.system(index_cmd)
-        return
 
         output_dir = os.path.join(self.tests_output_dir, "gene-psi-output")
         
