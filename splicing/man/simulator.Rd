@@ -1,43 +1,32 @@
 \name{Read simulator}
-\alias{genReadsForGene}
-\alias{genReads}
+\alias{simulateReads}
 \title{Simulating RNASeq reads from real or artifical genes}
 \usage{
-genReadsForGene (geneStructure, expression,
-     gene = geneIds(geneStructure)[1], coverage = 10, readLength = 33,
-     paired = FALSE, insertDistr = NULL, normalInsert = c(250, 15))
-genReads (geneStructure, expression, genes = geneIds (geneStructure))
+simulateReads (geneStructure, gene = 1, expression, noReads, readLength, 
+    paired = FALSE, chrname = seqIds(geneStructure)[gene],
+    chrlen = geneLength(geneStructure)[gene], 
+    qname = "read-\%s", fragmentProb = NULL, fragmentStart = 0L, 
+    normalMean, normalVar, numDevs)
 }
 \arguments{
   \item{geneStructure}{A GFF3 object containing one of more genes.}
-  \item{expression}{A numeric vector for \code{genReadsForGene}, a list
-    of numeric vectors for \code{genReads}. The list can be named, then
-    the names should correspond to gene IDs in \code{geneStructure}. If
-    the list is not named, then it is assumed to have the same order as
-    the genes in \code{geneStructure}.}
-  \item{gene}{If generating reads for a single gene with
-    \code{genReadsForGene}, then this argument should be a single gene
-    ID or a number, that defines the gene for which reads are
-    generated. By default the first gene is used.}
-  \item{coverage}{Coverage, a numeric scalar. This specifies the number
-    of reads to generate. It is calculated as the number of read that
-    cover each base the given number of times, on average. }
+  \item{gene}{The numeric id of the gene for which the reads are
+    generated. If the GFF3 object contains a single gene, then this must
+    be 1.}
+  \item{expression}{A numeric vector giving the expression levels
+    for the isoforms.}
+  \item{noReads}{The number of reads to generate. For paired-end reads
+    this means the number of read pairs.}
   \item{readLength}{Numeric scalar, the read length.}
   \item{paired}{Logical scalar, whether to generate paired reads.}
-  \item{insertDistr}{Numeric vector, the distribution of insert
-    length. The first value is the probability of having insert length
-    one, etc. If this vector is not given or \code{NULL}, then
-    \code{normalInsert} is used to calculate the insert length
-    distribution. This argument is ignored if \code{paired} is
-    \code{FALSE}.}
-  \item{normalInsert}{A numeric vector of length two. This is an
-    alternative to the explicit \code{insertDistr} form. The first value
-    is the mean, the second the standard deviation of the (distretized)
-    normal distribution that is used as the insert length distribution.
-    This argument is ignored if \code{paired} is FALSE, or
-    \code{insertDistr} is given (and not \code{NULL}).}
-  \item{genes}{The numbers or ids of the genes for which reads are
-    generated. By default all genes are used.}
+  \item{chrname}{The sequence (chromosome) name.}
+  \item{chrlen}{}
+  \item{qname}{}
+  \item{fragmentProb}{}
+  \item{fragmentStart}{}
+  \item{normalMean}{}
+  \item{normalVar}{}
+  \item{numDevs}{}
 }
 \details{
   TODO

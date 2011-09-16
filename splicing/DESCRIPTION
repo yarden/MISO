@@ -2,10 +2,15 @@ Package: splicing
 Type: Package
 Title: Various functions to study alternative splicing.
 Version: 0.1
-Date: 2011-03-30
+Date: 2011-09-30
 Author: Gabor Csardi <gcsardi@stat.harvard.edu>
 Maintainer: Gabor Csardi <gcsardi@stat.harvard.edu>
-Suggests: RCurl, MASS, nnls
+Suggests: RCurl
 Description: Various functions to study alternative splicing.
-License: GPL (>=2)
+  Most importantly, the package contains a fast implementation 
+  of the Mixture of Isoforms (MISO) isoform quantitation algorithm.
+  It also supports gene visualization, checking whether
+  isoform expression levels can be calculated for a given gene 
+  structure, and a novel gene structure complexity measure.
+License: MIT
 LazyLoad: yes

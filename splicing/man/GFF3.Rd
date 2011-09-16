@@ -1,5 +1,6 @@
 \name{GFF3 objects}
 \alias{gff3-class}
+\alias{GFF3}
 \alias{readGFF3}
 \alias{writeGFF3}
 \alias{noGenes}
@@ -14,30 +15,29 @@
 \alias{geneLength}
 \alias{isoLength}
 \alias{totalExonLength}
+\alias{getSpecies}
 \title{GFF3 objects, containing gene structures}
 \usage{
 isGFF3 (object)
 
-noGenes (gff3)
-noIso (gff3)
-noExons (gff3)
+\method{noGenes}{gff3} (gff3)
+\method{noIso}{gff3} (gff3)
+\method{noExons}{gff3} (gff3)
 
-geneLength (gff3)
-isoLength (gff3, collapse=FALSE)
-totalExonLength (gff3, overlap=TRUE)
+\method{geneLength}{gff3} (gff3)
+\method{isoLength}{gff3} (gff3, collapse=FALSE)
+\method{totalExonLength}{gff3} (gff3, overlap=TRUE)
 
-seqIds (gff3)
-geneIds (gff3)
-geneTypes (gff3)
-getIso (gff3)
+\method{seqIds}{gff3} (gff3)
+\method{geneIds}{gff3} (gff3)
+\method{geneTypes}{gff3} (gff3)
+\method{getIso}{gff3} (gff3)
+\method{getSpecies}{gff3} (gff3)
 
-selectGenes (gff3, idx)
+\method{selectGenes}{gff3} (gff3, idx)
 
-readGFF3 (file, sep = "\t", col.names = c("seqid", "source", 
-     "type", "start", "end", "score", "strand", "phase", "attributes"),
-     stringsAsFactors = FALSE, ...)
-writeGFF3 (gff3, file, sep = "\t", quote = FALSE, row.names = FALSE,
-     col.names = FALSE, ...)
+readGFF3 (file)
+writeGFF3 (gff3, file)
 }
 \arguments{
   \item{object}{An R object to be inspected.}
@@ -51,17 +51,6 @@ writeGFF3 (gff3, file, sep = "\t", quote = FALSE, row.names = FALSE,
   \item{file}{The file or connection the GFF data is read from or
     written to. This argument is passed to \code{read.table} or
     \code{write.table}.}
-  \item{sep}{Column separator, defaults to a single tabulator.}
-  \item{col.names}{The column names to assign to the GFF data, when
-    reading it from a file. Do not change the default, unless you
-    really know what you are doing.}
-  \item{stringsAsFactors}{Whether to read the data as factors, again,
-    changing the default is not recommended.}
-  \item{quote}{Whether to quote fields in the output file, it is not
-    suggested to change the default, which is \code{FALSE}.}
-  \item{row.names}{Whether to write row names to the file, leave this on
-    \code{FALSE}, otherwise the file will not conform to the GFF3
-     format.}
 }
 \details{
   A GFF3 object, i.e. an object with class \code{gff3} contains a number
@@ -97,6 +86,9 @@ writeGFF3 (gff3, file, sep = "\t", quote = FALSE, row.names = FALSE,
   \code{getIso} gives the ids of the transcripts, separately for each
   gene.
 
+  \code{getSpecies} returns the scientific name of the species
+  of which the genes belong to, if available.
+  
   \code{selectGenes} can be used to select a subset of genes from a GFF3
   object, based on their gene ids, or numbers.
 
@@ -107,7 +99,7 @@ writeGFF3 (gff3, file, sep = "\t", quote = FALSE, row.names = FALSE,
 \value{
   \code{isGFF3} returns a logical scalar.
 
-  \code{noGenes} returns a numeric scalar
+  \code{noGenes} returns a numeric scalar.
 
   \code{noIso}, \code{noExons} and \code{geneLength} return a named
   numeric vector. 
@@ -121,13 +113,15 @@ writeGFF3 (gff3, file, sep = "\t", quote = FALSE, row.names = FALSE,
   \code{seqIds}, \code{geneIds} and \code{geneTypes} return a character
   vector.
 
-  \code{getIso} return a named list of character vectors.
+  \code{getIso} returns a named list of character vectors.
 
+  \code{getSpecies} returns a character scalar.
+  
   \code{selectGenes} returns a GFF3 object.
 
   \code{readGFF3} returns a GFF3 object.
 
-  \code{writeGFF3} returns whatever \code{\link{write.table}} returns.
+  \code{writeGFF3} returns \code{NULL}, invisibly.
 }
 % \references{}
 \author{
@@ -143,7 +137,7 @@ genelist <- lapply(seq(20,100,by=20), function(x) {
   createGene(exons=list(c(1,1000), c(2001, 2000+x), c(4001,5000)),
              isoforms=list(c(1,2,3), c(1,3)), id=sprintf("gene-\%d", x))
 })
-genes <- do.call(mergeGenes, genelist)
+genes <- do.call(merge, genelist)
 
 ## Query some properties
 noGenes(genes)

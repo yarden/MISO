@@ -1,11 +1,12 @@
 \name{Artificial genes}
 \alias{createGene}
-\alias{mergeGenes}
+\alias{merge}
 \title{Create artificial gene structures for simulation purposes}
 \usage{
 createGene (exons, isoforms, id = "insilicogene",
-     seqid = "seq1", source = "protein_coding", strand = "+")
-mergeGenes (\dots, mode=c("disjunct"))
+     seqid = "seq1", source = "protein_coding",
+     strand = c("+", "-", "."), geneStructure = NULL)
+\method{merge}{gff3} (\dots, mode=c("disjunct"))
 }
 \arguments{
   \item{exons}{A list of numeric vectors, each of length two. This list
@@ -20,8 +21,9 @@ mergeGenes (\dots, mode=c("disjunct"))
     chromosome name) of the gene.}
   \item{source}{Character scalar, it corresponds to the \code{source}
     field in the GFF3 format.}
-  \item{strand}{Character scalar, the strand of the gene, usually
-    \code{+} or \code{-}.}
+  \item{strand}{Character scalar, the strand of the gene. It is either
+    \sQuote{+}, \sQuote{-}, or \sQuote{.}, the last one corresponds to
+    an unknown strand.}
   \item{\dots}{The genes to merge. If you have your genes in a list,
     then you can use \code{do.call}, see the example below.}
   \item{mode}{Character scalar, defines how the genes are merged. Right
