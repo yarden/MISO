@@ -330,8 +330,9 @@ geneTypes.gff3 <- function(gff3) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
-  res <- gff3$source_str
+  res <- gff3$source_str[gff3$source+1]
   names(res) <- geneIds(gff3)
+  res
 }
 
 ## The length of the gene(s)
