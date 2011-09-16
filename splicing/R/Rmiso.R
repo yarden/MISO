@@ -3,8 +3,8 @@
 
 MISO <- function(geneStructure, gene=1L, reads, readLength=readLength(reads),
                  overHang=1L, noIterations=5000, noBurnIn=500, noLag=10,
-                 hyperparameters=rep(1,noIso(geneStructure)[1]),
-                 paired=reads$paired, fragmentProb=NULL, fragmentStart,
+                 hyperparameters=rep(1, noIso(geneStructure)[gene]),
+                 paired=reads$paired, fragmentProb=NULL, fragmentStart=0L,
                  normalMean, normalVar, numDevs) {
 
   if (length(readLength) != 1) {
@@ -36,7 +36,7 @@ MISO.Trinity <- function(matchMatrix, fragmentLength=NULL, isoLength,
                          readLength=readLength(reads), overHang=1L,
                          noIterations=5000, noBurnIn=500, noLag=10,
                          hyperparameters=rep(1, length(isoLength)),
-                         paired=FALSE, fragmentProb=NULL, fragmentStart,
+                         paired=FALSE, fragmentProb=NULL, fragmentStart=0L,
                          normalMean, normalVar, numDevs) {
 
   if (length(readLength) != 1) {
