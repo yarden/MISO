@@ -1,7 +1,12 @@
 \name{Artificial genes}
 \alias{createGene}
 \alias{merge}
+\alias{merge.gff3}
 \title{Create artificial gene structures for simulation purposes}
+\description{
+  These functions can be used to create gene structures for
+  isoform quantitation.
+}
 \usage{
 createGene (exons, isoforms, id = "insilicogene",
      seqid = "seq1", source = "protein_coding",
@@ -24,6 +29,8 @@ createGene (exons, isoforms, id = "insilicogene",
   \item{strand}{Character scalar, the strand of the gene. It is either
     \sQuote{+}, \sQuote{-}, or \sQuote{.}, the last one corresponds to
     an unknown strand.}
+  \item{geneStructure}{If not \code{NULL}, then it must be GFF3 object.
+    The newly created gene will be added to this object.}
   \item{\dots}{The genes to merge. If you have your genes in a list,
     then you can use \code{do.call}, see the example below.}
   \item{mode}{Character scalar, defines how the genes are merged. Right
@@ -63,7 +70,7 @@ genelist <- lapply(seq(10,100,by=10), function(x) {
   createGene(exons=list(c(1,1000), c(2001, 2000+x), c(4001,5000)),
              isoforms=list(c(1,2,3), c(1,3)), id=sprintf("gene-\%d", x))
 })
-genes <- do.call(mergeGenes, genelist)
+genes <- do.call(merge, genelist)
 noIso(genes)
 geneIds(genes)
 isoLength(genes)

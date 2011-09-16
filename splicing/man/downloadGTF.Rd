@@ -1,6 +1,6 @@
 \name{Getting genes from Ensembl}
-\alias{listGTFs}
-\alias{downloadGTF}
+\alias{listEnsemblGenes}
+\alias{getEnsemblGenes}
 \title{
   List and download gene structures from Ensembl.
 }

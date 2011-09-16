@@ -4,19 +4,35 @@
 \alias{readGFF3}
 \alias{writeGFF3}
 \alias{noGenes}
+\alias{noGenes.gff3}
 \alias{seqIds}
+\alias{seqIds.gff3}
 \alias{geneIds}
+\alias{geneIds.gff3}
 \alias{selectGenes}
+\alias{selectGenes.gff3}
 \alias{noIso}
+\alias{noIso.gff3}
 \alias{noExons}
+\alias{noExons.gff3}
 \alias{getIso}
+\alias{getIso.gff3}
 \alias{isGFF3}
 \alias{geneTypes}
+\alias{geneTypes.gff3}
 \alias{geneLength}
+\alias{geneLength.gff3}
 \alias{isoLength}
+\alias{isoLength.gff3}
 \alias{totalExonLength}
+\alias{totalExonLength.gff3}
 \alias{getSpecies}
+\alias{getSpecies.gff3}
 \title{GFF3 objects, containing gene structures}
+\description{
+  Isoform information for single or multiple genes is stored in GFF3
+  objects.
+}
 \usage{
 isGFF3 (object)
 
@@ -25,13 +41,13 @@ isGFF3 (object)
 \method{noExons}{gff3} (gff3)
 
 \method{geneLength}{gff3} (gff3)
-\method{isoLength}{gff3} (gff3, collapse=FALSE)
+\method{isoLength}{gff3} (gff3)
 \method{totalExonLength}{gff3} (gff3, overlap=TRUE)
 
 \method{seqIds}{gff3} (gff3)
 \method{geneIds}{gff3} (gff3)
 \method{geneTypes}{gff3} (gff3)
-\method{getIso}{gff3} (gff3)
+\method{getIso}{gff3} (gff3, collapse=FALSE)
 \method{getSpecies}{gff3} (gff3)
 
 \method{selectGenes}{gff3} (gff3, idx)
@@ -55,9 +71,6 @@ writeGFF3 (gff3, file)
 \details{
   A GFF3 object, i.e. an object with class \code{gff3} contains a number
   of gene structures, from the same organism.
-
-  Currently it is implemented as a data frame with two extra indices, to
-  be able to find genes and transcripts quickly in the table.
 
   In this manual page, we list the various operations of GFF3 objects.
 
@@ -128,9 +141,7 @@ writeGFF3 (gff3, file)
   Gabor Csardi \email{gcsardi@stat.harvard.edu}
 }
 % \note{}
-\seealso{\code{\link{gtf2gff3}} for converting GTF files to GFF3 format
-  and \code{\link{gff32gtf}} for the opposite.
-}
+% \seealso{}
 \examples{
 ## Create a GFF with artificial genes
 genelist <- lapply(seq(20,100,by=20), function(x) {
