@@ -45,7 +45,7 @@ S3method("getIsoform", "splicingSAM")
 
 export(plotIso, plotIsoSize, plotIsoPDF)
 
-export(MISO, MISO.Trinity, postMean, runData)
+export(MISO, postMean, runData)
 
 S3method("postMean", "MISOresult")
 S3method("logLik", "MISOresult")

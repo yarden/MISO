@@ -32,40 +32,6 @@ MISO <- function(geneStructure, gene=1L, reads, readLength=readLength(reads),
   res
 }
 
-MISO.Trinity <- function(matchMatrix, fragmentLength=NULL, isoLength,
-                         readLength=readLength(reads), overHang=1L,
-                         noIterations=5000, noBurnIn=500, noLag=10,
-                         hyperparameters=rep(1, length(isoLength)),
-                         paired=FALSE, fragmentProb=NULL, fragmentStart=0L,
-                         normalMean, normalVar, numDevs) {
-
-  if (length(readLength) != 1) {
-    stop("Variable read length is currently not supported")
-  }
-  
-  if (!paired) {
-    res <- .Call("R_splicing_miso_trinity", matchMatrix,
-                 as.integer(isoLength), as.integer(readLength),
-                 as.integer(noIterations), as.integer(noBurnIn),
-                 as.integer(noLag), as.double(hyperparameters),
-                 as.integer(overHang),
-                 PACKAGE="splicing")
-  } else {
-    if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
-    res <- .Call("R_splicing_miso_paired_trinity",
-                 matchMatrix, fragmentLength,
-                 as.integer(isoLength), as.integer(readLength),
-                 as.integer(noIterations), as.integer(noBurnIn),
-                 as.integer(noLag), as.double(hyperparameters), fragmentProb,
-                 as.integer(fragmentStart), as.double(normalMean),
-                 as.double(normalVar), as.double(numDevs),
-                 as.integer(overHang),
-                 PACKAGE="splicing")
-  }
-
-  res
-}
-
 postMean <- function(misoResult)
   UseMethod("postMean")
 
