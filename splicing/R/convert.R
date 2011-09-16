@@ -337,7 +337,7 @@ geneTypes.gff3 <- function(gff3) {
 
 ## The length of the gene(s)
 
-geneLength <- function(gff)
+geneLength <- function(gff3)
   UseMethod("geneLength")
 
 geneLength.gff3 <- function(gff3) {
@@ -367,7 +367,8 @@ getSpecies.gff3 <- function(gff3) {
   if (is.null(res)) NA else res
 }
 
-print.gff3 <- function(gff3, verbose=TRUE) {
+print.gff3 <- function(x, verbose=TRUE, ...) {
+  gff3 <- x
   nog <- noGenes(gff3)
   spec <- getSpecies(gff3)
   if (is.na(spec)) { spec <- "Unknown species" }

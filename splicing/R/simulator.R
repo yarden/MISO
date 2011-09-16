@@ -50,7 +50,8 @@ getExonLength <- function(gff3, gene) {
 ## Generate reads for a single gene
 
 simulateReads <- function(geneStructure, gene=1, expression,
-                          noReads, readLength, paired=FALSE, chrname="seq1",
+                          noReads, readLength, paired=FALSE,
+                          chrname=seqIds(geneStructure)[gene],
                           chrlen=geneLength(geneStructure)[gene],
                           qname="read-%s",
                           fragmentProb=NULL, fragmentStart=0L,
@@ -81,7 +82,8 @@ simulateReads <- function(geneStructure, gene=1, expression,
                  as.integer(noReads), as.integer(readLength),
                  fragmentProb, as.integer(fragmentStart),
                  as.double(normalMean), as.double(normalVar),
-                 as.double(numDevs))
+                 as.double(numDevs),
+                 PACKAGE="splicing")
     attr <- sprintf("XI:i:%i", res$isoform)
     realNoReads <- length(res$cigar)
     res <- list(chrname=as.character(chrname), chrlen=as.integer(chrlen),

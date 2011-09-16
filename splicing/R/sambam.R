@@ -16,7 +16,8 @@ noReads.splicingSAM <- function(reads) {
   length(reads$position)
 }
 
-print.splicingSAM <- function(reads) {
+print.splicingSAM <- function(x, ...) {
+  reads <- x
   if (isPaired(reads)) {
     mess <- sprintf("SAM/BAM %i read pairs, %i single reads, %i sequences",
                     noPairs(reads), noSingles(reads),
