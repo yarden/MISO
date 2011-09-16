@@ -1,5 +1,5 @@
 
-assignmentMatrix <- function(geneStructure, gene=1L, readLength=33L,
+assignmentMatrix <- function(geneStructure, gene=1L, readLength,
                              overHang=1L, paired=FALSE, fragmentProb=NULL,
                              fragmentStart=0L, normalMean, normalVar,
                              numDevs) {

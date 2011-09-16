@@ -24,10 +24,15 @@ matchIso <- function(geneStructure, gene=1, reads, overHang=1L,
   }
 }
 
-solveIso <- function(geneStructure, gene=1L, reads, readLength=33L,
+solveIso <- function(geneStructure, gene=1L, reads,
+                     readLength=readLength(reads),
                      overHang=1L, paired=FALSE, fragmentProb=NULL,
                      fragmentStart=0L, normalMean, normalVar, numDevs) {
 
+  if (length(readLength) != 1) {
+    stop("Variable read length is currently not supported")
+  }
+  
   if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
 
   if (!paired) { 

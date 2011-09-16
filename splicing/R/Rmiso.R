@@ -1,12 +1,16 @@
 
 # TODO: better API
 
-MISO <- function(geneStructure, gene=1L, reads, readLength, overHang=1L,
-                 noIterations=5000, noBurnIn=500, noLag=10,
+MISO <- function(geneStructure, gene=1L, reads, readLength=readLength(reads),
+                 overHang=1L, noIterations=5000, noBurnIn=500, noLag=10,
                  hyperparameters=rep(1,noIso(geneStructure)[1]),
                  paired=reads$paired, fragmentProb=NULL, fragmentStart,
                  normalMean, normalVar, numDevs) {
 
+  if (length(readLength) != 1) {
+    stop("Variable read length is currently not supported")
+  }
+  
   if (!paired) {
     res <- .Call("R_splicing_miso", geneStructure, as.integer(gene), reads,
                  as.integer(readLength), as.integer(noIterations),
@@ -29,11 +33,16 @@ MISO <- function(geneStructure, gene=1L, reads, readLength, overHang=1L,
 }
 
 MISO.Trinity <- function(matchMatrix, fragmentLength=NULL, isoLength,
-                         readLength, overHang=1L, noIterations=5000,
-                         noBurnIn=500, noLag=10,
+                         readLength=readLength(reads), overHang=1L,
+                         noIterations=5000, noBurnIn=500, noLag=10,
                          hyperparameters=rep(1, length(isoLength)),
                          paired=FALSE, fragmentProb=NULL, fragmentStart,
                          normalMean, normalVar, numDevs) {
+
+  if (length(readLength) != 1) {
+    stop("Variable read length is currently not supported")
+  }
+  
   if (!paired) {
     res <- .Call("R_splicing_miso_trinity", matchMatrix,
                  as.integer(isoLength), as.integer(readLength),
