@@ -7,7 +7,7 @@
 }
 \usage{
 \method{filterReads}{splicingSAM}(reads, \dots)
-FILTER(name, \dots}
+FILTER(name, \dots)
 }
 \arguments{
   \item{reads}{The reads to filter, a \code{SAM} object.}
