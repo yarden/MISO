@@ -74,6 +74,14 @@ readLength.splicingSAM <- function(reads) {
   sort(unique(res))
 }
 
+## To support different read lengths within the same file
+
+eachReadLength <- function(reads) {
+  len <- strsplit(reads$cigar, "[A-Z]")
+  typ <- lapply(strsplit(reads$cigar, "[0-9]+"), "[", -1)
+  res <- mapply(len, typ, FUN=function(l, t) sum(as.numeric(l[t=="M"])))
+}  
+
 toTable <- function(reads, ...)
   UseMethod("toTable")
 
@@ -210,14 +218,16 @@ selectReads <- function(reads, idx)
 
 selectReads.splicingSAM <- function(reads, idx) {
   no <- noReads(reads)
+  idx <- sort(seq_len(no)[idx])
+  if (!is.null(attr <- reads$attributes)) { attr <- attr[idx] }
   res <- list(chrname=reads$chrname, chrlen=reads$chrlen,
-              chr=reads$chr[idx], qname=reads$chr[idx],
+              chr=reads$chr[idx], qname=reads$qname[idx],
               cigar=reads$cigar[idx], position=reads$position[idx],
               flag=reads$flag[idx], pairpos=reads$pairpos[idx],
               noPairs=0L, noSingles=0L, paired=reads$paired,
               mapq=reads$mapq[idx], rnext=reads$rnext[idx],
               tlen=reads$tlen[idx], seq=reads$seq[idx], qual=reads$qual[idx],
-              mypair=reads$mypair[idx])
+              mypair=reads$mypair[idx], attributes=attr)
   no2 <- length(res$cigar)
   class(res) <- class(reads)
 
@@ -225,12 +235,11 @@ selectReads.splicingSAM <- function(reads, idx) {
   ## 5) pairpos and 6) mate pointers
 
   if (isPaired(reads)) {
-    keep <- sort(seq_len(no)[idx])
-    tran <- integer(no)
-    tran[keep] <- seq_along(keep)
-    tran <- tran-1L
+    tran <- rep(-1L, no)
+    tran[idx] <- seq_along(idx)-1L
 
-    res$mypair <- tran[reads$mypair+1]
+    res$mypair <- sapply(reads$mypair[idx],
+                         function(x) if (x==-1) { -1 } else { tran[x+1] })
     res$noPairs <- as.integer(sum(res$mypair != -1)/2)
     res$noSingles <- as.integer(no2 - 2 * res$noPairs)
     res$paired <- res$noPairs != 0
@@ -303,11 +312,21 @@ filter.badFlags <- function(reads) {
   selectReads(reads, keep)
 }
 
+## Keep only a given region, on a given chromosome
+
+filter.keepRegion <- function(reads, sequence, start, end) {
+  rl <- eachReadLength(reads)
+  keep <- which(reads$chrname[reads$chr+1] == sequence &
+                reads$position >= start-rl+1 & reads$position <= end)
+  selectReads(reads, keep)
+}
+
 myfilters <- list(noPaired=filter.noPaired,
                   noSingle=filter.noSingle,
                   notOppositeStrand=filter.notOppositeStrand,
                   notMatching=filter.notMatching,
-                  badFlags=filter.badFlags)
+                  badFlags=filter.badFlags,
+                  keepRegion=filter.keepRegion)
 
 FILTER <- function(name, ...) {
   if (! name %in% names(myfilters)) {

@@ -34,4 +34,23 @@ Type 'q()' to quit R.
 `noPaired' filtered out 26 reads, 274 remaining
 `noPaired' filtered out 0 reads, 274 remaining
 > 
+> r1 <- readSAM(sprintf("%s/%s", fileDir, "paired-sorted.bam"))
+> r3 <- filterReads(r1, FILTER("keepRegion", sequence="seq1",
++                              start=200, end=400))
+`keepRegion' filtered out 304 reads, 300 remaining
+> 
+> mapply(r2, r3, FUN=function(x,y) length(x)==length(y) && all(x==y))
+   chrname     chrlen        chr      qname      cigar 
+      TRUE       TRUE       TRUE      FALSE       TRUE 
+  position       flag    pairpos    noPairs  noSingles 
+      TRUE       TRUE       TRUE       TRUE       TRUE 
+    paired       mapq      rnext       tlen        seq 
+      TRUE       TRUE       TRUE      FALSE       TRUE 
+      qual     mypair attributes 
+      TRUE       TRUE      FALSE 
+> all(sort(r2$qname) == sort(r3$qname))
+[1] TRUE
+> all(sort(r2$attributes) == sort(r3$attributes))
+[1] TRUE
+> 
 > 
