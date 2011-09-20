@@ -9,6 +9,27 @@ readSAM <- function(filename, region=NULL) {
   }
 }
 
+SAMFile2BAMFile <- function(samfile, bamfile) {
+  res <- .Call("R_splicing_sam2bam", as.character(samfile),
+               as.character(bamfile),
+               PACKAGE="splicing")
+  invisible(res)
+}
+
+sortBAMFile <- function(file, outprefix, key=c("position", "qname")) {
+  key <- match.arg(key)
+  key <- switch(key, "position"=0L, "qname"=1L)
+  res <- .Call("R_splicing_bam_sort", as.character(file),
+               as.character(outprefix), key, PACKAGE="splicing")
+  invisible(res)
+}
+
+indexBAMFile <- function(file) {
+  res <- .Call("R_splicing_bam_index", as.character(file),
+               PACKAGE="splicing")
+  invisible(res)
+}
+                        
 noReads <- function(reads)
   UseMethod("noReads")
 
@@ -64,10 +85,10 @@ seqNames.splicingSAM <- function(reads) {
   reads$chrname
 }
 
-readLength <- function(reads)
-  UseMethod("readLength")
+getReadLength <- function(reads)
+  UseMethod("getReadLength")
 
-readLength.splicingSAM <- function(reads) {
+getReadLength.splicingSAM <- function(reads) {
   len <- strsplit(reads$cigar, "[A-Z]")
   typ <- lapply(strsplit(reads$cigar, "[0-9]+"), "[", -1)
   res <- mapply(len, typ, FUN=function(l, t) sum(as.numeric(l[t=="M"])))

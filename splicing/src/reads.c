@@ -1,6 +1,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "splicing.h"
 #include "splicing_error.h"
@@ -576,5 +577,122 @@ int splicing_read_sambam_region(const char *filename,
 
   samclose(infile);  
 
+  return 0;
+}
+
+int splicing_sam2bam(const char *infile, const char *outfile) {
+
+  samfile_t *in = 0, *out = 0;
+  bam1_t *b = bam_init1();
+  int r;
+
+  bam_verbose=0;
+
+  if ((in = samopen(infile, "r", /*aux=*/ 0)) == 0) {
+    SPLICING_ERROR("Failed to open sam file for reading.", SPLICING_EFILE);
+  }
+  if ((out = samopen(outfile, "wbh", in->header)) == 0) {  
+    samclose(in);
+    SPLICING_ERROR("Failed to open bam file for writing.", SPLICING_EFILE);
+  }
+  
+  while ((r = samread(in, b)) >= 0) {
+    samwrite(out, b);
+  }
+  if (r < -1) {
+    SPLICING_WARNING("Truncated file");
+  }
+  bam_destroy1(b);
+
+  samclose(in);
+  samclose(out);
+  
+  return 0;
+}
+
+typedef bam1_t *bam1_p;
+extern int g_is_by_qname;
+extern void sort_blocks(int n, int k, bam1_p *buf, const char *prefix,
+			const bam_header_t *h, int is_stdout);
+int bam_merge_core(int by_qname, const char *out, const char *headers, 
+		   int n, char * const *fn, int flag, const char *reg);
+
+/* TODO: free memory in case of error */
+
+int splicing_bam_sort(const char *infile, const char *outprefix, 
+		      splicing_bam_sort_key_t key) {
+  
+  int is_by_qname = (key == SPLICING_BAM_KEY_QNAME);
+  int is_stdout = 0;
+  size_t max_mem = 500000000;
+  
+  int n, ret, k, i;
+  size_t mem;
+  bam_header_t *header;
+  bamFile fp;
+  bam1_t *b, **buf;
+
+  bam_verbose=0;
+  
+  g_is_by_qname = is_by_qname;
+  n = k = 0; mem = 0;
+  fp = bam_open(infile, "r");
+  if (fp == 0) {
+    SPLICING_ERROR("Cannot open BAM file", SPLICING_EFILE);
+  }
+  header = bam_header_read(fp);
+  buf = (bam1_t**)calloc(max_mem / BAM_CORE_SIZE, sizeof(bam1_t*));
+  // write sub files
+  for (;;) {
+    if (buf[k] == 0) buf[k] = (bam1_t*)calloc(1, sizeof(bam1_t));
+    b = buf[k];
+    if ((ret = bam_read1(fp, b)) < 0) break;
+    mem += ret;
+    ++k;
+    if (mem >= max_mem) {
+      sort_blocks(n++, k, buf, outprefix, header, 0);
+      mem = 0; k = 0;
+    }
+  }
+  if (ret != -1)
+    SPLICING_WARNING("[bam_sort_core] truncated file. Continue anyway.\n");
+  if (n == 0) 
+    sort_blocks(-1, k, buf, outprefix, header, is_stdout);
+  else { // then merge
+    char **fns, *fnout;
+    fprintf(stderr, "[bam_sort_core] merging from %d files...\n", n+1);
+    sort_blocks(n++, k, buf, outprefix, header, 0);
+    fnout = (char*)calloc(strlen(outprefix) + 20, 1);
+    if (is_stdout) sprintf(fnout, "-");
+    else sprintf(fnout, "%s.bam", outprefix);
+    fns = (char**)calloc(n, sizeof(char*));
+    for (i = 0; i < n; ++i) {
+      fns[i] = (char*)calloc(strlen(outprefix) + 20, 1);
+      sprintf(fns[i], "%s.%.4d.bam", outprefix, i);
+    }
+    bam_merge_core(is_by_qname, fnout, 0, n, fns, 0, 0);
+    free(fnout);
+    for (i = 0; i < n; ++i) {
+      unlink(fns[i]);
+      free(fns[i]);
+    }
+    free(fns);
+  }
+  for (k = 0; k < max_mem / BAM_CORE_SIZE; ++k) {
+    if (buf[k]) {
+      free(buf[k]->data);
+      free(buf[k]);
+    }
+  }
+  free(buf);
+  bam_header_destroy(header);
+  bam_close(fp);
+  
+  return 0;
+}
+
+int splicing_bam_index(const char *filename) {
+  bam_verbose=0;
+  bam_index_build(filename);
   return 0;
 }

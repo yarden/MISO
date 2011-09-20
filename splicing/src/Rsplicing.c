@@ -1684,6 +1684,8 @@ SEXP R_splicing_gtf2gff3(SEXP gtf, SEXP gid, SEXP tid) {
   double min, max;
   char attr[2000];
 
+  R_splicing_begin();
+
   /* Input fields */
 
   Tseqname = R_splicing_getListElement(gtf, "seqname");
@@ -1881,6 +1883,8 @@ SEXP R_splicing_gtf2gff3(SEXP gtf, SEXP gid, SEXP tid) {
     INTEGER(Fstart)[i] = -1;
   }
 
+  R_splicing_end();
+
   UNPROTECT(3);
   return result;
 }
@@ -1901,7 +1905,134 @@ SEXP R_splicing_noexons_one(SEXP pgff, SEXP pgene) {
   
   PROTECT(result=R_splicing_vector_int_to_SEXP(&noexons));
   splicing_vector_int_destroy(&noexons);
+
+  R_splicing_end();
   
   UNPROTECT(1);
   return result;
+}
+
+SEXP R_splicing_writemiso(SEXP pmisoresult, SEXP pfile) {
+  SEXP psamples=R_splicing_getListElement(pmisoresult, "samples");
+  SEXP plogLik=R_splicing_getListElement(pmisoresult, "logLik");
+  SEXP pmatchMatrix=R_splicing_getListElement(pmisoresult, "matchMatrix");
+  int noReads=INTEGER(GET_DIM(pmatchMatrix))[1];
+  SEXP pclassTemplates=R_splicing_getListElement(pmisoresult, 
+						 "classTemplates");
+  int noClasses=INTEGER(GET_DIM(pclassTemplates))[1];
+  SEXP pclassCounts=R_splicing_getListElement(pmisoresult, "classCounts");
+  SEXP prunData=R_splicing_getListElement(pmisoresult, "runData");
+  SEXP pgeneStructure=R_splicing_getListElement(pmisoresult, "geneStructure");
+  
+  double *samples=REAL(psamples);
+  int noSamples=INTEGER(GET_DIM(psamples))[1];
+  double *logLik=REAL(plogLik);
+  double *matchMatrix=REAL(pmatchMatrix);
+  double *classTemplates=REAL(pclassTemplates);
+  double *classCounts=REAL(pclassCounts);
+  int noIso=INTEGER(R_splicing_getListElement(prunData, "noIso"))[0];
+  int noIters=INTEGER(R_splicing_getListElement(prunData, "noIters"))[0];
+  int noBurnIn=INTEGER(R_splicing_getListElement(prunData, "noBurnIn"))[0];
+  int noLag=INTEGER(R_splicing_getListElement(prunData, "noLag"))[0];
+  int noAccepted=INTEGER(R_splicing_getListElement(prunData, 
+						   "noAccepted"))[0];
+  int noRejected=INTEGER(R_splicing_getListElement(prunData, 
+						   "noRejected"))[0];
+  splicing_gff_t gff;
+  const char *filename=CHAR(STRING_ELT(pfile, 0));
+  FILE *file=fopen(filename, "w");
+  int i, j, idx;
+  
+  R_splicing_begin();
+
+  R_splicing_SEXP_to_gff(pgeneStructure, &gff);
+  
+  fputs("[runData]\n", file);
+  fprintf(file, "noIso: %i\n", noIso);
+  fprintf(file, "noIters: %i\n", noIters);
+  fprintf(file, "noBurnIn: %i\n", noBurnIn);
+  fprintf(file, "noLag: %i\n", noLag);
+  fprintf(file, "noAccepted: %i\n", noAccepted);
+  fprintf(file, "noRejected: %i\n", noRejected);
+  
+  fputs("\n[geneStructure]\n", file);
+  splicing_gff_write(file, &gff);
+  
+  fputs("\n[classTemplates]\n", file);
+  for (i=0, idx=0; i<noClasses; i++) {
+    for (j=0; j<noIso-1; j++) {
+      fprintf(file, "%g ", classTemplates[idx++]);
+    }
+    fprintf(file, "%g\n", classTemplates[idx++]);
+  }
+
+  fputs("\n[classCounts]\n", file);
+  for (i=0, idx=0; i<noClasses; i++) {
+    fprintf(file, "%g\n", classCounts[idx++]);
+  }
+  
+  fputs("\n[matchMatrix]\n", file);
+  for (i=0, idx=0; i<noReads; i++) { 
+    for (j=0; j<noIso-1; j++) {
+      fprintf(file, "%g ", matchMatrix[idx++]);
+    }
+    fprintf(file, "%g\n", matchMatrix[idx++]);
+  }
+
+  fputs("\n[samples]\n", file);
+  for (i=0, idx=0; i<noSamples; i++) {
+    for (j=0; j<noIso-1; j++) {
+      fprintf(file, "%g ", samples[idx++]);
+    }
+    fprintf(file, "%g\n", samples[idx++]);
+  }
+  
+  fputs("\n[logLik]\n", file);
+  for (i=0, idx=0; i<noSamples; i++) {
+    fprintf(file, "%g\n", logLik[idx++]);
+  }
+
+  fclose(file);
+  R_splicing_end();  
+  return R_NilValue;
+}
+
+SEXP R_splicing_sam2bam(SEXP pinfile, SEXP poutfile) {
+  const char *infile=CHAR(STRING_ELT(pinfile, 0));
+  const char *outfile=CHAR(STRING_ELT(poutfile, 0));
+
+  R_splicing_begin();
+
+  splicing_sam2bam(infile, outfile);
+
+  R_splicing_end();
+
+  return R_NilValue;
+}
+
+SEXP R_splicing_bam_sort(SEXP pinfile, SEXP poutprefix, SEXP pkey) {
+  
+  const char *infile=CHAR(STRING_ELT(pinfile, 0));
+  const char *outprefix=CHAR(STRING_ELT(poutprefix, 0));
+  int key=INTEGER(pkey)[0];
+  
+  R_splicing_begin();
+  
+  splicing_bam_sort(infile, outprefix, key);
+  
+  R_splicing_end();
+  
+  return R_NilValue;
+}
+
+SEXP R_splicing_bam_index(SEXP pfilename) {
+  const char *filename=CHAR(STRING_ELT(pfilename, 0));
+  
+  R_splicing_begin();
+  
+  splicing_bam_index(filename);
+  
+  R_splicing_end();
+  
+  return R_NilValue;
 }

@@ -25,7 +25,7 @@ matchIso <- function(geneStructure, gene=1, reads, overHang=1L,
 }
 
 solveIso <- function(geneStructure, gene=1L, reads,
-                     readLength=readLength(reads),
+                     readLength=getReadLength(reads),
                      overHang=1L, paired=FALSE, fragmentProb=NULL,
                      fragmentStart=0L, normalMean, normalVar, numDevs) {
 

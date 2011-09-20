@@ -53,6 +53,9 @@ typedef enum { SPLICING_SAMBAM_AUTO,
 	       SPLICING_SAMBAM_SAM,
 	       SPLICING_SAMBAM_BAM } splicing_sambam_type_t;
 
+typedef enum { SPLICING_BAM_KEY_POS, 
+	       SPLICING_BAM_KEY_QNAME } splicing_bam_sort_key_t;
+
 int splicing_reads_init(splicing_reads_t *reads);
 void splicing_reads_destroy(splicing_reads_t *reads);
 int splicing_read_sambam(const char *filename,
@@ -63,6 +66,10 @@ int splicing_read_sambam_region(const char *filename,
 				splicing_sambam_type_t filetype,
 				const char *region,
 				splicing_reads_t *reads);
+int splicing_sam2bam(const char *infile, const char *outfile);
+int splicing_bam_sort(const char *infile, const char *outprefix, 
+		      splicing_bam_sort_key_t key);
+int splicing_bam_index(const char *filename);
 
 SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads);
 

@@ -22,8 +22,9 @@ S3method("merge", "gff3")
 export(createGene, rpk, realPsi, simulateReads)
 
 export(readSAM, noReads, isPaired, isMixed, noPairs, noSingles, toTable,
-       writeSAM, readLength, seqNames, selectReads, filterReads, FILTER,
-       getStrand, getAttributes, listAttributes, getAttribute, getIsoform)
+       writeSAM, getReadLength, seqNames, selectReads, filterReads, FILTER,
+       getStrand, getAttributes, listAttributes, getAttribute, getIsoform,
+       sortBAMFile, SAMFile2BAMFile, indexBAMFile)
 
 S3method("noReads", "splicingSAM")
 S3method("isPaired", "splicingSAM")
@@ -33,7 +34,7 @@ S3method("noSingles", "splicingSAM")
 S3method("toTable", "splicingSAM")
 S3method("writeSAM", "splicingSAM")
 S3method("print", "splicingSAM")
-S3method("readLength", "splicingSAM")
+S3method("getReadLength", "splicingSAM")
 S3method("seqNames", "splicingSAM")
 S3method("selectReads", "splicingSAM")
 S3method("filterReads", "splicingSAM")
@@ -45,8 +46,10 @@ S3method("getIsoform", "splicingSAM")
 
 export(plotIso, plotIsoSize, plotIsoPDF)
 
-export(MISO, postMean, runData)
+export(MISO, runMISO, writeMISO, readMISO, postMean, runData)
 
+S3method("print", "MISOresult")
+S3method("writeMISO", "MISOresult")
 S3method("postMean", "MISOresult")
 S3method("logLik", "MISOresult")
 S3method("runData", "MISOresult")
