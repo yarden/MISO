@@ -393,3 +393,56 @@ filterReads.splicingSAM <- function(reads, ..., verbose=TRUE) {
 
   reads
 }
+
+mergeReads <- function(...) {
+  reads <- list(...)
+  chrname <- unique(unlist(lapply(reads, "[[", "chrname")))
+
+  allchrname <- unlist(lapply(reads, "[[", "chrname"))
+  allchrlen <- unlist(lapply(reads, "[[", "chrlen"))
+  chrlen <- allchrlen[match(chrname, allchrname)]
+
+  chr <- match(unlist(lapply(reads, function(x) x$chrname[x$chr+1])),
+               chrname)-1
+  qname <- unlist(lapply(reads, "[[", "qname"))
+  if (any(duplicated(unlist(lapply(reads, function(x) unique(x$qname)))))) {
+    warning("Duplicate QNAME fields while merging reads")
+  }
+  cigar <- unlist(lapply(reads, "[[", "cigar"))
+  position <- unlist(lapply(reads, "[[", "position"))
+  flag <- unlist(lapply(reads, "[[", "flag"))
+  pairpos <- unlist(lapply(reads, "[[", "pairpos"))
+  noPairs <- sum(sapply(reads, "[[", "noPairs"))
+  noSingles <- sum(sapply(reads, "[[", "noSingles"))
+  paired <- any(sapply(reads, "[[", "paired"))
+  mapq <- unlist(lapply(reads, "[[", "mapq"))
+  rnext <- unlist(lapply(reads, "[[", "rnext"))
+  tlen <- unlist(lapply(reads, "[[", "tlen"))
+  seq <- unlist(lapply(reads, "[[", "seq"))
+  qual <- unlist(lapply(reads, "[[", "qual"))
+
+  offset <- c(0, cumsum(sapply(reads, noReads))[-length(reads)])
+  mypair <- unlist(mapply(reads, offset, SIMPLIFY=FALSE,
+                          FUN=function(r, o) {
+                            ifelse(r$mypair==-1, -1, r$mypair + o)
+                          })
+                   )
+
+  if (any(sapply(reads, function(x) !is.null(x$attributes)))) {
+    attributes <- unlist(lapply(reads, function(x) {
+      if (is.null(x$attributes)) character(noReads(x)) else x$attributes
+    }))
+  } else {
+    attributes <- NULL
+  }
+  sampleProb <- NULL
+
+  res <- list(chrname=chrname, chrlen=chrlen, chr=chr, qname=qname,
+              cigar=cigar, position=position, flag=flag, pairpos=pairpos,
+              noPairs=noPairs, noSingles=noSingles, paired=paired,
+              mapq=mapq, rnext=rnext, tlen=tlen, seq=seq, qual=qual,
+              mypair=mypair, attributes=attributes, sampleProb=sampleProb)
+  class(res) <- "splicingSAM"
+  res
+}
+                  
