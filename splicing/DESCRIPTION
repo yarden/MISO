@@ -5,7 +5,7 @@ Version: 0.1
 Date: 2011-09-30
 Author: Gabor Csardi <gcsardi@stat.harvard.edu>
 Maintainer: Gabor Csardi <gcsardi@stat.harvard.edu>
-Suggests: RCurl
+Suggests: RCurl, snow
 Description: Various functions to study alternative splicing.
   Most importantly, the package contains a fast implementation 
   of the Mixture of Isoforms (MISO) isoform quantitation algorithm.

@@ -34,10 +34,11 @@ MISO <- function(geneStructure, gene=1L, reads,
 
 ## Do all genes, reads are kept on the disk
 
-runMISO <- function(geneStructure, readsfile,
+runMISO <- function(geneStructure, readsfile, 
                     results = c("return", "files", "Rfiles"),
                     resultDir = ".", readLength = NULL,
-                    verbose = TRUE, ...) {
+                    verbose = TRUE, snowCluster = NULL,
+                    seed = NULL, ...) {
 
   results <- match.arg(results)
 
@@ -53,7 +54,7 @@ runMISO <- function(geneStructure, readsfile,
   get.region <- function(gene) {
     start <- geneStructure$start[geneStructure$gid[gene]+1]
     end <- geneStructure$end[geneStructure$gid[gene]+1]
-    seqid <- geneStructure$seqid[geneStructure$gid[gene]+1]
+    seqid <- geneStructure$seqid[gene]
     seqid_str <- geneStructure$seqid_str[seqid+1]
     paste(sep="", seqid_str, ":", start, "-", end)
   }
@@ -76,7 +77,26 @@ runMISO <- function(geneStructure, readsfile,
   
   funcs <- list("return"=run.return, "files"=run.files, "Rfiles"=run.Rfiles)
 
-  res <- lapply(seq_along(ids), function(x) {
+  myclusterExport <- function(cl, list) {
+    for (name in list) {
+      clusterCall(cl, assign, name, get(name))
+    }
+  }
+
+  if (!is.null(snowCluster)) {
+    require(snow)
+    if (!is.null(seed)) {
+      clusterCall(snowCluster, set.seed, seed)
+    }
+    myclusterExport(snowCluster, c("get.region", "readsfile",
+                                   "readLength", "verbose", "ids",
+                                   "geneStructure", "funcs", "results"))
+    myapply <- function(...) parLapply(cl=snowCluster, ...)
+  } else {
+    myapply <- lapply
+  }
+
+  res <- myapply(seq_along(ids), function(x) {
     region <- get.region(x)
     reads <- readSAM(readsfile, region=region)
     rl <- if (is.null(readLength)) {
