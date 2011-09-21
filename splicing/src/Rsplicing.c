@@ -899,6 +899,7 @@ SEXP R_splicing_score_joint(SEXP passignment, SEXP pnoreads, SEXP ppsi,
   R_splicing_SEXP_to_vector_int(peffisolen, &effisolen);
   R_splicing_SEXP_to_vector(ppsi, &psi);
   R_splicing_SEXP_to_vector(phyper, &hyper);
+  R_splicing_SEXP_to_vector(pisoscores, &isoscores);
   
   splicing_score_joint(&assignment, noreads, &psi, &hyper, &effisolen,
 		       &isoscores, &score);
@@ -967,6 +968,8 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
   case 2:
     R_splicing_SEXP_to_vector(ppsi, &psi);
     R_splicing_SEXP_to_vector(palpha, &alpha);
+    R_splicing_SEXP_to_vector(potherpsi, &otherpsi);
+    R_splicing_SEXP_to_vector(potheralpha, &otheralpha);
     splicing_drift_proposal(2, &psi, &alpha, sigma, &otherpsi, &otheralpha,
 			    noiso, 0, 0, 0, &resscore);
     PROTECT(result=ScalarReal(resscore));
@@ -1016,9 +1019,9 @@ SEXP R_splicing_metropolis_hastings_ratio(SEXP passignment, SEXP pnoreads,
   SET_VECTOR_ELT(result, 1, ScalarReal(pcJS));
   SET_VECTOR_ELT(result, 2, ScalarReal(ppJS));
   PROTECT(names=NEW_CHARACTER(3));
-  SET_STRING_ELT(result, 0, mkChar("acceptP"));
-  SET_STRING_ELT(result, 1, mkChar("pcJS"));
-  SET_STRING_ELT(result, 2, mkChar("ppJS"));
+  SET_STRING_ELT(names, 0, mkChar("acceptP"));
+  SET_STRING_ELT(names, 1, mkChar("pcJS"));
+  SET_STRING_ELT(names, 2, mkChar("ppJS"));
   SET_NAMES(result, names);
   
   R_splicing_end();
