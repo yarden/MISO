@@ -414,6 +414,8 @@ int splicing_i_gff_reindex_cmp(void *data, const void *a, const void *b) {
 
 int splicing_gff_reindex(splicing_gff_t *gff) {
   splicing_vector_int_t index;
+  splicing_vector_int_t index2;
+  splicing_vector_int_t gindex;
   int i, j, k, n=gff->n;
   
   SPLICING_CHECK(splicing_vector_int_init(&index, n));
@@ -424,16 +426,55 @@ int splicing_gff_reindex(splicing_gff_t *gff) {
   splicing_qsort_r(VECTOR(index), n, sizeof(int), (void*) gff, 
 		   splicing_i_gff_reindex_cmp);
 
-  splicing_vector_int_intiindex(&gff->seqid, &index);
-  splicing_vector_int_intiindex(&gff->source, &index);
+  SPLICING_CHECK(splicing_vector_int_init(&gindex, gff->nogenes));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &gindex);
+  SPLICING_CHECK(splicing_vector_int_init(&index2, n));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &index2);
+
+  for (i=0; i<gff->nogenes; i++) {
+    VECTOR(index2)[ VECTOR(gff->genes)[i] ] = i;
+  }
+
+  for (i=0, j=0; i<n; i++) {
+    if (VECTOR(gff->type)[ VECTOR(index)[i] ] == SPLICING_TYPE_GENE) {
+      VECTOR(gindex)[j++] = VECTOR(index2)[ VECTOR(index)[i] ];
+    }
+  }
+
+  splicing_vector_int_destroy(&index2);
+  SPLICING_FINALLY_CLEAN(1);
+
+  splicing_vector_int_intiindex(&gff->seqid, &gindex);
+  splicing_vector_int_intiindex(&gff->source, &gindex);
+  splicing_vector_int_intiindex(&gff->strand, &gindex);  
+    
+  splicing_vector_int_destroy(&gindex);
+  SPLICING_FINALLY_CLEAN(1);
+
   splicing_vector_int_intiindex(&gff->type, &index);
   splicing_vector_int_intiindex(&gff->start, &index);
   splicing_vector_int_intiindex(&gff->end, &index);
   splicing_vector_intiindex(&gff->score, &index);
-  splicing_vector_int_intiindex(&gff->strand, &index);
   splicing_vector_int_intiindex(&gff->phase, &index);
   splicing_strvector_ipermute(&gff->ID, &index);
   splicing_vector_int_intiindex(&gff->parent, &index);
+
+  SPLICING_CHECK(splicing_vector_int_init(&index2, n));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &index2);
+
+  for (i=0; i<n; i++) {
+    VECTOR(index2)[ VECTOR(index)[i] ] = i;
+  }
+
+  for (i=0; i<n; i++) {
+    int p=VECTOR(gff->parent)[i];
+    if (p != -1) {
+      VECTOR(gff->parent)[i] = VECTOR(index2)[p];
+    }
+  }
+
+  splicing_vector_int_destroy(&index2);
+  SPLICING_FINALLY_CLEAN(1);
 
   for (i=j=k=0; i<n; i++) { 
     if (VECTOR(gff->type)[i] == SPLICING_TYPE_GENE) { 
@@ -441,7 +482,7 @@ int splicing_gff_reindex(splicing_gff_t *gff) {
     } else if (VECTOR(gff->type)[i] == SPLICING_TYPE_MRNA) { 
       VECTOR(gff->transcripts)[k++] = i;
     }
-  }
+  }  
 
   splicing_vector_int_destroy(&index);
   SPLICING_FINALLY_CLEAN(1);

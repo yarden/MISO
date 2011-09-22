@@ -2310,18 +2310,15 @@ int FUNCTION(splicing_vector,intiindex)(TYPE(splicing_vector) *v,
   long int i, newlen=splicing_vector_int_size(idx);
   TYPE(splicing_vector) newv;
   
-  SPLICING_CHECK(FUNCTION(splicing_vector,copy)(&newv, v));
+  SPLICING_CHECK(FUNCTION(splicing_vector,init)(&newv, 0));
   SPLICING_FINALLY(FUNCTION(splicing_vector,destroy), &newv);
-  if (newlen > FUNCTION(splicing_vector,size)(v)) {
-    SPLICING_CHECK(FUNCTION(splicing_vector,resize)(v, newlen));
-  }
+  SPLICING_CHECK(FUNCTION(splicing_vector,update)(&newv, v));
+  SPLICING_CHECK(FUNCTION(splicing_vector,resize)(v, newlen));
   
   for (i=0; i<newlen; i++) {
     long int j=VECTOR(*idx)[i];
     VECTOR(*v)[i] = VECTOR(newv)[j];
   }
-
-  FUNCTION(splicing_vector,resize)(v, newlen);
 
   FUNCTION(splicing_vector,destroy)(&newv);
   SPLICING_FINALLY_CLEAN(1);
