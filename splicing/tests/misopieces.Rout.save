@@ -135,7 +135,7 @@ Type 'q()' to quit R.
 > 
 > ## init
 > .Call("R_splicing_drift_proposal", 0L, NULL, NULL, 0.0, NULL, NULL, 2L, 1L,
-+       PACKAGE="splicing")
++       0L, NULL, NULL, PACKAGE="splicing")
 $psi
            [,1]
 [1,] 0.91480604
@@ -149,7 +149,7 @@ $sigma
 [1] 0.05
 
 > .Call("R_splicing_drift_proposal", 0L, NULL, NULL, 0.0, NULL, NULL, 3L, 1L,
-+       PACKAGE="splicing")
++       0L, NULL, NULL, PACKAGE="splicing")
 $psi
           [,1]
 [1,] 0.3333333
@@ -171,7 +171,7 @@ $sigma
 > sigma <- 0.05
 > noiso <- nrow(psi)
 > .Call("R_splicing_drift_proposal", 1L, psi, alpha, sigma, NULL, NULL, noiso,
-+       1L, PACKAGE="splicing")
++       1L, 0L, NULL, NULL, PACKAGE="splicing")
 $psi
           [,1]
 [1,] 0.5191241
@@ -187,7 +187,7 @@ $alpha
 > sigma <- 0.05
 > noiso <- nrow(psi)
 > .Call("R_splicing_drift_proposal", 1L, psi, alpha, sigma, NULL, NULL, noiso,
-+       1L, PACKAGE="splicing")
++       1L, 0L, NULL, NULL, PACKAGE="splicing")
 $psi
           [,1]
 [1,] 0.4336433
@@ -208,7 +208,7 @@ $alpha
 > otheralpha <- cbind(3/100)
 > noiso <- length(psi)
 > .Call("R_splicing_drift_proposal", 2L, psi, alpha, sigma, otherpsi,
-+       otheralpha, noiso, 1L,
++       otheralpha, noiso, 1L, 0L, NULL, NULL,
 +       PACKAGE="splicing")
 [1] -9.166418
 > 
@@ -267,4 +267,13 @@ $ppJS
 [1] -6337.853
 
 > 
+> ## RNG_GET_DIRICHLET
+> 
+> set.seed(42)
+> alpha <- c(1,1,1,1)
+> alpha2 <- c(1,2,3,4)
+> .Call("R_splicing_rng_get_dirichlet", alpha, PACKAGE="splicing")
+[1] 0.724127700 0.067367995 0.199555756 0.008948549
+> .Call("R_splicing_rng_get_dirichlet", alpha2, PACKAGE="splicing")
+[1] 0.03777539 0.07089311 0.59253154 0.29879996
 > 

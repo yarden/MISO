@@ -8,6 +8,7 @@
 #include "splicing_vector.h"
 #include "splicing_matrix.h"
 #include "splicing_lapack.h"
+#include "splicing_random.h"
 
 double round(double);
 double fmin(double, double);
@@ -138,6 +139,12 @@ typedef struct splicing_miso_rundata_t {
   int noIso, noIters, noBurnIn, noLag, noAccepted, noRejected;
 } splicing_miso_rundata_t;
 
+typedef enum splicing_miso_start_t {
+  SPLICING_MISO_START_AUTO,
+  SPLICING_MISO_START_UNIFORM,
+  SPLICING_MISO_START_RANDOM,
+  SPLICING_MISO_START_GIVEN } splicing_miso_start_t;
+
 int splicing_matchIso(const splicing_gff_t *gff, int gene, 
 		      const splicing_vector_int_t *position,
 		      const char **cigarstr, int overHang,
@@ -173,6 +180,9 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  int noChains,
 		  int noIterations, int noBurnIn, int noLag,
 		  const splicing_vector_t *hyperp, 
+		  splicing_miso_start_t start,
+		  const splicing_matrix_t *start_psi,
+		  const splicing_matrix_t *start_alpha,
 		  splicing_matrix_t *samples, splicing_vector_t *logLik, 
 		  splicing_matrix_t *match_matrix,
 		  splicing_matrix_t *class_templates,
@@ -239,7 +249,10 @@ int splicing_drift_proposal(int mode,
 			    splicing_matrix_t *respsi, 
 			    splicing_matrix_t *resalpha,
 			    double *ressigma, 
-			    splicing_vector_t *resscore);
+			    splicing_vector_t *resscore, 
+			    splicing_miso_start_t start,
+			    const splicing_matrix_t *start_psi,
+			    const splicing_matrix_t *start_alpha);
 
 int splicing_metropolis_hastings_ratio(const splicing_matrix_int_t *ass,
 				       int no_reads, int noChains,
@@ -396,5 +409,9 @@ int splicing_gene_complexity(const splicing_gff_t *gff, size_t gene,
 			     int fragmentStart, double normalMean, 
 			     double normalVar, double numDevs,
 			     double *complexity);
+
+int splicing_rng_get_dirichlet(splicing_rng_t *rng, 
+			       const splicing_vector_t *alpha, 
+			       splicing_vector_t *result);
 
 #endif

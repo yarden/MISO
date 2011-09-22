@@ -89,7 +89,8 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
 				 (const char**) myreadcigar.table, 
 				 readLength, overhang, /*noChains=*/ 1L,
 				 noIterations, noBurnIn, noLag,
-				 &myhyperp, &samples, &logLik, 
+				 &myhyperp, SPLICING_MISO_START_AUTO, 0, 0,
+				 &samples, &logLik, 
 				 /*match_matrix=*/ 0, &class_templates,
 				 &class_counts, &assignment, &rundata));
 

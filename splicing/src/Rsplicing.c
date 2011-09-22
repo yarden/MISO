@@ -567,7 +567,8 @@ SEXP R_splicing_order_matches(SEXP pmatches) {
 
 SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength, 
 		     SEXP pnochains, SEXP pnoIterations, SEXP pnoBurnIn, 
-		     SEXP pnoLag, SEXP phyperp, SEXP poverhang) {
+		     SEXP pnoLag, SEXP phyperp, SEXP poverhang, SEXP pstart,
+		     SEXP pstart_psi, SEXP pstart_alpha) {
   
   size_t gene=INTEGER(pgene)[0]-1;
   SEXP result, names, class;
@@ -589,6 +590,9 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   splicing_matrix_t class_templates;
   splicing_vector_t class_counts;
   splicing_miso_rundata_t rundata;
+  int start=INTEGER(pstart)[0];
+  splicing_matrix_t start_psi;
+  splicing_matrix_t start_alpha;
 
   R_splicing_begin();
   
@@ -608,10 +612,19 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
     cigarstr[i] = CHAR(STRING_ELT(cigar, i));
   }
 
+  if (!isNull(pstart_psi)) {
+    R_splicing_SEXP_to_matrix(pstart_psi, &start_psi);
+  }
+  if (!isNull(pstart_alpha)) {
+    R_splicing_SEXP_to_matrix(pstart_alpha, &start_alpha);
+  }
+
   splicing_miso(&gff, gene, &position, cigarstr, readLength, overhang,
-		noChains, noIterations, noBurnIn, noLag, &hyperp, &samples,
-		&logLik, &match_matrix, &class_templates, &class_counts, 
-		/*assignment=*/ 0, &rundata);
+		noChains, noIterations, noBurnIn, noLag, &hyperp, start,
+		isNull(pstart_psi) ? 0 : &start_psi,
+		isNull(pstart_alpha) ? 0 : &start_alpha,
+		&samples, &logLik, &match_matrix, &class_templates, 
+		&class_counts, /*assignment=*/ 0, &rundata);
   
   PROTECT(result=NEW_LIST(6));
   SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&samples));
@@ -925,7 +938,8 @@ SEXP R_splicing_score_joint(SEXP passignment, SEXP pnoreads, SEXP pnochains,
 
 SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha, 
 			       SEXP psigma, SEXP potherpsi, SEXP potheralpha,
-			       SEXP pnoiso, SEXP pnochains) {
+			       SEXP pnoiso, SEXP pnochains, SEXP pstart,
+			       SEXP pstart_psi, SEXP pstart_alpha) {
   int mode=INTEGER(pmode)[0];
   splicing_matrix_t psi, alpha, otherpsi, otheralpha, respsi, resalpha;
   double sigma=REAL(psigma)[0];
@@ -934,6 +948,9 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
   int noiso=INTEGER(pnoiso)[0];
   int nochains=INTEGER(pnochains)[0];
   SEXP result, names;
+  int start=INTEGER(pstart)[0];
+  splicing_matrix_t start_psi;
+  splicing_matrix_t start_alpha;
 
   R_splicing_begin();
   
@@ -942,8 +959,16 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
   case 0:
     splicing_matrix_init(&respsi, 0, 0);
     splicing_matrix_init(&resalpha, 0, 0);
+    if (!isNull(pstart_psi)) {
+      R_splicing_SEXP_to_matrix(pstart_psi, &start_psi);
+    }
+    if (!isNull(pstart_alpha)) {
+      R_splicing_SEXP_to_matrix(pstart_alpha, &start_alpha);
+    }
     splicing_drift_proposal(0, 0, 0, 0, 0, 0, noiso, nochains, &respsi,
-			    &resalpha, &ressigma, 0);
+			    &resalpha, &ressigma, 0, start, 
+			    isNull(pstart_psi) ? 0 : &start_psi,
+			    isNull(pstart_alpha) ? 0 : &start_alpha);
     PROTECT(result=NEW_LIST(3));
     SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&respsi));
     SET_VECTOR_ELT(result, 1, R_splicing_matrix_to_SEXP(&resalpha));
@@ -964,7 +989,7 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
     splicing_matrix_init(&respsi, 0, 0);
     splicing_matrix_init(&resalpha, 0, 0);
     splicing_drift_proposal(1, &psi, &alpha, sigma, 0, 0, noiso, nochains,
-			    &respsi, &resalpha, 0, 0);
+			    &respsi, &resalpha, 0, 0, 0, 0, 0);
     PROTECT(result=NEW_LIST(2));
     SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&respsi));
     SET_VECTOR_ELT(result, 1, R_splicing_matrix_to_SEXP(&resalpha));
@@ -984,7 +1009,7 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
     R_splicing_SEXP_to_matrix(potheralpha, &otheralpha);
     splicing_vector_init(&resscore, 0);
     splicing_drift_proposal(2, &psi, &alpha, sigma, &otherpsi, &otheralpha,
-			    noiso, nochains, 0, 0, 0, &resscore);
+			    noiso, nochains, 0, 0, 0, &resscore, 0, 0, 0);
     PROTECT(result=R_splicing_vector_to_SEXP(&resscore));
     splicing_vector_destroy(&resscore);
     UNPROTECT(1);
@@ -2060,4 +2085,25 @@ SEXP R_splicing_bam_index(SEXP pfilename) {
   R_splicing_end();
   
   return R_NilValue;
+}
+
+SEXP R_splicing_rng_get_dirichlet(SEXP palpha) {
+  splicing_vector_t alpha;
+  splicing_vector_t res;
+  SEXP result;
+  
+  R_splicing_begin();
+  
+  R_splicing_SEXP_to_vector(palpha, &alpha);
+  splicing_vector_init(&res, 0);
+  
+  splicing_rng_get_dirichlet(&splicing_rng_default, &alpha, &res);
+  
+  PROTECT(result=R_splicing_vector_to_SEXP(&res));
+  splicing_vector_destroy(&res);
+
+  R_splicing_end();
+
+  UNPROTECT(1);
+  return result;
 }

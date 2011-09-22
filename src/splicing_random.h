@@ -32,6 +32,7 @@ typedef struct splicing_rng_type_t {
   double (*get_norm)(void *state);
   double (*get_geom)(void *state, double p);
   double (*get_binom)(void *state, long int n, double p);
+  double (*get_gamma)(void *state, double a, double scale);
 } splicing_rng_type_t;
 
 typedef struct splicing_rng_t {
@@ -60,6 +61,8 @@ double splicing_rng_get_unif01(splicing_rng_t *rng);
 double splicing_rng_get_geom(splicing_rng_t *rng, double p);
 double splicing_rng_get_binom(splicing_rng_t *rng, long int n, 
 				   double p);
+double splicing_rng_get_gamma(splicing_rng_t *rng, double a, 
+			      double scale);
 unsigned long int splicing_rng_get_int31(splicing_rng_t *rng);
 
 /* --------------------------------- */
@@ -96,6 +99,7 @@ void PutRNGstate(void);
 #define RNG_UNIF01()     (splicing_rng_get_unif01(&splicing_rng_default))
 #define RNG_GEOM(p)      (splicing_rng_get_geom(&splicing_rng_default,(p)))
 #define RNG_BINOM(n,p)   (splicing_rng_get_binom(&splicing_rng_default,(n),(p)))
+#define RNG_GAMMA(a,s)   (splicing_rng_get_gamma(&splicing_rng_default,(a),(s)))
 #define RNG_INT31()      (splicing_rng_get_int31(&splicing_rng_default))
 
 __END_DECLS

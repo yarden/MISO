@@ -70,9 +70,9 @@ set.seed(42)
 
 ## init
 .Call("R_splicing_drift_proposal", 0L, NULL, NULL, 0.0, NULL, NULL, 2L, 1L,
-      PACKAGE="splicing")
+      0L, NULL, NULL, PACKAGE="splicing")
 .Call("R_splicing_drift_proposal", 0L, NULL, NULL, 0.0, NULL, NULL, 3L, 1L,
-      PACKAGE="splicing")
+      0L, NULL, NULL, PACKAGE="splicing")
 
 ## propose
 psi <- cbind(c(3/4, 1/4))
@@ -80,14 +80,14 @@ alpha <- cbind(0)
 sigma <- 0.05
 noiso <- nrow(psi)
 .Call("R_splicing_drift_proposal", 1L, psi, alpha, sigma, NULL, NULL, noiso,
-      1L, PACKAGE="splicing")
+      1L, 0L, NULL, NULL, PACKAGE="splicing")
 
 psi <- cbind(c(1/3, 1/3, 1/3))
 alpha <- cbind(c(1/2, 1/2))
 sigma <- 0.05
 noiso <- nrow(psi)
 .Call("R_splicing_drift_proposal", 1L, psi, alpha, sigma, NULL, NULL, noiso,
-      1L, PACKAGE="splicing")
+      1L, 0L, NULL, NULL, PACKAGE="splicing")
 
 ## score
 psi <- cbind(c(3/4, 1/4))
@@ -97,7 +97,7 @@ otherpsi <- cbind(c(51/100, 49/100))
 otheralpha <- cbind(3/100)
 noiso <- length(psi)
 .Call("R_splicing_drift_proposal", 2L, psi, alpha, sigma, otherpsi,
-      otheralpha, noiso, 1L,
+      otheralpha, noiso, 1L, 0L, NULL, NULL,
       PACKAGE="splicing")
 
 ## METROPOLIS_HASTINGS_RATIO
@@ -137,3 +137,10 @@ isoscores <- -log(effisolen)
       hyperp, isoscores, 1L,
       PACKAGE="splicing")
 
+## RNG_GET_DIRICHLET
+
+set.seed(42)
+alpha <- c(1,1,1,1)
+alpha2 <- c(1,2,3,4)
+.Call("R_splicing_rng_get_dirichlet", alpha, PACKAGE="splicing")
+.Call("R_splicing_rng_get_dirichlet", alpha2, PACKAGE="splicing")

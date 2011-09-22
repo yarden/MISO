@@ -2,12 +2,23 @@
 MISO <- function(geneStructure, gene=1L, reads,
                  readLength=getReadLength(reads),
                  overHang=1L, noChains=1, noIterations=5000, noBurnIn=500,
-                 noLag=10, hyperparameters=rep(1, noIso(geneStructure)[gene]),
+                 noLag=10, start=c("auto", "uniform", "random", "given"),
+                 startPsi=NULL, startAlpha=NULL,
+                 hyperparameters=rep(1, noIso(geneStructure)[gene]),
                  paired=reads$paired, fragmentProb=NULL, fragmentStart=0L,
                  normalMean, normalVar, numDevs) {
 
   if (length(readLength) != 1) {
     stop("Variable read length is currently not supported")
+  }
+
+  start <- switch(match.arg(start), "auto"=0L, "uniform"=1L, "random"=2L,
+                  "given"=3L)
+  if (!is.null(startPsi)) {
+    startPsi <- structure(as.numeric(startPsi), dim=dim(startPsi))
+  }
+  if (!is.null(startAlpha)) {
+    startAlpha <- structure(as.numeric(startAlpha), dim=dim(startAlpha))
   }
   
   if (!paired) {
@@ -15,7 +26,7 @@ MISO <- function(geneStructure, gene=1L, reads,
                  as.integer(readLength), as.integer(noChains),
                  as.integer(noIterations), as.integer(noBurnIn),
                  as.integer(noLag), as.double(hyperparameters),
-                 as.integer(overHang),
+                 as.integer(overHang), start, startPsi, startAlpha,
                  PACKAGE="splicing")
   } else {
     if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
