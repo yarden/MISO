@@ -541,10 +541,11 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 
     for (j=0; j<noChains; j++) {
       if (VECTOR(acceptP)[j] >= 1 || RNG_UNIF01() < VECTOR(acceptP)[j]) {
-	splicing_matrix_t *tmp;
-	tmp=psi; psi=psiNew; psiNew=tmp;
-	tmp=alpha; alpha=alphaNew; alphaNew=tmp;
-	splicing_vector_update(&cJS, &pJS);
+	memcpy(&MATRIX(*psi, 0, j), &MATRIX(*psiNew, 0, j), 
+	       noiso * sizeof(double));
+	memcpy(&MATRIX(*alpha, 0, j), &MATRIX(*alphaNew, 0, j),
+	       (noiso - 1) * sizeof(double));
+	VECTOR(cJS)[j] = VECTOR(pJS)[j];
 	rundata->noAccepted ++;
       } else {
 	rundata->noRejected ++;

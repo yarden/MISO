@@ -1,5 +1,5 @@
 
-R version 2.13.0 (2011-04-13)
+R version 2.13.1 (2011-07-08)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
@@ -42,5 +42,12 @@ Type 'q()' to quit R.
 > 
 > postMean(mres2)
 [1] 0.2009561 0.2930143 0.5060296
+> 
+> ## Multiple chains
+> 
+> mres3 <- MISO(gene, reads=reads, noChains=9, noIterations=1000)
+> 
+> postMean(mres3)
+[1] 0.1962518 0.3170863 0.4866619
 > 
 > 

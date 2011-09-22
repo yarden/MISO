@@ -23,3 +23,9 @@ mres2 <- MISO(gene, reads=reads2, readLength=33L, normalMean=116, paired=TRUE,
 
 postMean(mres2)
 
+## Multiple chains
+
+mres3 <- MISO(gene, reads=reads, noChains=9, noIterations=1000)
+
+postMean(mres3)
+
