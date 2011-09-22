@@ -109,7 +109,7 @@ reads <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
                        noReads=1000L, readLength=35)
 
 matches <- matchIso(gene, reads=reads)
-match.order <- order(apply(matches, 2, paste, collapse=""))
+match.order <- order(apply(matches, 2, paste, collapse=""))-1L
 psi <- c(2/10, 3/10, 5/10)
 alpha <- c(1/3, 2/3)
 noiso <- 3L
