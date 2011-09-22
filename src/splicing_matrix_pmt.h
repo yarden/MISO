@@ -14,6 +14,8 @@ int FUNCTION(splicing_matrix,init)(TYPE(splicing_matrix) *m,
 int FUNCTION(splicing_matrix,copy)(TYPE(splicing_matrix) *to, 
 				 const TYPE(splicing_matrix) *from);
 void FUNCTION(splicing_matrix,destroy)(TYPE(splicing_matrix) *m);
+int FUNCTION(splicing_matrix,reserve)(TYPE(splicing_matrix) *m,
+				      long int nrow, long int ncol);
 
 /*--------------------*/
 /* Accessing elements */

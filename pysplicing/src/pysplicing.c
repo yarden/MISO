@@ -87,7 +87,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   
   SPLICING_PYCHECK(splicing_miso(mygff, gene, &myreadpos, 
 				 (const char**) myreadcigar.table, 
-				 readLength, overhang,
+				 readLength, overhang, /*noChains=*/ 1L,
 				 noIterations, noBurnIn, noLag,
 				 &myhyperp, &samples, &logLik, 
 				 /*match_matrix=*/ 0, &class_templates,

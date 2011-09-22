@@ -24,25 +24,26 @@ Type 'q()' to quit R.
 > ## MVRNORM
 > 
 > set.seed(42)
-> mu <- rep(1, 5)
+> mu <- cbind(rep(1, 5))
 > sigma <- sqrt(2)
 > len <- as.integer(length(mu))
-> .Call("R_splicing_mvrnorm", mu, sigma, len, PACKAGE="splicing")
+> as.vector(.Call("R_splicing_mvrnorm", mu, sigma, len, PACKAGE="splicing"))
 [1] 2.6303535 0.3284569 1.4318349 1.7526047 1.4807588
-> .Call("R_splicing_mvrnorm", mu, sigma, len, PACKAGE="splicing")
+> as.vector(.Call("R_splicing_mvrnorm", mu, sigma, len, PACKAGE="splicing"))
 [1] 0.8737960 2.7975127 0.8874308 3.4003238 0.9254199
-> .Call("R_splicing_mvrnorm", mu, sigma, len, PACKAGE="splicing")
+> as.vector(.Call("R_splicing_mvrnorm", mu, sigma, len, PACKAGE="splicing"))
 [1]  2.5517603  3.7192950 -0.6516430  0.6684624  0.8414533
-> .Call("R_splicing_mvrnorm", mu, sigma, len, PACKAGE="splicing")
+> as.vector(.Call("R_splicing_mvrnorm", mu, sigma, len, PACKAGE="splicing"))
 [1]  1.7562767  0.6619644 -2.1590757 -1.9022206  2.5698882
-> .Call("R_splicing_mvrnorm", mu, sigma, len, PACKAGE="splicing")
+> as.vector(.Call("R_splicing_mvrnorm", mu, sigma, len, PACKAGE="splicing"))
 [1]  0.6353432 -1.1183447  0.7955547  2.4444998  3.2537775
 > 
 > ## LOGIT_INV
 > 
 > set.seed(42)
-> x <- runif(10)
-> .Call("R_splicing_logit_inv", x, as.integer(length(x)-1L), PACKAGE="splicing")
+> x <- cbind(runif(10))
+> as.vector(.Call("R_splicing_logit_inv", x, as.integer(length(x)-1L), 1L,
++                 PACKAGE="splicing"))
 [1] 0.13554529 0.13859766 0.07228664 0.12457992 0.10315630
 [6] 0.09124934 0.11341891 0.06212611 0.10474115
 > 
@@ -55,21 +56,21 @@ Type 'q()' to quit R.
 > reads <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
 +                        noReads=1000L, readLength=35)
 > 
-> assignment <- as.integer(sample(0:2, noReads(reads), replace=TRUE))
+> assignment <- cbind(as.integer(sample(0:2, noReads(reads), replace=TRUE)))
 > noreads <- as.integer(noReads(reads))
-> psi <- c(2/10, 3/10, 5/10)
+> psi <- cbind(c(2/10, 3/10, 5/10))
 > hyper <- rep(1, noIso(gene))
 > effisolen <- pmax(isoLength(gene)[[1]] - getReadLength(reads) + 1, 0)
 > isoscores <- -log(effisolen)
 > 
-> .Call("R_splicing_score_joint", assignment, noreads, psi, hyper,
+> .Call("R_splicing_score_joint", assignment, noreads, 1L, psi, hyper,
 +       as.integer(effisolen), isoscores, PACKAGE="splicing")
 [1] -6535.827
 > 
-> assignment <- as.integer(sample(0:2, noReads(reads), replace=TRUE,
-+                                 prob=reads$sampleProb))
+> assignment <- cbind(as.integer(sample(0:2, noReads(reads), replace=TRUE,
++                                       prob=reads$sampleProb)))
 > 
-> .Call("R_splicing_score_joint", assignment, noreads, psi, hyper,
+> .Call("R_splicing_score_joint", assignment, noreads, 1L, psi, hyper,
 +       as.integer(effisolen), isoscores, PACKAGE="splicing")
 [1] -6343.862
 > 
@@ -84,11 +85,11 @@ Type 'q()' to quit R.
 > 
 > matches <- matchIso(gene, reads=reads)
 > match.order <- order(apply(matches, 2, paste, collapse=""))-1L
-> psi <- c(2/10, 3/10, 5/10)
+> psi <- cbind(c(2/10, 3/10, 5/10))
 > noiso <- 3L
 > 
-> .Call("R_splicing_reassign_samples", matches, match.order, psi, noiso,
-+       PACKAGE="splicing")
+> as.vector(.Call("R_splicing_reassign_samples", matches, match.order, psi,
++                 noiso, 1L, PACKAGE="splicing"))
    [1] 2 0 2 2 2 1 0 2 0 2 2 0 2 2 0 2 2 1 2 2 2 2 2 0 2 2 2
   [28] 2 2 2 1 1 2 2 2 2 2 1 2 1 1 2 0 2 2 2 0 1 2 1 2 2 0 2
   [55] 2 1 2 1 2 2 0 2 1 1 2 1 2 0 2 2 2 2 1 2 1 2 2 2 1 1 2
@@ -133,65 +134,81 @@ Type 'q()' to quit R.
 > set.seed(42)
 > 
 > ## init
-> .Call("R_splicing_drift_proposal", 0L, NULL, NULL, 0.0, NULL, NULL, 2L,
+> .Call("R_splicing_drift_proposal", 0L, NULL, NULL, 0.0, NULL, NULL, 2L, 1L,
 +       PACKAGE="splicing")
 $psi
-[1] 0.91480604 0.08519396
+           [,1]
+[1,] 0.91480604
+[2,] 0.08519396
 
 $alpha
-[1] 0
+     [,1]
+[1,]    0
 
 $sigma
 [1] 0.05
 
-> .Call("R_splicing_drift_proposal", 0L, NULL, NULL, 0.0, NULL, NULL, 3L,
+> .Call("R_splicing_drift_proposal", 0L, NULL, NULL, 0.0, NULL, NULL, 3L, 1L,
 +       PACKAGE="splicing")
 $psi
-[1] 0.3333333 0.3333333 0.3333333
+          [,1]
+[1,] 0.3333333
+[2,] 0.3333333
+[3,] 0.3333333
 
 $alpha
-[1] 0.5 0.5
+     [,1]
+[1,]  0.5
+[2,]  0.5
 
 $sigma
 [1] 0.05
 
 > 
 > ## propose
-> psi <- c(3/4, 1/4)
-> alpha <- 0
+> psi <- cbind(c(3/4, 1/4))
+> alpha <- cbind(0)
 > sigma <- 0.05
-> noiso <- length(psi)
+> noiso <- nrow(psi)
 > .Call("R_splicing_drift_proposal", 1L, psi, alpha, sigma, NULL, NULL, noiso,
-+       PACKAGE="splicing")
++       1L, PACKAGE="splicing")
 $psi
-[1] 0.5191241 0.4808759
+          [,1]
+[1,] 0.5191241
+[2,] 0.4808759
 
 $alpha
-[1] 0.07653386
+           [,1]
+[1,] 0.07653386
 
 > 
-> psi <- c(1/3, 1/3, 1/3)
-> alpha <- c(1/2, 1/2)
+> psi <- cbind(c(1/3, 1/3, 1/3))
+> alpha <- cbind(c(1/2, 1/2))
 > sigma <- 0.05
-> noiso <- length(psi)
+> noiso <- nrow(psi)
 > .Call("R_splicing_drift_proposal", 1L, psi, alpha, sigma, NULL, NULL, noiso,
-+       PACKAGE="splicing")
++       1L, PACKAGE="splicing")
 $psi
-[1] 0.4336433 0.3539572 0.2123994
+          [,1]
+[1,] 0.4336433
+[2,] 0.3539572
+[3,] 0.2123994
 
 $alpha
-[1] 0.7137537 0.5107074
+          [,1]
+[1,] 0.7137537
+[2,] 0.5107074
 
 > 
 > ## score
-> psi <- c(3/4, 1/4)
-> alpha <- 0
+> psi <- cbind(c(3/4, 1/4))
+> alpha <- cbind(0)
 > sigma <- 0.05
-> otherpsi <- c(51/100, 49/100)
-> otheralpha <- 3/100
+> otherpsi <- cbind(c(51/100, 49/100))
+> otheralpha <- cbind(3/100)
 > noiso <- length(psi)
 > .Call("R_splicing_drift_proposal", 2L, psi, alpha, sigma, otherpsi,
-+       otheralpha, noiso,
++       otheralpha, noiso, 1L,
 +       PACKAGE="splicing")
 [1] -9.166418
 > 
@@ -206,23 +223,23 @@ $alpha
 > 
 > matches <- matchIso(gene, reads=reads)
 > match.order <- order(apply(matches, 2, paste, collapse=""))-1L
-> psi <- c(2/10, 3/10, 5/10)
-> alpha <- c(1/3, 2/3)
+> psi <- cbind(c(2/10, 3/10, 5/10))
+> alpha <- cbind(c(1/3, 2/3))
 > noiso <- 3L
 > 
 > set.seed(42)
 > assignment <- .Call("R_splicing_reassign_samples", matches, match.order,
-+                     psi, noiso, PACKAGE="splicing")
++                     psi, noiso, 1L, PACKAGE="splicing")
 > 
 > noreads <- noReads(reads)
-> psinew <- c(5/10, 3/10, 2/10)
-> alphanew <- c(1/2, 1/2)
+> psinew <- cbind(c(5/10, 3/10, 2/10))
+> alphanew <- cbind(c(1/2, 1/2))
 > sigma <- 0.05
 > effisolen <- pmax(isoLength(gene)[[1]] - getReadLength(reads) + 1L, 0L)
 > hyperp <- rep(1, noiso)
 > isoscores <- -log(effisolen)
 > 
-> .Call("R_splicing_metropolis_hastings_ratio", assignment, noreads,
+> .Call("R_splicing_metropolis_hastings_ratio", assignment, noreads, 1L,
 +       psinew, alphanew, psi, alpha, sigma, noiso, as.integer(effisolen),
 +       hyperp, isoscores, 1L,
 +       PACKAGE="splicing")
@@ -236,7 +253,7 @@ $ppJS
 [1] -6589.657
 
 > 
-> .Call("R_splicing_metropolis_hastings_ratio", assignment, noreads,
+> .Call("R_splicing_metropolis_hastings_ratio", assignment, noreads, 1L,
 +       psi, alpha, psinew, alphanew, sigma, noiso, as.integer(effisolen),
 +       hyperp, isoscores, 1L,
 +       PACKAGE="splicing")

@@ -170,6 +170,7 @@ int splicing_i_miso_classes(const splicing_matrix_t *match_matrix,
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
 		  const char **cigarstr, int readLength, int overHang,
+		  int noChains,
 		  int noIterations, int noBurnIn, int noLag,
 		  const splicing_vector_t *hyperp, 
 		  splicing_matrix_t *samples, splicing_vector_t *logLik, 
@@ -198,8 +199,9 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
 int splicing_reassign_samples(const splicing_matrix_t *matches, 
 			      const splicing_vector_int_t *match_order,
-			      const splicing_vector_t *psi, 
-			      int noiso, splicing_vector_int_t *result);
+			      const splicing_matrix_t *psi, 
+			      int noiso, int noChains, 
+			      splicing_matrix_int_t *result);
 
 int splicing_mvplogisnorm(const splicing_vector_t *theta, 
 			  const splicing_vector_t *mu, 
@@ -213,42 +215,46 @@ int splicing_ldirichlet(const splicing_vector_t *x,
 			const splicing_vector_t *alpha, int len, 
 			double *res);
 
-int splicing_mvrnorm(const splicing_vector_t *mu, double sigma, 
-		     splicing_vector_t *resalpha, int len);
+int splicing_mvrnorm(const splicing_matrix_t *mu, double sigma, 
+		     splicing_matrix_t *resalpha, int len);
 
-int splicing_logit_inv(const splicing_vector_t *x, 
-		       splicing_vector_t *res, int len);
+int splicing_logit_inv(const splicing_matrix_t *x, 
+		       splicing_matrix_t *res, int len, int noChains);
 
-int splicing_score_joint(const splicing_vector_int_t *assignment,
-			 int no_reads, const splicing_vector_t *psi, 
+int splicing_score_joint(const splicing_matrix_int_t *assignment,
+			 int no_reads, int noChains, 
+			 const splicing_matrix_t *psi, 
 			 const splicing_vector_t *hyper, 
 			 const splicing_vector_int_t *effisolen,
 			 const splicing_vector_t *isoscores, 
-			 double *score);
+			 splicing_vector_t *score);
 
 int splicing_drift_proposal(int mode, 
-			    const splicing_vector_t *psi, 
-			    const splicing_vector_t *alpha, 
+			    const splicing_matrix_t *psi, 
+			    const splicing_matrix_t *alpha, 
 			    double sigma, 
-			    const splicing_vector_t *otherpsi, 
-			    const splicing_vector_t *otheralpha, int noiso,
-			    splicing_vector_t *respsi, 
-			    splicing_vector_t *resalpha,
-			    double *ressigma, double *resscore);
+			    const splicing_matrix_t *otherpsi, 
+			    const splicing_matrix_t *otheralpha,
+			    int noiso, int noChains,
+			    splicing_matrix_t *respsi, 
+			    splicing_matrix_t *resalpha,
+			    double *ressigma, 
+			    splicing_vector_t *resscore);
 
-int splicing_metropolis_hastings_ratio(const splicing_vector_int_t *ass,
-				       int no_reads,
-				       const splicing_vector_t *psiNew,
-				       const splicing_vector_t *alphaNew,
-				       const splicing_vector_t *psi, 
-				       const splicing_vector_t *alpha,
+int splicing_metropolis_hastings_ratio(const splicing_matrix_int_t *ass,
+				       int no_reads, int noChains,
+				       const splicing_matrix_t *psiNew,
+				       const splicing_matrix_t *alphaNew,
+				       const splicing_matrix_t *psi, 
+				       const splicing_matrix_t *alpha,
 				       double sigma,
 				       int noiso, 
 				       const splicing_vector_int_t *effisolen,
 				       const splicing_vector_t *hyperp, 
 				       const splicing_vector_t *isoscores,
-				       int full, double *acceptP, 
-				       double *pcJS, double *ppJS);
+				       int full, splicing_vector_t *acceptP, 
+				       splicing_vector_t *pcJS, 
+				       splicing_vector_t *ppJS);
 
 int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 			       int readLength, int overHang, 

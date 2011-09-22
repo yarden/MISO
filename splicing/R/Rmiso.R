@@ -1,8 +1,8 @@
 
 MISO <- function(geneStructure, gene=1L, reads,
                  readLength=getReadLength(reads),
-                 overHang=1L, noIterations=5000, noBurnIn=500, noLag=10,
-                 hyperparameters=rep(1, noIso(geneStructure)[gene]),
+                 overHang=1L, noChains=1, noIterations=5000, noBurnIn=500,
+                 noLag=10, hyperparameters=rep(1, noIso(geneStructure)[gene]),
                  paired=reads$paired, fragmentProb=NULL, fragmentStart=0L,
                  normalMean, normalVar, numDevs) {
 
@@ -12,9 +12,10 @@ MISO <- function(geneStructure, gene=1L, reads,
   
   if (!paired) {
     res <- .Call("R_splicing_miso", geneStructure, as.integer(gene), reads,
-                 as.integer(readLength), as.integer(noIterations),
-                 as.integer(noBurnIn), as.integer(noLag),
-                 as.double(hyperparameters), as.integer(overHang),
+                 as.integer(readLength), as.integer(noChains),
+                 as.integer(noIterations), as.integer(noBurnIn),
+                 as.integer(noLag), as.double(hyperparameters),
+                 as.integer(overHang),
                  PACKAGE="splicing")
   } else {
     if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }

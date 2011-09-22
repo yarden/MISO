@@ -566,8 +566,8 @@ SEXP R_splicing_order_matches(SEXP pmatches) {
 }
 
 SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength, 
-		     SEXP pnoIterations, SEXP pnoBurnIn, SEXP pnoLag,
-		     SEXP phyperp, SEXP poverhang) {
+		     SEXP pnochains, SEXP pnoIterations, SEXP pnoBurnIn, 
+		     SEXP pnoLag, SEXP phyperp, SEXP poverhang) {
   
   size_t gene=INTEGER(pgene)[0]-1;
   SEXP result, names, class;
@@ -578,6 +578,7 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   const char **cigarstr;
   SEXP cigar=R_splicing_getListElement(preads, "cigar");
   int readLength=INTEGER(preadLength)[0];
+  int noChains=INTEGER(pnochains)[0];
   int noIterations=INTEGER(pnoIterations)[0];
   int noBurnIn=INTEGER(pnoBurnIn)[0];
   int noLag=INTEGER(pnoLag)[0];
@@ -608,8 +609,8 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   }
 
   splicing_miso(&gff, gene, &position, cigarstr, readLength, overhang,
-		noIterations, noBurnIn, noLag, &hyperp, &samples, &logLik, 
-		&match_matrix, &class_templates, &class_counts, 
+		noChains, noIterations, noBurnIn, noLag, &hyperp, &samples,
+		&logLik, &match_matrix, &class_templates, &class_counts, 
 		/*assignment=*/ 0, &rundata);
   
   PROTECT(result=NEW_LIST(6));
@@ -738,26 +739,28 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
 }
 
 SEXP R_splicing_reassign_samples(SEXP pmatches, SEXP pmatch_order, 
-				 SEXP ppsi, SEXP pnoiso) {
+				 SEXP ppsi, SEXP pnoiso, SEXP pnochains) {
   SEXP result; 
   splicing_matrix_t matches;
   splicing_vector_int_t match_order;
-  splicing_vector_t psi;
+  splicing_matrix_t psi;
   int noiso=INTEGER(pnoiso)[0];
-  splicing_vector_int_t cresult;
+  int nochains=INTEGER(pnochains)[0];
+  splicing_matrix_int_t cresult;
   
   R_splicing_begin();
   
   R_splicing_SEXP_to_matrix(pmatches, &matches);
   R_splicing_SEXP_to_vector_int(pmatch_order, &match_order);
-  R_splicing_SEXP_to_vector(ppsi, &psi);
-  splicing_vector_int_init(&cresult, 0);
+  R_splicing_SEXP_to_matrix(ppsi, &psi);
+  splicing_matrix_int_init(&cresult, 0, 0);
 
-  splicing_reassign_samples(&matches, &match_order, &psi, noiso, &cresult);
+  splicing_reassign_samples(&matches, &match_order, &psi, noiso, nochains,
+			    &cresult);
 
-  PROTECT(result=R_splicing_vector_int_to_SEXP(&cresult));
+  PROTECT(result=R_splicing_matrix_int_to_SEXP(&cresult));
   
-  splicing_vector_int_destroy(&cresult);
+  splicing_matrix_int_destroy(&cresult);
   
   R_splicing_end();
   
@@ -840,20 +843,20 @@ SEXP R_splicing_ldirichlet(SEXP px, SEXP palpha, SEXP plen) {
 
 SEXP R_splicing_mvrnorm(SEXP pmu, SEXP psigma, SEXP plen) {
   SEXP result;
-  splicing_vector_t mu, resalpha;
+  splicing_matrix_t mu, resalpha;
   double sigma=REAL(psigma)[0];
   int len=INTEGER(plen)[0];
   
   R_splicing_begin();
   
-  R_splicing_SEXP_to_vector(pmu, &mu);
-  splicing_vector_init(&resalpha, 0);
+  R_splicing_SEXP_to_matrix(pmu, &mu);
+  splicing_matrix_init(&resalpha, 0, 0);
 
   splicing_mvrnorm(&mu, sigma, &resalpha, len);
 
-  PROTECT(result=R_splicing_vector_to_SEXP(&resalpha));
+  PROTECT(result=R_splicing_matrix_to_SEXP(&resalpha));
   
-  splicing_vector_destroy(&resalpha);
+  splicing_matrix_destroy(&resalpha);
   
   R_splicing_end();
   
@@ -861,22 +864,23 @@ SEXP R_splicing_mvrnorm(SEXP pmu, SEXP psigma, SEXP plen) {
   return result;
 }
 
-SEXP R_splicing_logit_inv(SEXP px, SEXP plen) {
+SEXP R_splicing_logit_inv(SEXP px, SEXP plen, SEXP pnochains) {
   SEXP result;
-  splicing_vector_t x;
-  splicing_vector_t res;
+  splicing_matrix_t x;
+  splicing_matrix_t res;
   int len=INTEGER(plen)[0];
+  int nochains=INTEGER(pnochains)[0];
   
   R_splicing_begin();
   
-  R_splicing_SEXP_to_vector(px, &x);
-  splicing_vector_init(&res, 0);
+  R_splicing_SEXP_to_matrix(px, &x);
+  splicing_matrix_init(&res, len, nochains);
   
-  splicing_logit_inv(&x, &res, len);
+  splicing_logit_inv(&x, &res, len, nochains);
   
-  PROTECT(result=R_splicing_vector_to_SEXP(&res));
+  PROTECT(result=R_splicing_matrix_to_SEXP(&res));
   
-  splicing_vector_destroy(&res);
+  splicing_matrix_destroy(&res);
   
   R_splicing_end();
   
@@ -884,28 +888,34 @@ SEXP R_splicing_logit_inv(SEXP px, SEXP plen) {
   return result;
 }
 
-SEXP R_splicing_score_joint(SEXP passignment, SEXP pnoreads, SEXP ppsi,
-			    SEXP phyper, SEXP peffisolen, SEXP pisoscores) {
+SEXP R_splicing_score_joint(SEXP passignment, SEXP pnoreads, SEXP pnochains,
+			    SEXP ppsi, SEXP phyper, SEXP peffisolen,
+			    SEXP pisoscores) {
   
   SEXP result;
-  splicing_vector_int_t assignment, effisolen;
-  splicing_vector_t psi, hyper, isoscores;
+  splicing_matrix_int_t assignment;
+  splicing_vector_int_t effisolen;
+  splicing_matrix_t psi;
+  splicing_vector_t hyper, isoscores;
   int noreads=INTEGER(pnoreads)[0];
-  double score;
+  int nochains=INTEGER(pnochains)[0];
+  splicing_vector_t score;
   
   R_splicing_begin();
   
-  R_splicing_SEXP_to_vector_int(passignment, &assignment);
+  R_splicing_SEXP_to_matrix_int(passignment, &assignment);
   R_splicing_SEXP_to_vector_int(peffisolen, &effisolen);
-  R_splicing_SEXP_to_vector(ppsi, &psi);
+  R_splicing_SEXP_to_matrix(ppsi, &psi);
   R_splicing_SEXP_to_vector(phyper, &hyper);
   R_splicing_SEXP_to_vector(pisoscores, &isoscores);
+
+  splicing_vector_init(&score, 0);
+
+  splicing_score_joint(&assignment, noreads, nochains, &psi, &hyper, 
+		       &effisolen, &isoscores, &score);
   
-  splicing_score_joint(&assignment, noreads, &psi, &hyper, &effisolen,
-		       &isoscores, &score);
-  
-  PROTECT(result=NEW_NUMERIC(1));
-  REAL(result)[0] = score;
+  PROTECT(result=R_splicing_vector_to_SEXP(&score));
+  splicing_vector_destroy(&score);
   
   R_splicing_end();
   
@@ -915,12 +925,14 @@ SEXP R_splicing_score_joint(SEXP passignment, SEXP pnoreads, SEXP ppsi,
 
 SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha, 
 			       SEXP psigma, SEXP potherpsi, SEXP potheralpha,
-			       SEXP pnoiso) {
+			       SEXP pnoiso, SEXP pnochains) {
   int mode=INTEGER(pmode)[0];
-  splicing_vector_t psi, alpha, otherpsi, otheralpha, respsi, resalpha;
+  splicing_matrix_t psi, alpha, otherpsi, otheralpha, respsi, resalpha;
   double sigma=REAL(psigma)[0];
-  double ressigma, resscore;
+  double ressigma;
+  splicing_vector_t resscore;
   int noiso=INTEGER(pnoiso)[0];
+  int nochains=INTEGER(pnochains)[0];
   SEXP result, names;
 
   R_splicing_begin();
@@ -928,51 +940,53 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
   switch (mode) {
 
   case 0:
-    splicing_vector_init(&respsi, 0);
-    splicing_vector_init(&resalpha, 0);
-    splicing_drift_proposal(0, 0, 0, 0, 0, 0, noiso, &respsi, &resalpha, 
-			    &ressigma, 0);
+    splicing_matrix_init(&respsi, 0, 0);
+    splicing_matrix_init(&resalpha, 0, 0);
+    splicing_drift_proposal(0, 0, 0, 0, 0, 0, noiso, nochains, &respsi,
+			    &resalpha, &ressigma, 0);
     PROTECT(result=NEW_LIST(3));
-    SET_VECTOR_ELT(result, 0, R_splicing_vector_to_SEXP(&respsi));
-    SET_VECTOR_ELT(result, 1, R_splicing_vector_to_SEXP(&resalpha));
+    SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&respsi));
+    SET_VECTOR_ELT(result, 1, R_splicing_matrix_to_SEXP(&resalpha));
     SET_VECTOR_ELT(result, 2, ScalarReal(ressigma));
     PROTECT(names=NEW_CHARACTER(3));
     SET_STRING_ELT(names, 0, mkChar("psi"));
     SET_STRING_ELT(names, 1, mkChar("alpha"));
     SET_STRING_ELT(names, 2, mkChar("sigma"));
     SET_NAMES(result, names);
-    splicing_vector_destroy(&respsi);
-    splicing_vector_destroy(&resalpha);
+    splicing_matrix_destroy(&respsi);
+    splicing_matrix_destroy(&resalpha);
     UNPROTECT(2);
     break;
 
   case 1:
-    R_splicing_SEXP_to_vector(ppsi, &psi);
-    R_splicing_SEXP_to_vector(palpha, &alpha);
-    splicing_vector_init(&respsi, 0);
-    splicing_vector_init(&resalpha, 0);
-    splicing_drift_proposal(1, &psi, &alpha, sigma, 0, 0, noiso, 
+    R_splicing_SEXP_to_matrix(ppsi, &psi);
+    R_splicing_SEXP_to_matrix(palpha, &alpha);
+    splicing_matrix_init(&respsi, 0, 0);
+    splicing_matrix_init(&resalpha, 0, 0);
+    splicing_drift_proposal(1, &psi, &alpha, sigma, 0, 0, noiso, nochains,
 			    &respsi, &resalpha, 0, 0);
     PROTECT(result=NEW_LIST(2));
-    SET_VECTOR_ELT(result, 0, R_splicing_vector_to_SEXP(&respsi));
-    SET_VECTOR_ELT(result, 1, R_splicing_vector_to_SEXP(&resalpha));
+    SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&respsi));
+    SET_VECTOR_ELT(result, 1, R_splicing_matrix_to_SEXP(&resalpha));
     PROTECT(names=NEW_CHARACTER(2));
     SET_STRING_ELT(names, 0, mkChar("psi"));
     SET_STRING_ELT(names, 1, mkChar("alpha"));
     SET_NAMES(result, names);
-    splicing_vector_destroy(&respsi);
-    splicing_vector_destroy(&resalpha);
+    splicing_matrix_destroy(&respsi);
+    splicing_matrix_destroy(&resalpha);
     UNPROTECT(2);
     break;
 
   case 2:
-    R_splicing_SEXP_to_vector(ppsi, &psi);
-    R_splicing_SEXP_to_vector(palpha, &alpha);
-    R_splicing_SEXP_to_vector(potherpsi, &otherpsi);
-    R_splicing_SEXP_to_vector(potheralpha, &otheralpha);
+    R_splicing_SEXP_to_matrix(ppsi, &psi);
+    R_splicing_SEXP_to_matrix(palpha, &alpha);
+    R_splicing_SEXP_to_matrix(potherpsi, &otherpsi);
+    R_splicing_SEXP_to_matrix(potheralpha, &otheralpha);
+    splicing_vector_init(&resscore, 0);
     splicing_drift_proposal(2, &psi, &alpha, sigma, &otherpsi, &otheralpha,
-			    noiso, 0, 0, 0, &resscore);
-    PROTECT(result=ScalarReal(resscore));
+			    noiso, nochains, 0, 0, 0, &resscore);
+    PROTECT(result=R_splicing_vector_to_SEXP(&resscore));
+    splicing_vector_destroy(&resscore);
     UNPROTECT(1);
     break;
   }
@@ -983,6 +997,7 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
 }
 
 SEXP R_splicing_metropolis_hastings_ratio(SEXP passignment, SEXP pnoreads,
+					  SEXP pnochains, 
 					  SEXP ppsiNew, SEXP palphaNew,
 					  SEXP ppsi, SEXP palpha, 
 					  SEXP psigma, SEXP pnoiso, 
@@ -990,34 +1005,41 @@ SEXP R_splicing_metropolis_hastings_ratio(SEXP passignment, SEXP pnoreads,
 					  SEXP pisoscores, SEXP pfull) {
 
   SEXP result, names; 
-  splicing_vector_int_t assignment, effisolen;
-  splicing_vector_t psiNew, alphaNew, psi, alpha, hyperp, isoscores;
+  splicing_matrix_int_t assignment;
+  splicing_vector_int_t effisolen;
+  splicing_matrix_t psiNew, alphaNew, psi, alpha;
+  splicing_vector_t hyperp, isoscores;
   int noreads=INTEGER(pnoreads)[0]; 
+  int nochains=INTEGER(pnochains)[0];
   int noiso=INTEGER(pnoiso)[0];
   double sigma=REAL(psigma)[0];
   int full=INTEGER(pfull)[0];
-  double acceptP, pcJS, ppJS;
+  splicing_vector_t acceptP, pcJS, ppJS;
   
   R_splicing_begin();
   
-  R_splicing_SEXP_to_vector_int(passignment, &assignment);
-  R_splicing_SEXP_to_vector(ppsiNew, &psiNew);
-  R_splicing_SEXP_to_vector(palphaNew, &alphaNew);
-  R_splicing_SEXP_to_vector(ppsi, &psi);
-  R_splicing_SEXP_to_vector(palpha, &alpha);
+  R_splicing_SEXP_to_matrix_int(passignment, &assignment);
+  R_splicing_SEXP_to_matrix(ppsiNew, &psiNew);
+  R_splicing_SEXP_to_matrix(palphaNew, &alphaNew);
+  R_splicing_SEXP_to_matrix(ppsi, &psi);
+  R_splicing_SEXP_to_matrix(palpha, &alpha);
   R_splicing_SEXP_to_vector_int(peffisolen, &effisolen);
   R_splicing_SEXP_to_vector(phyperp, &hyperp);
   R_splicing_SEXP_to_vector(pisoscores, &isoscores);
-  
-  splicing_metropolis_hastings_ratio(&assignment, noreads, &psiNew, 
+
+  splicing_vector_init(&acceptP, 0);
+  splicing_vector_init(&pcJS, 0);
+  splicing_vector_init(&ppJS, 0);
+
+  splicing_metropolis_hastings_ratio(&assignment, noreads, nochains, &psiNew, 
 				     &alphaNew, &psi, &alpha, sigma, noiso,
 				     &effisolen, &hyperp, &isoscores, full,
 				     &acceptP, &pcJS, &ppJS);
   
   PROTECT(result=NEW_LIST(3));
-  SET_VECTOR_ELT(result, 0, ScalarReal(acceptP));
-  SET_VECTOR_ELT(result, 1, ScalarReal(pcJS));
-  SET_VECTOR_ELT(result, 2, ScalarReal(ppJS));
+  SET_VECTOR_ELT(result, 0, R_splicing_vector_to_SEXP(&acceptP));
+  SET_VECTOR_ELT(result, 1, R_splicing_vector_to_SEXP(&pcJS));
+  SET_VECTOR_ELT(result, 2, R_splicing_vector_to_SEXP(&ppJS));
   PROTECT(names=NEW_CHARACTER(3));
   SET_STRING_ELT(names, 0, mkChar("acceptP"));
   SET_STRING_ELT(names, 1, mkChar("pcJS"));

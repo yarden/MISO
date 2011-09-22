@@ -52,6 +52,11 @@ int FUNCTION(splicing_matrix,init)(TYPE(splicing_matrix) *m, long int nrow, long
   return ret1;
 }
 
+int FUNCTION(splicing_matrix,reserve)(TYPE(splicing_matrix) *m,
+				      long int nrow, long int ncol) {
+  return FUNCTION(splicing_vector,reserve)(&m->data, nrow*ncol);
+}
+
 /** 
  * \ingroup matrix
  * \function splicing_matrix_destroy

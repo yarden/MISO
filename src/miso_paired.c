@@ -8,6 +8,93 @@
 #include "splicing.h"
 #include "splicing_random.h"
 
+int splicing_mvrnorm2(const splicing_vector_t *mu, double sigma, 
+		      splicing_vector_t *resalpha, int len) {
+  int i;
+  double sqrtsigma = len == 1 ? sigma : sqrt(sigma);
+
+  SPLICING_CHECK(splicing_vector_resize(resalpha, len));
+
+  for (i=0; i<len; i++) {
+    VECTOR(*resalpha)[i] = VECTOR(*mu)[i] + sqrtsigma * RNG_NORMAL(0,1);
+  }
+
+  return 0;
+}
+
+int splicing_logit_inv2(const splicing_vector_t *x, 
+			splicing_vector_t *res, int len) {
+  int i;
+  double sumexp=0.0;
+
+  SPLICING_CHECK(splicing_vector_resize(res, len));
+
+  for (i=0; i<len; i++) {
+    sumexp += exp(VECTOR(*x)[i]);
+  }
+  sumexp += 1.0;
+  
+  for (i=0; i<len; i++) {
+    VECTOR(*res)[i] = exp(VECTOR(*x)[i]) / sumexp;
+  }
+  
+  return 0;
+}
+
+int splicing_drift_proposal2(int mode, 
+			     const splicing_vector_t *psi, 
+			     const splicing_vector_t *alpha, 
+			     double sigma, 
+			     const splicing_vector_t *otherpsi, 
+			     const splicing_vector_t *otheralpha, int noiso,
+			     splicing_vector_t *respsi, 
+			     splicing_vector_t *resalpha,
+			     double *ressigma, double *resscore) {
+
+  switch (mode) {
+  case 0: 			/* init */
+    {
+      SPLICING_CHECK(splicing_vector_resize(respsi, noiso));
+      SPLICING_CHECK(splicing_vector_resize(resalpha, noiso-1));
+      if (noiso != 2) {
+	int i;
+	for (i=0; i<noiso; i++) {	
+	  VECTOR(*respsi)[i] = 1.0/noiso; 
+	}
+	for (i=0; i<noiso-1; i++) { 
+	  VECTOR(*resalpha)[i] = 1.0/(noiso-1);
+	}
+	*ressigma = 0.05;
+      } else {
+	VECTOR(*respsi)[0] = RNG_UNIF01();
+	VECTOR(*respsi)[1] = 1 - VECTOR(*respsi)[0];
+	VECTOR(*resalpha)[0] = 0.0;
+	VECTOR(*resalpha)[1] = 0.0;
+	*ressigma = 0.05;
+      }
+    }
+    break;
+  case 1:			/* propose */
+    {
+      int len=noiso-1;
+      double sumpsi=0.0;
+  
+      SPLICING_CHECK(splicing_vector_reserve(respsi, len+1));
+      SPLICING_CHECK(splicing_mvrnorm2(alpha, sigma, resalpha, len));
+      SPLICING_CHECK(splicing_logit_inv2(resalpha, respsi, len));
+      sumpsi = splicing_vector_sum(respsi);
+      SPLICING_CHECK(splicing_vector_resize(respsi, len+1));
+      VECTOR(*respsi)[len] = 1-sumpsi;
+    }
+    break;
+  case 2: 			/* score */
+    SPLICING_CHECK(splicing_mvplogisnorm(psi, otheralpha, sigma, noiso-1, 
+					 resscore));
+    break;
+  }
+  
+  return 0;
+}
 #define CUMSUM() do {							\
     int j;								\
     double *cptr = curr;						\
@@ -184,10 +271,10 @@ int splicing_metropolis_hastings_ratio_paired(
 					     fragmentLength, fragmentStart,
 					     &cJS));
   
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psi, alpha, sigma, 
+  SPLICING_CHECK(splicing_drift_proposal2(/* mode= */ 2, psi, alpha, sigma, 
 					 psiNew, alphaNew, noiso, 0, 0, 0,
 					 &ptoCS));
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psiNew, alphaNew, 
+  SPLICING_CHECK(splicing_drift_proposal2(/* mode= */ 2, psiNew, alphaNew, 
 					 sigma, psi, alpha, noiso, 0, 0, 0,
 					 &ctoPS));
   
@@ -341,9 +428,9 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   /* Initialize Psi(0) randomly */
 
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 0, 0, 0, 0, 0, 0, noiso,
+  SPLICING_CHECK(splicing_drift_proposal2(/* mode= */ 0, 0, 0, 0, 0, 0, noiso,
 					 psi, alpha, &sigma, 0));
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
+  SPLICING_CHECK(splicing_drift_proposal2(/* mode= */ 1, psi, alpha, sigma,
 					 0, 0, noiso, psi, alpha, 0, 0));
   
   /* Initialize assignments of reads */  
@@ -357,7 +444,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   for (m=0; m < noIterations; m++) {
 
-    SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
+    SPLICING_CHECK(splicing_drift_proposal2(/* mode= */ 1, psi, alpha, sigma,
 					   0, 0, noiso, psiNew, alphaNew,
 					   0, 0));
 
