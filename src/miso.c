@@ -294,7 +294,11 @@ int splicing_drift_proposal(int mode,
 			    splicing_vector_t *resscore, 
 			    splicing_miso_start_t start,
 			    const splicing_matrix_t *start_psi,
-			    const splicing_matrix_t *start_alpha) {
+			    const splicing_matrix_t *start_alpha,
+			    const splicing_gff_t *gff, int gene, 
+			    int readLength, int overHang, 
+			    const splicing_vector_int_t *position,
+			    const char **cigarstr) {
 
   switch (mode) {
   case 0: 			/* init */
@@ -371,6 +375,33 @@ int splicing_drift_proposal(int mode,
 	splicing_matrix_update(resalpha, start_alpha);
 	*ressigma = SIGMA;
 	break;
+      case SPLICING_MISO_START_LINEAR:
+	{
+	  splicing_vector_t tmp, tmp2;
+	  int j;
+	  SPLICING_CHECK(splicing_vector_init(&tmp, noiso));
+	  SPLICING_FINALLY(splicing_vector_destroy, &tmp);
+	  SPLICING_CHECK(splicing_solve_gene(gff, gene, readLength, 
+					     overHang, position, cigarstr,
+					     /*match_matrix=*/ 0, 
+					     /*assignment_matrix=*/ 0,
+					     &tmp));
+
+	  for (j=0; j<noChains; j++) {
+	    splicing_vector_view(&tmp2, &MATRIX(*respsi, 0, j), noiso);
+	    splicing_vector_update(&tmp2, &tmp);
+	  }
+	  splicing_vector_pop_back(&tmp);
+	  for (j=0; j<noChains; j++) {
+	    splicing_vector_view(&tmp2, &MATRIX(*resalpha, 0, j), noiso-1);
+	    splicing_vector_update(&tmp2, &tmp);
+	  }
+	  
+	  splicing_vector_destroy(&tmp);
+	  SPLICING_FINALLY_CLEAN(1);
+	  *ressigma = SIGMA;
+	}
+	break;
       }
     }
     break;
@@ -446,10 +477,12 @@ int splicing_metropolis_hastings_ratio(const splicing_matrix_int_t *ass,
   
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psi, alpha, sigma, 
 					 psiNew, alphaNew, noiso, noChains,
-					 0, 0, 0, &ptoCS, 0, 0, 0));
+					 0, 0, 0, &ptoCS, 0, 0, 0, 0, 0, 0,
+					 0, 0, 0));
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psiNew, alphaNew,
 					 sigma, psi, alpha, noiso, noChains,
-					 0, 0, 0, &ctoPS, 0, 0, 0));
+					 0, 0, 0, &ctoPS, 0, 0, 0, 0, 0, 0,
+					 0, 0, 0));
   
   if (full) {
     for (i=0; i<noChains; i++) {
@@ -605,10 +638,12 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 0, 0, 0, 0, 0, 0, 
 					 noiso, noChains, psi, alpha, 
 					 &sigma, 0, start, start_psi, 
-					 start_alpha));
+					 start_alpha, gff, gene, readLength,
+					 overHang, position, cigarstr));
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
 					 0, 0, noiso, noChains, psi, 
-					 alpha, 0, 0, 0, 0, 0));
+					 alpha, 0, 0, 0, 0, 0, 0, 0, 0,
+					 0, 0, 0));
   
   /* Initialize assignments of reads */  
   
@@ -621,7 +656,8 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 
     SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
 					   0, 0, noiso, noChains, psiNew, 
-					   alphaNew, 0, 0, 0, 0, 0));
+					   alphaNew, 0, 0, 0, 0, 0, 0, 0, 0,
+					   0, 0, 0));
 
     SPLICING_CHECK(splicing_metropolis_hastings_ratio(&vass, noReads, 
 						      noChains, psiNew,

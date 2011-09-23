@@ -2,8 +2,8 @@
 MISO <- function(geneStructure, gene=1L, reads,
                  readLength=getReadLength(reads),
                  overHang=1L, noChains=1, noIterations=5000, noBurnIn=500,
-                 noLag=10, start=c("auto", "uniform", "random", "given"),
-                 startPsi=NULL, startAlpha=NULL,
+                 noLag=10, start=c("auto", "uniform", "random", "given",
+                             "linear"), startPsi=NULL, startAlpha=NULL,
                  hyperparameters=rep(1, noIso(geneStructure)[gene]),
                  paired=reads$paired, fragmentProb=NULL, fragmentStart=0L,
                  normalMean, normalVar, numDevs) {
@@ -13,7 +13,7 @@ MISO <- function(geneStructure, gene=1L, reads,
   }
 
   start <- switch(match.arg(start), "auto"=0L, "uniform"=1L, "random"=2L,
-                  "given"=3L)
+                  "given"=3L, "linear"=4L)
   if (!is.null(startPsi)) {
     startPsi <- structure(as.numeric(startPsi), dim=dim(startPsi))
   }

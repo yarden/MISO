@@ -143,7 +143,8 @@ typedef enum splicing_miso_start_t {
   SPLICING_MISO_START_AUTO,
   SPLICING_MISO_START_UNIFORM,
   SPLICING_MISO_START_RANDOM,
-  SPLICING_MISO_START_GIVEN } splicing_miso_start_t;
+  SPLICING_MISO_START_GIVEN,
+  SPLICING_MISO_START_LINEAR } splicing_miso_start_t;
 
 int splicing_matchIso(const splicing_gff_t *gff, int gene, 
 		      const splicing_vector_int_t *position,
@@ -252,7 +253,11 @@ int splicing_drift_proposal(int mode,
 			    splicing_vector_t *resscore, 
 			    splicing_miso_start_t start,
 			    const splicing_matrix_t *start_psi,
-			    const splicing_matrix_t *start_alpha);
+			    const splicing_matrix_t *start_alpha,
+			    const splicing_gff_t *gff, int gene, 
+			    int readLength, int overHang, 
+			    const splicing_vector_int_t *position,
+			    const char **cigarstr);
 
 int splicing_metropolis_hastings_ratio(const splicing_matrix_int_t *ass,
 				       int no_reads, int noChains,

@@ -968,7 +968,8 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
     splicing_drift_proposal(0, 0, 0, 0, 0, 0, noiso, nochains, &respsi,
 			    &resalpha, &ressigma, 0, start, 
 			    isNull(pstart_psi) ? 0 : &start_psi,
-			    isNull(pstart_alpha) ? 0 : &start_alpha);
+			    isNull(pstart_alpha) ? 0 : &start_alpha, 
+			    0, 0, 0, 0, 0, 0);
     PROTECT(result=NEW_LIST(3));
     SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&respsi));
     SET_VECTOR_ELT(result, 1, R_splicing_matrix_to_SEXP(&resalpha));
@@ -989,7 +990,8 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
     splicing_matrix_init(&respsi, 0, 0);
     splicing_matrix_init(&resalpha, 0, 0);
     splicing_drift_proposal(1, &psi, &alpha, sigma, 0, 0, noiso, nochains,
-			    &respsi, &resalpha, 0, 0, 0, 0, 0);
+			    &respsi, &resalpha, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+			    0, 0);
     PROTECT(result=NEW_LIST(2));
     SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&respsi));
     SET_VECTOR_ELT(result, 1, R_splicing_matrix_to_SEXP(&resalpha));
@@ -1009,7 +1011,8 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
     R_splicing_SEXP_to_matrix(potheralpha, &otheralpha);
     splicing_vector_init(&resscore, 0);
     splicing_drift_proposal(2, &psi, &alpha, sigma, &otherpsi, &otheralpha,
-			    noiso, nochains, 0, 0, 0, &resscore, 0, 0, 0);
+			    noiso, nochains, 0, 0, 0, &resscore, 0, 0, 0, 
+			    0, 0, 0, 0, 0, 0);
     PROTECT(result=R_splicing_vector_to_SEXP(&resscore));
     splicing_vector_destroy(&resscore);
     UNPROTECT(1);
