@@ -213,11 +213,12 @@ rpk <- function(genes, reads, overlap=TRUE) {
 ## Calculate the real expression profile. This might differ a bit from
 ## the one that was prescribed for the read generator
 
-realPsi <- function(gene, reads, readLength=33) {
-  isolen <- isoLength(gene)[[1]]
+realPsi <- function(geneStructure, gene=1, reads,
+                    readLength=getReadLength(reads)) {
+  isolen <- isoLength(geneStructure)[[gene]]
   effLen <- isolen - readLength + 1
-  ii <- as.character(1:noIso(gene)[1])
-  it <- table(reads$isoform)[ii]
+  ii <- as.character((1:noIso(geneStructure)[gene])-1)
+  it <- table(getIsoform(reads))[ii]
   it[is.na(it)] <- 0
   res <- as.vector(it / effLen)
   res / sum(res)
