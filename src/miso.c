@@ -279,6 +279,8 @@ int splicing_rng_get_dirichlet(splicing_rng_t *rng,
   return 0;
 }
 
+#define SIGMA (0.2/noiso/noiso)
+
 int splicing_drift_proposal(int mode, 
 			    const splicing_matrix_t *psi, 
 			    const splicing_matrix_t *alpha, 
@@ -313,7 +315,7 @@ int splicing_drift_proposal(int mode,
 	      MATRIX(*resalpha, i, j) = 1.0/(noiso-1);
 	    }
 	  }
-	  *ressigma = 0.05;
+	  *ressigma = SIGMA;
 	} else {
 	  int j;
 	  for (j=0; j<noChains; j++) {
@@ -322,7 +324,7 @@ int splicing_drift_proposal(int mode,
 	    MATRIX(*resalpha, 0, j) = 0.0;
 	    MATRIX(*resalpha, 1, j) = 0.0;
 	  }
-	  *ressigma = 0.05;
+	  *ressigma = SIGMA;
 	}
 	break;
       case SPLICING_MISO_START_UNIFORM:
@@ -338,7 +340,7 @@ int splicing_drift_proposal(int mode,
 	      MATRIX(*resalpha, i, j) = 1.0/(noiso-1);
 	    }
 	  }
-	  *ressigma = 0.05;
+	  *ressigma = SIGMA;
 	}
 	break;
       case SPLICING_MISO_START_RANDOM:
@@ -367,7 +369,7 @@ int splicing_drift_proposal(int mode,
       case SPLICING_MISO_START_GIVEN:
 	splicing_matrix_update(respsi, start_psi);
 	splicing_matrix_update(resalpha, start_alpha);
-	*ressigma = 0.05;
+	*ressigma = SIGMA;
 	break;
       }
     }
