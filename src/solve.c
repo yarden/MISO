@@ -222,15 +222,29 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
   size_t r;
   long int nsetp;
   double rnorm;
+  splicing_matrix_t *mymatch_matrix=match_matrix, vmatch_matrix;
+  splicing_matrix_t *myass_matrix=assignment_matrix, vass_matrix;
+
+  if (!match_matrix) {
+    mymatch_matrix=&vmatch_matrix;
+    SPLICING_CHECK(splicing_matrix_init(mymatch_matrix, 0, 0));
+    SPLICING_FINALLY(splicing_matrix_destroy, mymatch_matrix);
+  }
+
+  if (!assignment_matrix) {
+    myass_matrix=&vass_matrix;
+    SPLICING_CHECK(splicing_matrix_init(myass_matrix, 0, 0));
+    SPLICING_FINALLY(splicing_matrix_destroy, myass_matrix);
+  }
 
   SPLICING_CHECK(splicing_assignment_matrix(gff, gene, readLength, overHang,
-					    assignment_matrix));
-  no_classes=splicing_matrix_ncol(assignment_matrix);
-  noiso=splicing_matrix_nrow(assignment_matrix);
+					    myass_matrix));
+  no_classes=splicing_matrix_ncol(myass_matrix);
+  noiso=splicing_matrix_nrow(myass_matrix);
 
   /* Calculate match vector from match matrix */
   SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, overHang,
-				   match_matrix));
+				   mymatch_matrix));
   SPLICING_CHECK(splicing_vector_init(&match, no_classes));
   SPLICING_FINALLY(splicing_vector_destroy, &match);
   for (r=0; r<no_reads; r++) {
@@ -238,8 +252,8 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
     for (cl=0, found=0; !found && cl < no_classes; cl++) {
       size_t i;
       for (i=0, found=1; i<noiso && found; i++) {
-	double m1=MATRIX(*match_matrix, i, r);
-	double m2=MATRIX(*assignment_matrix, i, cl);
+	double m1=MATRIX(*mymatch_matrix, i, r);
+	double m2=MATRIX(*myass_matrix, i, cl);
 	found = (m1 > 0 && m2 > 0) || (m1 == 0 && m2 == 0);
       }
     }
@@ -247,11 +261,20 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
   }
 
   /* This is modified, need a copy */
-  SPLICING_CHECK(splicing_matrix_copy(&A, assignment_matrix));
+  SPLICING_CHECK(splicing_matrix_copy(&A, myass_matrix));
   SPLICING_FINALLY(splicing_matrix_destroy, &A);
   SPLICING_CHECK(splicing_matrix_transpose(&A));
   SPLICING_CHECK(splicing_vector_long_init(&index, 0));
   SPLICING_FINALLY(splicing_vector_long_destroy, &index);
+
+  if (!assignment_matrix) {
+    splicing_matrix_destroy(myass_matrix);
+    SPLICING_FINALLY_CLEAN(1);
+  }
+  if (!match_matrix) {
+    splicing_matrix_destroy(mymatch_matrix);
+    SPLICING_FINALLY_CLEAN(1);
+  }
   
   SPLICING_CHECK(splicing_nnls(&A, &match, expression, &rnorm, &index, 
 			       &nsetp));
