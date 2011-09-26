@@ -191,7 +191,7 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
     while (*s) {
       long l = strtol(s, &s, 10L);
 
-      if (mode==0 && (*s=='M' || *s=='N' || *s=='I' || *s=='D')) {
+      if (mode==0 && *s!='S' && *s!='H') {
 	mode=1; 
       } else if (mode==1 && (*s=='S' || *s=='H')) { 
 	mode=2;
@@ -200,12 +200,17 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 		       "the beginning and the end", SPLICING_EINVAL);
       }
 
-      if (*s == 'M') { 		/* MATCHING */
+      if (*s == 'M' || *s == '=') { 		/* MATCHING */
 	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
 	pos++;
 	s++;
       } else if (*s == 'N') {	/* SKIPPING */
 	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, -l));
+	pos++;
+	s++;
+      } else if (*s == 'X') {
+	if (l > 4) { SPLICING_WARNING("Long non-matching alignment"); }
+	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
 	pos++;
 	s++;
       } else if (*s == 'S' || *s == 'H') {
@@ -223,7 +228,7 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 	/* We do nothing, just ignore the part that does not appear in 
 	   the genome */
       } else {
-	SPLICING_ERROR("Unsupported CIGAR string (`MNSHDI' ar supported)", 
+	SPLICING_ERROR("Unsupported CIGAR string (`MNSHDI=X' ara supported)", 
 		       SPLICING_EINVAL);
       }
     }
