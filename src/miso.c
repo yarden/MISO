@@ -723,7 +723,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   splicing_vector_destroy(&cJS);
   splicing_vector_destroy(&pJS);
   splicing_vector_destroy(&acceptP);
-  SPLICING_FINALLY_CLEAN(5);
+  SPLICING_FINALLY_CLEAN(8);
   
   return 0;
 }
