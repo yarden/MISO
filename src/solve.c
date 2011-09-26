@@ -183,20 +183,48 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
   
   splicing_vector_int_clear(numcigar);
   SPLICING_CHECK(splicing_vector_int_resize(cigaridx, noreads+1));
-  
+
   for (i=0; i<noreads; i++) {
     char *s= (char*) cigar[i];
     VECTOR(*cigaridx)[i] = pos;
+    int mode=0;			/* 0: begin, 1:middle, 2:end */
     while (*s) {
       long l = strtol(s, &s, 10L);
-      if (*s == 'M') { 
+
+      if (mode==0 && (*s=='M' || *s=='N' || *s=='I' || *s=='D')) {
+	mode=1; 
+      } else if (mode==1 && (*s=='S' || *s=='H')) { 
+	mode=2;
+      } else if (mode==2 && *s != 'S' && *s != 'H') {
+	SPLICING_ERROR("Bad CIGAR string: `S' and 'H' may appear only at "
+		       "the beginning and the end", SPLICING_EINVAL);
+      }
+
+      if (*s == 'M') { 		/* MATCHING */
 	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
 	pos++;
 	s++;
-      } else if (*s == 'N') {
+      } else if (*s == 'N') {	/* SKIPPING */
 	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, -l));
 	pos++;
 	s++;
+      } else if (*s == 'S' || *s == 'H') {
+	/* We consider these 'matching' */
+	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
+	pos++;
+	s++;
+      } else if (*s == 'D') {	/* DELETED */
+	if (l > 4) { SPLICING_WARNING("Long deleted alignment"); }
+	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
+	pos++;
+	s++;
+      } else if (*s == 'I') {
+	if (l > 4) { SPLICING_WARNING("Long inserted alignment"); }
+	/* We do nothing, just ignore the part that does not appear in 
+	   the genome */
+      } else {
+	SPLICING_ERROR("Unsupported CIGAR string (`MNSHDI' ar supported)", 
+		       SPLICING_EINVAL);
       }
     }
   }
