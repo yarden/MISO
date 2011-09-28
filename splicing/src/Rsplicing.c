@@ -781,6 +781,38 @@ SEXP R_splicing_reassign_samples(SEXP pmatches, SEXP pmatch_order,
   return result;
 }
 
+SEXP R_splicing_reassign_samples_paired(SEXP pmatches, SEXP pmatch_order,
+					SEXP ppsi, SEXP pnoiso, 
+					SEXP pfragmentStart) {
+
+  SEXP result; 
+  splicing_matrix_t matches;
+  splicing_vector_int_t match_order;
+  splicing_vector_t psi;
+  int noiso=INTEGER(pnoiso)[0];
+  int fragmentstart=INTEGER(pfragmentStart)[0];
+  splicing_vector_int_t cresult;
+  
+  R_splicing_begin();
+  
+  R_splicing_SEXP_to_matrix(pmatches, &matches);
+  R_splicing_SEXP_to_vector_int(pmatch_order, &match_order);
+  R_splicing_SEXP_to_vector(ppsi, &psi);
+  splicing_vector_int_init(&cresult, 0);
+
+  splicing_reassign_samples_paired(&matches, &match_order, &psi, noiso, 
+				   fragmentstart, &cresult);
+
+  PROTECT(result=R_splicing_vector_int_to_SEXP(&cresult));
+  
+  splicing_vector_int_destroy(&cresult);
+  
+  R_splicing_end();
+  
+  UNPROTECT(1);
+  return result;
+}  
+  
 SEXP R_splicing_mvplogisnorm(SEXP ptheta, SEXP pmu, SEXP psigma, 
 			     SEXP plen) {
   SEXP result;
@@ -823,6 +855,35 @@ SEXP R_splicing_score_iso(SEXP ppsi, SEXP pnoiso, SEXP passignment,
   
   splicing_score_iso(&psi, noiso, &assignment, noreads, &effisolen, &res);
   
+  PROTECT(result=NEW_NUMERIC(1));
+  REAL(result)[0] = res;
+  
+  R_splicing_end();
+  
+  UNPROTECT(1);
+  return result;
+}
+
+SEXP R_splicing_score_iso_paired(SEXP ppsi, SEXP pnoiso, SEXP passignment,
+				 SEXP ppisolen, SEXP passscores) {
+  SEXP result;
+  splicing_vector_t psi;
+  int noiso=INTEGER(pnoiso)[0];
+  splicing_vector_int_t assignment;
+  splicing_vector_int_t pisolen;
+  splicing_vector_t assscores;
+  double res;
+
+  R_splicing_begin();
+  
+  R_splicing_SEXP_to_vector(ppsi, &psi);
+  R_splicing_SEXP_to_vector_int(passignment, &assignment);
+  R_splicing_SEXP_to_vector_int(ppisolen, &pisolen);
+  R_splicing_SEXP_to_vector(passscores, &assscores);
+  
+  splicing_score_iso_paired(&psi, noiso, &assignment, &pisolen, &assscores,
+			    &res);
+
   PROTECT(result=NEW_NUMERIC(1));
   REAL(result)[0] = res;
   
@@ -932,6 +993,45 @@ SEXP R_splicing_score_joint(SEXP passignment, SEXP pnoreads, SEXP pnochains,
   
   R_splicing_end();
   
+  UNPROTECT(1);
+  return result;
+}
+
+SEXP R_splicing_score_joint_paired(SEXP passignment, SEXP ppsi, 
+				   SEXP phyper, SEXP pisolen, 
+				   SEXP pisoscores, SEXP passscores, 
+				   SEXP pfragmentLength, 
+				   SEXP pfragmentStart) {
+  
+  SEXP result;
+  splicing_vector_int_t assignment;
+  splicing_vector_t psi;
+  splicing_vector_t hyper;
+  splicing_vector_int_t isolen;
+  splicing_matrix_t isoscores;
+  splicing_vector_t assscores;
+  splicing_matrix_int_t fragmentLength;
+  int fragmentStart=INTEGER(pfragmentStart)[0];
+  double score;
+  
+  R_splicing_begin();
+  
+  R_splicing_SEXP_to_vector_int(passignment, &assignment);
+  R_splicing_SEXP_to_vector(ppsi, &psi);
+  R_splicing_SEXP_to_vector(phyper, &hyper);
+  R_splicing_SEXP_to_vector_int(pisolen, &isolen);
+  R_splicing_SEXP_to_matrix(pisoscores, &isoscores);
+  R_splicing_SEXP_to_vector(passscores, &assscores);
+  R_splicing_SEXP_to_matrix_int(pfragmentLength, &fragmentLength);
+
+  splicing_score_joint_paired(&assignment, &psi, &hyper, &isolen, 
+			      &isoscores, &assscores, &fragmentLength, 
+			      fragmentStart, &score);
+  
+  PROTECT(result=ScalarReal(score));
+
+  R_splicing_end();  
+
   UNPROTECT(1);
   return result;
 }
@@ -1078,6 +1178,62 @@ SEXP R_splicing_metropolis_hastings_ratio(SEXP passignment, SEXP pnoreads,
   
   UNPROTECT(2);
   return result;  
+}
+
+SEXP R_splicing_metropolis_hastings_ratio_paired(SEXP pass, SEXP ppsiNew,
+						 SEXP palphaNew, SEXP ppsi, 
+						 SEXP palpha, SEXP psigma,
+						 SEXP pnoiso, SEXP pisolen,
+						 SEXP phyperp, 
+						 SEXP pisoscores,
+						 SEXP passscores, 
+						 SEXP pfragmentLength,
+						 SEXP pfragmentStart, 
+						 SEXP pfull) {
+  SEXP result, names;
+  splicing_vector_int_t ass, isolen;
+  splicing_vector_t psiNew, alphaNew, psi, alpha, hyperp, assscores;
+  double sigma=REAL(psigma)[0];
+  int noiso=INTEGER(pnoiso)[0];
+  splicing_matrix_t isoscores;
+  splicing_matrix_int_t fragmentLength;
+  int fragmentStart=INTEGER(pfragmentStart)[0];
+  int full=INTEGER(pfull)[0];
+  double acceptP, pcJS, ppJS;
+  
+  R_splicing_begin();
+
+  R_splicing_SEXP_to_vector_int(pass, &ass);
+  R_splicing_SEXP_to_vector(ppsiNew, &psiNew);
+  R_splicing_SEXP_to_vector(palphaNew, &alphaNew);
+  R_splicing_SEXP_to_vector(ppsi, &psi);
+  R_splicing_SEXP_to_vector(palpha, &alpha);
+  R_splicing_SEXP_to_vector_int(pisolen, &isolen);
+  R_splicing_SEXP_to_vector(phyperp, &hyperp);
+  R_splicing_SEXP_to_matrix(pisoscores, &isoscores);
+  R_splicing_SEXP_to_vector(passscores, &assscores);
+  R_splicing_SEXP_to_matrix_int(pfragmentLength, &fragmentLength);
+  
+  splicing_metropolis_hastings_ratio_paired(&ass, &psiNew, &alphaNew, &psi,
+					    &alpha, sigma, noiso, &isolen,
+					    &hyperp, &isoscores, &assscores,
+					    &fragmentLength, fragmentStart,
+					    full, &acceptP, &pcJS, &ppJS);
+  
+  PROTECT(result=NEW_LIST(3));
+  SET_VECTOR_ELT(result, 0, ScalarReal(acceptP));
+  SET_VECTOR_ELT(result, 1, ScalarReal(pcJS));
+  SET_VECTOR_ELT(result, 2, ScalarReal(ppJS));
+  PROTECT(names=NEW_CHARACTER(3));
+  SET_STRING_ELT(names, 0, mkChar("acceptP"));
+  SET_STRING_ELT(names, 1, mkChar("pcJS"));
+  SET_STRING_ELT(names, 2, mkChar("ppJS"));
+  SET_NAMES(result, names);
+
+  R_splicing_end();
+  
+  UNPROTECT(2);
+  return result;
 }
 
 SEXP R_splicing_gff_exon_start_end(SEXP pgff, SEXP pgene) {
