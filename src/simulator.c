@@ -200,11 +200,13 @@ int splicing_normal_fragment(double normalMean, double normalVar,
 			     int *fragmentStart) {
 
   double normalSd=sqrt(normalVar);
-  int fragmentEnd = normalMean + normalSd * numDevs;
+  int fragmentEnd;
   int i, j;
 
   *fragmentStart = normalMean - normalSd * numDevs;
-  if (*fragmentStart < minLength) *fragmentStart = minLength;
+  fragmentEnd    = normalMean + normalSd * numDevs;
+  if (*fragmentStart < minLength) { *fragmentStart = minLength; }
+  if (fragmentEnd    < *fragmentStart) { fragmentEnd = *fragmentStart; }
   
   SPLICING_CHECK(splicing_vector_resize(fragmentProb,
 					fragmentEnd - *fragmentStart + 1));
@@ -261,7 +263,7 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
     
-  if ( fabs(splicing_vector_sum(myfragmentProb) - 1.0) > 1e-13 ) {
+  if ( fabs(splicing_vector_sum(myfragmentProb) - 1.0) > 1e-10 ) {
     SPLICING_ERROR("Fragment length distribution does not sum up to 1", 
 		   SPLICING_EINVAL);
   }
