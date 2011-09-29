@@ -325,6 +325,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   int il;
   splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
     vfragmentProb;
+  splicing_vector_int_t noexons;
 
   if ( (class_templates ? 1 : 0) + (class_counts ? 1 : 0) == 1) {
     SPLICING_ERROR("Only one of `class_templates' and `class_counts' is "
@@ -353,6 +354,12 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   if (splicing_vector_size(hyperp) != noiso) { 
     SPLICING_ERROR("Invalid hyperparameter vector length", 
 		   SPLICING_EINVAL);
+  }
+
+  if (overHang==0) { overHang=1; }
+  if (overHang < 1 || overHang >= readLength / 2) {
+    SPLICING_ERROR("Overhang length invalid. Must be between 0 and "
+		   "readLength/2", SPLICING_EINVAL);
   }
 
   rundata->noIso=noiso;
@@ -411,14 +418,23 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_FINALLY(splicing_matrix_destroy, &isoscores);
   SPLICING_CHECK(splicing_vector_init(&assscores, noiso));
   SPLICING_FINALLY(splicing_vector_destroy, &assscores);
+  SPLICING_CHECK(splicing_vector_int_init(&noexons, noiso));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &noexons);
+  SPLICING_CHECK(splicing_gff_noexons_one(gff, gene, &noexons));
   for (j=0; j<il; j++) {
     double logprob=VECTOR(*myfragmentProb)[j];
     for (i=0; i<noiso; i++) {
-      double lp = VECTOR(isolen)[i] - fragmentStart - j + 1;
+      int nox=VECTOR(noexons)[i];      
+      /* The following is only approximate if there are some short exons
+	 and overHang is not one */
+      double lp = VECTOR(isolen)[i] - fragmentStart - j + 1 - 
+	2 * (nox-1) * (overHang-1);
       MATRIX(isoscores, j, i) = -log(lp) + logprob;
       VECTOR(assscores)[i] += lp;
     }
   }
+  splicing_vector_int_destroy(&noexons);
+  SPLICING_FINALLY_CLEAN(1);
   for (i=0; i<noiso; i++) {
     VECTOR(assscores)[i] = log(VECTOR(assscores)[i]);
   }

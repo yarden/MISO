@@ -623,6 +623,8 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_gff_noexons_one(gff, gene, &noexons));
   for (i=0; i<noiso; i++) { 
     int nox=VECTOR(noexons)[i];
+    /* The following is only approximate if there are some short exons
+       and overHang is not one */
     int l=VECTOR(effisolen)[i] - readLength+1 - 2*(nox-1)*(overHang-1);
     VECTOR(effisolen)[i] = l > 0 ? l : 0;
     VECTOR(isoscores)[i] = -log((double) l);
