@@ -40,7 +40,7 @@ MISO <- function(geneStructure, gene=1L, reads,
                  as.double(hyperparameters), fragmentProb,
                  as.integer(fragmentStart), as.double(normalMean),
                  as.double(normalVar), as.double(numDevs),
-                 as.integer(overHang), stopCond,
+                 as.integer(overHang), start, startPsi, startAlpha, stopCond,
                  PACKAGE="splicing")
   }
 

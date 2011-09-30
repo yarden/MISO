@@ -41,6 +41,15 @@ mres5 <- MISO(gene, reads=reads, noChains=5, noIterations=5000,
               noBurnIn=2500, noLag=10, start="linear", overHang=1)
 postMean(mres5)
 
+mres7 <- MISO(gene, reads=reads2, noChains=5,
+              normalMean=116, normalVar=50, numDevs=4,
+              noIterations=1, noBurnIn=0, noLag=1, start="linear", overHang=1,
+              stopCond="fixedno")
+
+postMean(mres7)
+solveIso(gene, reads=reads2, normalMean=116, normalVar=50,
+         numDevs=4)$expression
+
 ## Convergence for the paired-end sampler
 
 set.seed(42)

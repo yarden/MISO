@@ -298,7 +298,10 @@ int splicing_drift_proposal(int mode,
 			    const splicing_gff_t *gff, int gene, 
 			    int readLength, int overHang, 
 			    const splicing_vector_int_t *position,
-			    const char **cigarstr) {
+			    const char **cigarstr, int paired, 
+			    const splicing_vector_t *fragmentProb,
+			    int fragmentStart, double normalMean,
+			    double normalVar, double numDevs) {
 
   switch (mode) {
   case 0: 			/* init */
@@ -381,11 +384,20 @@ int splicing_drift_proposal(int mode,
 	  int j;
 	  SPLICING_CHECK(splicing_vector_init(&tmp, noiso));
 	  SPLICING_FINALLY(splicing_vector_destroy, &tmp);
-	  SPLICING_CHECK(splicing_solve_gene(gff, gene, readLength, 
-					     overHang, position, cigarstr,
-					     /*match_matrix=*/ 0, 
-					     /*assignment_matrix=*/ 0,
-					     &tmp));
+	  if (!paired) { 
+	    SPLICING_CHECK(splicing_solve_gene(gff, gene, readLength, 
+				       overHang, position, cigarstr,
+				       /*match_matrix=*/ 0, 
+				       /*assignment_matrix=*/ 0,
+				       &tmp));
+	  } else {
+	    SPLICING_CHECK(splicing_solve_gene_paired(gff, gene, readLength,
+				       overHang, position,
+				       cigarstr, fragmentProb, fragmentStart,
+				       normalMean, normalVar, numDevs,
+				       /*match_matrix=*/ 0,
+				       /*assignment_matrix=*/ 0, &tmp));
+	  }
 
 	  for (j=0; j<noChains; j++) {
 	    splicing_vector_view(&tmp2, &MATRIX(*respsi, 0, j), noiso);
@@ -478,11 +490,11 @@ int splicing_metropolis_hastings_ratio(const splicing_matrix_int_t *ass,
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psi, alpha, sigma, 
 					 psiNew, alphaNew, noiso, noChains,
 					 0, 0, 0, &ptoCS, 0, 0, 0, 0, 0, 0,
-					 0, 0, 0));
+					 0, 0, 0, 0, 0, 0, 0, 0, 0));
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psiNew, alphaNew,
 					 sigma, psi, alpha, noiso, noChains,
 					 0, 0, 0, &ctoPS, 0, 0, 0, 0, 0, 0,
-					 0, 0, 0));
+					 0, 0, 0, 0, 0, 0, 0, 0, 0));
   
   if (full) {
     for (i=0; i<noChains; i++) {
@@ -743,11 +755,12 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 					 noiso, noChains, psi, alpha, 
 					 &sigma, 0, start, start_psi, 
 					 start_alpha, gff, gene, readLength,
-					 overHang, position, cigarstr));
+					 overHang, position, cigarstr, 
+					 0, 0, 0, 0, 0, 0));
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
 					 0, 0, noiso, noChains, psi, 
 					 alpha, 0, 0, 0, 0, 0, 0, 0, 0,
-					 0, 0, 0));
+					 0, 0, 0, 0, 0, 0, 0, 0, 0));
   
   /* Initialize assignments of reads */  
   
@@ -763,7 +776,8 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
       SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha,
 					     sigma, 0, 0, noiso, noChains,
 					     psiNew, alphaNew, 0, 0, 0, 0, 
-					     0, 0, 0, 0, 0, 0, 0));
+					     0, 0, 0, 0, 0, 0, 0, 
+					     0, 0, 0, 0, 0, 0));
 
       SPLICING_CHECK(splicing_metropolis_hastings_ratio(&vass, noReads, 
 							noChains, psiNew,

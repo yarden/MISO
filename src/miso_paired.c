@@ -217,11 +217,13 @@ int splicing_metropolis_hastings_ratio_paired(
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psi, alpha, sigma, 
 					 psiNew, alphaNew, noiso, noChains,
 					 0, 0, 0, &ptoCS, 
-					 0, 0, 0, 0, 0, 0, 0, 0, 0));
+					 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					 0, 0, 0, 0, 0, 0));
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psiNew, alphaNew, 
 					 sigma, psi, alpha, noiso, noChains,
 					 0, 0, 0, &ctoPS,
-					 0, 0, 0, 0, 0, 0, 0, 0, 0));
+					 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+					 0, 0, 0, 0, 0, 0));
   
   if (full) {
     for (i=0; i<noChains; i++) {
@@ -248,7 +250,10 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 int noChains, int noIterations, 
 			 int noBurnIn, int noLag,
 			 const splicing_vector_t *hyperp, 
+			 splicing_miso_start_t start, 
 			 splicing_miso_stop_t stop,
+			 const splicing_matrix_t *start_psi,
+			 const splicing_matrix_t *start_alpha,
 			 const splicing_vector_t *fragmentProb,
 			 int fragmentStart, double normalMean, 
 			 double normalVar, double numDevs,
@@ -283,6 +288,12 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   splicing_vector_int_t noexons;
   int shouldstop=0;
   splicing_matrix_t chainMeans, chainVars;
+
+  if (start == SPLICING_MISO_START_GIVEN && 
+      (!start_psi || !start_alpha)) {
+    SPLICING_ERROR("`start_psi' and `start_alpha' must be given when "
+		   "starting from a given PSI", SPLICING_EINVAL);
+  }
 
   if ( (class_templates ? 1 : 0) + (class_counts ? 1 : 0) == 1) {
     SPLICING_ERROR("Only one of `class_templates' and `class_counts' is "
@@ -322,6 +333,22 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   if (noChains < 1) { 
     SPLICING_ERROR("Number of chains must be at least one.", 
 		   SPLICING_EINVAL);
+  }
+
+  if (stop==SPLICING_MISO_STOP_CONVERGENT_MEAN && noChains == 1) {
+    SPLICING_ERROR("Cannot access convergence with one chain only", 
+		   SPLICING_EINVAL);
+  }
+
+  if (start_psi && 
+      (splicing_matrix_nrow(start_psi) != noiso ||
+       splicing_matrix_ncol(start_psi) != noChains)) {
+    SPLICING_ERROR("Given PSI has wrong size", SPLICING_EINVAL);
+  }
+  if (start_alpha && 
+      (splicing_matrix_nrow(start_alpha) != noiso-1 || 
+       splicing_matrix_ncol(start_alpha) != noChains)) {
+    SPLICING_ERROR("Given alpha has wrong size", SPLICING_EINVAL);
   }
 
   rundata->noIso=noiso;
@@ -416,12 +443,17 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 0, 0, 0, 0, 0, 0, noiso,
 					 noChains, psi, alpha, &sigma, 0, 
-					 0, 0, 0, 0, 0, 0, 0, 0, 0));
+					 start, start_psi, start_alpha, gff,
+					 gene, readLength, overHang, 
+					 position, cigarstr, 1, fragmentProb,
+					 fragmentStart, normalMean, 
+					 normalVar, numDevs));
 
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
 					 0, 0, noiso, noChains, psi, alpha,
 					 0, 0, 
-					 0, 0, 0, 0, 0, 0, 0, 0, 0));
+					 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+					 0, 0, 0, 0, 0, 0));
   
   /* Initialize assignments of reads */  
   
@@ -440,7 +472,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
       SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
 					     0, 0, noiso, noChains, psiNew, 
 					     alphaNew, 0, 0, 
-					     0, 0, 0, 0, 0, 0, 0, 0, 0));
+					     0, 0, 0, 0, 0, 0, 0, 0, 0, 
+					     0, 0, 0, 0, 0, 0));
 
       SPLICING_CHECK(splicing_metropolis_hastings_ratio_paired(&vass,
 					     noReads, noChains,

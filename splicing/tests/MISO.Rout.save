@@ -71,6 +71,17 @@ Type 'q()' to quit R.
 > postMean(mres5)
 [1] 0.2058959 0.3174284 0.4766757
 > 
+> mres7 <- MISO(gene, reads=reads2, noChains=5,
++               normalMean=116, normalVar=50, numDevs=4,
++               noIterations=1, noBurnIn=0, noLag=1, start="linear", overHang=1,
++               stopCond="fixedno")
+> 
+> postMean(mres7)
+[1] 0.3434696 0.3703938 0.2861366
+> solveIso(gene, reads=reads2, normalMean=116, normalVar=50,
++          numDevs=4)$expression
+[1] 0.1495241 0.3094353 0.5410406
+> 
 > ## Convergence for the paired-end sampler
 > 
 > set.seed(42)
