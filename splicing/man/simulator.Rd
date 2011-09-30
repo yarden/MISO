@@ -1,5 +1,6 @@
 \name{Read simulator}
 \alias{simulateReads}
+\alias{realPsi}
 \title{Simulating RNASeq reads from real or artifical genes}
 \description{
   TODO
@@ -10,6 +11,7 @@ simulateReads (geneStructure, gene = 1, expression, noReads, readLength,
     chrlen = geneLength(geneStructure)[gene], 
     qname = "read-\%s", fragmentProb = NULL, fragmentStart = 0L, 
     normalMean, normalVar, numDevs)
+realPsi(geneStructure, gene = 1, reads, readLength=getReadLength(reads))
 }
 \arguments{
   \item{geneStructure}{A GFF3 object containing one of more genes.}
@@ -30,12 +32,15 @@ simulateReads (geneStructure, gene = 1, expression, noReads, readLength,
   \item{normalMean}{TODO}
   \item{normalVar}{TODO}
   \item{numDevs}{TODO}
+  \item{reads}{TODO}
 }
 \details{
   TODO
 }
 \value{
-  Both functions return a SAM object.
+  \code{simulateReads} returns a SAM object.
+
+  \code{realPsi} returns a numeric vector.
 }
 % \references{}
 \author{
@@ -50,6 +55,8 @@ mygene <- createGene(exons=list(c(1,1000), c(2001,3000), c(4001,5000)),
                      isoforms=list(c(1,2,3), c(1,3)))
 reads <- simulateReads(mygene, expression=c(2/3,1/3), noReads=200,
                        readLength=40)
+
+realPsi(mygene, reads=reads)
 
 ## Simple expression level estimator
 solveIso(mygene, reads=reads)$expression

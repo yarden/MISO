@@ -10,16 +10,16 @@ assignmentMatrix (geneStructure, gene = 1L, readLength, overHang = 1L,
     normalMean, normalVar, numDevs) 
 }
 \arguments{
-  \item{geneStructure}{}
-  \item{gene}{}
-  \item{readLength}{}
-  \item{overHang}{}
-  \item{paired}{}
-  \item{fragmentProb}{}
-  \item{fragmentStart}{}
-  \item{normalMean}{}
-  \item{normalVar}{}
-  \item{numDevs}{}
+  \item{geneStructure}{TODO}
+  \item{gene}{TODO}
+  \item{readLength}{TODO}
+  \item{overHang}{TODO}
+  \item{paired}{TODO}
+  \item{fragmentProb}{TODO}
+  \item{fragmentStart}{TODO}
+  \item{normalMean}{TODO}
+  \item{normalVar}{TODO}
+  \item{numDevs}{TODO}
 }
 \details{
   TODO

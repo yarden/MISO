@@ -42,7 +42,7 @@
     \item \code{\link{isoLength}}
     \item \code{\link{totalExonLength}}
     \item \code{\link{getSpecies}}
-    \item \code{\link{mergeGFF3}}
+    \item \code{\link{merge}}
   }
   
   The \code{\link{createGene}} function creates (possibly artificial)
@@ -63,7 +63,7 @@
     \item \code{\link{noPairs}}
     \item \code{\link{noSingles}}
     \item \code{\link{toTable}}
-    \item \code{\link{readLength}}
+    \item \code{\link{getReadLength}}
     \item \code{\link{seqNames}}
     \item \code{\link{selectReads}}
     \item \code{\link{filterReads}}
@@ -75,7 +75,7 @@
     \item \code{\link{writeSAM}}
   }
   
-  \code{\link{condIso}} calculates the complexity of a gene structure.
+  \code{\link{geneComplexity}} calculates the complexity of a gene structure.
 
   \code{\link{MISO}} runs the Mixture of Isoforms algorithm for a given
   gene and set of reads, and returns a MISOresult object.

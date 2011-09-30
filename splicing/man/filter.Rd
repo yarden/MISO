@@ -1,12 +1,13 @@
 \name{Filtering reads}
 \alias{filterReads}
+\alias{filterReads.splicingSAM}
 \alias{FILTER}
 \title{Filtering reads based on various criteria}
 \description{
   TODO
 }
 \usage{
-\method{filterReads}{splicingSAM}(reads, \dots)
+\method{filterReads}{splicingSAM}(reads, \dots, verbose = TRUE)
 FILTER(name, \dots)
 }
 \arguments{
@@ -15,7 +16,9 @@ FILTER(name, \dots)
     details below.
 
     For \code{FILTER} the parameters of the filter.
-  } 
+  }
+  \item{verbose}{Logical scalar, whether to print the number of
+    unfiltered reads for each filter to the screen.}
   \item{name}{The name of the filter, see implemented filters below.}
 }
 \details{
