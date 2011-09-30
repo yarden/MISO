@@ -508,6 +508,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  int noChains, int noIterations, int noBurnIn, int noLag,
 		  const splicing_vector_t *hyperp, 
 		  splicing_miso_start_t start,
+		  splicing_miso_stop_t stop,
 		  const splicing_matrix_t *start_psi,
 		  const splicing_matrix_t *start_alpha,
 		  splicing_matrix_t *samples, splicing_vector_t *logLik,
@@ -525,14 +526,14 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   splicing_matrix_t vpsi, vpsiNew, valpha, valphaNew, 
     *psi=&vpsi, *psiNew=&vpsiNew, *alpha=&valpha, *alphaNew=&valphaNew;
   int noSamples = noChains * (noIterations - noBurnIn) / noLag;  
-  int i, j, m, lagCounter=0, noS=0;
+  int i, j, m=0, lagCounter=0, noS=0;
   splicing_matrix_t *mymatch_matrix=match_matrix, vmatch_matrix;
   splicing_vector_int_t match_order;
   splicing_vector_int_t effisolen;
   splicing_vector_t isoscores;
   splicing_vector_int_t noexons;
-
-  splicing_vector_int_t sample_offset;
+  int shouldstop=0;
+  splicing_matrix_t chainMeans, chainVars;
 
   if (start == SPLICING_MISO_START_GIVEN && 
       (!start_psi || !start_alpha)) {
@@ -558,6 +559,16 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		   SPLICING_EINVAL);
   }
 
+  if (noChains < 1) { 
+    SPLICING_ERROR("Number of chains must be at least one.", 
+		   SPLICING_EINVAL);
+  }
+
+  if (stop==SPLICING_MISO_STOP_CONVERGENT_MEAN && noChains == 1) {
+    SPLICING_ERROR("Cannot access convergence with one chain only", 
+		   SPLICING_EINVAL);
+  }
+
   if (start_psi && 
       (splicing_matrix_nrow(start_psi) != noiso ||
        splicing_matrix_ncol(start_psi) != noChains)) {
@@ -574,6 +585,8 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   rundata->noBurnIn=noBurnIn;
   rundata->noLag=noLag;
   rundata->noAccepted = rundata->noRejected = 0;
+  rundata->noChains = noChains;
+  rundata->noSamples = noSamples;
 
   SPLICING_CHECK(splicing_vector_init(&acceptP, noChains));
   SPLICING_FINALLY(splicing_vector_destroy, &acceptP);
@@ -632,6 +645,11 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   splicing_vector_int_destroy(&noexons);
   SPLICING_FINALLY_CLEAN(1);
 
+  SPLICING_CHECK(splicing_matrix_init(&chainMeans, noiso, noChains));
+  SPLICING_FINALLY(splicing_matrix_destroy, &chainMeans);
+  SPLICING_CHECK(splicing_matrix_init(&chainVars, noiso, noChains));
+  SPLICING_FINALLY(splicing_matrix_destroy, &chainVars);
+  
   SPLICING_CHECK(splicing_matrix_resize(samples, noiso, noSamples));
   SPLICING_CHECK(splicing_vector_resize(logLik, noSamples));
 
@@ -651,56 +669,156 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   
   SPLICING_CHECK(splicing_reassign_samples(mymatch_matrix, &match_order,
 					   psi, noiso, noChains, &vass));
-  
-  /* foreach Iteration m=1, ..., M do */
 
-  for (m=0; m < noIterations; m++) {
+  while (1) {
 
-    SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
-					   0, 0, noiso, noChains, psiNew, 
-					   alphaNew, 0, 0, 0, 0, 0, 0, 0, 0,
-					   0, 0, 0));
+    for (m=0, rundata->noAccepted=0, rundata->noRejected=0; 
+	 m < noIterations; 
+	 m++) {
+      
+      SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha,
+					     sigma, 0, 0, noiso, noChains,
+					     psiNew, alphaNew, 0, 0, 0, 0, 
+					     0, 0, 0, 0, 0, 0, 0));
 
-    SPLICING_CHECK(splicing_metropolis_hastings_ratio(&vass, noReads, 
-						      noChains, psiNew,
-						      alphaNew, psi, alpha,
-						      sigma, noiso, 
-						      &effisolen, hyperp,
-						      &isoscores, 
-						      m > 0 ? 1 : 0, 
-						      &acceptP, &cJS, &pJS));
+      SPLICING_CHECK(splicing_metropolis_hastings_ratio(&vass, noReads, 
+							noChains, psiNew,
+							alphaNew, psi, alpha,
+							sigma, noiso, 
+							&effisolen, hyperp,
+							&isoscores, 
+							m > 0 ? 1 : 0, 
+							&acceptP, &cJS, 
+							&pJS));
 
-    for (j=0; j<noChains; j++) {
-      if (VECTOR(acceptP)[j] >= 1 || RNG_UNIF01() < VECTOR(acceptP)[j]) {
-	memcpy(&MATRIX(*psi, 0, j), &MATRIX(*psiNew, 0, j), 
-	       noiso * sizeof(double));
-	memcpy(&MATRIX(*alpha, 0, j), &MATRIX(*alphaNew, 0, j),
-	       (noiso - 1) * sizeof(double));
-	VECTOR(cJS)[j] = VECTOR(pJS)[j];
-	rundata->noAccepted ++;
-      } else {
-	rundata->noRejected ++;
-      }
-    }
-    
-    if (m >= noBurnIn) {
       for (j=0; j<noChains; j++) {
-	if (lagCounter == noLag - 1) {
-	  memcpy(&MATRIX(*samples, 0, noS), &MATRIX(*psi, 0, j), 
+	if (VECTOR(acceptP)[j] >= 1 || RNG_UNIF01() < VECTOR(acceptP)[j]) {
+	  memcpy(&MATRIX(*psi, 0, j), &MATRIX(*psiNew, 0, j), 
 		 noiso * sizeof(double));
-	  VECTOR(*logLik)[noS] = VECTOR(cJS)[j];
-	  noS++;
+	  memcpy(&MATRIX(*alpha, 0, j), &MATRIX(*alphaNew, 0, j),
+		 (noiso - 1) * sizeof(double));
+	  VECTOR(cJS)[j] = VECTOR(pJS)[j];
+	  rundata->noAccepted ++;
+	} else {
+	  rundata->noRejected ++;
+	}
+      }
+      
+      if (m >= noBurnIn) {
+	if (lagCounter == noLag - 1) {
+	  memcpy(&MATRIX(*samples, 0, noS), &MATRIX(*psi, 0, 0), 
+		 noChains * noiso * sizeof(double));
+	  memcpy(VECTOR(*logLik)+noS, VECTOR(cJS), 
+		 noChains * sizeof(double));
+	  noS += noChains;
 	  lagCounter = 0;
 	} else {
 	  lagCounter ++;
 	}
       }
+      
+      SPLICING_CHECK(splicing_reassign_samples(mymatch_matrix, &match_order, 
+					       psi, noiso, noChains, &vass));
+      
+    } /* for m < noIterations */
+    
+    /* Should we stop? */
+    switch (stop) {
+    case SPLICING_MISO_STOP_FIXEDNO: 
+      shouldstop = 1;
+      break;
+    case SPLICING_MISO_STOP_CONVERGENT_MEAN:
+      {
+	/* Check convergence. See Gelman, Carlin, Stern and Rubin:
+	   Bayesian Data Analysis, pp. 296, 2nd edition, for
+	   details. */
+	int i /* sample */, j /* chain */, k /* isoform */,
+	  l /* sample per chain */;
+	splicing_vector_t B, W, mean, rhat;
+
+	splicing_matrix_null(&chainVars);
+	memcpy(&MATRIX(chainMeans, 0, 0), &MATRIX(*samples, 0, 0), 
+	       noChains * noiso * sizeof(double));
+
+	for (i=noChains, j=0, l=1; i<noSamples; i++, j = (j+1) % noChains) {
+	  for (k=0; k<noiso; k++) {
+	    double mk=MATRIX(chainMeans, k, j) + 
+	      (MATRIX(*samples, k, i) - MATRIX(chainMeans, k, j)) / l;
+	    double sk=MATRIX(chainVars, k, j) + 
+	      (MATRIX(*samples, k, i) - MATRIX(chainMeans, k, j)) *
+	      (MATRIX(*samples, k, i) - mk);
+	    MATRIX(chainMeans, k, j) = mk;
+	    MATRIX(chainVars, k, j) = sk;
+	  }
+	  if (j==noChains-1) { l++; }
+	}
+
+	SPLICING_CHECK(splicing_vector_init(&B, noiso));
+	SPLICING_FINALLY(splicing_vector_destroy, &B);
+	SPLICING_CHECK(splicing_vector_init(&W, noiso));
+	SPLICING_FINALLY(splicing_vector_destroy, &W);
+	SPLICING_CHECK(splicing_vector_init(&mean, noiso));
+	SPLICING_FINALLY(splicing_vector_destroy, &mean);
+	SPLICING_CHECK(splicing_vector_init(&rhat, noiso));
+	SPLICING_FINALLY(splicing_vector_destroy, &rhat);
+
+	for (k=0; k<noiso; k++) { 
+	  for (j=0; j<noChains; j++) { 
+	    VECTOR(mean)[k] += MATRIX(chainMeans, k, j);
+	  }
+	  VECTOR(mean)[k] /= noChains;
+	}
+
+	for (k=0; k<noiso; k++) {
+	  for (j=0; j<noChains; j++) { 
+	    double t=MATRIX(chainMeans, k, j) - VECTOR(mean)[k];
+	    VECTOR(B)[k] += t*t;
+	  }
+	  VECTOR(B)[k] *= noSamples / (noChains-1.0);
+	}
+	
+	for (k=0; k<noiso; k++) {
+	  for (j=0; j<noChains; j++) {
+	    double t=MATRIX(chainVars, k, j);
+	    VECTOR(W)[k] += t * t;
+	  }
+	  VECTOR(W)[k] /= noChains;
+	}
+	
+	for (k=0; k<noiso; k++) {
+	  VECTOR(rhat)[k] = 
+	    sqrt(((noSamples - 1.0)/noSamples * VECTOR(W)[k] + VECTOR(B)[k] /
+		  noSamples) / VECTOR(W)[k]);
+	}
+
+	for (k=0, shouldstop=1; k<noiso; k++) {
+	  shouldstop = shouldstop && VECTOR(rhat)[k] <= 1.1;
+	}
+	splicing_vector_destroy(&rhat);
+	splicing_vector_destroy(&mean);
+	splicing_vector_destroy(&W);
+	splicing_vector_destroy(&B);
+	SPLICING_FINALLY_CLEAN(4);
+      }
+      break;
     }
     
-    SPLICING_CHECK(splicing_reassign_samples(mymatch_matrix, &match_order, 
-					     psi, noiso, noChains, &vass));
+    if (shouldstop) { break; }
+    
+    noS=0;
+    noIterations = 3*noIterations - 2*noBurnIn;
+    noBurnIn = m;
+    rundata->noSamples = noSamples = 
+      noChains * (noIterations - noBurnIn) / noLag;
+    lagCounter = 0;
 
-  } /* for m < noIterations */
+    SPLICING_CHECK(splicing_matrix_resize(samples, noiso, noSamples));
+    SPLICING_CHECK(splicing_vector_resize(logLik, noSamples));
+  }
+  
+  splicing_matrix_destroy(&chainVars);
+  splicing_matrix_destroy(&chainMeans);
+  SPLICING_FINALLY_CLEAN(2);
 
   if (assignment) {
     SPLICING_CHECK(splicing_vector_int_resize(assignment, noReads));

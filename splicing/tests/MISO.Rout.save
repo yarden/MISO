@@ -48,7 +48,7 @@ Type 'q()' to quit R.
 > mres3 <- MISO(gene, reads=reads, noChains=9, noIterations=1000)
 > 
 > postMean(mres3)
-[1] 0.2073338 0.3176400 0.4750263
+[1] 0.2076552 0.3177587 0.4745861
 > 
 > ## Multiple chains, different (random) start positions
 > 
@@ -63,5 +63,4 @@ Type 'q()' to quit R.
 [1,] 0.2998181 0.4102777 0.2465291 0.2503431
 [2,] 0.4720120 0.3574492 0.5335047 0.5289450
 [3,] 0.2281698 0.2322731 0.2199662 0.2207119
-> 
 > 

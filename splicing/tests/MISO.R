@@ -34,4 +34,3 @@ postMean(mres3)
 mres4 <- MISO(gene, reads=reads, noChains=9, noIterations=1, noBurnIn=0,
               noLag=1, start="random")
 mres4$samples
-

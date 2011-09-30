@@ -135,21 +135,25 @@ SEXP R_splicing_vector_int_index_to_SEXP(const splicing_vector_int_t *v,
 SEXP R_splicing_miso_rundata_to_SEXP(const splicing_miso_rundata_t *data) {
   SEXP result, names;
   
-  PROTECT(result=NEW_LIST(6));
+  PROTECT(result=NEW_LIST(8));
   SET_VECTOR_ELT(result, 0, ScalarInteger(data->noIso));
   SET_VECTOR_ELT(result, 1, ScalarInteger(data->noIters));
   SET_VECTOR_ELT(result, 2, ScalarInteger(data->noBurnIn));
   SET_VECTOR_ELT(result, 3, ScalarInteger(data->noLag));
   SET_VECTOR_ELT(result, 4, ScalarInteger(data->noAccepted));
   SET_VECTOR_ELT(result, 5, ScalarInteger(data->noRejected));
+  SET_VECTOR_ELT(result, 6, ScalarInteger(data->noChains));
+  SET_VECTOR_ELT(result, 7, ScalarInteger(data->noSamples));
   
-  PROTECT(names=NEW_STRING(6));
+  PROTECT(names=NEW_STRING(8));
   SET_STRING_ELT(names, 0, mkChar("noIso"));
   SET_STRING_ELT(names, 1, mkChar("noIters"));
   SET_STRING_ELT(names, 2, mkChar("noBurnIn"));
   SET_STRING_ELT(names, 3, mkChar("noLag"));
   SET_STRING_ELT(names, 4, mkChar("noAccepted"));
   SET_STRING_ELT(names, 5, mkChar("noRejected"));
+  SET_STRING_ELT(names, 6, mkChar("noChains"));
+  SET_STRING_ELT(names, 7, mkChar("noSamples"));
   
   SET_NAMES(result, names);
   
@@ -568,7 +572,7 @@ SEXP R_splicing_order_matches(SEXP pmatches) {
 SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength, 
 		     SEXP pnochains, SEXP pnoIterations, SEXP pnoBurnIn, 
 		     SEXP pnoLag, SEXP phyperp, SEXP poverhang, SEXP pstart,
-		     SEXP pstart_psi, SEXP pstart_alpha) {
+		     SEXP pstart_psi, SEXP pstart_alpha, SEXP pstop) {
   
   size_t gene=INTEGER(pgene)[0]-1;
   SEXP result, names, class;
@@ -593,6 +597,7 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   int start=INTEGER(pstart)[0];
   splicing_matrix_t start_psi;
   splicing_matrix_t start_alpha;
+  int stop=INTEGER(pstop)[0];
 
   R_splicing_begin();
   
@@ -620,7 +625,7 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   }
 
   splicing_miso(&gff, gene, &position, cigarstr, readLength, overhang,
-		noChains, noIterations, noBurnIn, noLag, &hyperp, start,
+		noChains, noIterations, noBurnIn, noLag, &hyperp, start, stop,
 		isNull(pstart_psi) ? 0 : &start_psi,
 		isNull(pstart_alpha) ? 0 : &start_alpha,
 		&samples, &logLik, &match_matrix, &class_templates, 
@@ -658,7 +663,8 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
 }
 
 SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads, 
-			    SEXP preadLength, SEXP pnoIterations, 
+			    SEXP preadLength, SEXP pnochains, 
+			    SEXP pnoIterations, 
 			    SEXP pnoBurnIn, SEXP pnoLag, SEXP phyperp, 
 			    SEXP pfragmentProb, SEXP pfragmentStart, 
 			    SEXP pnormalMean, SEXP pnormalVar, 
@@ -673,6 +679,7 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
   const char **cigarstr;
   SEXP cigar=R_splicing_getListElement(preads, "cigar");
   int readLength=INTEGER(preadLength)[0];
+  int nochains=INTEGER(pnochains)[0];
   int overHang=INTEGER(poverhang)[0];
   int noIterations=INTEGER(pnoIterations)[0];
   int noBurnIn=INTEGER(pnoBurnIn)[0];
@@ -712,8 +719,8 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
   }
 
   splicing_miso_paired(&gff, gene, &position, cigarstr, readLength,
-		       overHang, noIterations, noBurnIn, noLag, &hyperp, 
-		       isNull(pfragmentProb) ? 0 : &fragmentProb, 
+		       overHang, nochains, noIterations, noBurnIn, noLag, 
+		       &hyperp, isNull(pfragmentProb) ? 0 : &fragmentProb, 
 		       fragmentStart, normalMean, normalVar, numDevs,
 		       &samples, &logLik, &match_matrix, &class_templates,
 		       &class_counts, /*bin_class_templates=*/ 0, 
@@ -783,29 +790,31 @@ SEXP R_splicing_reassign_samples(SEXP pmatches, SEXP pmatch_order,
 
 SEXP R_splicing_reassign_samples_paired(SEXP pmatches, SEXP pmatch_order,
 					SEXP ppsi, SEXP pnoiso, 
+					SEXP pnochains,
 					SEXP pfragmentStart) {
 
   SEXP result; 
   splicing_matrix_t matches;
   splicing_vector_int_t match_order;
-  splicing_vector_t psi;
+  splicing_matrix_t psi;
   int noiso=INTEGER(pnoiso)[0];
+  int nochains=INTEGER(pnochains)[0];
   int fragmentstart=INTEGER(pfragmentStart)[0];
-  splicing_vector_int_t cresult;
+  splicing_matrix_int_t cresult;
   
   R_splicing_begin();
   
   R_splicing_SEXP_to_matrix(pmatches, &matches);
   R_splicing_SEXP_to_vector_int(pmatch_order, &match_order);
-  R_splicing_SEXP_to_vector(ppsi, &psi);
-  splicing_vector_int_init(&cresult, 0);
+  R_splicing_SEXP_to_matrix(ppsi, &psi);
+  splicing_matrix_int_init(&cresult, 0, 0);
 
   splicing_reassign_samples_paired(&matches, &match_order, &psi, noiso, 
-				   fragmentstart, &cresult);
+				   nochains, fragmentstart, &cresult);
 
-  PROTECT(result=R_splicing_vector_int_to_SEXP(&cresult));
+  PROTECT(result=R_splicing_matrix_int_to_SEXP(&cresult));
   
-  splicing_vector_int_destroy(&cresult);
+  splicing_matrix_int_destroy(&cresult);
   
   R_splicing_end();
   
@@ -997,38 +1006,44 @@ SEXP R_splicing_score_joint(SEXP passignment, SEXP pnoreads, SEXP pnochains,
   return result;
 }
 
-SEXP R_splicing_score_joint_paired(SEXP passignment, SEXP ppsi, 
+SEXP R_splicing_score_joint_paired(SEXP passignment, 
+				   SEXP pnoreads, SEXP pnochains, SEXP ppsi, 
 				   SEXP phyper, SEXP pisolen, 
 				   SEXP pisoscores, SEXP passscores, 
 				   SEXP pfragmentLength, 
 				   SEXP pfragmentStart) {
   
   SEXP result;
-  splicing_vector_int_t assignment;
-  splicing_vector_t psi;
+  splicing_matrix_int_t assignment;
+  int noreads=INTEGER(pnoreads)[0];
+  int nochains=INTEGER(pnochains)[0];
+  splicing_matrix_t psi;
   splicing_vector_t hyper;
   splicing_vector_int_t isolen;
   splicing_matrix_t isoscores;
   splicing_vector_t assscores;
   splicing_matrix_int_t fragmentLength;
   int fragmentStart=INTEGER(pfragmentStart)[0];
-  double score;
+  splicing_vector_t score;
   
   R_splicing_begin();
   
-  R_splicing_SEXP_to_vector_int(passignment, &assignment);
-  R_splicing_SEXP_to_vector(ppsi, &psi);
+  R_splicing_SEXP_to_matrix_int(passignment, &assignment);
+  R_splicing_SEXP_to_matrix(ppsi, &psi);
   R_splicing_SEXP_to_vector(phyper, &hyper);
   R_splicing_SEXP_to_vector_int(pisolen, &isolen);
   R_splicing_SEXP_to_matrix(pisoscores, &isoscores);
   R_splicing_SEXP_to_vector(passscores, &assscores);
   R_splicing_SEXP_to_matrix_int(pfragmentLength, &fragmentLength);
 
-  splicing_score_joint_paired(&assignment, &psi, &hyper, &isolen, 
-			      &isoscores, &assscores, &fragmentLength, 
-			      fragmentStart, &score);
+  splicing_vector_init(&score, 0);
+
+  splicing_score_joint_paired(&assignment, noreads, nochains, &psi, 
+			      &hyper, &isolen, &isoscores, &assscores, 
+			      &fragmentLength, fragmentStart, &score);
   
-  PROTECT(result=ScalarReal(score));
+  PROTECT(result=R_splicing_vector_to_SEXP(&score));
+  splicing_vector_destroy(&score);
 
   R_splicing_end();  
 
@@ -1180,7 +1195,10 @@ SEXP R_splicing_metropolis_hastings_ratio(SEXP passignment, SEXP pnoreads,
   return result;  
 }
 
-SEXP R_splicing_metropolis_hastings_ratio_paired(SEXP pass, SEXP ppsiNew,
+SEXP R_splicing_metropolis_hastings_ratio_paired(SEXP pass, 
+						 SEXP pnoreads, 
+						 SEXP pnochains, 
+						 SEXP ppsiNew,
 						 SEXP palphaNew, SEXP ppsi, 
 						 SEXP palpha, SEXP psigma,
 						 SEXP pnoiso, SEXP pisolen,
@@ -1191,39 +1209,51 @@ SEXP R_splicing_metropolis_hastings_ratio_paired(SEXP pass, SEXP ppsiNew,
 						 SEXP pfragmentStart, 
 						 SEXP pfull) {
   SEXP result, names;
-  splicing_vector_int_t ass, isolen;
-  splicing_vector_t psiNew, alphaNew, psi, alpha, hyperp, assscores;
+  splicing_matrix_int_t ass;
+  int noreads=INTEGER(pnoreads)[0];
+  int nochains=INTEGER(pnochains)[0];
+  splicing_matrix_t psiNew, alphaNew, psi, alpha;
+  splicing_vector_t hyperp, assscores;
   double sigma=REAL(psigma)[0];
   int noiso=INTEGER(pnoiso)[0];
+  splicing_vector_int_t isolen;
   splicing_matrix_t isoscores;
   splicing_matrix_int_t fragmentLength;
   int fragmentStart=INTEGER(pfragmentStart)[0];
   int full=INTEGER(pfull)[0];
-  double acceptP, pcJS, ppJS;
+  splicing_vector_t acceptP, pcJS, ppJS;
   
   R_splicing_begin();
 
-  R_splicing_SEXP_to_vector_int(pass, &ass);
-  R_splicing_SEXP_to_vector(ppsiNew, &psiNew);
-  R_splicing_SEXP_to_vector(palphaNew, &alphaNew);
-  R_splicing_SEXP_to_vector(ppsi, &psi);
-  R_splicing_SEXP_to_vector(palpha, &alpha);
+  R_splicing_SEXP_to_matrix_int(pass, &ass);
+  R_splicing_SEXP_to_matrix(ppsiNew, &psiNew);
+  R_splicing_SEXP_to_matrix(palphaNew, &alphaNew);
+  R_splicing_SEXP_to_matrix(ppsi, &psi);
+  R_splicing_SEXP_to_matrix(palpha, &alpha);
   R_splicing_SEXP_to_vector_int(pisolen, &isolen);
   R_splicing_SEXP_to_vector(phyperp, &hyperp);
   R_splicing_SEXP_to_matrix(pisoscores, &isoscores);
   R_splicing_SEXP_to_vector(passscores, &assscores);
   R_splicing_SEXP_to_matrix_int(pfragmentLength, &fragmentLength);
+
+  splicing_vector_init(&acceptP, 0);
+  splicing_vector_init(&pcJS, 0);
+  splicing_vector_init(&ppJS, 0);
   
-  splicing_metropolis_hastings_ratio_paired(&ass, &psiNew, &alphaNew, &psi,
+  splicing_metropolis_hastings_ratio_paired(&ass, noreads, nochains, 
+					    &psiNew, &alphaNew, &psi,
 					    &alpha, sigma, noiso, &isolen,
 					    &hyperp, &isoscores, &assscores,
 					    &fragmentLength, fragmentStart,
 					    full, &acceptP, &pcJS, &ppJS);
   
   PROTECT(result=NEW_LIST(3));
-  SET_VECTOR_ELT(result, 0, ScalarReal(acceptP));
-  SET_VECTOR_ELT(result, 1, ScalarReal(pcJS));
-  SET_VECTOR_ELT(result, 2, ScalarReal(ppJS));
+  SET_VECTOR_ELT(result, 0, R_splicing_vector_to_SEXP(&acceptP));
+  splicing_vector_destroy(&acceptP);
+  SET_VECTOR_ELT(result, 1, R_splicing_vector_to_SEXP(&pcJS));
+  splicing_vector_destroy(&pcJS);
+  SET_VECTOR_ELT(result, 2, R_splicing_vector_to_SEXP(&ppJS));
+  splicing_vector_destroy(&ppJS);
   PROTECT(names=NEW_CHARACTER(3));
   SET_STRING_ELT(names, 0, mkChar("acceptP"));
   SET_STRING_ELT(names, 1, mkChar("pcJS"));
@@ -2147,6 +2177,8 @@ SEXP R_splicing_writemiso(SEXP pmisoresult, SEXP pfile) {
 						   "noAccepted"))[0];
   int noRejected=INTEGER(R_splicing_getListElement(prunData, 
 						   "noRejected"))[0];
+  int noChains=INTEGER(R_splicing_getListElement(prunData, 
+						 "noChains"))[0];
   splicing_gff_t gff;
   const char *filename=CHAR(STRING_ELT(pfile, 0));
   FILE *file=fopen(filename, "w");
@@ -2163,6 +2195,8 @@ SEXP R_splicing_writemiso(SEXP pmisoresult, SEXP pfile) {
   fprintf(file, "noLag: %i\n", noLag);
   fprintf(file, "noAccepted: %i\n", noAccepted);
   fprintf(file, "noRejected: %i\n", noRejected);
+  fprintf(file, "nochains: %i\n", noChains);
+  fprintf(file, "noSamples: %i\n", noSamples);
   
   fputs("\n[geneStructure]\n", file);
   splicing_gff_write(file, &gff);

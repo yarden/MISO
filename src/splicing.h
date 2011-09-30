@@ -136,7 +136,8 @@ int splicing_gff_fprint(const splicing_gff_t *gff,
 int splicing_gff_print(const splicing_gff_t *gff);
 
 typedef struct splicing_miso_rundata_t {
-  int noIso, noIters, noBurnIn, noLag, noAccepted, noRejected;
+  int noIso, noIters, noBurnIn, noLag, noAccepted, noRejected, noChains, 
+    noSamples;
 } splicing_miso_rundata_t;
 
 typedef enum splicing_miso_start_t {
@@ -145,6 +146,11 @@ typedef enum splicing_miso_start_t {
   SPLICING_MISO_START_RANDOM,
   SPLICING_MISO_START_GIVEN,
   SPLICING_MISO_START_LINEAR } splicing_miso_start_t;
+
+typedef enum splicing_miso_stop_t {
+  SPLICING_MISO_STOP_FIXEDNO,
+  SPLICING_MISO_STOP_CONVERGENT_MEAN,
+} splicing_miso_stop_t;
 
 int splicing_matchIso(const splicing_gff_t *gff, int gene, 
 		      const splicing_vector_int_t *position,
@@ -182,6 +188,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  int noIterations, int noBurnIn, int noLag,
 		  const splicing_vector_t *hyperp, 
 		  splicing_miso_start_t start,
+		  splicing_miso_stop_t stop,
 		  const splicing_matrix_t *start_psi,
 		  const splicing_matrix_t *start_alpha,
 		  splicing_matrix_t *samples, splicing_vector_t *logLik, 
@@ -194,9 +201,10 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const splicing_vector_int_t *position,
 			 const char **cigarstr, int readLength, int overHang,
-			 int noIterations, int noBurnIn, int noLag,
-			 const splicing_vector_t *hyperp,
-			 const splicing_vector_t *fragmentProb, int fragmentStart,
+			 int noChains, int noIterations, int noBurnIn,
+			 int noLag, const splicing_vector_t *hyperp,
+			 const splicing_vector_t *fragmentProb, 
+			 int fragmentStart,
 			 double normalMean, double normalVar, double numDevs,
 			 splicing_matrix_t *samples, 
 			 splicing_vector_t *logLik, 
@@ -362,9 +370,9 @@ int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 int splicing_reassign_samples_paired(
 			     const splicing_matrix_t *matches, 
 			     const splicing_vector_int_t *match_order,
-			     const splicing_vector_t *psi, 
-			     int noiso, int fragmentStart, 
-			     splicing_vector_int_t *result);
+			     const splicing_matrix_t *psi, 
+			     int noiso, int noChains, int fragmentStart, 
+			     splicing_matrix_int_t *result);
 
 int splicing_score_iso_paired(const splicing_vector_t *psi, int noiso, 
 			      const splicing_vector_int_t *assignment, 
@@ -372,29 +380,34 @@ int splicing_score_iso_paired(const splicing_vector_t *psi, int noiso,
 			      const splicing_vector_t *assscores,
 			      double *res);
 
-int splicing_score_joint_paired(const splicing_vector_int_t *assignment,
-				const splicing_vector_t *psi, 
+int splicing_score_joint_paired(const splicing_matrix_int_t *assignment,
+				int no_reads, int noChains,
+				const splicing_matrix_t *psi, 
 				const splicing_vector_t *hyper, 
 				const splicing_vector_int_t *isolen,
 				const splicing_matrix_t *isoscores, 
 				const splicing_vector_t *assscores,
 				const splicing_matrix_int_t *fragmentLength,
-				int fragmentStart, double *score);
+				int fragmentStart, 
+				splicing_vector_t *score);
 
 int splicing_metropolis_hastings_ratio_paired(
-			      const splicing_vector_int_t *ass,
-			      const splicing_vector_t *psiNew,
-			      const splicing_vector_t *alphaNew,
-			      const splicing_vector_t *psi, 
-			      const splicing_vector_t *alpha,
+			      const splicing_matrix_int_t *ass,
+			      int no_reads, int noChains,
+			      const splicing_matrix_t *psiNew,
+			      const splicing_matrix_t *alphaNew,
+			      const splicing_matrix_t *psi, 
+			      const splicing_matrix_t *alpha,
 			      double sigma, int noiso, 
 			      const splicing_vector_int_t *isolen,
 			      const splicing_vector_t *hyperp, 
 			      const splicing_matrix_t *isoscores,
 			      const splicing_vector_t *assscores,
 			      const splicing_matrix_int_t *fragmentLength,
-			      int fragmentStart, int full, double *acceptP, 
-			      double *pcJS, double *ppJS);
+			      int fragmentStart, int full, 
+			      splicing_vector_t *acceptP, 
+			      splicing_vector_t *pcJS, 
+			      splicing_vector_t *ppJS);
 
 int splicing_dgesdd(const splicing_matrix_t *matrix, 
 		    splicing_vector_t *values);

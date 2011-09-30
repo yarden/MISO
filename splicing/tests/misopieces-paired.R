@@ -21,8 +21,8 @@ psi <- cbind(c(2/10, 3/10, 5/10))
 noiso <- 3L
 
 set.seed(42)
-r1 <- as.vector(.Call("R_splicing_reassign_samples_paired", matches[[1]],
-                      match.order, psi, noiso, 1L, PACKAGE="splicing"))
+r1 <- .Call("R_splicing_reassign_samples_paired", matches[[1]],
+            match.order, psi, noiso, 1L, 1L, PACKAGE="splicing")
 
 sec <- seq(1, noPairs(reads)*2, by=2)
 calcCigar <- function(r) {
@@ -50,9 +50,9 @@ matches2 <- matchIso(gene, reads=reads2)
 all((matches2 == (matches[[1]] != 0) + 0))
 
 set.seed(42)
-r2 <- as.vector(.Call("R_splicing_reassign_samples", matches2,
-                      match.order, psi, noiso, 1L,
-                      PACKAGE="splicing"))
+r2 <- .Call("R_splicing_reassign_samples", matches2,
+            match.order, psi, noiso, 1L, 1L,
+            PACKAGE="splicing")
 
 all(r1 ==r2)
 
@@ -70,11 +70,11 @@ reads <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
 matches <- matchIso(gene, reads=reads, normalMean=100,
                     normalVar=100, numDevs=4)
 match.order <- order(apply(matches[[1]], 2, paste, collapse=""))-1L
-psi <- c(2/10, 3/10, 5/10)
+psi <- cbind(c(2/10, 3/10, 5/10))
 noiso <- 3L
-assignment <- as.vector(.Call("R_splicing_reassign_samples_paired",
-                              matches[[1]], match.order, psi, noiso, 1L,
-                              PACKAGE="splicing"))
+assignment <- .Call("R_splicing_reassign_samples_paired",
+                    matches[[1]], match.order, psi, noiso, 1L, 1L,
+                    PACKAGE="splicing")
 
 hyper <- rep(1, noIso(gene))
 isolen <- isoLength(gene)[[1]]
@@ -86,10 +86,10 @@ assscores <- log(isolen * length(dist$fragmentProb) - lp)
 .Call("R_splicing_score_iso_paired", psi, 3L, assignment, isolen,
       assscores, PACKAGE="splicing")
 
-psi2 <- c(5/10, 3/10, 2/10)
-assignment <- as.vector(.Call("R_splicing_reassign_samples_paired",
-                              matches[[1]], match.order, psi2, noiso, 1L,
-                              PACKAGE="splicing"))
+psi2 <- cbind(c(5/10, 3/10, 2/10))
+assignment <- .Call("R_splicing_reassign_samples_paired",
+                    matches[[1]], match.order, psi2, noiso, 1L, 1L,
+                    PACKAGE="splicing")
 
 .Call("R_splicing_score_iso_paired", psi, 3L, assignment, isolen,
       assscores, PACKAGE="splicing")
@@ -108,11 +108,11 @@ reads <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
 matches <- matchIso(gene, reads=reads, normalMean=100,
                     normalVar=100, numDevs=4)
 match.order <- order(apply(matches[[1]], 2, paste, collapse=""))-1L
-psi <- c(2/10, 3/10, 5/10)
+psi <- cbind(c(2/10, 3/10, 5/10))
 noiso <- 3L
-assignment <- as.vector(.Call("R_splicing_reassign_samples_paired",
-                              matches[[1]], match.order, psi, noiso, 1L,
-                              PACKAGE="splicing"))
+assignment <- .Call("R_splicing_reassign_samples_paired",
+                    matches[[1]], match.order, psi, noiso, 1L, 1L,
+                    PACKAGE="splicing")
 
 hyper <- rep(1, noIso(gene))
 isolen <- isoLength(gene)[[1]]
@@ -135,16 +135,18 @@ for (j in 1:length(dist$fragmentProb)) {
 }
 assscores <- log(assscores)
 
-.Call("R_splicing_score_joint_paired", assignment, psi, hyper,
+.Call("R_splicing_score_joint_paired", assignment,
+      as.integer(noPairs(reads)), 1L, psi, hyper,
       isolen, isoscores, assscores, fragmentLength,
       dist$fragmentStart, PACKAGE="splicing")
 
-psi2 <- c(5/10, 3/10, 2/10)
-assignment <- as.vector(.Call("R_splicing_reassign_samples_paired",
-                              matches[[1]], match.order, psi2, noiso, 1L,
-                              PACKAGE="splicing"))
+psi2 <- cbind(c(5/10, 3/10, 2/10))
+assignment <- .Call("R_splicing_reassign_samples_paired",
+                    matches[[1]], match.order, psi2, noiso, 1L, 1L,
+                    PACKAGE="splicing")
 
-.Call("R_splicing_score_joint_paired", assignment, psi, hyper,
+.Call("R_splicing_score_joint_paired", assignment,
+      as.integer(noPairs(reads)), 1L, psi, hyper,
       isolen, isoscores, assscores, fragmentLength,
       dist$fragmentStart, PACKAGE="splicing")
 
@@ -162,11 +164,11 @@ reads <- simulateReads(gene, expression=c(2/10, 3/10, 5/10),
 matches <- matchIso(gene, reads=reads, normalMean=100,
                     normalVar=100, numDevs=4)
 match.order <- order(apply(matches[[1]], 2, paste, collapse=""))-1L
-psi <- c(2/10, 3/10, 5/10)
+psi <- cbind(c(2/10, 3/10, 5/10))
 noiso <- 3L
-assignment <- as.vector(.Call("R_splicing_reassign_samples_paired",
-                              matches[[1]], match.order, psi, noiso, 1L,
-                              PACKAGE="splicing"))
+assignment <- .Call("R_splicing_reassign_samples_paired",
+                    matches[[1]], match.order, psi, noiso, 1L, 1L,
+                    PACKAGE="splicing")
 alpha <- cbind(c(1/3, 2/3))
 
 psinew <- cbind(c(5/10, 3/10, 2/10))
@@ -191,12 +193,14 @@ for (j in 1:length(dist$fragmentProb)) {
 }
 assscores <- log(assscores)
 
-.Call("R_splicing_metropolis_hastings_ratio_paired", assignment, 
+.Call("R_splicing_metropolis_hastings_ratio_paired", assignment,
+      as.integer(noPairs(reads)), 1L,
       psinew, alphanew, psi, alpha, sigma, noiso, isolen, hyperp,
       isoscores, assscores, matches[[2]], dist$fragmentStart, 1L,
       PACKAGE="splicing")
 
-.Call("R_splicing_metropolis_hastings_ratio_paired", assignment, 
+.Call("R_splicing_metropolis_hastings_ratio_paired", assignment,
+      as.integer(noPairs(reads)), 1L,
       psi, alpha, psinew, alphanew, sigma, noiso, isolen, hyperp,
       isoscores, assscores, matches[[2]], dist$fragmentStart, 1L,
       PACKAGE="splicing")
