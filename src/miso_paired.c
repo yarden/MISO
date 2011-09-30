@@ -417,7 +417,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 0, 0, 0, 0, 0, 0, noiso,
 					 noChains, psi, alpha, &sigma, 0, 
 					 0, 0, 0, 0, 0, 0, 0, 0, 0));
-  sigma = 0.05;
+
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
 					 0, 0, noiso, noChains, psi, alpha,
 					 0, 0, 
