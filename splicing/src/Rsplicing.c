@@ -668,7 +668,7 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
 			    SEXP pnoBurnIn, SEXP pnoLag, SEXP phyperp, 
 			    SEXP pfragmentProb, SEXP pfragmentStart, 
 			    SEXP pnormalMean, SEXP pnormalVar, 
-			    SEXP pnumDevs, SEXP poverhang) {
+			    SEXP pnumDevs, SEXP poverhang, SEXP pstopcond) {
   
   size_t gene=INTEGER(pgene)[0]-1;
   SEXP result, names, class;
@@ -695,6 +695,7 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
   splicing_matrix_t class_templates;
   splicing_vector_t class_counts;
   splicing_miso_rundata_t rundata;
+  int stopCond=INTEGER(pstopcond)[0];
 
   R_splicing_begin();
   
@@ -720,7 +721,8 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
 
   splicing_miso_paired(&gff, gene, &position, cigarstr, readLength,
 		       overHang, nochains, noIterations, noBurnIn, noLag, 
-		       &hyperp, isNull(pfragmentProb) ? 0 : &fragmentProb, 
+		       &hyperp, stopCond, 
+		       isNull(pfragmentProb) ? 0 : &fragmentProb, 
 		       fragmentStart, normalMean, normalVar, numDevs,
 		       &samples, &logLik, &match_matrix, &class_templates,
 		       &class_counts, /*bin_class_templates=*/ 0, 

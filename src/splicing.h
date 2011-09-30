@@ -181,6 +181,11 @@ int splicing_i_miso_classes(const splicing_matrix_t *match_matrix,
 			    splicing_matrix_t *bin_class_templates,
 			    splicing_vector_t *bin_class_counts);
 
+int splicing_i_check_convergent_mean(splicing_matrix_t *chainMeans, 
+				     splicing_matrix_t *chainVars, 
+				     const splicing_matrix_t *samples,
+				     int *shouldstop);
+
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
 		  const char **cigarstr, int readLength, int overHang,
@@ -202,7 +207,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const splicing_vector_int_t *position,
 			 const char **cigarstr, int readLength, int overHang,
 			 int noChains, int noIterations, int noBurnIn,
-			 int noLag, const splicing_vector_t *hyperp,
+			 int noLag, const splicing_vector_t *hyperp, 
+			 splicing_miso_stop_t stop, 
 			 const splicing_vector_t *fragmentProb, 
 			 int fragmentStart,
 			 double normalMean, double normalVar, double numDevs,

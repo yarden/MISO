@@ -502,6 +502,90 @@ int splicing_metropolis_hastings_ratio(const splicing_matrix_int_t *ass,
   return 0;
 }
 
+/* chainMeans and chainVars must have the correct size! */
+
+int splicing_i_check_convergent_mean(splicing_matrix_t *chainMeans, 
+				     splicing_matrix_t *chainVars, 
+				     const splicing_matrix_t *samples,
+				     int *shouldstop) {
+
+  /* Check convergence. See Gelman, Carlin, Stern and Rubin:
+     Bayesian Data Analysis, pp. 296, 2nd edition, for
+     details. */
+  int i /* sample */, j /* chain */, k /* isoform */,
+    l /* sample per chain */;
+  splicing_vector_t B, W, mean, rhat;
+  int noiso = splicing_matrix_nrow(chainMeans);
+  int noChains = splicing_matrix_ncol(chainMeans);
+  int noSamples = splicing_matrix_ncol(samples);
+
+  splicing_matrix_null(chainVars);
+  memcpy(&MATRIX(*chainMeans, 0, 0), &MATRIX(*samples, 0, 0), 
+	 noChains * noiso * sizeof(double));
+  
+  for (i=noChains, j=0, l=1; i<noSamples; i++, j = (j+1) % noChains) {
+    for (k=0; k<noiso; k++) {
+      double mk=MATRIX(*chainMeans, k, j) + 
+	(MATRIX(*samples, k, i) - MATRIX(*chainMeans, k, j)) / l;
+      double sk=MATRIX(*chainVars, k, j) + 
+	(MATRIX(*samples, k, i) - MATRIX(*chainMeans, k, j)) *
+	(MATRIX(*samples, k, i) - mk);
+      MATRIX(*chainMeans, k, j) = mk;
+      MATRIX(*chainVars, k, j) = sk;
+    }
+    if (j==noChains-1) { l++; }
+  }
+  
+  SPLICING_CHECK(splicing_vector_init(&B, noiso));
+  SPLICING_FINALLY(splicing_vector_destroy, &B);
+  SPLICING_CHECK(splicing_vector_init(&W, noiso));
+  SPLICING_FINALLY(splicing_vector_destroy, &W);
+  SPLICING_CHECK(splicing_vector_init(&mean, noiso));
+  SPLICING_FINALLY(splicing_vector_destroy, &mean);
+  SPLICING_CHECK(splicing_vector_init(&rhat, noiso));
+  SPLICING_FINALLY(splicing_vector_destroy, &rhat);
+  
+  for (k=0; k<noiso; k++) { 
+    for (j=0; j<noChains; j++) { 
+      VECTOR(mean)[k] += MATRIX(*chainMeans, k, j);
+    }
+    VECTOR(mean)[k] /= noChains;
+  }
+  
+  for (k=0; k<noiso; k++) {
+    for (j=0; j<noChains; j++) { 
+      double t=MATRIX(*chainMeans, k, j) - VECTOR(mean)[k];
+      VECTOR(B)[k] += t*t;
+    }
+    VECTOR(B)[k] *= noSamples / (noChains-1.0);
+  }
+  
+  for (k=0; k<noiso; k++) {
+    for (j=0; j<noChains; j++) {
+      double t=MATRIX(*chainVars, k, j);
+      VECTOR(W)[k] += t * t;
+    }
+    VECTOR(W)[k] /= noChains;
+  }
+  
+  for (k=0; k<noiso; k++) {
+    VECTOR(rhat)[k] = 
+      sqrt(((noSamples - 1.0)/noSamples * VECTOR(W)[k] + VECTOR(B)[k] /
+	    noSamples) / VECTOR(W)[k]);
+  }
+  
+  for (k=0, *shouldstop=1; k<noiso; k++) {
+    *shouldstop = *shouldstop && VECTOR(rhat)[k] <= 1.1;
+  }
+  splicing_vector_destroy(&rhat);
+  splicing_vector_destroy(&mean);
+  splicing_vector_destroy(&W);
+  splicing_vector_destroy(&B);
+  SPLICING_FINALLY_CLEAN(4);
+  
+  return 0;
+}
+
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
 		  const char **cigarstr, int readLength, int overHang,
@@ -728,78 +812,8 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
       shouldstop = 1;
       break;
     case SPLICING_MISO_STOP_CONVERGENT_MEAN:
-      {
-	/* Check convergence. See Gelman, Carlin, Stern and Rubin:
-	   Bayesian Data Analysis, pp. 296, 2nd edition, for
-	   details. */
-	int i /* sample */, j /* chain */, k /* isoform */,
-	  l /* sample per chain */;
-	splicing_vector_t B, W, mean, rhat;
-
-	splicing_matrix_null(&chainVars);
-	memcpy(&MATRIX(chainMeans, 0, 0), &MATRIX(*samples, 0, 0), 
-	       noChains * noiso * sizeof(double));
-
-	for (i=noChains, j=0, l=1; i<noSamples; i++, j = (j+1) % noChains) {
-	  for (k=0; k<noiso; k++) {
-	    double mk=MATRIX(chainMeans, k, j) + 
-	      (MATRIX(*samples, k, i) - MATRIX(chainMeans, k, j)) / l;
-	    double sk=MATRIX(chainVars, k, j) + 
-	      (MATRIX(*samples, k, i) - MATRIX(chainMeans, k, j)) *
-	      (MATRIX(*samples, k, i) - mk);
-	    MATRIX(chainMeans, k, j) = mk;
-	    MATRIX(chainVars, k, j) = sk;
-	  }
-	  if (j==noChains-1) { l++; }
-	}
-
-	SPLICING_CHECK(splicing_vector_init(&B, noiso));
-	SPLICING_FINALLY(splicing_vector_destroy, &B);
-	SPLICING_CHECK(splicing_vector_init(&W, noiso));
-	SPLICING_FINALLY(splicing_vector_destroy, &W);
-	SPLICING_CHECK(splicing_vector_init(&mean, noiso));
-	SPLICING_FINALLY(splicing_vector_destroy, &mean);
-	SPLICING_CHECK(splicing_vector_init(&rhat, noiso));
-	SPLICING_FINALLY(splicing_vector_destroy, &rhat);
-
-	for (k=0; k<noiso; k++) { 
-	  for (j=0; j<noChains; j++) { 
-	    VECTOR(mean)[k] += MATRIX(chainMeans, k, j);
-	  }
-	  VECTOR(mean)[k] /= noChains;
-	}
-
-	for (k=0; k<noiso; k++) {
-	  for (j=0; j<noChains; j++) { 
-	    double t=MATRIX(chainMeans, k, j) - VECTOR(mean)[k];
-	    VECTOR(B)[k] += t*t;
-	  }
-	  VECTOR(B)[k] *= noSamples / (noChains-1.0);
-	}
-	
-	for (k=0; k<noiso; k++) {
-	  for (j=0; j<noChains; j++) {
-	    double t=MATRIX(chainVars, k, j);
-	    VECTOR(W)[k] += t * t;
-	  }
-	  VECTOR(W)[k] /= noChains;
-	}
-	
-	for (k=0; k<noiso; k++) {
-	  VECTOR(rhat)[k] = 
-	    sqrt(((noSamples - 1.0)/noSamples * VECTOR(W)[k] + VECTOR(B)[k] /
-		  noSamples) / VECTOR(W)[k]);
-	}
-
-	for (k=0, shouldstop=1; k<noiso; k++) {
-	  shouldstop = shouldstop && VECTOR(rhat)[k] <= 1.1;
-	}
-	splicing_vector_destroy(&rhat);
-	splicing_vector_destroy(&mean);
-	splicing_vector_destroy(&W);
-	splicing_vector_destroy(&B);
-	SPLICING_FINALLY_CLEAN(4);
-      }
+      SPLICING_CHECK(splicing_i_check_convergent_mean(&chainMeans, &chainVars, 
+						      samples, &shouldstop));
       break;
     }
     

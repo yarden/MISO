@@ -247,7 +247,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const char **cigarstr, int readLength, int overHang,
 			 int noChains, int noIterations, 
 			 int noBurnIn, int noLag,
-			 const splicing_vector_t *hyperp,
+			 const splicing_vector_t *hyperp, 
+			 splicing_miso_stop_t stop,
 			 const splicing_vector_t *fragmentProb,
 			 int fragmentStart, double normalMean, 
 			 double normalVar, double numDevs,
@@ -280,6 +281,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
     vfragmentProb;
   splicing_vector_int_t noexons;
+  int shouldstop=0;
+  splicing_matrix_t chainMeans, chainVars;
 
   if ( (class_templates ? 1 : 0) + (class_counts ? 1 : 0) == 1) {
     SPLICING_ERROR("Only one of `class_templates' and `class_counts' is "
@@ -404,6 +407,11 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_matrix_resize(samples, noiso, noSamples));
   SPLICING_CHECK(splicing_vector_resize(logLik, noSamples));
 
+  SPLICING_CHECK(splicing_matrix_init(&chainMeans, noiso, noChains));
+  SPLICING_FINALLY(splicing_matrix_destroy, &chainMeans);
+  SPLICING_CHECK(splicing_matrix_init(&chainVars, noiso, noChains));
+  SPLICING_FINALLY(splicing_matrix_destroy, &chainVars);
+
   /* Initialize Psi(0) randomly */
 
   SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 0, 0, 0, 0, 0, 0, noiso,
@@ -425,14 +433,16 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   
   /* foreach Iteration m=1, ..., M do */
 
-  for (m=0; m < noIterations; m++) {
+  while (1) { 
 
-    SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
-					   0, 0, noiso, noChains, psiNew, 
-					   alphaNew, 0, 0, 
-					   0, 0, 0, 0, 0, 0, 0, 0, 0));
+    for (m=0; m < noIterations; m++) {
+      
+      SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
+					     0, 0, noiso, noChains, psiNew, 
+					     alphaNew, 0, 0, 
+					     0, 0, 0, 0, 0, 0, 0, 0, 0));
 
-    SPLICING_CHECK(splicing_metropolis_hastings_ratio_paired(&vass,
+      SPLICING_CHECK(splicing_metropolis_hastings_ratio_paired(&vass,
 					     noReads, noChains,
 					     psiNew, alphaNew, psi, alpha,
 					     sigma, noiso, &isolen, hyperp, 
@@ -441,37 +451,65 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 					     m > 0 ? 1 : 0, 
 					     &acceptP, &cJS, &pJS));
 
-    for (j=0; j<noChains; j++) {
-      if (VECTOR(acceptP)[j] >= 1 || RNG_UNIF01() < VECTOR(acceptP)[j]) {
-	memcpy(&MATRIX(*psi, 0, j), &MATRIX(*psiNew, 0, j), 
-	       noiso * sizeof(double));
-	memcpy(&MATRIX(*alpha, 0, j), &MATRIX(*alphaNew, 0, j),
-	       (noiso - 1) * sizeof(double));
-	VECTOR(cJS)[j] = VECTOR(pJS)[j];
-	rundata->noAccepted ++;
-      } else {
-	rundata->noRejected ++;
+      for (j=0; j<noChains; j++) {
+	if (VECTOR(acceptP)[j] >= 1 || RNG_UNIF01() < VECTOR(acceptP)[j]) {
+	  memcpy(&MATRIX(*psi, 0, j), &MATRIX(*psiNew, 0, j), 
+		 noiso * sizeof(double));
+	  memcpy(&MATRIX(*alpha, 0, j), &MATRIX(*alphaNew, 0, j),
+		 (noiso - 1) * sizeof(double));
+	  VECTOR(cJS)[j] = VECTOR(pJS)[j];
+	  rundata->noAccepted ++;
+	} else {
+	  rundata->noRejected ++;
+	}
       }
+
+      if (m >= noBurnIn) {
+	if (lagCounter == noLag - 1) {
+	  memcpy(&MATRIX(*samples, 0, noS), &MATRIX(*psi, 0, 0), 
+		 noChains * noiso * sizeof(double));
+	  memcpy(VECTOR(*logLik)+noS, VECTOR(cJS), noChains * sizeof(double));
+	  noS += noChains;
+	  lagCounter = 0;
+	} else {
+	  lagCounter ++;
+	}
+      }
+      
+      SPLICING_CHECK(splicing_reassign_samples_paired(mymatch_matrix,
+						      &match_order,
+						      psi, noiso, noChains, 
+						      fragmentStart, &vass));
+
+    } /* for m < noIterations */
+
+    /* Should we stop? */
+    switch (stop) {
+    case SPLICING_MISO_STOP_FIXEDNO: 
+      shouldstop = 1;
+      break;
+    case SPLICING_MISO_STOP_CONVERGENT_MEAN:
+      SPLICING_CHECK(splicing_i_check_convergent_mean(&chainMeans, &chainVars, 
+						      samples, &shouldstop));
+      break;
     }
 
-    if (m >= noBurnIn) {
-      if (lagCounter == noLag - 1) {
-	memcpy(&MATRIX(*samples, 0, noS), &MATRIX(*psi, 0, 0), 
-	       noChains * noiso * sizeof(double));
-	memcpy(VECTOR(*logLik)+noS, VECTOR(cJS), noChains * sizeof(double));
-	noS += noChains;
-	lagCounter = 0;
-      } else {
-	lagCounter ++;
-      }
-    }
+    if (shouldstop) { break; }
     
-    SPLICING_CHECK(splicing_reassign_samples_paired(mymatch_matrix,
-						    &match_order,
-						    psi, noiso, noChains, 
-						    fragmentStart, &vass));
+    noS=0;
+    noIterations = 3*noIterations - 2*noBurnIn;
+    noBurnIn = m;
+    rundata->noSamples = noSamples = 
+      noChains * (noIterations - noBurnIn) / noLag;
+    lagCounter = 0;
 
-  } /* for m < noIterations */
+    SPLICING_CHECK(splicing_matrix_resize(samples, noiso, noSamples));
+    SPLICING_CHECK(splicing_vector_resize(logLik, noSamples));
+  }
+
+  splicing_matrix_destroy(&chainVars);
+  splicing_matrix_destroy(&chainMeans);
+  SPLICING_FINALLY_CLEAN(2);
 
   splicing_vector_destroy(&assscores);
   splicing_matrix_destroy(&isoscores);

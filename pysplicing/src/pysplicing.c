@@ -194,7 +194,7 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_miso_paired(mygff, gene, &myreadpos,
 		       (const char**) myreadcigar.table, readLength,
 		       overhang, /*noChains=*/ 1, noIterations, 
-		       noBurnIn, noLag, &myhyperp, 
+		       noBurnIn, noLag, &myhyperp, /*stop=*/ 0,
 		       /*insertProb=*/ 0, /*insertStart=*/ 0,
 		       normalMean, normalVar, numDevs, &samples, &logLik,
 		       /*match_matrix=*/ 0, /*class_templates=*/ 0, 

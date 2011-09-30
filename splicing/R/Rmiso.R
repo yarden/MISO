@@ -1,12 +1,10 @@
 
-# TODO: better API
-
 MISO <- function(geneStructure, gene=1L, reads,
                  readLength=getReadLength(reads),
-                 overHang=1L, noChains=1, noIterations=5000, noBurnIn=500,
+                 overHang=1L, noChains=2, noIterations=5000, noBurnIn=500,
                  noLag=10, start=c("auto", "uniform", "random", "given",
                              "linear"), startPsi=NULL, startAlpha=NULL,
-                 stopCond=c("fixedno", "convMean"),
+                 stopCond=c("convMean", "fixedno"),
                  hyperparameters=rep(1, noIso(geneStructure)[gene]),
                  paired=isPaired(reads), fragmentProb=NULL, fragmentStart=0L,
                  normalMean, normalVar, numDevs) {
@@ -42,7 +40,7 @@ MISO <- function(geneStructure, gene=1L, reads,
                  as.double(hyperparameters), fragmentProb,
                  as.integer(fragmentStart), as.double(normalMean),
                  as.double(normalVar), as.double(numDevs),
-                 as.integer(overHang),
+                 as.integer(overHang), stopCond,
                  PACKAGE="splicing")
   }
 
