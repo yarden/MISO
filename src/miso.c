@@ -281,177 +281,175 @@ int splicing_rng_get_dirichlet(splicing_rng_t *rng,
 
 #define SIGMA (0.2/noiso/noiso)
 
-int splicing_drift_proposal(int mode, 
-			    const splicing_matrix_t *psi, 
-			    const splicing_matrix_t *alpha, 
-			    double sigma, 
-			    const splicing_matrix_t *otherpsi, 
-			    const splicing_matrix_t *otheralpha, 
-			    int noiso, int noChains,
-			    splicing_matrix_t *respsi, 
-			    splicing_matrix_t *resalpha,
-			    double *ressigma, 
-			    splicing_vector_t *resscore, 
-			    splicing_miso_start_t start,
-			    const splicing_matrix_t *start_psi,
-			    const splicing_matrix_t *start_alpha,
-			    const splicing_gff_t *gff, int gene, 
-			    int readLength, int overHang, 
-			    const splicing_vector_int_t *position,
-			    const char **cigarstr, int paired, 
-			    const splicing_vector_t *fragmentProb,
-			    int fragmentStart, double normalMean,
-			    double normalVar, double numDevs) {
+int splicing_drift_proposal_init(int noiso, int noChains, 
+				 splicing_matrix_t *respsi, 
+				 splicing_matrix_t *resalpha,
+				 double *ressigma,
+				 splicing_miso_start_t start,
+				 const splicing_matrix_t *start_psi,
+				 const splicing_matrix_t *start_alpha,
+				 const splicing_gff_t *gff, int gene, 
+				 int readLength, int overHang, 
+				 const splicing_vector_int_t *position,
+				 const char **cigarstr, int paired, 
+				 const splicing_vector_t *fragmentProb,
+				 int fragmentStart, double normalMean,
+				 double normalVar, double numDevs) {
 
-  switch (mode) {
-  case 0: 			/* init */
+  SPLICING_CHECK(splicing_matrix_resize(respsi, noiso, noChains));
+  SPLICING_CHECK(splicing_matrix_resize(resalpha, noiso-1, noChains));
+
+  switch (start) {
+  case SPLICING_MISO_START_AUTO:
+    if (noiso != 2) {
+      int i, j;
+      for (i=0; i<noiso; i++) {	
+	for (j=0; j<noChains; j++) {
+	  MATRIX(*respsi, i, j) = 1.0/noiso; 
+	}
+      }
+      for (i=0; i<noiso-1; i++) { 
+	for (j=0; j<noChains; j++) {
+	  MATRIX(*resalpha, i, j) = 1.0/(noiso-1);
+	}
+      }
+      *ressigma = SIGMA;
+    } else {
+      int j;
+      for (j=0; j<noChains; j++) {
+	MATRIX(*respsi, 0, j) = RNG_UNIF01();
+	MATRIX(*respsi, 1, j) = 1 - MATRIX(*respsi, j, 0);
+	MATRIX(*resalpha, 0, j) = 0.0;
+	MATRIX(*resalpha, 1, j) = 0.0;
+      }
+      *ressigma = SIGMA;
+    }
+    break;
+  case SPLICING_MISO_START_UNIFORM:
     {
-      SPLICING_CHECK(splicing_matrix_resize(respsi, noiso, noChains));
-      SPLICING_CHECK(splicing_matrix_resize(resalpha, noiso-1, noChains));
-      switch (start) {
-      case SPLICING_MISO_START_AUTO:
-	if (noiso != 2) {
-	  int i, j;
-	  for (i=0; i<noiso; i++) {	
-	    for (j=0; j<noChains; j++) {
-	      MATRIX(*respsi, i, j) = 1.0/noiso; 
-	    }
-	  }
-	  for (i=0; i<noiso-1; i++) { 
-	    for (j=0; j<noChains; j++) {
-	      MATRIX(*resalpha, i, j) = 1.0/(noiso-1);
-	    }
-	  }
-	  *ressigma = SIGMA;
-	} else {
-	  int j;
-	  for (j=0; j<noChains; j++) {
-	    MATRIX(*respsi, 0, j) = RNG_UNIF01();
-	    MATRIX(*respsi, 1, j) = 1 - MATRIX(*respsi, j, 0);
-	    MATRIX(*resalpha, 0, j) = 0.0;
-	    MATRIX(*resalpha, 1, j) = 0.0;
-	  }
-	  *ressigma = SIGMA;
+      int i, j;
+      for (i=0; i<noiso; i++) {	
+	for (j=0; j<noChains; j++) {
+	  MATRIX(*respsi, i, j) = 1.0/noiso; 
 	}
-	break;
-      case SPLICING_MISO_START_UNIFORM:
-	{
-	  int i, j;
-	  for (i=0; i<noiso; i++) {	
-	    for (j=0; j<noChains; j++) {
-	      MATRIX(*respsi, i, j) = 1.0/noiso; 
-	    }
-	  }
-	  for (i=0; i<noiso-1; i++) { 
-	    for (j=0; j<noChains; j++) {
-	      MATRIX(*resalpha, i, j) = 1.0/(noiso-1);
-	    }
-	  }
-	  *ressigma = SIGMA;
+      }
+      for (i=0; i<noiso-1; i++) { 
+	for (j=0; j<noChains; j++) {
+	  MATRIX(*resalpha, i, j) = 1.0/(noiso-1);
 	}
-	break;
-      case SPLICING_MISO_START_RANDOM:
-	{
-	  splicing_vector_t alpha, tmp;
-	  int i, j;
-	  SPLICING_CHECK(splicing_vector_init(&alpha, noiso));
-	  SPLICING_FINALLY(splicing_vector_destroy, &alpha);
-	  for (i=0; i<noiso; i++) { VECTOR(alpha)[i] = 1.0; }
-	  for (j=0; j<noChains; j++) {
-	    splicing_vector_view(&tmp, &MATRIX(*respsi, 0, j), noiso);
-	    SPLICING_CHECK(splicing_rng_get_dirichlet(&splicing_rng_default,
-						      &alpha, &tmp));
-	  }
-	  splicing_vector_pop_back(&alpha);
-	  for (j=0; j<noChains; j++) {
-	    splicing_vector_view(&tmp, &MATRIX(*resalpha, 0, j), noiso-1);
-	    SPLICING_CHECK(splicing_rng_get_dirichlet(&splicing_rng_default,
-						      &alpha, &tmp));	    
-	  }
-	  splicing_vector_destroy(&alpha);
-	  SPLICING_FINALLY_CLEAN(1);
-	}
-	
-	break;
-      case SPLICING_MISO_START_GIVEN:
-	splicing_matrix_update(respsi, start_psi);
-	splicing_matrix_update(resalpha, start_alpha);
-	*ressigma = SIGMA;
-	break;
-      case SPLICING_MISO_START_LINEAR:
-	{
-	  splicing_vector_t tmp, tmp2;
-	  int j;
-	  SPLICING_CHECK(splicing_vector_init(&tmp, noiso));
-	  SPLICING_FINALLY(splicing_vector_destroy, &tmp);
-	  if (!paired) { 
-	    SPLICING_CHECK(splicing_solve_gene(gff, gene, readLength, 
+      }
+      *ressigma = SIGMA;
+    }
+    break;
+  case SPLICING_MISO_START_RANDOM:
+    {
+      splicing_vector_t alpha, tmp;
+      int i, j;
+      SPLICING_CHECK(splicing_vector_init(&alpha, noiso));
+      SPLICING_FINALLY(splicing_vector_destroy, &alpha);
+      for (i=0; i<noiso; i++) { VECTOR(alpha)[i] = 1.0; }
+      for (j=0; j<noChains; j++) {
+	splicing_vector_view(&tmp, &MATRIX(*respsi, 0, j), noiso);
+	SPLICING_CHECK(splicing_rng_get_dirichlet(&splicing_rng_default,
+						  &alpha, &tmp));
+      }
+      splicing_vector_pop_back(&alpha);
+      for (j=0; j<noChains; j++) {
+	splicing_vector_view(&tmp, &MATRIX(*resalpha, 0, j), noiso-1);
+	SPLICING_CHECK(splicing_rng_get_dirichlet(&splicing_rng_default,
+						  &alpha, &tmp));	    
+      }
+      splicing_vector_destroy(&alpha);
+      SPLICING_FINALLY_CLEAN(1);
+    }
+    break;
+  case SPLICING_MISO_START_GIVEN:
+    splicing_matrix_update(respsi, start_psi);
+    splicing_matrix_update(resalpha, start_alpha);
+    *ressigma = SIGMA;
+    break;
+  case SPLICING_MISO_START_LINEAR:
+    {
+      splicing_vector_t tmp, tmp2;
+      int j;
+      SPLICING_CHECK(splicing_vector_init(&tmp, noiso));
+      SPLICING_FINALLY(splicing_vector_destroy, &tmp);
+      if (!paired) { 
+	SPLICING_CHECK(splicing_solve_gene(gff, gene, readLength, 
 				       overHang, position, cigarstr,
 				       /*match_matrix=*/ 0, 
 				       /*assignment_matrix=*/ 0,
 				       &tmp));
-	  } else {
-	    SPLICING_CHECK(splicing_solve_gene_paired(gff, gene, readLength,
+      } else {
+	SPLICING_CHECK(splicing_solve_gene_paired(gff, gene, readLength,
 				       overHang, position,
 				       cigarstr, fragmentProb, fragmentStart,
 				       normalMean, normalVar, numDevs,
 				       /*match_matrix=*/ 0,
 				       /*assignment_matrix=*/ 0, &tmp));
-	  }
-
-	  for (j=0; j<noChains; j++) {
-	    splicing_vector_view(&tmp2, &MATRIX(*respsi, 0, j), noiso);
-	    splicing_vector_update(&tmp2, &tmp);
-	  }
-	  splicing_vector_pop_back(&tmp);
-	  for (j=0; j<noChains; j++) {
-	    splicing_vector_view(&tmp2, &MATRIX(*resalpha, 0, j), noiso-1);
-	    splicing_vector_update(&tmp2, &tmp);
-	  }
-	  
-	  splicing_vector_destroy(&tmp);
-	  SPLICING_FINALLY_CLEAN(1);
-	  *ressigma = SIGMA;
-	}
-	break;
       }
-    }
-    break;
-  case 1:			/* propose */
-    {
-      int len=noiso-1;
-      double sumpsi=0.0;
-      int i;
-  
-      SPLICING_CHECK(splicing_matrix_resize(respsi, len+1, noChains));
-      SPLICING_CHECK(splicing_mvrnorm(alpha, sigma, resalpha, len));
-      SPLICING_CHECK(splicing_logit_inv(resalpha, respsi, len, noChains));
-      for (i=0; i<noChains; i++) {
-	splicing_vector_t col;
-	splicing_vector_view(&col, &MATRIX(*respsi, 0, i), len);
-	sumpsi = splicing_vector_sum(&col);
-	/* SPLICING_CHECK(splicing_vector_resize(respsi, len+1)); */
-	MATRIX(*respsi, len, i) = 1-sumpsi;
+      
+      for (j=0; j<noChains; j++) {
+	splicing_vector_view(&tmp2, &MATRIX(*respsi, 0, j), noiso);
+	splicing_vector_update(&tmp2, &tmp);
       }
-    }
-    break;
-  case 2: 			/* score */
-    {
-      double score;
-      int i;
-      SPLICING_CHECK(splicing_vector_resize(resscore, noChains));
-      for (i=0; i<noChains; i++) {
-	splicing_vector_t col1, col2;
-	splicing_vector_view(&col1, &MATRIX(*psi, 0, i), noiso);
-	splicing_vector_view(&col2, &MATRIX(*otheralpha, 0, i), noiso-1);
-	SPLICING_CHECK(splicing_mvplogisnorm(&col1, &col2, sigma, noiso-1, 
-					     &score));
-	VECTOR(*resscore)[i]=score;
+      splicing_vector_pop_back(&tmp);
+      for (j=0; j<noChains; j++) {
+	splicing_vector_view(&tmp2, &MATRIX(*resalpha, 0, j), noiso-1);
+	splicing_vector_update(&tmp2, &tmp);
       }
+      
+      splicing_vector_destroy(&tmp);
+      SPLICING_FINALLY_CLEAN(1);
+      *ressigma = SIGMA;
     }
     break;
   }
   
+  return 0;
+}
+
+int splicing_drift_proposal_propose(int noiso, int noChains, 
+				    const splicing_matrix_t *alpha,
+				    double sigma, 
+				    splicing_matrix_t *respsi,
+				    splicing_matrix_t *resalpha) {
+
+  int len=noiso-1;
+  double sumpsi=0.0;
+  int i;
+  
+  SPLICING_CHECK(splicing_matrix_resize(respsi, len+1, noChains));
+  SPLICING_CHECK(splicing_mvrnorm(alpha, sigma, resalpha, len));
+  SPLICING_CHECK(splicing_logit_inv(resalpha, respsi, len, noChains));
+  for (i=0; i<noChains; i++) {
+    splicing_vector_t col;
+    splicing_vector_view(&col, &MATRIX(*respsi, 0, i), len);
+    sumpsi = splicing_vector_sum(&col);
+    /* SPLICING_CHECK(splicing_vector_resize(respsi, len+1)); */
+    MATRIX(*respsi, len, i) = 1-sumpsi;
+  }
+  
+  return 0;
+ }
+
+int splicing_drift_proposal_score(int noiso, int noChains, 
+				  const splicing_matrix_t *psi,
+				  const splicing_matrix_t *otheralpha, 
+				  double sigma,
+				  splicing_vector_t *resscore) {
+
+  double score;
+  int i;
+  SPLICING_CHECK(splicing_vector_resize(resscore, noChains));
+  for (i=0; i<noChains; i++) {
+    splicing_vector_t col1, col2;
+    splicing_vector_view(&col1, &MATRIX(*psi, 0, i), noiso);
+    splicing_vector_view(&col2, &MATRIX(*otheralpha, 0, i), noiso-1);
+    SPLICING_CHECK(splicing_mvplogisnorm(&col1, &col2, sigma, noiso-1, 
+					 &score));
+    VECTOR(*resscore)[i]=score;
+  }
   return 0;
 }
 
@@ -487,14 +485,10 @@ int splicing_metropolis_hastings_ratio(const splicing_matrix_int_t *ass,
   SPLICING_CHECK(splicing_score_joint(ass, no_reads, noChains, psi, hyperp,
 				      effisolen, isoscores, pcJS));
   
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psi, alpha, sigma, 
-					 psiNew, alphaNew, noiso, noChains,
-					 0, 0, 0, &ptoCS, 0, 0, 0, 0, 0, 0,
-					 0, 0, 0, 0, 0, 0, 0, 0, 0));
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psiNew, alphaNew,
-					 sigma, psi, alpha, noiso, noChains,
-					 0, 0, 0, &ctoPS, 0, 0, 0, 0, 0, 0,
-					 0, 0, 0, 0, 0, 0, 0, 0, 0));
+  SPLICING_CHECK(splicing_drift_proposal_score(noiso, noChains, psi, alphaNew,
+					       sigma, &ptoCS));
+  SPLICING_CHECK(splicing_drift_proposal_score(noiso, noChains, psiNew, alpha,
+					       sigma, &ctoPS));
   
   if (full) {
     for (i=0; i<noChains; i++) {
@@ -751,16 +745,14 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 
   /* Initialize Psi(0) randomly */
 
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 0, 0, 0, 0, 0, 0, 
-					 noiso, noChains, psi, alpha, 
-					 &sigma, 0, start, start_psi, 
-					 start_alpha, gff, gene, readLength,
-					 overHang, position, cigarstr, 
-					 0, 0, 0, 0, 0, 0));
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
-					 0, 0, noiso, noChains, psi, 
-					 alpha, 0, 0, 0, 0, 0, 0, 0, 0,
-					 0, 0, 0, 0, 0, 0, 0, 0, 0));
+  SPLICING_CHECK(splicing_drift_proposal_init(noiso, noChains, 
+					      psi, alpha, &sigma,
+					      start, start_psi, start_alpha,
+					      gff, gene, readLength,
+					      overHang, position, cigarstr,
+					      /*paired=*/ 0, 0, 0, 0, 0, 0));
+  SPLICING_CHECK(splicing_drift_proposal_propose(noiso, noChains, 
+						 alpha, sigma, psi, alpha));
   
   /* Initialize assignments of reads */  
   
@@ -773,11 +765,9 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 	 m < noIterations; 
 	 m++) {
       
-      SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha,
-					     sigma, 0, 0, noiso, noChains,
-					     psiNew, alphaNew, 0, 0, 0, 0, 
-					     0, 0, 0, 0, 0, 0, 0, 
-					     0, 0, 0, 0, 0, 0));
+      SPLICING_CHECK(splicing_drift_proposal_propose(noiso, noChains, 
+						     alpha, sigma, 
+						     psiNew, alphaNew));
 
       SPLICING_CHECK(splicing_metropolis_hastings_ratio(&vass, noReads, 
 							noChains, psiNew,

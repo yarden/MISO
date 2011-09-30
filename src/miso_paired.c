@@ -214,16 +214,10 @@ int splicing_metropolis_hastings_ratio_paired(
 					     fragmentLength, fragmentStart,
 					     pcJS));
   
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psi, alpha, sigma, 
-					 psiNew, alphaNew, noiso, noChains,
-					 0, 0, 0, &ptoCS, 
-					 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					 0, 0, 0, 0, 0, 0));
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 2, psiNew, alphaNew, 
-					 sigma, psi, alpha, noiso, noChains,
-					 0, 0, 0, &ctoPS,
-					 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-					 0, 0, 0, 0, 0, 0));
+  SPLICING_CHECK(splicing_drift_proposal_score(noiso, noChains, psi, 
+					       alphaNew, sigma, &ptoCS));
+  SPLICING_CHECK(splicing_drift_proposal_score(noiso, noChains, psiNew, 
+					       alpha, sigma, &ctoPS));
   
   if (full) {
     for (i=0; i<noChains; i++) {
@@ -441,19 +435,15 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   /* Initialize Psi(0) randomly */
 
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 0, 0, 0, 0, 0, 0, noiso,
-					 noChains, psi, alpha, &sigma, 0, 
+  SPLICING_CHECK(splicing_drift_proposal_init(noiso, noChains, psi, alpha, &sigma,
 					 start, start_psi, start_alpha, gff,
 					 gene, readLength, overHang, 
-					 position, cigarstr, 1, fragmentProb,
-					 fragmentStart, normalMean, 
-					 normalVar, numDevs));
+					 position, cigarstr, /*paired=*/ 1, 
+					 fragmentProb, fragmentStart,
+					 normalMean, normalVar, numDevs));
 
-  SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
-					 0, 0, noiso, noChains, psi, alpha,
-					 0, 0, 
-					 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-					 0, 0, 0, 0, 0, 0));
+  SPLICING_CHECK(splicing_drift_proposal_propose(noiso, noChains, 
+						 alpha, sigma, psi, alpha));
   
   /* Initialize assignments of reads */  
   
@@ -469,11 +459,9 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
     for (m=0; m < noIterations; m++) {
       
-      SPLICING_CHECK(splicing_drift_proposal(/* mode= */ 1, psi, alpha, sigma,
-					     0, 0, noiso, noChains, psiNew, 
-					     alphaNew, 0, 0, 
-					     0, 0, 0, 0, 0, 0, 0, 0, 0, 
-					     0, 0, 0, 0, 0, 0));
+      SPLICING_CHECK(splicing_drift_proposal_propose(noiso, noChains,
+						     alpha, sigma,
+						     psiNew, alphaNew));
 
       SPLICING_CHECK(splicing_metropolis_hastings_ratio_paired(&vass,
 					     noReads, noChains,
