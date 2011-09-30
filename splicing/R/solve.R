@@ -1,7 +1,7 @@
 
 matchIso <- function(geneStructure, gene=1, reads, overHang=1L,
-                     paired=reads$paired, fragmentProb=NULL, fragmentStart=0L,
-                     normalMean, normalVar, numDevs) {
+                     paired=isPaired(reads), fragmentProb=NULL,
+                     fragmentStart=0L, normalMean, normalVar, numDevs) {
 
   if (paired) {
     getreadlength <- function(cig) {
@@ -26,7 +26,7 @@ matchIso <- function(geneStructure, gene=1, reads, overHang=1L,
 
 solveIso <- function(geneStructure, gene=1L, reads,
                      readLength=getReadLength(reads),
-                     overHang=1L, paired=FALSE, fragmentProb=NULL,
+                     overHang=1L, paired=isPaired(reads), fragmentProb=NULL,
                      fragmentStart=0L, normalMean, normalVar, numDevs) {
 
   if (length(readLength) != 1) {

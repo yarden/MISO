@@ -1,4 +1,6 @@
 
+# TODO: better API
+
 MISO <- function(geneStructure, gene=1L, reads,
                  readLength=getReadLength(reads),
                  overHang=1L, noChains=1, noIterations=5000, noBurnIn=500,
@@ -6,7 +8,7 @@ MISO <- function(geneStructure, gene=1L, reads,
                              "linear"), startPsi=NULL, startAlpha=NULL,
                  stopCond=c("fixedno", "convMean"),
                  hyperparameters=rep(1, noIso(geneStructure)[gene]),
-                 paired=reads$paired, fragmentProb=NULL, fragmentStart=0L,
+                 paired=isPaired(reads), fragmentProb=NULL, fragmentStart=0L,
                  normalMean, normalVar, numDevs) {
 
   if (length(readLength) != 1) {

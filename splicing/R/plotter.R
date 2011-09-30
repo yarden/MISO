@@ -1,6 +1,5 @@
 
-plotIso <- function(geneStructure, gene=geneIds(geneStructure)[1],
-                    xlab="", ylab="", ...) {
+plotIso <- function(geneStructure, gene=1, xlab="", ylab="", ...) {
 
   geneStructure <- selectGenes(geneStructure, gene)
 
@@ -134,7 +133,7 @@ plotIso <- function(geneStructure, gene=geneIds(geneStructure)[1],
   invisible(geneStructure)
 }
 
-plotIsoSize <- function(geneStructure, gene=geneIds(geneStructure)[1],
+plotIsoSize <- function(geneStructure, gene=1,
                         labels=NULL, stripwidth=5, stripheight=1/5) {
 
   geneStructure <- selectGenes(geneStructure, gene)
@@ -149,7 +148,7 @@ plotIsoSize <- function(geneStructure, gene=geneIds(geneStructure)[1],
   c(width, height)
 }
 
-plotIsoPDF <- function(geneStructure, file, gene=geneIds(geneStructure)[1],
+plotIsoPDF <- function(geneStructure, file, gene=1,
                        labelwidth=NULL, mar=c(0,0,2,0), ...) {
 
   pdf(tmp <- tempfile())

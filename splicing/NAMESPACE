@@ -54,6 +54,6 @@ S3method("postMean", "MISOresult")
 S3method("logLik", "MISOresult")
 S3method("runData", "MISOresult")
 
-export(condIso, assignmentMatrix)
+export(geneComplexity, assignmentMatrix)
 
 export(matchIso, solveIso)

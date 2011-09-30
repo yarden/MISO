@@ -308,7 +308,7 @@ filter.notOppositeStrand <- function(reads) {
 ## Remove reads that do not match any isoform of a given
 ## gene
 
-filter.notMatching <- function(reads, gff, paired=reads$paired, ...) {
+filter.notMatching <- function(reads, gff, paired=isPaired(reads), ...) {
   
   mat <- matchIso(geneStructure=gff, reads=reads, paired=paired, ...)
 

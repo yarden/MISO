@@ -215,9 +215,14 @@ rpk <- function(genes, reads, overlap=TRUE) {
 
 realPsi <- function(geneStructure, gene=1, reads,
                     readLength=getReadLength(reads)) {
+
+  if (length(readLength) != 1) {
+    stop("Multiple read lengths are not supported")
+  }
+  
   isolen <- isoLength(geneStructure)[[gene]]
   effLen <- isolen - readLength + 1
-  ii <- as.character((1:noIso(geneStructure)[gene])-1)
+  ii <- as.character(1:noIso(geneStructure)[gene]-1)
   it <- table(getIsoform(reads))[ii]
   it[is.na(it)] <- 0
   res <- as.vector(it / effLen)

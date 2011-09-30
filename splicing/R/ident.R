@@ -26,11 +26,11 @@ assignmentMatrix <- function(geneStructure, gene=1L, readLength,
   res
 }
 
-condIso <- function(geneStructure, gene=1, readLength, overHang=1L,
-                    type=c("relative", "absolute"),
-                    norm=c("2","1","inf"), paired=FALSE,
-                    fragmentProb=NULL, fragmentStart=0L, normalMean,
-                    normalVar, numDevs) {
+geneComplexity <- function(geneStructure, gene=1, readLength, overHang=1L,
+                           type=c("relative", "absolute"),
+                           norm=c("2","1","inf"), paired=FALSE,
+                           fragmentProb=NULL, fragmentStart=0L, normalMean,
+                           normalVar, numDevs) {
 
   type <- switch(match.arg(type), "relative"=0, "absolute"=1)
   norm <- switch(match.arg(norm), "2"=0, "1"=1, "inf"=2)
