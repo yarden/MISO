@@ -64,3 +64,11 @@ Type 'q()' to quit R.
 [2,] 0.4720120 0.3574492 0.5335047 0.5289450
 [3,] 0.2281698 0.2322731 0.2199662 0.2207119
 > 
+> ## Start from the result of the linear solver
+> 
+> mres5 <- MISO(gene, reads=reads, noChains=5, noIterations=5000,
++               noBurnIn=2500, noLag=10, start="linear", overHang=1)
+> postMean(mres5)
+[1] 0.2021539 0.3162118 0.4816343
+> 
+> 
