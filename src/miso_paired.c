@@ -511,6 +511,13 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   splicing_matrix_destroy(&chainMeans);
   SPLICING_FINALLY_CLEAN(2);
 
+  if (assignment) {
+    SPLICING_CHECK(splicing_vector_int_resize(assignment, noReads));
+    for (i=0; i<noReads; i++) {
+      VECTOR(*assignment)[i] = MATRIX(vass, i, 0);
+    }
+  }
+
   splicing_vector_destroy(&assscores);
   splicing_matrix_destroy(&isoscores);
   splicing_vector_int_destroy(&isolen);
