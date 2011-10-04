@@ -90,7 +90,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
 				 readLength, overhang, /*noChains=*/ 1L,
 				 noIterations, noBurnIn, noLag,
 				 &myhyperp, SPLICING_MISO_START_AUTO, 
-				 SPLICING_MISO_STOP_FIXEDNO, 0, 0,
+				 SPLICING_MISO_STOP_FIXEDNO, 0,
 				 &samples, &logLik, 
 				 /*match_matrix=*/ 0, &class_templates,
 				 &class_counts, &assignment, &rundata));
@@ -195,7 +195,7 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
 		       (const char**) myreadcigar.table, readLength,
 		       overhang, /*noChains=*/ 1, noIterations, 
 		       noBurnIn, noLag, &myhyperp, /*start=*/ 0,
-		       /*stop=*/ 0, /*start_psi=*/ 0, /*start_alpha=*/ 0,
+		       /*stop=*/ 0, /*start_psi=*/ 0,
 		       /*insertProb=*/ 0, /*insertStart=*/ 0,
 		       normalMean, normalVar, numDevs, &samples, &logLik,
 		       /*match_matrix=*/ 0, /*class_templates=*/ 0, 

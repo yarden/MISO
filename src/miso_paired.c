@@ -247,7 +247,6 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 splicing_miso_start_t start, 
 			 splicing_miso_stop_t stop,
 			 const splicing_matrix_t *start_psi,
-			 const splicing_matrix_t *start_alpha,
 			 const splicing_vector_t *fragmentProb,
 			 int fragmentStart, double normalMean, 
 			 double normalVar, double numDevs,
@@ -283,9 +282,8 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   int shouldstop=0;
   splicing_matrix_t chainMeans, chainVars;
 
-  if (start == SPLICING_MISO_START_GIVEN && 
-      (!start_psi || !start_alpha)) {
-    SPLICING_ERROR("`start_psi' and `start_alpha' must be given when "
+  if (start == SPLICING_MISO_START_GIVEN && !start_psi) {
+    SPLICING_ERROR("`start_psi' must be given when "
 		   "starting from a given PSI", SPLICING_EINVAL);
   }
 
@@ -338,11 +336,6 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
       (splicing_matrix_nrow(start_psi) != noiso ||
        splicing_matrix_ncol(start_psi) != noChains)) {
     SPLICING_ERROR("Given PSI has wrong size", SPLICING_EINVAL);
-  }
-  if (start_alpha && 
-      (splicing_matrix_nrow(start_alpha) != noiso-1 || 
-       splicing_matrix_ncol(start_alpha) != noChains)) {
-    SPLICING_ERROR("Given alpha has wrong size", SPLICING_EINVAL);
   }
 
   rundata->noIso=noiso;
@@ -436,7 +429,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   /* Initialize Psi(0) randomly */
 
   SPLICING_CHECK(splicing_drift_proposal_init(noiso, noChains, psi, alpha, &sigma,
-					 start, start_psi, start_alpha, gff,
+					 start, start_psi, gff,
 					 gene, readLength, overHang, 
 					 position, cigarstr, /*paired=*/ 1, 
 					 fragmentProb, fragmentStart,

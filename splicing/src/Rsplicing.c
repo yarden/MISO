@@ -572,7 +572,7 @@ SEXP R_splicing_order_matches(SEXP pmatches) {
 SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength, 
 		     SEXP pnochains, SEXP pnoIterations, SEXP pnoBurnIn, 
 		     SEXP pnoLag, SEXP phyperp, SEXP poverhang, SEXP pstart,
-		     SEXP pstart_psi, SEXP pstart_alpha, SEXP pstop) {
+		     SEXP pstart_psi, SEXP pstop) {
   
   size_t gene=INTEGER(pgene)[0]-1;
   SEXP result, names, class;
@@ -596,7 +596,6 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   splicing_miso_rundata_t rundata;
   int start=INTEGER(pstart)[0];
   splicing_matrix_t start_psi;
-  splicing_matrix_t start_alpha;
   int stop=INTEGER(pstop)[0];
 
   R_splicing_begin();
@@ -620,14 +619,10 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   if (!isNull(pstart_psi)) {
     R_splicing_SEXP_to_matrix(pstart_psi, &start_psi);
   }
-  if (!isNull(pstart_alpha)) {
-    R_splicing_SEXP_to_matrix(pstart_alpha, &start_alpha);
-  }
 
   splicing_miso(&gff, gene, &position, cigarstr, readLength, overhang,
 		noChains, noIterations, noBurnIn, noLag, &hyperp, start, stop,
 		isNull(pstart_psi) ? 0 : &start_psi,
-		isNull(pstart_alpha) ? 0 : &start_alpha,
 		&samples, &logLik, &match_matrix, &class_templates, 
 		&class_counts, /*assignment=*/ 0, &rundata);
   
@@ -669,7 +664,7 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
 			    SEXP pfragmentProb, SEXP pfragmentStart, 
 			    SEXP pnormalMean, SEXP pnormalVar, 
 			    SEXP pnumDevs, SEXP poverhang, SEXP pstart,
-			    SEXP pstartpsi, SEXP pstartalpha, 
+			    SEXP pstartpsi,
 			    SEXP pstopcond) {
   
   size_t gene=INTEGER(pgene)[0]-1;
@@ -698,7 +693,7 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
   splicing_vector_t class_counts;
   splicing_miso_rundata_t rundata;
   int start=INTEGER(pstart)[0];
-  splicing_matrix_t startPsi, startAlpha;
+  splicing_matrix_t startPsi;
   int stopCond=INTEGER(pstopcond)[0];
 
   R_splicing_begin();
@@ -727,15 +722,10 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
     R_splicing_SEXP_to_matrix(pstartpsi, &startPsi);
   }
 
-  if (!isNull(pstartalpha)) {
-    R_splicing_SEXP_to_matrix(pstartalpha, &startAlpha);
-  }  
-
   splicing_miso_paired(&gff, gene, &position, cigarstr, readLength,
 		       overHang, nochains, noIterations, noBurnIn, noLag, 
 		       &hyperp, start, stopCond, 
 		       isNull(pstartpsi) ? 0 : &startPsi, 
-		       isNull(pstartalpha) ? 0 : &startAlpha, 
 		       isNull(pfragmentProb) ? 0 : &fragmentProb, 
 		       fragmentStart, normalMean, normalVar, numDevs,
 		       &samples, &logLik, &match_matrix, &class_templates,
@@ -1070,7 +1060,7 @@ SEXP R_splicing_score_joint_paired(SEXP passignment,
 SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha, 
 			       SEXP psigma, SEXP potherpsi, SEXP potheralpha,
 			       SEXP pnoiso, SEXP pnochains, SEXP pstart,
-			       SEXP pstart_psi, SEXP pstart_alpha) {
+			       SEXP pstart_psi) {
   int mode=INTEGER(pmode)[0];
   splicing_matrix_t psi, alpha, otherpsi, otheralpha, respsi, resalpha;
   double sigma=REAL(psigma)[0];
@@ -1081,7 +1071,6 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
   SEXP result, names;
   int start=INTEGER(pstart)[0];
   splicing_matrix_t start_psi;
-  splicing_matrix_t start_alpha;
 
   R_splicing_begin();
   
@@ -1093,13 +1082,9 @@ SEXP R_splicing_drift_proposal(SEXP pmode, SEXP ppsi, SEXP palpha,
     if (!isNull(pstart_psi)) {
       R_splicing_SEXP_to_matrix(pstart_psi, &start_psi);
     }
-    if (!isNull(pstart_alpha)) {
-      R_splicing_SEXP_to_matrix(pstart_alpha, &start_alpha);
-    }
     splicing_drift_proposal_init(noiso, nochains, &respsi,
 			    &resalpha, &ressigma, start, 
 			    isNull(pstart_psi) ? 0 : &start_psi,
-			    isNull(pstart_alpha) ? 0 : &start_alpha, 
 			    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     PROTECT(result=NEW_LIST(3));
     SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&respsi));

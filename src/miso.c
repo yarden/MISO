@@ -199,6 +199,23 @@ int splicing_mvrnorm(const splicing_matrix_t *mu, double sigma,
   return 0;
 }
 
+int splicing_logit(const splicing_matrix_t *x,
+		   splicing_matrix_t *res, int len, int noChains) {
+
+  int i, j;
+    
+  SPLICING_CHECK(splicing_matrix_resize(res, len, noChains));
+  
+  for (j=0; j<noChains; j++) {
+    double logyn=log(MATRIX(*x, len, j));
+    for (i=0; i<len; i++) {
+      MATRIX(*res, i, j) = log(MATRIX(*x, i, j)) - logyn;
+    }
+  }
+  
+  return 0;
+}
+
 int splicing_logit_inv(const splicing_matrix_t *x, 
 		       splicing_matrix_t *res, int len, int noChains) {
   int i, j;
@@ -287,7 +304,6 @@ int splicing_drift_proposal_init(int noiso, int noChains,
 				 double *ressigma,
 				 splicing_miso_start_t start,
 				 const splicing_matrix_t *start_psi,
-				 const splicing_matrix_t *start_alpha,
 				 const splicing_gff_t *gff, int gene, 
 				 int readLength, int overHang, 
 				 const splicing_vector_int_t *position,
@@ -335,7 +351,7 @@ int splicing_drift_proposal_init(int noiso, int noChains,
       }
       for (i=0; i<noiso-1; i++) { 
 	for (j=0; j<noChains; j++) {
-	  MATRIX(*resalpha, i, j) = 1.0/(noiso-1);
+	  MATRIX(*resalpha, i, j) = 0;
 	}
       }
       *ressigma = SIGMA;
@@ -353,19 +369,14 @@ int splicing_drift_proposal_init(int noiso, int noChains,
 	SPLICING_CHECK(splicing_rng_get_dirichlet(&splicing_rng_default,
 						  &alpha, &tmp));
       }
-      splicing_vector_pop_back(&alpha);
-      for (j=0; j<noChains; j++) {
-	splicing_vector_view(&tmp, &MATRIX(*resalpha, 0, j), noiso-1);
-	SPLICING_CHECK(splicing_rng_get_dirichlet(&splicing_rng_default,
-						  &alpha, &tmp));	    
-      }
+      SPLICING_CHECK(splicing_logit(respsi, resalpha, noiso-1, noChains));
       splicing_vector_destroy(&alpha);
       SPLICING_FINALLY_CLEAN(1);
     }
     break;
   case SPLICING_MISO_START_GIVEN:
     splicing_matrix_update(respsi, start_psi);
-    splicing_matrix_update(resalpha, start_alpha);
+    SPLICING_CHECK(splicing_logit(respsi, resalpha, noiso-1, noChains));
     *ressigma = SIGMA;
     break;
   case SPLICING_MISO_START_LINEAR:
@@ -393,12 +404,8 @@ int splicing_drift_proposal_init(int noiso, int noChains,
 	splicing_vector_view(&tmp2, &MATRIX(*respsi, 0, j), noiso);
 	splicing_vector_update(&tmp2, &tmp);
       }
-      splicing_vector_pop_back(&tmp);
-      for (j=0; j<noChains; j++) {
-	splicing_vector_view(&tmp2, &MATRIX(*resalpha, 0, j), noiso-1);
-	splicing_vector_update(&tmp2, &tmp);
-      }
-      
+      SPLICING_CHECK(splicing_logit(respsi, resalpha, noiso-1,
+				    noChains));
       splicing_vector_destroy(&tmp);
       SPLICING_FINALLY_CLEAN(1);
       *ressigma = SIGMA;
@@ -600,7 +607,6 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  splicing_miso_start_t start,
 		  splicing_miso_stop_t stop,
 		  const splicing_matrix_t *start_psi,
-		  const splicing_matrix_t *start_alpha,
 		  splicing_matrix_t *samples, splicing_vector_t *logLik,
 		  splicing_matrix_t *match_matrix, 
 		  splicing_matrix_t *class_templates,
@@ -625,9 +631,8 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   int shouldstop=0;
   splicing_matrix_t chainMeans, chainVars;
 
-  if (start == SPLICING_MISO_START_GIVEN && 
-      (!start_psi || !start_alpha)) {
-    SPLICING_ERROR("`start_psi' and `start_alpha' must be given when "
+  if (start == SPLICING_MISO_START_GIVEN && !start_psi) {
+    SPLICING_ERROR("`start_psi' must be given when "
 		   "starting from a given PSI", SPLICING_EINVAL);
   }
 
@@ -663,11 +668,6 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
       (splicing_matrix_nrow(start_psi) != noiso ||
        splicing_matrix_ncol(start_psi) != noChains)) {
     SPLICING_ERROR("Given PSI has wrong size", SPLICING_EINVAL);
-  }
-  if (start_alpha && 
-      (splicing_matrix_nrow(start_alpha) != noiso-1 || 
-       splicing_matrix_ncol(start_alpha) != noChains)) {
-    SPLICING_ERROR("Given alpha has wrong size", SPLICING_EINVAL);
   }
 
   rundata->noIso=noiso;
@@ -747,10 +747,11 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 
   SPLICING_CHECK(splicing_drift_proposal_init(noiso, noChains, 
 					      psi, alpha, &sigma,
-					      start, start_psi, start_alpha,
+					      start, start_psi,
 					      gff, gene, readLength,
 					      overHang, position, cigarstr,
 					      /*paired=*/ 0, 0, 0, 0, 0, 0));
+
   SPLICING_CHECK(splicing_drift_proposal_propose(noiso, noChains, 
 						 alpha, sigma, psi, alpha));
   
