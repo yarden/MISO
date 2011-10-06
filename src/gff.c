@@ -798,7 +798,7 @@ int splicing_gff_write(FILE *output, const splicing_gff_t *gff) {
     } else {
       fprintf(output, "%g\t", VECTOR(gff->score)[i]);
     }
-    fprintf(output, "%s\t", strands[gene]);
+    fprintf(output, "%s\t", strands[VECTOR(gff->strand)[gene]]);
     if (VECTOR(gff->phase)[i] == SPLICING_NA_INTEGER) {
       fprintf(output, "%s\t", ".");
     } else {
