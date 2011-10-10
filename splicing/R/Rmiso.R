@@ -49,7 +49,7 @@ MISO <- function(geneStructure, gene=1L, reads,
 
 runMISO <- function(geneStructure, readsfile, 
                     results = c("return", "files", "Rfiles"),
-                    resultDir = ".", readLength = NULL,
+                    resultDir = ".", overWrite = FALSE, readLength = NULL,
                     verbose = TRUE, snowCluster = NULL,
                     seed = NULL, ...) {
 
@@ -72,24 +72,6 @@ runMISO <- function(geneStructure, readsfile,
     paste(sep="", seqid_str, ":", start, "-", end)
   }
   
-  run.return <- function(misoResult, gene) {
-    misoResult
-  }
-
-  run.files <- function(misoResult, gene) {
-    fname <- paste(sep="", resultDir, "/", ids[gene], ".miso")
-    writeMISO(misoResult, fname)
-    fname
-  }
-
-  run.Rfiles <- function(misoResult, gene) {
-    fname <- paste(sep="", resultDir, "/", ids[gene], ".Rdata")
-    save(misoResult, file=fname)
-    fname
-  }
-  
-  funcs <- list("return"=run.return, "files"=run.files, "Rfiles"=run.Rfiles)
-
   myclusterExport <- function(cl, list) {
     for (name in list) {
       clusterCall(cl, assign, name, get(name))
@@ -103,13 +85,26 @@ runMISO <- function(geneStructure, readsfile,
     }
     myclusterExport(snowCluster, c("get.region", "readsfile",
                                    "readLength", "verbose", "ids",
-                                   "geneStructure", "funcs", "results"))
+                                   "geneStructure", "results", "overWrite"))
     myapply <- function(...) parLapply(cl=snowCluster, ...)
   } else {
     myapply <- lapply
   }
 
   res <- myapply(seq_along(ids), function(x) {
+
+    if (results=="files") {
+      fname <- paste(sep="", resultDir, "/", ids[gene], ".miso")
+    } else if (results=="Rfiles") {
+      fname <- paste(sep="", resultDir, "/", ids[gene], ".Rdata")            
+    }
+    
+                 
+    if (!overWrite && results %in% c("files", "Rfiles") &&
+        file.exists(fname)) {
+      return(fname)
+    }
+    
     region <- get.region(x)
     reads <- readSAM(readsfile, region=region)
     rl <- if (is.null(readLength)) {
@@ -119,7 +114,16 @@ runMISO <- function(geneStructure, readsfile,
     }
     if (verbose) { message("Running gene # ", x, ", ", ids[x]) }
     res <- MISO(geneStructure, gene=x, reads=reads, readLength=rl, ...)
-    funcs[[results]](res, x)
+
+    if (results=="return") {
+      res
+    } else if (results=="files") {
+      writeMISO(misoResult, fname)
+      fname
+    } else if (results=="Rfiles") {
+      save(misoResult, file=fname)
+      fname
+    }
   })
   
   names(res) <- ids
