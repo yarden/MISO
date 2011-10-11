@@ -297,7 +297,7 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
   for (i=0; i<noiso; i++) {
     int ilen=VECTOR(isolen)[i];
     int r1= ilen >= fl ? ilen - fl + 1 : 0;
-    int r2= ilen >= fs ? (ilen > fl ? fl - fs : ilen - fs + 1) : 0;
+    int r2= ilen >= fs ? (ilen >= fl ? fl - fs : ilen - fs + 1) : 0;
     /* int r3= fs - 1; */
     double sp=0.0;
     if (r1 > 0) { sp += r1; } 
@@ -360,7 +360,7 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
     int iso=VECTOR(*isoform)[2*i];
     int ilen=VECTOR(isolen)[iso];
     int r1= ilen >= fl ? ilen - fl + 1 : 0;
-    int r2= ilen >= fs ? (ilen > fl ? fl - fs : ilen - fs + 1) : 0;
+    int r2= ilen >= fs ? (ilen >= fl ? fl - fs : ilen - fs + 1) : 0;
     /* int r3= fs - 1; */
     int pos, fragment;
     double sp=0.0;
