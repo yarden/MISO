@@ -50,9 +50,9 @@ run <- function(runFunction, writeFunction, geneStructure, readsfile,
   res <- myapply(seq_along(ids), function(x) {
 
     if (results=="files") {
-      fname <- paste(sep="", resultDir, "/", ids[gene], ".miso")
+      fname <- paste(sep="", resultDir, "/", ids[x], ".miso")
     } else if (results=="Rfiles") {
-      fname <- paste(sep="", resultDir, "/", ids[gene], ".Rdata")            
+      fname <- paste(sep="", resultDir, "/", ids[x], ".Rdata")            
     }
     
                  
@@ -74,10 +74,10 @@ run <- function(runFunction, writeFunction, geneStructure, readsfile,
     if (results=="return") {
       res
     } else if (results=="files") {
-      writeFunction(misoResult, fname)
+      writeFunction(res, fname)
       fname
     } else if (results=="Rfiles") {
-      save(misoResult, file=fname)
+      save(res, file=fname)
       fname
     }
   })
