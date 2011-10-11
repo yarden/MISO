@@ -242,7 +242,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const splicing_vector_int_t *position,
 			 const char **cigarstr, int readLength, int overHang,
 			 int noChains, int noIterations, 
-			 int noBurnIn, int noLag,
+			 int maxIterations, int noBurnIn, int noLag,
 			 const splicing_vector_t *hyperp, 
 			 splicing_miso_start_t start, 
 			 splicing_miso_stop_t stop,
@@ -503,8 +503,14 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
       shouldstop = 1;
       break;
     case SPLICING_MISO_STOP_CONVERGENT_MEAN:
-      SPLICING_CHECK(splicing_i_check_convergent_mean(&chainMeans, &chainVars, 
-						      samples, &shouldstop));
+      if (maxIterations <= noIterations) {
+	shouldstop = 1;
+      } else {
+	SPLICING_CHECK(splicing_i_check_convergent_mean(&chainMeans,
+							&chainVars, 
+							samples, 
+							&shouldstop));
+      }
       break;
     }
 

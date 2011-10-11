@@ -136,8 +136,8 @@ int splicing_gff_fprint(const splicing_gff_t *gff,
 int splicing_gff_print(const splicing_gff_t *gff);
 
 typedef struct splicing_miso_rundata_t {
-  int noIso, noIters, noBurnIn, noLag, noAccepted, noRejected, noChains, 
-    noSamples;
+  int noIso, noIters, maxIters, noBurnIn, noLag, noAccepted, noRejected,
+    noChains, noSamples;
 } splicing_miso_rundata_t;
 
 typedef enum splicing_miso_start_t {
@@ -189,11 +189,9 @@ int splicing_i_check_convergent_mean(splicing_matrix_t *chainMeans,
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
 		  const char **cigarstr, int readLength, int overHang,
-		  int noChains,
-		  int noIterations, int noBurnIn, int noLag,
-		  const splicing_vector_t *hyperp, 
-		  splicing_miso_start_t start,
-		  splicing_miso_stop_t stop,
+		  int noChains, int noIterations, int maxIterations, 
+		  int noBurnIn, int noLag, const splicing_vector_t *hyperp, 
+		  splicing_miso_start_t start, splicing_miso_stop_t stop,
 		  const splicing_matrix_t *start_psi,
 		  splicing_matrix_t *samples, splicing_vector_t *logLik, 
 		  splicing_matrix_t *match_matrix,
@@ -205,8 +203,9 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const splicing_vector_int_t *position,
 			 const char **cigarstr, int readLength, int overHang,
-			 int noChains, int noIterations, int noBurnIn,
-			 int noLag, const splicing_vector_t *hyperp, 
+			 int noChains, int noIterations, int maxIterations,
+			 int noBurnIn, int noLag, 
+			 const splicing_vector_t *hyperp, 
 			 splicing_miso_start_t start, 
 			 splicing_miso_stop_t stop, 
 			 const splicing_matrix_t *start_psi,

@@ -40,7 +40,8 @@ static PyObject* pysplicing_read_gff(PyObject *self, PyObject *args) {
 
 static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   PyObject *gff, *readpos, *readcigar, *hyperp=0;
-  int gene, readLength, noIterations=5000, noBurnIn=500, noLag=10;
+  int gene, readLength, noIterations=5000, maxIterations=100000, 
+    noBurnIn=500, noLag=10;
   int overhang=1;
   splicing_gff_t *mygff;
   splicing_strvector_t myreadcigar;
@@ -88,7 +89,8 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   SPLICING_PYCHECK(splicing_miso(mygff, gene, &myreadpos, 
 				 (const char**) myreadcigar.table, 
 				 readLength, overhang, /*noChains=*/ 1L,
-				 noIterations, noBurnIn, noLag,
+				 noIterations, maxIterations, 
+				 noBurnIn, noLag,
 				 &myhyperp, SPLICING_MISO_START_AUTO, 
 				 SPLICING_MISO_STOP_FIXEDNO, 0,
 				 &samples, &logLik, 

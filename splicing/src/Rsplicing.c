@@ -570,7 +570,8 @@ SEXP R_splicing_order_matches(SEXP pmatches) {
 }
 
 SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength, 
-		     SEXP pnochains, SEXP pnoIterations, SEXP pnoBurnIn, 
+		     SEXP pnochains, SEXP pnoIterations, 
+		     SEXP pmaxIterations, SEXP pnoBurnIn, 
 		     SEXP pnoLag, SEXP phyperp, SEXP poverhang, SEXP pstart,
 		     SEXP pstart_psi, SEXP pstop) {
   
@@ -585,6 +586,7 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   int readLength=INTEGER(preadLength)[0];
   int noChains=INTEGER(pnochains)[0];
   int noIterations=INTEGER(pnoIterations)[0];
+  int maxIterations=INTEGER(pmaxIterations)[0];
   int noBurnIn=INTEGER(pnoBurnIn)[0];
   int noLag=INTEGER(pnoLag)[0];
   splicing_vector_t hyperp;
@@ -621,7 +623,8 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
   }
 
   splicing_miso(&gff, gene, &position, cigarstr, readLength, overhang,
-		noChains, noIterations, noBurnIn, noLag, &hyperp, start, stop,
+		noChains, noIterations, maxIterations, 
+		noBurnIn, noLag, &hyperp, start, stop,
 		isNull(pstart_psi) ? 0 : &start_psi,
 		&samples, &logLik, &match_matrix, &class_templates, 
 		&class_counts, /*assignment=*/ 0, &rundata);
@@ -659,7 +662,7 @@ SEXP R_splicing_miso(SEXP pgff, SEXP pgene, SEXP preads, SEXP preadLength,
 
 SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads, 
 			    SEXP preadLength, SEXP pnochains, 
-			    SEXP pnoIterations, 
+			    SEXP pnoIterations, SEXP pmaxIterations,
 			    SEXP pnoBurnIn, SEXP pnoLag, SEXP phyperp, 
 			    SEXP pfragmentProb, SEXP pfragmentStart, 
 			    SEXP pnormalMean, SEXP pnormalVar, 
@@ -679,6 +682,7 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
   int nochains=INTEGER(pnochains)[0];
   int overHang=INTEGER(poverhang)[0];
   int noIterations=INTEGER(pnoIterations)[0];
+  int maxIterations=INTEGER(pmaxIterations)[0];
   int noBurnIn=INTEGER(pnoBurnIn)[0];
   int noLag=INTEGER(pnoLag)[0];
   splicing_vector_t hyperp;
@@ -723,7 +727,8 @@ SEXP R_splicing_miso_paired(SEXP pgff, SEXP pgene, SEXP preads,
   }
 
   splicing_miso_paired(&gff, gene, &position, cigarstr, readLength,
-		       overHang, nochains, noIterations, noBurnIn, noLag, 
+		       overHang, nochains, noIterations, 
+		       maxIterations, noBurnIn, noLag, 
 		       &hyperp, start, stopCond, 
 		       isNull(pstartpsi) ? 0 : &startPsi, 
 		       isNull(pfragmentProb) ? 0 : &fragmentProb, 
