@@ -49,3 +49,16 @@ solveIso <- function(geneStructure, gene=1L, reads,
           PACKAGE="splicing")
   }
 }
+
+## TODO: writeFunction
+
+runLinear <- function(geneStructure, readsfile,
+                      results=c("return", "files", "Rfiles"),
+                      resultDir=".", overWrite=FALSE, readLength=NULL,
+                      verbose=TRUE, snowCluster=NULL, seed=NULL, ...) {
+
+  run(runFunction=solveIso, writeFunction=NULL, geneStructure=geneStructure,
+      readsfile=readsfile, results=results, resultDir=resultDir,
+      overWrite=overWrite, readLength=readLength, verbose=verbose,
+      snowCluster=snowCluster, seed=seed, ...)
+}

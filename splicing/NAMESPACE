@@ -56,4 +56,4 @@ S3method("runData", "MISOresult")
 
 export(geneComplexity, assignmentMatrix)
 
-export(matchIso, solveIso)
+export(matchIso, solveIso, runLinear)

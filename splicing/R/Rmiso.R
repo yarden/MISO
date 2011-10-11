@@ -49,88 +49,17 @@ MISO <- function(geneStructure, gene=1L, reads,
 
 ## Do all genes, reads are kept on the disk
 
-runMISO <- function(geneStructure, readsfile, 
+runMISO <- function(geneStructure, readsfile,
                     results = c("return", "files", "Rfiles"),
                     resultDir = ".", overWrite = FALSE, readLength = NULL,
                     verbose = TRUE, snowCluster = NULL,
                     seed = NULL, ...) {
 
-  results <- match.arg(results)
-
-  if (is.character(geneStructure)) {
-    geneStructure <- readGFF3(geneStructure)
-  }
-  if (!isGFF3(geneStructure)) {
-    stop("Invalid gene structure(s), must be a GFF3 object or a filename")
-  }
-
-  ids <- geneIds(geneStructure)
-  
-  get.region <- function(gene) {
-    start <- geneStructure$start[geneStructure$gid[gene]+1]
-    end <- geneStructure$end[geneStructure$gid[gene]+1]
-    seqid <- geneStructure$seqid[gene]
-    seqid_str <- geneStructure$seqid_str[seqid+1]
-    paste(sep="", seqid_str, ":", start, "-", end)
-  }
-  
-  myclusterExport <- function(cl, list) {
-    for (name in list) {
-      clusterCall(cl, assign, name, get(name))
-    }
-  }
-
-  if (!is.null(snowCluster)) {
-    require(snow)
-    if (!is.null(seed)) {
-      clusterCall(snowCluster, set.seed, seed)
-    }
-    myclusterExport(snowCluster, c("get.region", "readsfile",
-                                   "readLength", "verbose", "ids",
-                                   "geneStructure", "results", "overWrite"))
-    myapply <- function(...) parLapply(cl=snowCluster, ...)
-  } else {
-    myapply <- lapply
-  }
-
-  res <- myapply(seq_along(ids), function(x) {
-
-    if (results=="files") {
-      fname <- paste(sep="", resultDir, "/", ids[gene], ".miso")
-    } else if (results=="Rfiles") {
-      fname <- paste(sep="", resultDir, "/", ids[gene], ".Rdata")            
-    }
-    
-                 
-    if (!overWrite && results %in% c("files", "Rfiles") &&
-        file.exists(fname)) {
-      return(fname)
-    }
-    
-    region <- get.region(x)
-    reads <- readSAM(readsfile, region=region)
-    rl <- if (is.null(readLength)) {
-      getReadLength(reads)
-    } else {
-      readLength
-    }
-    if (verbose) { message("Running gene # ", x, ", ", ids[x]) }
-    res <- MISO(geneStructure, gene=x, reads=reads, readLength=rl, ...)
-
-    if (results=="return") {
-      res
-    } else if (results=="files") {
-      writeMISO(misoResult, fname)
-      fname
-    } else if (results=="Rfiles") {
-      save(misoResult, file=fname)
-      fname
-    }
-  })
-  
-  names(res) <- ids
-  res
-}
+  run(runFunction=MISO, writeFunction=writeMISO, geneStructure=geneStructure,
+      readsfile=readsfile, results=results, resultDir=resultDir,
+      overWrite=overWrite, readLength=readLength, verbose=verbose,
+      snowCluster=snowCluster, seed=seed, ...)
+}     
 
 print.MISOresult <- function(x, ...) {
   cat(sep="", "MISO ", geneIds(x$geneStructure), ", ",
