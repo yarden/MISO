@@ -486,6 +486,8 @@ int splicing_gff_reindex(splicing_gff_t *gff) {
 
   splicing_vector_int_destroy(&index);
   SPLICING_FINALLY_CLEAN(1);
+
+  return 0;
 }
 
 int splicing_gff_read(FILE *input, splicing_gff_t *gff) {
