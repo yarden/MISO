@@ -1,5 +1,5 @@
 
-R version 2.13.0 (2011-04-13)
+R version 2.13.1 (2011-07-08)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
@@ -66,4 +66,23 @@ Type 'q()' to quit R.
 > reads$paired && all(reads$isoform == 0) && all(reads$cigar=="30M")
 [1] TRUE
 > 
+> ## Check the pairs
+> 
+> load(system.file("test_files/mymm.Rdata", package="splicing"))
+> 
+> expr <- rep(1/noIso(mymm)[2], noIso(mymm)[2])
+> 
+> set.seed(42)
+> res <- .Call("R_splicing_simulate_paired_reads", mymm, 2L, expr, 173L, 33L, 
++              NULL, 0L, 250+33+33, 250+33+33, 4, PACKAGE="splicing")
+> 
+> set.seed(42)
+> reads <- simulateReads(mymm, 2, expr, noReads=346/2, readLength=33,
++                        paired=TRUE, normalMean=250+33+33, normalVar=250+33+33,
++                        numDevs=4)
+> 
+> all(res$position == reads$position)
+[1] TRUE
+> all(reads$position[reads$mypair+1] == reads$pairpos)
+[1] TRUE
 > 

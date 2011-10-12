@@ -92,8 +92,8 @@ simulateReads <- function(geneStructure, gene=1, expression,
                   each=2)), sep="/", rep(1:2, realNoReads/2)),
                 cigar=res$cigar, position=res$position,
                 flag=rep(c(99L,147L), realNoReads/2), ## TODO
-                pairpos=c(res$position[seq.int(2,by=2,length=realNoReads/2)],
-                  res$position[seq.int(1, by=2,length=realNoReads/2)]),
+                pairpos=res$position[as.vector(t(matrix(seq.int(realNoReads),
+                  nc=2, byrow=TRUE)[,2:1]))],
                 noPairs=as.integer(realNoReads/2), noSingles=0L, paired=TRUE,
                 mapq=rep(255L, realNoReads), rnext=rep(0L, realNoReads),
                 tlen=rep(0L, realNoReads), ## TODO
