@@ -322,7 +322,9 @@ int splicing_i_order_reads(splicing_reads_t *reads) {
   
   for (i=0, pos=0; i<noReads; i++) {
     int curr=VECTOR(idx)[i];
-    if (VECTOR(reads->pairpos)[curr] == 0) { 
+    if (VECTOR(taken)[curr]) {
+      /* already done, do nothing */
+    } else if (VECTOR(reads->pairpos)[curr] == 0) { 
       /* has no pair, add it */
       VECTOR(reads->mypair)[pos] = -1;
       VECTOR(idx2)[pos++] = curr;
@@ -335,9 +337,6 @@ int splicing_i_order_reads(splicing_reads_t *reads) {
       VECTOR(reads->flags)[curr] &= nonpaired_mask;
       reads->noPairs--;
       reads->noSingles++;
-    } else if (VECTOR(reads->pairpos)[curr] < 
-	       VECTOR(reads->position)[curr]) {
-      /* already done, do nothing */
     } else {
       /* search for pair, forward */
       int needle=VECTOR(reads->pairpos)[curr], ppos, found;
@@ -368,7 +367,7 @@ int splicing_i_order_reads(splicing_reads_t *reads) {
 
   splicing_vector_char_destroy(&taken);
   SPLICING_FINALLY_CLEAN(1);
-  
+
   /* We have the correct order now, reorder the vectors */
   splicing_vector_int_iindex(&reads->chr, &idx2);
   splicing_strvector_permute(&reads->qname, &idx2);
