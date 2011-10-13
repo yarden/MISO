@@ -144,7 +144,8 @@ static PyObject* pysplicing_write_gff(PyObject *self, PyObject *args) {
 
 static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   PyObject *gff, *readpos, *readcigar, *hyperp=0;
-  int gene, readLength, noIterations=5000, noBurnIn=500, noLag=10;
+  int gene, readLength, noIterations=5000, maxIterations=100000, 
+    noBurnIn=500, noLag=10;
   int overhang=1;
   double normalMean, normalVar, numDevs;
   splicing_gff_t *mygff;
@@ -196,8 +197,8 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_miso_paired(mygff, gene, &myreadpos,
 		       (const char**) myreadcigar.table, readLength,
 		       overhang, /*noChains=*/ 1, noIterations, 
-		       noBurnIn, noLag, &myhyperp, /*start=*/ 0,
-		       /*stop=*/ 0, /*start_psi=*/ 0,
+		       maxIterations, noBurnIn, noLag, &myhyperp, 
+		       /*start=*/ 0, /*stop=*/ 0, /*start_psi=*/ 0,
 		       /*insertProb=*/ 0, /*insertStart=*/ 0,
 		       normalMean, normalVar, numDevs, &samples, &logLik,
 		       /*match_matrix=*/ 0, /*class_templates=*/ 0, 
