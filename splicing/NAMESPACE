@@ -53,6 +53,7 @@ S3method("writeMISO", "MISOresult")
 S3method("postMean", "MISOresult")
 S3method("logLik", "MISOresult")
 S3method("runData", "MISOresult")
+S3method("confint", "MISOresult")
 
 export(geneComplexity, assignmentMatrix)
 

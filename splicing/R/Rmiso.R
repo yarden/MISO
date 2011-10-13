@@ -62,9 +62,12 @@ runMISO <- function(geneStructure, readsfile,
 }     
 
 print.MISOresult <- function(x, ...) {
+  ci <- t(confint(x))-postMean(x)
+  ci <- apply(abs(ci), 1, max)
   cat(sep="", "MISO ", geneIds(x$geneStructure), ", ",
       runData(x)$noIso, " i: ",
-      paste(collapse=" ", round(postMean(x), 2)), "\n")
+      paste(collapse=", ", sep="", round(postMean(x), 2), " (+-",
+            round(ci,2), ")"), "\n")
 }
 
 writeMISO <- function(misoResult, file)
@@ -159,4 +162,15 @@ runData <- function(misoResult)
 
 runData.MISOresult <- function(misoResult) {
   misoResult$runData
+}
+
+confint.MISOresult <- function(misoResult, level=0.95) {
+  if (level <= 0 || level >= 1) {
+    stop("`level' must be greater than 0 and less than 1")
+  }
+  alpha <- 1-level
+  lw.idx <- round(alpha/2 * ncol(misoResult$samples))
+  up.idx <- round((1-alpha/2) * ncol(misoResult$samples))
+  ordered <- apply(misoResult$samples, 1, sort)
+  rbind(ordered[lw.idx,], ordered[up.idx,])
 }
