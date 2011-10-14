@@ -46,7 +46,7 @@ plotIso <- function(geneStructure, gene=1, xlab="", ylab="", ...) {
     start <- end <- 0
     if (length(startcodon)>0 && length(stopcodon)>0 &&
         !is.na(startcodon[1]) && !is.na(stopcodon[1])) {
-      if (strand=="-") {
+      if (strand==SPLICING_STRAND_MINUS) {
         start <- geneStructure$start[stopcodon[1]]
         end <- geneStructure$end[startcodon[1]]
       } else {
