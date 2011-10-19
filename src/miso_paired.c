@@ -409,7 +409,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
       double lp = VECTOR(isolen)[i] - fragmentStart - j + 1 - 
 	2 * (nox-1) * (overHang-1);
       MATRIX(isoscores, j, i) = -log(lp) + logprob;
-      VECTOR(assscores)[i] += lp;
+      if (lp > 0) { VECTOR(assscores)[i] += lp; }
     }
   }
   splicing_vector_int_destroy(&noexons);
