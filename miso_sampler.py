@@ -261,8 +261,6 @@ class MISOSampler:
                                                  long(burn_in),
                                                  long(lag),
                                                  prior_params)
-            print "PAIRED-END results: "
-            print miso_results
         else:
             # Run single-end
             miso_results = pysplicing.MISO(c_gene, 0L,
