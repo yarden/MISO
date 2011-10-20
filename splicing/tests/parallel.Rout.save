@@ -51,34 +51,34 @@ Loading required package: Rmpi
 > runMISO(genes, paste(bamfile2, sep="", ".bam"), snowCluster=cl, seed=42,
 +         verbose=FALSE)
 $`gene-10`
-MISO gene-10, 2 i: 0.22 0.78
+MISO gene-10, 2 i: 0.22 (+-0.14), 0.78 (+-0.14)
 
 $`gene-20`
-MISO gene-20, 2 i: 0.28 0.72
+MISO gene-20, 2 i: 0.28 (+-0.18), 0.72 (+-0.18)
 
 $`gene-30`
-MISO gene-30, 2 i: 0.22 0.78
+MISO gene-30, 2 i: 0.22 (+-0.17), 0.78 (+-0.17)
 
 $`gene-40`
-MISO gene-40, 2 i: 0.18 0.82
+MISO gene-40, 2 i: 0.18 (+-0.12), 0.82 (+-0.12)
 
 $`gene-50`
-MISO gene-50, 2 i: 0.24 0.76
+MISO gene-50, 2 i: 0.24 (+-0.17), 0.76 (+-0.17)
 
 $`gene-60`
-MISO gene-60, 2 i: 0.2 0.8
+MISO gene-60, 2 i: 0.2 (+-0.13), 0.8 (+-0.13)
 
 $`gene-70`
-MISO gene-70, 2 i: 0.27 0.73
+MISO gene-70, 2 i: 0.27 (+-0.13), 0.73 (+-0.13)
 
 $`gene-80`
-MISO gene-80, 2 i: 0.24 0.76
+MISO gene-80, 2 i: 0.24 (+-0.12), 0.76 (+-0.12)
 
 $`gene-90`
-MISO gene-90, 2 i: 0.16 0.84
+MISO gene-90, 2 i: 0.16 (+-0.1), 0.84 (+-0.1)
 
 $`gene-100`
-MISO gene-100, 2 i: 0.17 0.83
+MISO gene-100, 2 i: 0.17 (+-0.08), 0.83 (+-0.08)
 
 > 
 > stopCluster(cl)
