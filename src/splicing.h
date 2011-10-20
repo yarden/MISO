@@ -299,11 +299,12 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 			       int readLength, int overHang, 
 			       splicing_matrix_t *matrix);
 
-int splicing_numeric_cigar(const splicing_vector_int_t *exstart, 
-			   const splicing_vector_int_t *exend,
-			   const splicing_vector_int_t *exidx,
+int splicing_numeric_cigar(splicing_vector_int_t *exstart, 
+			   splicing_vector_int_t *exend,
+			   splicing_vector_int_t *exidx,
 			   int noiso, size_t genestart, 
-			   splicing_vector_int_t *result);
+			   splicing_vector_int_t *result,
+			   int skip);
 
 int splicing_create_gene(const splicing_vector_int_t *exons,
 			 const splicing_vector_int_t *isoforms,

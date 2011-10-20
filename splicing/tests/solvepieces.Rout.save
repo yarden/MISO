@@ -1,0 +1,75 @@
+
+R version 2.13.1 (2011-07-08)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> library(splicing)
+> 
+> gene <- createGene(list(c(1,20), c(31,40)),
++                    list(c(1), c(1,2)))
+> 
+> exons <- .Call("R_splicing_gff_exon_start_end", gene, 1L, PACKAGE="splicing")
+> 
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 0L)
+[1]   0  20   0  20 -10  10   0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 1L)
+[1]   0  19   0  19 -10  10   0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 19L)
+[1]   0   1   0   1 -10  10   0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 20L)
+[1]   0   0 -10  10   0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 21L)
+[1]  0  0 -9 10  0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 25L)
+[1]  0  0 -5 10  0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 29L)
+[1]  0  0 -1 10  0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 30L)
+[1]  0  0 10  0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 31L)
+[1] 0 0 9 0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 40L)
+[1] 0 0 0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 50L)
+[1] 0 0 0
+> 
+> exons$start <- exons$start - 1L
+> exons$end   <- exons$end   - 1L
+> 
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 0L)
+[1]   0  20   0  20 -10  10   0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 1L)
+[1]   0  19   0  19 -10  10   0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 19L)
+[1]   0   1   0   1 -10  10   0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 20L)
+[1]   0   0 -10  10   0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 21L)
+[1]  0  0 -9 10  0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 25L)
+[1]  0  0 -5 10  0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 29L)
+[1]  0  0 -1 10  0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 30L)
+[1]  0  0 10  0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 31L)
+[1] 0 0 9 0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 40L)
+[1] 0 0 0
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 50L)
+[1] 0 0 0
+> 

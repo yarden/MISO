@@ -106,6 +106,8 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
 
+  SPLICING_CHECK(splicing_vector_int_init(&cigar, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &cigar);
   SPLICING_CHECK(splicing_vector_int_init(&exstart, 0));
   SPLICING_FINALLY(splicing_vector_int_destroy, &exstart);
   SPLICING_CHECK(splicing_vector_int_init(&exend, 0));
@@ -120,10 +122,13 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
     VECTOR(exend)[i] -= genestart;
   }
   
-  SPLICING_CHECK(splicing_vector_int_init(&cigar, 0));
-  SPLICING_FINALLY(splicing_vector_int_destroy, &cigar);
   SPLICING_CHECK(splicing_numeric_cigar(&exstart, &exend, &exidx, noiso, 0,
-					&cigar));
+					&cigar, /* start= */ 0));
+
+  splicing_vector_int_destroy(&exidx);
+  splicing_vector_int_destroy(&exend);
+  splicing_vector_int_destroy(&exstart);
+  SPLICING_FINALLY_CLEAN(3);
   
   SPLICING_CHECK(splicing_vector_int_init(&mp, 0));
   SPLICING_FINALLY(splicing_vector_int_destroy, &mp);
@@ -258,10 +263,7 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   splicing_vector_int_destroy(&mppos);
   splicing_vector_int_destroy(&mp);
   splicing_vector_int_destroy(&cigar);
-  splicing_vector_int_destroy(&exidx);
-  splicing_vector_int_destroy(&exend);
-  splicing_vector_int_destroy(&exstart);
-  SPLICING_FINALLY_CLEAN(8);
+  SPLICING_FINALLY_CLEAN(5);
 
   splicing_i_assignmat_simplify(matrix);
   

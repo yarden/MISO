@@ -219,6 +219,13 @@ int R_splicing_SEXP_to_vector_int(SEXP pv, splicing_vector_int_t *v) {
   return 0;
 }
 
+int R_splicing_SEXP_to_vector_int_copy(SEXP pv, splicing_vector_int_t *v) {
+  int n=GET_LENGTH(pv);
+  splicing_vector_int_init(v, n);
+  memcpy(VECTOR(*v), INTEGER(pv), sizeof(int) * n);
+  return 0;
+}
+
 int R_splicing_SEXP_to_vector(SEXP pv, splicing_vector_t *v) {
   v->stor_begin = REAL(pv);
   v->stor_end = v->end = v->stor_begin + GET_LENGTH(pv);
@@ -1306,26 +1313,34 @@ SEXP R_splicing_gff_exon_start_end(SEXP pgff, SEXP pgene) {
 }
   
 					  
-SEXP R_splicing_numeric_cigar(SEXP pexstart, SEXP pexend, SEXP pexidx, 
-			      SEXP pnoiso, SEXP pgenestart) {
+SEXP R_splicing_numeric_cigar(SEXP pexons, SEXP pnoiso, SEXP pgenestart, 
+			      SEXP pskip) {
   SEXP result;
+  SEXP pexstart=R_splicing_getListElement(pexons, "start");
+  SEXP pexend=R_splicing_getListElement(pexons, "end");
+  SEXP pexidx=R_splicing_getListElement(pexons, "idx");
   splicing_vector_int_t exstart, exend, exidx, res;
   int noiso=INTEGER(pnoiso)[0];
   int genestart=INTEGER(pgenestart)[0];
+  int skip=INTEGER(pskip)[0];
   
   R_splicing_begin();
   
-  R_splicing_SEXP_to_vector_int(pexstart, &exstart);
-  R_splicing_SEXP_to_vector_int(pexend, &exend);  
-  R_splicing_SEXP_to_vector_int(pexidx, &exidx);  
+  R_splicing_SEXP_to_vector_int_copy(pexstart, &exstart);
+  R_splicing_SEXP_to_vector_int_copy(pexend, &exend);  
+  R_splicing_SEXP_to_vector_int_copy(pexidx, &exidx);  
   splicing_vector_int_init(&res, 0);
 
-  splicing_numeric_cigar(&exstart, &exend, &exidx, noiso, genestart, &res);
+  splicing_numeric_cigar(&exstart, &exend, &exidx, noiso, genestart, &res, 
+			 skip);
   
   PROTECT(result=R_splicing_vector_int_to_SEXP(&res));
-  
   splicing_vector_int_destroy(&res);
-  
+
+  splicing_vector_int_destroy(&exidx);
+  splicing_vector_int_destroy(&exend);
+  splicing_vector_int_destroy(&exstart);
+
   R_splicing_end();
   
   UNPROTECT(1);
@@ -2304,3 +2319,4 @@ SEXP R_splicing_rng_get_dirichlet(SEXP palpha) {
   UNPROTECT(1);
   return result;
 }
+
