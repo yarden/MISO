@@ -17,7 +17,7 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
     graphToGene, bam_filename, axvar, paired_end=False, intron_scale=30,\
     exon_scale=4, color='r', ymax=None, logged=False, coverage=1,\
     number_junctions=True, resolution=.5, showXaxis=True, showYaxis=True,\
-    showYlabel=True):
+    showYlabel=True, font_size=6):
 
     bamfile = sam_utils.load_bam_reads(bam_filename) 
 
@@ -108,28 +108,28 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
 
     if showXaxis:
         axvar.xaxis.set_ticks_position('bottom')
-        xlabel('Genomic coordinate (%s)'%(gene_obj.chrom), fontsize=6)
+        xlabel('Genomic coordinate (%s)'%(gene_obj.chrom), fontsize=font_size)
         xticks(linspace(0, max(graphcoords), nxticks), [graphToGene[int(x)] for x in \
-            linspace(0, max(graphcoords), nxticks)], fontsize=6)
+            linspace(0, max(graphcoords), nxticks)], fontsize=font_size)
     else:
         axvar.spines['bottom'].set_color('none')
         xticks([])
 
     if showYlabel:
         if logged:
-            ylabel('RPKM $(log_{10})$', fontsize=6)
+            ylabel('RPKM $(log_{10})$', fontsize=font_size)
         else:
-            ylabel('RPKM', fontsize=6)
+            ylabel('RPKM', fontsize=font_size)
     if showYaxis:
         axvar.yaxis.set_ticks_position('left')
         yticks(linspace(0, ymax, nyticks), ['%d'%(x) for x in \
-            linspace(0, ymax, nyticks)], fontsize=6)
+            linspace(0, ymax, nyticks)], fontsize=font_size)
     else:
         axvar.spines['left'].set_color('none')
         yticks([])
     
     text(max(graphcoords), ymax, os.path.basename(bam_filename).split(".")[0],\
-        fontsize=8, va='bottom', ha='right', color=color)
+        fontsize=font_size, va='bottom', ha='right', color=color)
     xlim(0, graphcoords[-1])
 
 
@@ -137,7 +137,8 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
 def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
     intron_scale=30, exon_scale=1, gene_posterior_ratio=5, posterior_bins=40,\
     colors=None, ymax=None, logged=False, show_posteriors=True, coverages=None,\
-    number_junctions=True, resolution=.5, fig_width=8.5, fig_height=11):
+    number_junctions=True, resolution=.5, fig_width=8.5, fig_height=11,\
+    font_size=6):
 
     # Parse gene pickle and get scaling information.
     tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs = \
@@ -172,7 +173,7 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
             intron_scale=intron_scale, exon_scale=exon_scale, color=color,\
             ymax=ymax, logged=logged, coverage=coverage,\
             number_junctions=number_junctions, resolution=resolution,\
-            showXaxis=showXaxis, showYlabel=False)
+            showXaxis=showXaxis, showYlabel=False, font_size=font_size)
 
         if show_posteriors:
             try:
@@ -180,7 +181,7 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
                     (i, gene_posterior_ratio - 1))
 
                 plot_posterior_single(miso_file, ax2, posterior_bins,\
-                    showXaxis=showXaxis, showYlabel=False)
+                    showXaxis=showXaxis, showYlabel=False, font_size=font_size)
             except:
                 box(on=False)
                 xticks([])
@@ -192,7 +193,7 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
         colspan=gene_posterior_ratio - 1, rowspan=2)
     plot_mRNAs(tx_start, mRNAs, graphcoords, ax)
 
-    subplots_adjust(hspace=.2, wspace=.7)
+    subplots_adjust(hspace=.1, wspace=.7)
     savefig(out_f)
 
 
@@ -326,7 +327,7 @@ def plot_mRNAs(tx_start, mRNAs, graphcoords, axvar):
 
 # Plot a posterior probability distribution for a MISO event
 def plot_posterior_single(miso_f, axvar, posterior_bins,\
-    showXaxis=True, showYaxis=True, showYlabel=True):
+    showXaxis=True, showYaxis=True, showYlabel=True, font_size=6):
   
     posterior_bins = int(posterior_bins) 
     psis = [] 
@@ -355,7 +356,7 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,\
 
     text(1, ymax,\
         "$\Psi$ = %.2f\n$\Psi_{0.05}$ = %.2f\n$\Psi_{0.95}$ = %.2f"%\
-        (median(psis), clow, chigh), fontsize=6, va='top', ha='left')
+        (median(psis), clow, chigh), fontsize=font_size, va='top', ha='left')
 
     ylim(ymin, ymax)
     axvar.spines['left'].set_bounds(0, ymax)
@@ -366,7 +367,7 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,\
     axvar.yaxis.set_ticks_position('left')
     
     if showXaxis:
-        xticks(fontsize=6)
+        xticks(fontsize=font_size)
         xlabel("Posterior $\Psi$", fontsize=6)
     else:
         [label.set_visible(False) for label in axvar.get_xticklabels()]
@@ -375,11 +376,11 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,\
     if showYaxis:
         yticks(linspace(0, ymax, nyticks),\
             ["%d"%(y) for y in linspace(0, ymax, nyticks)],\
-            fontsize=6)
+            fontsize=font_size)
     else:
         yticks([])
     if showYlabel:
-        ylabel("Frequency", fontsize=6, ha='right', va='center')
+        ylabel("Frequency", fontsize=font_size, ha='right', va='center')
 
 
 # Get points in a cubic bezier.
@@ -409,11 +410,12 @@ def plot_density_from_file(pickle_filename, event, settings_f, out_f):
         "gene_posterior_ratio": 5,\
         "resolution": .5,\
         "fig_width": 8.5,\
-        "fig_height": 11} 
+        "fig_height": 11,\
+        "font_size": 6} 
     for section in config.sections():
         for option in config.options(section):
             if option in ["intron_scale", "exon_scale", "ymax", "resolution",\
-                "fig_width", "fig_height"]:
+                "fig_width", "fig_height", "font_size"]:
                 settings[option] = config.getfloat(section, option)
             elif option in ["posterior_bins", "gene_posterior_ratio"]:
                 settings[option] = config.getint(section, option)
@@ -458,6 +460,7 @@ def plot_density_from_file(pickle_filename, event, settings_f, out_f):
         colors=colors, ymax=settings["ymax"], coverages=coverages,\
         number_junctions=settings["number_junctions"],\
         resolution=settings["resolution"],\
-        fig_width=settings["fig_width"], fig_height=settings["fig_height"])
+        fig_width=settings["fig_width"], fig_height=settings["fig_height"],\
+        font_size=settings["font_size"])
 
 
