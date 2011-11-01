@@ -13,11 +13,11 @@ from matplotlib.path import Path
 
 # Plot MISO events using BAM files and posterior distribution files.
 # If comparison files are available, plot bayes factors too.
-def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
+def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,\
     graphToGene, bam_filename, axvar, paired_end=False, intron_scale=30,\
     exon_scale=4, color='r', ymax=None, logged=False, coverage=1,\
     number_junctions=True, resolution=.5, showXaxis=True, showYaxis=True,\
-    showYlabel=True, font_size=6):
+    showYlabel=True, font_size=6, junction_log_base=10):
 
     bamfile = sam_utils.load_bam_reads(bam_filename) 
 
@@ -31,7 +31,7 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
  
     if logged:
         wiggle = log10(wiggle + 1)
-
+    
     maxheight = max(wiggle)
     if ymax is None:
         ymax = 1.1 * maxheight
@@ -46,15 +46,14 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
     tmpval = []
     for i in range(len(graphcoords)):
         tmpval.append(wiggle[i])
-        if graphcoords[i] - prevx > resolution:
+        if abs(graphcoords[i] - prevx) > resolution:
             compressed_wiggle.append(mean(tmpval))
             compressed_x.append(prevx)
             prevx = graphcoords[i]
             tmpval = []
-            
+
     fill_between(compressed_x, compressed_wiggle,\
         y2=0, color=color, lw=0)
-    #fill_between(graphcoords, wiggle, y2=0, color=color, lw=0)
    
     sslists = []
     for mRNA in mRNAs:
@@ -65,8 +64,10 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
 
     for jxn in jxns:
         leftss, rightss = map(int, jxn.split(":"))
+
         ss1, ss2 = [graphcoords[leftss - tx_start - 1],\
             graphcoords[rightss - tx_start]]
+
         mid = (ss1 + ss2) / 2
         h = -3 * ymin / 4
    
@@ -82,6 +83,7 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
             else:                         # put on top 
                 leftdens = wiggle[leftss - tx_start - 1]
                 rightdens = wiggle[rightss - tx_start]
+
                 pts = [(ss1, leftdens),\
                     (ss1, leftdens + h),\
                     (ss2, rightdens + h),\
@@ -93,7 +95,8 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
                     fontsize=6, ha='center', va='center', backgroundcolor='w')
 
             a = Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])
-            p = PathPatch(a, ec=color, lw=jxns[jxn] ** .2, fc='none')
+            p = PathPatch(a, ec=color, lw=log(jxns[jxn] + 1) /\
+                log(junction_log_base), fc='none')
             axvar.add_patch(p) 
 
     # Format plot.
@@ -101,15 +104,16 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
     nxticks = 5
     ylim(ymin, ymax)
 
-
     axvar.spines['left'].set_bounds(0, ymax)
     axvar.spines['right'].set_color('none')
     axvar.spines['top'].set_color('none')
 
     if showXaxis:
         axvar.xaxis.set_ticks_position('bottom')
-        xlabel('Genomic coordinate (%s)'%(gene_obj.chrom), fontsize=font_size)
-        xticks(linspace(0, max(graphcoords), nxticks), [graphToGene[int(x)] for x in \
+        xlabel('Genomic coordinate (%s), "%s" strand'%(gene_obj.chrom,\
+            strand), fontsize=font_size)
+        xticks(linspace(0, max(graphcoords), nxticks),\
+            [graphToGene[int(x)] for x in \
             linspace(0, max(graphcoords), nxticks)], fontsize=font_size)
     else:
         axvar.spines['bottom'].set_color('none')
@@ -130,7 +134,7 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
     
     text(max(graphcoords), ymax, os.path.basename(bam_filename).split(".")[0],\
         fontsize=font_size, va='bottom', ha='right', color=color)
-    xlim(0, graphcoords[-1])
+    xlim(0, max(graphcoords))
 
 
 # Plot density for a series of bam files.
@@ -138,13 +142,13 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
     intron_scale=30, exon_scale=1, gene_posterior_ratio=5, posterior_bins=40,\
     colors=None, ymax=None, logged=False, show_posteriors=True, coverages=None,\
     number_junctions=True, resolution=.5, fig_width=8.5, fig_height=11,\
-    font_size=6):
+    font_size=6, junction_log_base=10, reverse_minus=False):
 
     # Parse gene pickle and get scaling information.
-    tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs = \
+    tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand = \
         parseGene(pickle_filename, event)
-    graphcoords, graphToGene = getScaling(tx_start, tx_end,\
-        exon_starts, exon_ends, intron_scale, exon_scale)
+    graphcoords, graphToGene = getScaling(tx_start, tx_end, strand,\
+        exon_starts, exon_ends, intron_scale, exon_scale, reverse_minus)
 
     nfiles = len(bam_files)
     figure(figsize=(fig_width, fig_height))
@@ -168,12 +172,13 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
         miso_file = os.path.expanduser(miso_files[i])
         ax1 = subplot2grid((nfiles + 2, gene_posterior_ratio), (i, 0),\
             colspan=gene_posterior_ratio - 1)
-        plot_density_single(tx_start, tx_end, gene_obj, mRNAs,\
+        plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand,\
             graphcoords, graphToGene, bam_file, ax1, paired_end=False,\
             intron_scale=intron_scale, exon_scale=exon_scale, color=color,\
             ymax=ymax, logged=logged, coverage=coverage,\
             number_junctions=number_junctions, resolution=resolution,\
-            showXaxis=showXaxis, showYlabel=False, font_size=font_size)
+            showXaxis=showXaxis, showYlabel=False, font_size=font_size,\
+            junction_log_base=junction_log_base)
 
         if show_posteriors:
             try:
@@ -191,7 +196,7 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
     # Draw gene structure
     ax = subplot2grid((nfiles + 2, gene_posterior_ratio), (nfiles, 0),\
         colspan=gene_posterior_ratio - 1, rowspan=2)
-    plot_mRNAs(tx_start, mRNAs, graphcoords, ax)
+    plot_mRNAs(tx_start, mRNAs, strand, graphcoords, ax)
 
     subplots_adjust(hspace=.1, wspace=.7)
     savefig(out_f)
@@ -217,8 +222,9 @@ def parseGene(pickle_filename, event):
                     [mRNA_id]['exons'].\
                     iteritems():
 
-                    exon_rec = gene_hierarchy[gene_id]['mRNAs'][mRNA_id]['exons']\
-                        [exon_id]['record']
+                    exon_rec = gene_hierarchy[gene_id]['mRNAs']\
+                        [mRNA_id]['exons'][exon_id]['record']
+                    strand = exon_rec.strand
                     exon_starts.append(exon_rec.start)
                     exon_ends.append(exon_rec.end)
                     mRNA.append(sorted([exon_rec.start, exon_rec.end]))
@@ -227,10 +233,11 @@ def parseGene(pickle_filename, event):
             break
 
     mRNAs.sort(key=len)
-    return tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs
+    return tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand
 
 # Compute the scaling factor across various genic regions.
-def getScaling(tx_start, tx_end, exon_starts, exon_ends, intron_scale, exon_scale):
+def getScaling(tx_start, tx_end, strand, exon_starts, exon_ends,\
+    intron_scale, exon_scale, reverse_minus):
    
     exoncoords = zeros((tx_end - tx_start + 1))
     for i in range(len(exon_starts)):
@@ -239,14 +246,23 @@ def getScaling(tx_start, tx_end, exon_starts, exon_ends, intron_scale, exon_scal
     graphToGene = {}
     graphcoords = zeros((tx_end - tx_start + 1), dtype='f')
     x = 0
-    for i in range(tx_end - tx_start + 1):
-        graphcoords[i] = x
-        graphToGene[int(x)] = i + tx_start
-        if exoncoords[i] == 1:
-            x += 1. / exon_scale
-        else:
-            x += 1. / intron_scale
-
+    if strand == '+' or not reverse_minus:
+        for i in range(tx_end - tx_start + 1):
+            graphcoords[i] = x
+            graphToGene[int(x)] = i + tx_start
+            if exoncoords[i] == 1:
+                x += 1. / exon_scale
+            else:
+                x += 1. / intron_scale
+    else:
+        for i in range(tx_end - tx_start + 1):
+            graphcoords[-(i + 1)] = x
+            graphToGene[int(x)] = tx_end - i + 1
+            if exoncoords[-(i + 1)] == 1:
+                x += 1. / exon_scale
+            else:
+                x += 1. / intron_scale
+    
     return graphcoords, graphToGene
 
 
@@ -272,13 +288,20 @@ def readsToWiggle(reads, tx_start, tx_end):
             e1 = pos - tx_start + left
             s2 = pos + left + middle - tx_start
             e2 = pos + left + middle + right - tx_start
-            if min([s1, e1]) > 0 and max([s1, e1]) < len(wiggle) - 1 and \
-                min([s2, e2]) > 0 and max([s2, e2]) < len(wiggle) - 1:
-                wiggle[s1 : e1] += 1. / rlen
-                wiggle[s2 : e2] += 1. / rlen
 
-                leftss = pos + left
-                rightss = pos + left + middle + 1
+            # Include read coverage from adjacent junctions.
+            if (e1 >= 0 and e1 < len(wiggle)) or (s1 >= 0 and s1 < len(wiggle)):
+                wiggle[max([s1, 0]) : min([e1, len(wiggle)])] += 1. / rlen
+            if (e2 >= 0 and e2 < len(wiggle)) or (s2 >= 0 and s2 < len(wiggle)):
+                wiggle[max([s2, 0]) : min([e2, len(wiggle)])] += 1. / rlen
+
+            # Plot a junction if both splice sites are within locus.
+            leftss = pos + left
+            rightss = pos + left + middle + 1
+            if leftss - tx_start >= 0 and leftss - tx_start < len(wiggle) \
+                and rightss - tx_start >= 0 and rightss - tx_start < \
+                len(wiggle): 
+
                 jxn = ":".join(map(str, [leftss, rightss]))
                 try:
                     jxns[jxn] += 1 
@@ -289,7 +312,7 @@ def readsToWiggle(reads, tx_start, tx_end):
 
 
 # Draw the gene structure.
-def plot_mRNAs(tx_start, mRNAs, graphcoords, axvar):
+def plot_mRNAs(tx_start, mRNAs, strand, graphcoords, axvar):
   
     yloc = 0 
     exonwidth = .3
@@ -349,14 +372,18 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,\
         normed=True, facecolor='k', edgecolor='w', lw=.2) 
     axvline(clow, ymin=.33, linestyle='--', dashes=(1, 1), color='#CCCCCC', lw=.5)
     axvline(chigh, ymin=.33, linestyle='--', dashes=(1, 1), color='#CCCCCC', lw=.5)
-    axvline(median(psis), ymin=.33, color='r')
+    axvline(mean(psis), ymin=.33, color='r')
 
     ymax = max(y) * 1.5
     ymin = -.5 * ymax
 
+    #text(1, ymax,\
+    #    "$\Psi$ = %.2f"%(mean(psis)), va='top', ha='left',\
+    #    fontsize=font_size)
+    
     text(1, ymax,\
         "$\Psi$ = %.2f\n$\Psi_{0.05}$ = %.2f\n$\Psi_{0.95}$ = %.2f"%\
-        (median(psis), clow, chigh), fontsize=font_size, va='top', ha='left')
+        (mean(psis), clow, chigh), fontsize=font_size, va='top', ha='left')
 
     ylim(ymin, ymax)
     axvar.spines['left'].set_bounds(0, ymax)
@@ -368,7 +395,7 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,\
     
     if showXaxis:
         xticks(fontsize=font_size)
-        xlabel("Posterior $\Psi$", fontsize=6)
+        xlabel("Posterior $\Psi$", fontsize=font_size)
     else:
         [label.set_visible(False) for label in axvar.get_xticklabels()]
 
@@ -411,15 +438,18 @@ def plot_density_from_file(pickle_filename, event, settings_f, out_f):
         "resolution": .5,\
         "fig_width": 8.5,\
         "fig_height": 11,\
+        "junction_log_base": 10.,\
+        "reverse_minus": False,\
         "font_size": 6} 
     for section in config.sections():
         for option in config.options(section):
             if option in ["intron_scale", "exon_scale", "ymax", "resolution",\
-                "fig_width", "fig_height", "font_size"]:
+                "fig_width", "fig_height", "font_size", "junction_log_base"]:
                 settings[option] = config.getfloat(section, option)
             elif option in ["posterior_bins", "gene_posterior_ratio"]:
                 settings[option] = config.getint(section, option)
-            elif option in ["logged", "show_posteriors", "number_junctions"]:
+            elif option in ["logged", "show_posteriors", "number_junctions",\
+                "reverse_minus"]:
                 settings[option] = config.getboolean(section, option)
             else:
                 settings[option] = config.get(section, option)
@@ -437,7 +467,6 @@ def plot_density_from_file(pickle_filename, event, settings_f, out_f):
         bam_files = settings["bam_files"]
     chrom = event.split(":")[0]
     strand = event.split(":")[-1]
-    print chrom
     if "miso_prefix" in settings:
         miso_files = [os.path.join(settings["miso_prefix"], x, chrom,\
             event) + ".miso" for x in settings["miso_files"]]
@@ -461,6 +490,8 @@ def plot_density_from_file(pickle_filename, event, settings_f, out_f):
         number_junctions=settings["number_junctions"],\
         resolution=settings["resolution"],\
         fig_width=settings["fig_width"], fig_height=settings["fig_height"],\
-        font_size=settings["font_size"])
+        font_size=settings["font_size"],\
+        junction_log_base=settings["junction_log_base"],\
+        reverse_minus=settings["reverse_minus"])
 
 
