@@ -16,10 +16,17 @@ typedef struct TYPE(splicing_vector) {
 #ifndef SPLICING_VECTOR_NULL
 #define SPLICING_VECTOR_NULL { 0,0,0 }
 #endif
+
 #ifndef SPLICING_VECTOR_INIT_FINALLY
 #define SPLICING_VECTOR_INIT_FINALLY(v, size) \
   do { SPLICING_CHECK(splicing_vector_init(v, size)); \
   SPLICING_FINALLY(splicing_vector_destroy, v); } while (0)
+#endif
+
+#ifndef SPLICING_VECTOR_INT_INIT_FINALLY
+#define SPLICING_VECTOR_INT_INIT_FINALLY(v, size) \
+  do { SPLICING_CHECK(splicing_vector_int_init(v, size)); \
+  SPLICING_FINALLY(splicing_vector_int_destroy, v); } while (0)
 #endif
 
 /*--------------------*/

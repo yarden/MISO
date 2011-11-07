@@ -154,8 +154,9 @@ int splicing_simulate_reads(const splicing_gff_t *gff, int gene,
 
   /* Translate isoform coordinates to genomic coordintes */
 
-  SPLICING_CHECK(splicing_iso_to_genomic(gff, gene, isoform, &exstart, 
-					 &exend, &exidx, position));
+  /* TODO: some of this is already calculated */
+  SPLICING_CHECK(splicing_iso_to_genomic(gff, gene, isoform, /*converter=*/ 0,
+					 position));
 
   /* CIGAR strings */
 
@@ -391,8 +392,9 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
 
   /* Translate positions to genomic coordinates */
 
-  SPLICING_CHECK(splicing_iso_to_genomic(gff, gene, isoform, &exstart,
-  					 &exend, &exidx, position));
+  /* TODO: some of this is already calculated */
+  SPLICING_CHECK(splicing_iso_to_genomic(gff, gene, isoform, /*converter=*/ 0,
+					 position));
 
   /* CIGAR strings */
 

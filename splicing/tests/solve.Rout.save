@@ -1,5 +1,5 @@
 
-R version 2.13.1 (2011-07-08)
+R version 2.14.0 (2011-10-31)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
@@ -39,7 +39,7 @@ Type 'q()' to quit R.
 > mres2 <- solveIso(gene, reads=reads2, readLength=20L, paired=TRUE,
 +                   normalMean=90, normalVar=50, numDevs=4)
 > mres2$expression
-[1] 0.2059162 0.2943647 0.4997191
+[1] 0.2694845 0.2433443 0.4871712
 > 
 > assmat <- assignmentMatrix(gene, readLength=20, paired=TRUE,
 +                            normalMean=90, normalVar=50, numDevs=4)
@@ -57,7 +57,7 @@ Type 'q()' to quit R.
 > 
 > n(fit$coefficients)
        X1        X2        X3 
-0.2059162 0.2943647 0.4997191 
+0.2694845 0.2433443 0.4871712 
 > 
 > ########
 > 

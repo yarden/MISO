@@ -299,12 +299,11 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 			       int readLength, int overHang, 
 			       splicing_matrix_t *matrix);
 
-int splicing_numeric_cigar(splicing_vector_int_t *exstart, 
-			   splicing_vector_int_t *exend,
-			   splicing_vector_int_t *exidx,
+int splicing_numeric_cigar(const splicing_vector_int_t *exstart, 
+			   const splicing_vector_int_t *exend,
+			   const splicing_vector_int_t *exidx,
 			   int noiso, size_t genestart, 
-			   splicing_vector_int_t *result,
-			   int skip);
+			   splicing_vector_int_t *result);
 
 int splicing_create_gene(const splicing_vector_int_t *exons,
 			 const splicing_vector_int_t *isoforms,
@@ -363,16 +362,45 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       splicing_matrix_t *assignment_matrix,
 			       splicing_vector_t *expression);
 
+typedef struct splicing_gff_converter_t {
+  size_t noiso;
+  splicing_vector_int_t exstart, exend, exidx, exlim, shift;
+} splicing_gff_converter_t;
+
+int splicing_gff_converter_init(const splicing_gff_t *gff, size_t gene,
+				splicing_gff_converter_t *converter);
+
+void splicing_gff_converter_destroy(splicing_gff_converter_t *converter);
+
 int splicing_iso_to_genomic(const splicing_gff_t *gff, size_t gene, 
 			    const splicing_vector_int_t *isoform,
-			    const splicing_vector_int_t *exstart,
-			    const splicing_vector_int_t *exend,
-			    const splicing_vector_int_t *exidx,
+			    const splicing_gff_converter_t *converter,
 			    splicing_vector_int_t *position);
+
+int splicing_iso_to_genomic_1(const splicing_gff_t *gff, size_t gene,
+			      int isoform, int position, 
+			      const splicing_gff_converter_t *converter,
+			      int *result);
+
+int splicing_iso_to_genomic_all(const splicing_gff_t *gff, size_t gene,
+				int position, 
+				const splicing_gff_converter_t *converter,
+				splicing_vector_int_t *result);
 
 int splicing_genomic_to_iso(const splicing_gff_t *gff, size_t gene,
 			    const splicing_vector_int_t *position, 
+			    const splicing_gff_converter_t *converter,
 			    splicing_matrix_int_t *isopos);
+
+int splicing_genomic_to_iso_1(const splicing_gff_t *gff, size_t gene,
+			      int isoform, int position, 
+			      const splicing_gff_converter_t *converter,
+			      int *result);
+
+int splicing_genomic_to_iso_all(const splicing_gff_t *gff, size_t gene,
+				int position, 
+				const splicing_gff_converter_t *converter,
+				splicing_vector_int_t *result);
 
 int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 				      int readLength, int overHang,
@@ -380,6 +408,13 @@ int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 				      int fragmentStart, double normalMean,
 				      double normalVar, double numDevs,
 				      splicing_matrix_t *matrix);
+
+int splicing_paired_assignment_matrix_old(const splicing_gff_t *gff, 
+				  size_t gene, int readLength, int overHang,
+				  const splicing_vector_t *fragmentProb,
+				  int fragmentStart, double normalMean,
+				  double normalVar, double numDevs,
+				  splicing_matrix_t *matrix);
 
 int splicing_reassign_samples_paired(
 			     const splicing_matrix_t *matches, 

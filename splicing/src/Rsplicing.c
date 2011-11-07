@@ -1313,8 +1313,8 @@ SEXP R_splicing_gff_exon_start_end(SEXP pgff, SEXP pgene) {
 }
   
 					  
-SEXP R_splicing_numeric_cigar(SEXP pexons, SEXP pnoiso, SEXP pgenestart, 
-			      SEXP pskip) {
+SEXP R_splicing_numeric_cigar(SEXP pexons, SEXP pnoiso, SEXP pgenestart) {
+
   SEXP result;
   SEXP pexstart=R_splicing_getListElement(pexons, "start");
   SEXP pexend=R_splicing_getListElement(pexons, "end");
@@ -1322,24 +1322,18 @@ SEXP R_splicing_numeric_cigar(SEXP pexons, SEXP pnoiso, SEXP pgenestart,
   splicing_vector_int_t exstart, exend, exidx, res;
   int noiso=INTEGER(pnoiso)[0];
   int genestart=INTEGER(pgenestart)[0];
-  int skip=INTEGER(pskip)[0];
   
   R_splicing_begin();
   
-  R_splicing_SEXP_to_vector_int_copy(pexstart, &exstart);
-  R_splicing_SEXP_to_vector_int_copy(pexend, &exend);  
-  R_splicing_SEXP_to_vector_int_copy(pexidx, &exidx);  
+  R_splicing_SEXP_to_vector_int(pexstart, &exstart);
+  R_splicing_SEXP_to_vector_int(pexend, &exend);  
+  R_splicing_SEXP_to_vector_int(pexidx, &exidx);  
   splicing_vector_int_init(&res, 0);
 
-  splicing_numeric_cigar(&exstart, &exend, &exidx, noiso, genestart, &res, 
-			 skip);
+  splicing_numeric_cigar(&exstart, &exend, &exidx, noiso, genestart, &res);
   
   PROTECT(result=R_splicing_vector_int_to_SEXP(&res));
   splicing_vector_int_destroy(&res);
-
-  splicing_vector_int_destroy(&exidx);
-  splicing_vector_int_destroy(&exend);
-  splicing_vector_int_destroy(&exstart);
 
   R_splicing_end();
   
@@ -1688,7 +1682,7 @@ SEXP R_splicing_iso_to_genomic(SEXP pgff, SEXP pgene, SEXP pisoform,
   splicing_vector_int_view(&newposition, INTEGER(result), 
 			   GET_LENGTH(pposition));
   
-  splicing_iso_to_genomic(&gff, gene, &isoform, 0, 0, 0, &newposition);
+  splicing_iso_to_genomic(&gff, gene, &isoform, 0, &newposition);
   
   R_splicing_end();
   
@@ -1711,7 +1705,7 @@ SEXP R_splicing_genomic_to_iso(SEXP pgff, SEXP pgene, SEXP pposition) {
   R_splicing_SEXP_to_vector_int(pposition, &position);
   splicing_matrix_int_init(&isopos, 0, 0);
 
-  splicing_genomic_to_iso(&gff, gene, &position, &isopos);
+  splicing_genomic_to_iso(&gff, gene, &position, 0, &isopos);
   
   PROTECT(result=R_splicing_matrix_int_to_SEXP(&isopos));
   
@@ -1818,7 +1812,7 @@ SEXP R_splicing_paired_assignment_matrix(SEXP pgff, SEXP pgene,
   UNPROTECT(1);
   return result;
 }
-  
+
 SEXP R_splicing_normal_fragment(SEXP pnormalMean, SEXP pnormalVar, 
 				SEXP pnumDevs, SEXP pminLength) { 
   SEXP result, names;
@@ -2320,3 +2314,51 @@ SEXP R_splicing_rng_get_dirichlet(SEXP palpha) {
   return result;
 }
 
+SEXP R_splicing_genomic_to_iso_all(SEXP pgff, SEXP pgene, SEXP pposition) {
+  SEXP result;
+  splicing_gff_t gff;
+  int gene=INTEGER(pgene)[0]-1;
+  int position=INTEGER(pposition)[0];
+  splicing_vector_int_t cresult;
+  
+  R_splicing_begin();
+
+  R_splicing_SEXP_to_gff(pgff, &gff);
+  splicing_vector_int_init(&cresult, 0);
+  
+  splicing_genomic_to_iso_all(&gff, gene, position, /*converter=*/ 0, 
+			      &cresult);
+
+  PROTECT(result=R_splicing_vector_int_to_SEXP(&cresult));
+  splicing_vector_int_destroy(&cresult);
+
+  R_splicing_end();
+  
+  UNPROTECT(1);
+  return result;
+}
+
+SEXP R_splicing_iso_to_genomic_all(SEXP pgff, SEXP pgene, SEXP pposition) {
+  SEXP result;
+  splicing_gff_t gff;
+  int gene=INTEGER(pgene)[0]-1;
+  int position=INTEGER(pposition)[0];
+  splicing_vector_int_t cresult;
+  
+  R_splicing_begin();
+
+  R_splicing_SEXP_to_gff(pgff, &gff);
+  splicing_vector_int_init(&cresult, 0);
+  
+  splicing_iso_to_genomic_all(&gff, gene, position, /*converter=*/ 0, 
+			      &cresult);
+
+  PROTECT(result=R_splicing_vector_int_to_SEXP(&cresult));
+  splicing_vector_int_destroy(&cresult);
+
+  R_splicing_end();
+  
+  UNPROTECT(1);
+  return result;
+}
+				  

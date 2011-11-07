@@ -132,7 +132,8 @@ int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
   /* Convert genomic coordinates to isoform coordinates */
   SPLICING_CHECK(splicing_matrix_int_init(&isopos, 0, 0));
   SPLICING_FINALLY(splicing_matrix_int_destroy, &isopos);
-  SPLICING_CHECK(splicing_genomic_to_iso(gff, gene, position, &isopos));
+  SPLICING_CHECK(splicing_genomic_to_iso(gff, gene, position,
+					 /*converter=*/ 0, &isopos));
   
   SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, overHang,
 				   result));
@@ -388,8 +389,9 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
       }
     }
     if (!found) {
-      SPLICING_ERROR("Read does not match any assignment class", 
-		     SPLICING_EINTERNAL);
+      SPLICING_WARNING("Read does not match any assignment class");
+      /* SPLICING_ERROR("Read does not match any assignment class",  */
+      /* 		     SPLICING_EINTERNAL); */
     }
     VECTOR(match)[cl-1] += 1;
   }

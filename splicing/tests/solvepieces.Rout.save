@@ -24,52 +24,12 @@ Type 'q()' to quit R.
 > 
 > exons <- .Call("R_splicing_gff_exon_start_end", gene, 1L, PACKAGE="splicing")
 > 
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 0L)
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L)
 [1]   0  20   0  20 -10  10   0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 1L)
-[1]   0  19   0  19 -10  10   0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 19L)
-[1]   0   1   0   1 -10  10   0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 20L)
-[1]   0   0 -10  10   0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 21L)
-[1]  0  0 -9 10  0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 25L)
-[1]  0  0 -5 10  0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 29L)
-[1]  0  0 -1 10  0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 30L)
-[1]  0  0 10  0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 31L)
-[1] 0 0 9 0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 40L)
-[1] 0 0 0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 1L, 50L)
-[1] 0 0 0
 > 
 > exons$start <- exons$start - 1L
 > exons$end   <- exons$end   - 1L
 > 
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 0L)
+> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L)
 [1]   0  20   0  20 -10  10   0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 1L)
-[1]   0  19   0  19 -10  10   0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 19L)
-[1]   0   1   0   1 -10  10   0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 20L)
-[1]   0   0 -10  10   0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 21L)
-[1]  0  0 -9 10  0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 25L)
-[1]  0  0 -5 10  0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 29L)
-[1]  0  0 -1 10  0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 30L)
-[1]  0  0 10  0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 31L)
-[1] 0 0 9 0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 40L)
-[1] 0 0 0
-> .Call("R_splicing_numeric_cigar", exons, noIso(gene), 0L, 50L)
-[1] 0 0 0
 > 

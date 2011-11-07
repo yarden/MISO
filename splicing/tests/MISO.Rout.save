@@ -1,5 +1,5 @@
 
-R version 2.13.1 (2011-07-08)
+R version 2.14.0 (2011-10-31)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
@@ -77,10 +77,10 @@ Type 'q()' to quit R.
 +               stopCond="fixedno")
 > 
 > postMean(mres7)
-[1] 0.1534739 0.3106664 0.5358597
+[1] 0.2325122 0.2859740 0.4815138
 > solveIso(gene, reads=reads2, normalMean=116, normalVar=50,
 +          numDevs=4)$expression
-[1] 0.1495241 0.3094353 0.5410406
+[1] 0.2272654 0.2855253 0.4872092
 > 
 > ## Convergence for the paired-end sampler
 > 

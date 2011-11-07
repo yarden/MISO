@@ -1,5 +1,5 @@
 
-R version 2.13.1 (2011-07-08)
+R version 2.14.0 (2011-10-31)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
@@ -45,8 +45,6 @@ Type 'q()' to quit R.
 > indexBAMFile(paste(bamfile2, sep="", ".bam"))
 > 
 > cl <- makeCluster(10)
-Loading required package: Rmpi
-	10 slaves are spawned successfully. 0 failed.
 > 
 > runMISO(genes, paste(bamfile2, sep="", ".bam"), snowCluster=cl, seed=42,
 +         verbose=FALSE)
@@ -82,5 +80,4 @@ MISO gene-100, 2 i: 0.17 (+-0.08), 0.83 (+-0.08)
 
 > 
 > stopCluster(cl)
-[1] 1
 > 

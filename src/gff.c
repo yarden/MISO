@@ -852,80 +852,187 @@ int splicing_gff_gene_start_end(const splicing_gff_t *gff,
   return 0;
 }
 
-int splicing_iso_to_genomic(const splicing_gff_t *gff, size_t gene, 
-			    const splicing_vector_int_t *isoform,
-			    const splicing_vector_int_t *exstart,
-			    const splicing_vector_int_t *exend,
-			    const splicing_vector_int_t *exidx,
-			    splicing_vector_int_t *position) {
+int splicing_gff_converter_init(const splicing_gff_t *gff, size_t gene,
+				splicing_gff_converter_t *converter) {
 
-  size_t i, noiso, n=splicing_vector_int_size(position);
-  splicing_vector_int_t exlim, shift;
-  splicing_vector_int_t vexstart, vexend, vexidx, 
-    *myexstart=(splicing_vector_int_t *) exstart, 
-    *myexend=(splicing_vector_int_t *) exend, 
-    *myexidx=(splicing_vector_int_t *) exidx;
-  size_t pos, pos2;
+  int i; 
 
-  if (!exstart || !exend || !exidx) {
-    myexstart=&vexstart;
-    myexend=&vexend;
-    myexidx=&vexidx;
-    SPLICING_CHECK(splicing_vector_int_init(myexstart, 0));
-    SPLICING_FINALLY(splicing_vector_int_destroy, myexstart);
-    SPLICING_CHECK(splicing_vector_int_init(myexend, 0));
-    SPLICING_FINALLY(splicing_vector_int_destroy, myexend);
-    SPLICING_CHECK(splicing_vector_int_init(myexidx, 0));
-    SPLICING_FINALLY(splicing_vector_int_destroy, myexidx);
-    SPLICING_CHECK(splicing_gff_exon_start_end(gff, myexstart, myexend, 
-					       myexidx, gene));
-  }
+  SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &converter->noiso));
 
-  SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
+  SPLICING_VECTOR_INT_INIT_FINALLY(&converter->exstart, 0);
+  SPLICING_VECTOR_INT_INIT_FINALLY(&converter->exend, 0);
+  SPLICING_VECTOR_INT_INIT_FINALLY(&converter->exidx, 0);
+  SPLICING_VECTOR_INT_INIT_FINALLY(&converter->shift, 0);
+  SPLICING_VECTOR_INT_INIT_FINALLY(&converter->exlim, 0);
+  
+  SPLICING_CHECK(splicing_gff_exon_start_end(gff, &converter->exstart, 
+					     &converter->exend, 
+					     &converter->exidx, gene));
 
-  SPLICING_CHECK(splicing_vector_int_init(&exlim, 0));
-  SPLICING_FINALLY(splicing_vector_int_destroy, &exlim);
-  SPLICING_CHECK(splicing_vector_int_init(&shift, 0));
-  SPLICING_FINALLY(splicing_vector_int_destroy, &shift);
-
-  for (i=0; i<noiso; i++) {
+  /* Calculate the shift */
+  for (i=0; i < converter->noiso; i++) {
     size_t cs=0, ce=0, ex=0;
-    int pos=VECTOR(*myexidx)[i], pos2=VECTOR(*myexidx)[i+1];
+    int pos=VECTOR(converter->exidx)[i], pos2=VECTOR(converter->exidx)[i+1];
     while (pos < pos2) {
-      cs += VECTOR(*myexstart)[pos];
-      SPLICING_CHECK(splicing_vector_int_push_back(&shift, cs-ce-ex-1));
-      ex++; ce += VECTOR(*myexend)[pos]; pos++;
+      cs += VECTOR(converter->exstart)[pos];
+      SPLICING_CHECK(splicing_vector_int_push_back(&converter->shift, 
+						   cs-ce-ex-1));
+      ex++; ce += VECTOR(converter->exend)[pos]; pos++;
     }
   }
-
-  for (i=0; i<noiso; i++) { 
+  
+  /* Calculate the exlim */
+  for (i=0; i < converter->noiso; i++) { 
     size_t cs=0;
-    int pos=VECTOR(*myexidx)[i], pos2=VECTOR(*myexidx)[i+1];
+    int pos=VECTOR(converter->exidx)[i], pos2=VECTOR(converter->exidx)[i+1];
     while (pos < pos2) {
-      size_t l=VECTOR(*myexend)[pos]-VECTOR(*myexstart)[pos]+1;
+      size_t l=
+	VECTOR(converter->exend)[pos] - VECTOR(converter->exstart)[pos]+1;
       cs += l;
-      SPLICING_CHECK(splicing_vector_int_push_back(&exlim, cs+1));
+      SPLICING_CHECK(splicing_vector_int_push_back(&converter->exlim, cs+1));
       pos++;
     }
-  }  
+  }
 
+  SPLICING_FINALLY_CLEAN(5);
+
+  return 0;
+}
+
+void splicing_gff_converter_destroy(splicing_gff_converter_t *converter) {
+  splicing_vector_int_destroy(&converter->exstart);
+  splicing_vector_int_destroy(&converter->exend);
+  splicing_vector_int_destroy(&converter->exidx);
+  splicing_vector_int_destroy(&converter->exlim);
+  splicing_vector_int_destroy(&converter->shift);
+}
+
+/* Convert isoform coordinates to genomic coordinates. 
+   Convert a vector of positions (position), this will be overwritten
+   by the result. For each position, its isoform can be specified
+   (isoform). 
+
+   If input position is negative, then it is ignored.
+*/
+
+int splicing_iso_to_genomic(const splicing_gff_t *gff, size_t gene, 
+			    const splicing_vector_int_t *isoform,
+			    const splicing_gff_converter_t *converter,
+			    splicing_vector_int_t *position) {
+
+  size_t i, n=splicing_vector_int_size(position);
+  splicing_gff_converter_t vconverter, 
+    *myconverter = (splicing_gff_converter_t*) converter;
+
+  if (!converter) { 
+    myconverter=&vconverter;
+    SPLICING_CHECK(splicing_gff_converter_init(gff, gene, myconverter));
+    SPLICING_FINALLY(splicing_gff_converter_destroy, myconverter);
+  }
+
+  /* Do the shifting */
   for (i=0; i<n; i++) {
     int iso=VECTOR(*isoform)[i];
     size_t pos=VECTOR(*position)[i];
     int ex;
-    for (ex=VECTOR(*myexidx)[iso]; VECTOR(exlim)[ex] <= pos; ex++) ;
-    VECTOR(*position)[i] = pos + VECTOR(shift)[ex];
+    if (pos==-1) { continue; }
+    for (ex=VECTOR(myconverter->exidx)[iso]; 
+	 ex < VECTOR(myconverter->exidx)[iso+1] && 
+	   VECTOR(myconverter->exlim)[ex] <= pos; 
+	 ex++) ;
+    if (ex < VECTOR(myconverter->exidx)[iso+1]) { 
+      VECTOR(*position)[i] = pos + VECTOR(myconverter->shift)[ex];
+    } else {
+      VECTOR(*position)[i] = -1;
+    }
   }
 
-  splicing_vector_int_destroy(&shift);
-  splicing_vector_int_destroy(&exlim);
-  SPLICING_FINALLY_CLEAN(2);
+  if (!converter) {
+    splicing_gff_converter_destroy(myconverter);
+    SPLICING_FINALLY_CLEAN(1);
+  }
+  
+  return 0;
+}
 
-  if (!exstart || !exend || !exidx) {
-    splicing_vector_int_destroy(myexidx);
-    splicing_vector_int_destroy(myexend);
-    splicing_vector_int_destroy(myexstart);
-    SPLICING_FINALLY_CLEAN(3);
+int splicing_iso_to_genomic_all(const splicing_gff_t *gff, size_t gene,
+				int position, 
+				const splicing_gff_converter_t *converter,
+				splicing_vector_int_t *result) {
+
+  size_t i;
+  splicing_gff_converter_t vconverter, 
+    *myconverter = (splicing_gff_converter_t*) converter;
+
+  if (position < 1) { 
+    SPLICING_ERROR("Invalid isoform coordinate, must the larger than zero", 
+		   SPLICING_EINVAL);
+  }
+
+  if (!converter) { 
+    myconverter=&vconverter;
+    SPLICING_CHECK(splicing_gff_converter_init(gff, gene, myconverter));
+    SPLICING_FINALLY(splicing_gff_converter_destroy, myconverter);
+  }
+
+  SPLICING_CHECK(splicing_vector_int_resize(result, myconverter->noiso));
+
+  /* TODO: find impossible positions */
+  for (i=0; i<myconverter->noiso; i++) {
+    int ex;
+    for (ex=VECTOR(myconverter->exidx)[i]; 
+	 ex < VECTOR(myconverter->exidx)[i+1] && 
+	   VECTOR(myconverter->exlim)[ex] <= position; 
+	 ex++) ;
+    if (ex < VECTOR(myconverter->exidx)[i+1]) {
+      VECTOR(*result)[i] = position + VECTOR(myconverter->shift)[ex];
+    } else {
+      VECTOR(*result)[i] = -1;
+    }
+  }
+
+  if (!converter) {
+    splicing_gff_converter_destroy(myconverter);
+    SPLICING_FINALLY_CLEAN(1);
+  }
+  
+  return 0;
+}
+
+int splicing_iso_to_genomic_1(const splicing_gff_t *gff, size_t gene,
+			      int isoform, int position, 
+			      const splicing_gff_converter_t *converter,
+			      int *result) {
+
+  int ex;
+  splicing_gff_converter_t vconverter, 
+    *myconverter = (splicing_gff_converter_t*) converter;
+
+  if (position < 1) { 
+    SPLICING_ERROR("Invalid isoform coordinate, must the larger than zero", 
+		   SPLICING_EINVAL);
+  }
+
+  if (!converter) { 
+    myconverter=&vconverter;
+    SPLICING_CHECK(splicing_gff_converter_init(gff, gene, myconverter));
+    SPLICING_FINALLY(splicing_gff_converter_destroy, myconverter);
+  }
+
+  /* TODO: find impossible positions */
+  for (ex=VECTOR(myconverter->exidx)[isoform]; 
+       ex < VECTOR(myconverter->exidx)[isoform+1] && 
+	 VECTOR(myconverter->exlim)[ex] <= position; 
+       ex++) ;
+  if (ex < VECTOR(myconverter->exidx)[isoform+1]) {
+    *result = position + VECTOR(myconverter->shift)[ex];
+  } else {
+    *result = -1;
+  }
+
+  if (!converter) {
+    splicing_gff_converter_destroy(myconverter);
+    SPLICING_FINALLY_CLEAN(1);
   }
   
   return 0;
@@ -933,58 +1040,121 @@ int splicing_iso_to_genomic(const splicing_gff_t *gff, size_t gene,
 
 int splicing_genomic_to_iso(const splicing_gff_t *gff, size_t gene,
 			    const splicing_vector_int_t *position, 
+			    const splicing_gff_converter_t *converter,
 			    splicing_matrix_int_t *isopos) {
 
-  size_t r, i, noiso, noreads=splicing_vector_int_size(position);
-  splicing_vector_int_t exstart, exend, exidx, shift;
+  size_t r, i, noreads=splicing_vector_int_size(position);
+  splicing_gff_converter_t vconverter, 
+    *myconverter = (splicing_gff_converter_t*) converter;
   
-  splicing_gff_noiso_one(gff, gene, &noiso);
-  
-  SPLICING_CHECK(splicing_vector_int_init(&exstart, 0));
-  SPLICING_FINALLY(splicing_vector_int_destroy, &exstart);
-  SPLICING_CHECK(splicing_vector_int_init(&exend, 0));
-  SPLICING_FINALLY(splicing_vector_int_destroy, &exend);
-  SPLICING_CHECK(splicing_vector_int_init(&exidx, 0));
-  SPLICING_FINALLY(splicing_vector_int_destroy, &exidx);
-  SPLICING_CHECK(splicing_gff_exon_start_end(gff, &exstart, &exend,
-					     &exidx, gene));
-
-  SPLICING_CHECK(splicing_vector_int_init(&shift, 0));
-  SPLICING_FINALLY(splicing_vector_int_destroy, &shift);
-  
-  for (i=0; i<noiso; i++) {
-    size_t cs=0, ce=0, ex=0;
-    int pos=VECTOR(exidx)[i], pos2=VECTOR(exidx)[i+1];
-    while (pos < pos2) {
-      cs += VECTOR(exstart)[pos];
-      SPLICING_CHECK(splicing_vector_int_push_back(&shift, cs-ce-ex-1));
-      ex++; ce += VECTOR(exend)[pos]; pos++;
-    }
+  if (!converter) { 
+    myconverter=&vconverter;
+    SPLICING_CHECK(splicing_gff_converter_init(gff, gene, myconverter));
+    SPLICING_FINALLY(splicing_gff_converter_destroy, myconverter);
   }
 
-  SPLICING_CHECK(splicing_matrix_int_resize(isopos, noiso, noreads));
+  SPLICING_CHECK(splicing_matrix_int_resize(isopos, myconverter->noiso, 
+					    noreads));
   
   for (r=0; r<noreads; r++) {
-    for (i=0; i<noiso; i++) {
+    for (i=0; i<myconverter->noiso; i++) {
       size_t pos=VECTOR(*position)[r];
-      size_t startpos=VECTOR(exidx)[i];
-      size_t endpos=VECTOR(exidx)[i+1];
+      size_t startpos=VECTOR(myconverter->exidx)[i];
+      size_t endpos=VECTOR(myconverter->exidx)[i+1];
       int ex;
-      for (ex=startpos; ex < endpos && VECTOR(exend)[ex] < pos; ex++) ;
-      if (VECTOR(exstart)[ex] <= pos && pos <= VECTOR(exend)[ex]) {
-	MATRIX(*isopos, i, r) = VECTOR(*position)[r] - VECTOR(shift)[ex];
+      for (ex=startpos; 
+	   ex < endpos && VECTOR(myconverter->exend)[ex] < pos; 
+	   ex++) ;
+      if (ex < endpos && VECTOR(myconverter->exstart)[ex] <= pos && 
+	  pos <= VECTOR(myconverter->exend)[ex]) {
+	MATRIX(*isopos, i, r) = VECTOR(*position)[r] - 
+	  VECTOR(myconverter->shift)[ex];
       } else { 
 	MATRIX(*isopos, i, r) = -1;
       }
     }
   }
 
-  splicing_vector_int_destroy(&shift);
-  splicing_vector_int_destroy(&exidx);
-  splicing_vector_int_destroy(&exend);
-  splicing_vector_int_destroy(&exstart);
-  SPLICING_FINALLY_CLEAN(4);
+  if (!converter) { 
+    splicing_gff_converter_destroy(myconverter);
+    SPLICING_FINALLY_CLEAN(1);
+  }
 
+  return 0;
+}
+
+int splicing_genomic_to_iso_1(const splicing_gff_t *gff, size_t gene,
+			      int isoform, int position, 
+			      const splicing_gff_converter_t *converter,
+			      int *result) {
+
+  size_t startpos, endpos, ex;
+  splicing_gff_converter_t vconverter, 
+    *myconverter = (splicing_gff_converter_t*) converter;
+  
+  if (!converter) { 
+    myconverter=&vconverter;
+    SPLICING_CHECK(splicing_gff_converter_init(gff, gene, myconverter));
+    SPLICING_FINALLY(splicing_gff_converter_destroy, myconverter);
+  }
+
+  startpos=VECTOR(myconverter->exidx)[isoform];
+  endpos=VECTOR(myconverter->exidx)[isoform+1];
+  for (ex=startpos; 
+       ex < endpos && VECTOR(myconverter->exend)[ex] < position; 
+       ex++) ;
+  if (ex < endpos && VECTOR(myconverter->exstart)[ex] <= position && 
+      position <= VECTOR(myconverter->exend)[ex]) {
+    *result = position - VECTOR(myconverter->shift)[ex];
+  } else { 
+    *result = -1;
+  }
+
+  if (!converter) { 
+    splicing_gff_converter_destroy(myconverter);
+    SPLICING_FINALLY_CLEAN(1);
+  }
+  
+  return 0;
+}
+
+int splicing_genomic_to_iso_all(const splicing_gff_t *gff, size_t gene,
+				int position, 
+				const splicing_gff_converter_t *converter,
+				splicing_vector_int_t *result) {
+
+  int i;
+  splicing_gff_converter_t vconverter, 
+    *myconverter = (splicing_gff_converter_t*) converter;
+  
+  if (!converter) { 
+    myconverter=&vconverter;
+    SPLICING_CHECK(splicing_gff_converter_init(gff, gene, myconverter));
+    SPLICING_FINALLY(splicing_gff_converter_destroy, myconverter);
+  }
+
+  SPLICING_CHECK(splicing_vector_int_resize(result, myconverter->noiso));
+  
+  for (i=0; i<myconverter->noiso; i++) {
+    size_t startpos=VECTOR(myconverter->exidx)[i];
+    size_t endpos=VECTOR(myconverter->exidx)[i+1];
+    int ex;
+    for (ex=startpos; 
+	 ex < endpos && VECTOR(myconverter->exend)[ex] < position; 
+	 ex++) ;
+    if (ex < endpos && VECTOR(myconverter->exstart)[ex] <= position && 
+	position <= VECTOR(myconverter->exend)[ex]) {
+      VECTOR(*result)[i] = position - VECTOR(myconverter->shift)[ex];
+    } else { 
+      VECTOR(*result)[i] = -1;
+    }
+  }
+
+  if (!converter) { 
+    splicing_gff_converter_destroy(myconverter);
+    SPLICING_FINALLY_CLEAN(1);
+  }
+  
   return 0;
 }
 	
