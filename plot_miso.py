@@ -24,8 +24,15 @@ def plot_event(event_name, pickle_dir, settings_filename,
     Also plots MISO estimates and Psi values.
     """
     # Retrieve the full pickle filename
-    event_to_filenames = shelve.load(os.path.join(pickle_dir,
-                                                  "genes_to_filenames.shelve"))
+    genes_filename = os.path.join(pickle_dir,
+                                  "genes_to_filenames.shelve")
+
+    if not os.path.isfile(genes_filename):
+        raise Exception, "Cannot find file %s. Are you sure the events " \
+              "were indexed with the latest version of index_gff.py?" \
+              %(genes_filename)
+    
+    event_to_filenames = shelve.open(genes_filename)
     if event_name not in event_to_filenames:
         raise Exception, "Event %s not found in pickled directory %s. " \
               "Are you sure this is the right directory for the event?" \
@@ -48,7 +55,8 @@ def plot_event(event_name, pickle_dir, settings_filename,
     print "  - Event: %s" %(event_name)
     print "  - Output filename: %s" %(output_filename)
         
-    plot_density_from_file(pickle_filename, event, settings_filename,
+    plot_density_from_file(pickle_filename, event_name,
+                           settings_filename,
                            output_filename)
 
 
@@ -60,9 +68,6 @@ def plot_posterior(miso_filename, output_dir,
     """
     Plot posterior distribution.
     """
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
-
     samples, log_scores, params, gene = load_samples(miso_filename)
     sp = SamplesPlotter(samples, gene, params)
     
@@ -100,7 +105,7 @@ def main():
     parser.add_option("--plot-posterior", dest="plot_posterior", nargs=1, default=None,
                       help="Plot the posterior distribution. Takes as input a raw MISO output "
                       "file (.miso)")
-    parser.add_option("--plot-event", dest="plot_event", nargs=2, default=None,
+    parser.add_option("--plot-event", dest="plot_event", nargs=3, default=None,
                       help="Plot read densities and MISO inferences for a given alternative event. "
                       "Takes the arguments: (1) event name (i.e. the ID= of the event based on MISO gff3 "
                       "annotation file, (2) directory where the pickled annotation files are, "
@@ -124,6 +129,9 @@ def main():
         return
 
     output_dir = os.path.abspath(os.path.expanduser(options.output_dir))
+
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
 
     if options.plot_posterior != None:
         miso_filename = os.path.abspath(os.path.expanduser(options.plot_posterior))
