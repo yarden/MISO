@@ -109,8 +109,11 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, graphcoords,\
     if showXaxis:
         axvar.xaxis.set_ticks_position('bottom')
         xlabel('Genomic coordinate (%s)'%(gene_obj.chrom), fontsize=font_size)
-        xticks(linspace(0, max(graphcoords), nxticks), [graphToGene[int(x)] for x in \
-            linspace(0, max(graphcoords), nxticks)], fontsize=font_size)
+        print "graphcoords", graphcoords
+        print graphToGene
+        x_max = max(graphcoords) - 1
+        xticks(linspace(0, x_max, nxticks), [graphToGene[int(x)] for x in \
+            linspace(0, x_max, nxticks)], fontsize=font_size)
     else:
         axvar.spines['bottom'].set_color('none')
         xticks([])
@@ -166,7 +169,7 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
 
         bam_file = os.path.expanduser(bam_files[i])
         miso_file = os.path.expanduser(miso_files[i])
-        ax1 = subplot2grid((nfiles + 2, gene_posterior_ratio), (i, 0),\
+        ax1 = plt.subplot2grid((nfiles + 2, gene_posterior_ratio), (i, 0),\
             colspan=gene_posterior_ratio - 1)
         plot_density_single(tx_start, tx_end, gene_obj, mRNAs,\
             graphcoords, graphToGene, bam_file, ax1, paired_end=False,\
@@ -176,20 +179,20 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
             showXaxis=showXaxis, showYlabel=False, font_size=font_size)
 
         if show_posteriors:
-            try:
-                ax2 = subplot2grid((nfiles + 2, gene_posterior_ratio),\
+#            try:
+                ax2 = plt.subplot2grid((nfiles + 2, gene_posterior_ratio),\
                     (i, gene_posterior_ratio - 1))
 
                 plot_posterior_single(miso_file, ax2, posterior_bins,\
                     showXaxis=showXaxis, showYlabel=False, font_size=font_size)
-            except:
-                box(on=False)
-                xticks([])
-                yticks([])
-                print "Posterior plot failed."
+#            except:
+#                box(on=False)
+#                xticks([])
+#                yticks([])
+#                print "Posterior plot failed."
 
     # Draw gene structure
-    ax = subplot2grid((nfiles + 2, gene_posterior_ratio), (nfiles, 0),\
+    ax = plt.subplot2grid((nfiles + 2, gene_posterior_ratio), (nfiles, 0),\
         colspan=gene_posterior_ratio - 1, rowspan=2)
     plot_mRNAs(tx_start, mRNAs, graphcoords, ax)
 
