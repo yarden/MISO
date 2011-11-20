@@ -63,6 +63,27 @@ def get_const_exons_from_mRNA(gff_in, mRNAs, min_size=0):
 
     return const_exons
 
+def get_bam_reads_in_exons(exons_filename, bam_filename):
+    """
+    Get the BAM reads that land inside the boundaries of a set of exons.
+
+    Arguments:
+
+    - exons filename (in GFF format)
+
+    - BAM filename
+
+    Returns results in BED format.
+
+    Relies on intersectBed being available.
+    """
+    #intersectBed -abam reads.bam -b exons.gff -wb -f 1 | coverageBed -abam stdin -b exons.gff
+    cmd = "intersectBed -abam %s -b %s -wb -f 1 | coverageBed -abam stdin -b %s -bed" \
+          %(bam_filename, exons_filename, exons_filename)
+    print "Getting BAM reads in exons..."
+#    a = subprocess.Popen("intersectBed -abam test-output/sam-output/c2c12.Atp2b1.sorted.bam -b test-gff/Atp2b1.mm9.gff.const_exons -wb -f 1 -bed".split(), stdout=subprocess.PIPE,stderr=subprocess.PIPE)    
+    return bam_reads
+
 
 def output_exons_to_file(recs, output_filename,
                          output_format='gff'):
@@ -74,7 +95,7 @@ def output_exons_to_file(recs, output_filename,
     - records in gff format
     - filename to output results to
     """
-    print "Outputting exons to file"
+    print "Outputting exons to file: %s" %(output_filename)
 
     if output_format == "gff":
         # Write file in GFF format
@@ -119,28 +140,33 @@ def get_const_exons_by_gene(gff_filename, output_dir,
 
     const_exons_by_gene = []
 
+    num_exons = 0
+
     for gene, mRNAs in gff_in.mRNAs_by_gene.iteritems():
         # For each gene, look at all mRNAs and return constitutive exon
-        const_exons_by_gene.extend(get_const_exons_from_mRNA(gff_in, mRNAs,
-                                                             min_size=min_size))
+        curr_const_exons = get_const_exons_from_mRNA(gff_in, mRNAs,
+                                                     min_size=min_size)
+        const_exons_by_gene.extend(curr_const_exons)
+        num_exons += len(curr_const_exons)
 
     t2 = time.time()
-    print "Constitutive exon retrieval took %.2f seconds." \
-          %(t2 - t1)
+
+    print "Constitutive exon retrieval took %.2f seconds (%d exons)." \
+          %((t2 - t1), num_exons)
 
     output_filename = os.path.join(output_dir,
                                    "%s.const_exons" %(os.path.basename(gff_filename)))
 
     output_exons_to_file(const_exons_by_gene, output_filename,
                          output_format=output_format)
-    return const_exons_by_gene
+    return const_exons_by_gene, output_filename
 
 
 def main():
     test_gff = '/home/yarden/MISO/gff-events/mm9/genes/Atp2b1.mm9.gff'
     output_dir = 'test-gff'
-    const_exons_by_gene = get_const_exons_by_gene(test_gff, output_dir)
-    print "const_exons_by_gene: ", const_exons_by_gene
+    const_exons_by_gene, output_filename = get_const_exons_by_gene(test_gff, output_dir)
+    print "const_exons_by_gene: ", const_exons_by_gene, output_filename
 
 if __name__ == '__main__':
     main()
