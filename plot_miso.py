@@ -16,7 +16,7 @@ from plot_gene import *
 
 
 def plot_event(event_name, pickle_dir, settings_filename,
-               output_dir, png=False):
+               output_dir, png=False, dimensions=None):
     """
     Visualize read densities across the exons and junctions
     of a given MISO alternative RNA processing event.
@@ -54,10 +54,19 @@ def plot_event(event_name, pickle_dir, settings_filename,
     print "Plotting read densities and MISO estimates along event..."
     print "  - Event: %s" %(event_name)
     print "  - Output filename: %s" %(output_filename)
+
+    fig_width = 8.5
+    fig_height = 11
+    
+    if dimensions != None:
+        fig_width = dimensions[0]
+        fig_height = dimensions[1]
         
     plot_density_from_file(pickle_filename, event_name,
                            settings_filename,
-                           output_filename)
+                           output_filename,
+                           fig_width=fig_width,
+                           fig_height=fig_height)
 
 
 def plot_posterior(miso_filename, output_dir,
@@ -129,6 +138,11 @@ def main():
         return
 
     output_dir = os.path.abspath(os.path.expanduser(options.output_dir))
+    dimensions = None
+
+    if options.dimensions != None:
+        dimensions = (int(options.dimensions[0]),
+                      int(options.dimensions[1]))
 
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
@@ -137,15 +151,10 @@ def main():
         miso_filename = os.path.abspath(os.path.expanduser(options.plot_posterior))
 
         with_intervals = None
-        dimensions = None
         plot_mean = options.plot_mean
         
         if options.with_intervals != None:
             with_intervals = options.with_intervals[0]
-
-        if options.dimensions != None:
-            dimensions = (int(options.dimensions[0]),
-                          int(options.dimensions[1]))
 
         plot_posterior(miso_filename, output_dir,
                        with_intervals=with_intervals,
@@ -163,7 +172,7 @@ def main():
         pickle_dir = os.path.abspath(os.path.expanduser(options.plot_event[1]))
         settings_filename = os.path.abspath(os.path.expanduser(options.plot_event[2]))
         plot_event(event_name, pickle_dir, settings_filename, output_dir,
-                   png=options.png)
+                   png=options.png, dimensions=dimensions)
         
 
 if __name__ == '__main__':
