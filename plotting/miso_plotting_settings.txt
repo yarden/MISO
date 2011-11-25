@@ -1,0 +1,45 @@
+[data]
+# directory where BAM files are
+bam_prefix = /home/et_wang/atf/mbnl1_tissues/pipeline_110217/rawdata/bam/
+# directory where MISO output is
+miso_prefix = /home/et_wang/atf/mbnl1_tissues/pipeline_110217/analysis/rna_events/SE/eventdir/
+
+bam_files = [
+    "heartWT1.sorted.bam",
+    "heartWT2.sorted.bam",
+    "heartKOa.sorted.bam",
+    "heartKOb.sorted.bam"]
+
+miso_files = [
+    "heartWT1",
+    "heartWT2",
+    "heartKOa",
+    "heartKOb"]
+
+[plotting]
+fig_width = 4 
+fig_height = 4 
+intron_scale = 30
+exon_scale = 4
+logged = False 
+font_size = 4
+ymax = 150
+show_posteriors = True 
+number_junctions = False 
+resolution = .5
+posterior_bins = 40
+gene_posterior_ratio = 5
+colors = [
+    "#CC0011",
+    "#CC0011",
+    "#FF8800",
+    "#FF8800"]
+
+# Number of mapped reads in each file
+coverages = [
+    6830944,
+    14039751,
+    4449737, 
+    6720151]
+
+

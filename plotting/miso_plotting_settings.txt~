@@ -1,0 +1,62 @@
+[data]
+bam_prefix = /home/et_wang/atf/mbnl1_tissues/pipeline_110217/rawdata/bam/
+#miso_prefix = /home/et_wang/atf/mbnl1_tissues/pipeline_110217/analysis/rna_events/SE_pooled/events/
+miso_prefix = /home/et_wang/atf/mbnl1_tissues/pipeline_110217/analysis/rna_events/SE/eventdir/
+#miso_prefix = /home/et_wang/atf/mbnl1_tissues/pipeline_110217/analysis/rna_events/Trim55/Trim55SE/
+
+bam_files = [
+    "heartWT1.sorted.bam",
+    "heartWT2.sorted.bam",
+    "heartWT3.sorted.bam",
+    "heartWT4.sorted.bam",
+    "heartKOa.sorted.bam",
+    "heartKOb.sorted.bam",
+    "heartKOc.sorted.bam",
+    "heartKOe.sorted.bam"]
+
+miso_files = [
+    "heartWT1",
+    "heartWT2",
+    "heartWT3",
+    "heartWT4",
+    "heartKOa",
+    "heartKOb",
+    "heartKOc",
+    "heartKOe"]
+
+[plotting]
+fig_width = 4 
+fig_height = 4 
+intron_scale = 30
+exon_scale = 4
+logged = False 
+font_size = 4
+ymax = 150
+show_posteriors = True 
+number_junctions = False 
+resolution = .5
+posterior_bins = 40
+gene_posterior_ratio = 5
+colors = [
+    "#CC0011",
+    "#CC0011",
+    "#CC0011",
+    "#CC0011",
+    "#CC0011",
+    "#FF8800",
+    "#FF8800",
+    "#FF8800",
+    "#FF8800",
+    "#FF8800"]
+coverages = [
+    6830944,
+    14039751,
+    13119046,
+    6419724,
+    4449737, 
+    6720151,
+    6047776,
+    6246025,
+    4667118,
+    7073198]
+

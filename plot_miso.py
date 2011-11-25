@@ -10,9 +10,9 @@ import shelve
 import GFF as gff_utils
 from plot_utils.samples_plotter import SamplesPlotter, load_samples
 from plot_utils.plotting import *
+from plot_utils.plot_gene import *
 import matplotlib.pyplot as plt
 from matplotlib import rc
-from plot_gene import *
 
 
 def plot_event(event_name, pickle_dir, settings_filename,
