@@ -1,4 +1,3 @@
-Gene.py
 def py2c_gene(py_gene):
     """
     Convert a Python Gene object to a C gene object for use
