@@ -649,6 +649,10 @@ def main():
             for isoform in gene_obj.isoforms:
                 print " - ", isoform
             print "=="
+            print "mRNA IDs: "
+            for mRNA_id in gene_info['hierarchy'][gene_id]['mRNAs']:
+                print "%s" %(mRNA_id)
+            print "=="    
             print "Exons: "
             for exon in gene_obj.parts:
                 print " - ", exon
