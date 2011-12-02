@@ -1127,9 +1127,11 @@ class MISOSampler:
         Output results of MISO to a file.
         """
         output = open(output_file, 'w')
+        iso_delim = "_"
         
-        # Get a string representation of the isoforms
-        str_isoforms = '[' + ",".join(["\'" + iso.desc + "\'" for iso in gene.isoforms]) + ']'
+        # Get a string representation of the isoforms - use '_'
+        # in the delimiter regardless
+        str_isoforms = '[' + ",".join(["\'" + iso_delim.join(iso.desc) + "\'" for iso in gene.isoforms]) + ']'
 
         num_isoforms = len(gene.isoforms)
 

@@ -118,9 +118,9 @@ class Gene:
 
     Isoforms are made up of parts, which might be exons or introns.
 
-    isoform_desc is a list describing the structure of the isoforms, e.g.
+    isoform_desc is a of lists describing the structure of the isoforms, e.g.
 
-      ['A_B_A', 'A_A']
+      [['A', 'B', 'A'], ['A', 'A']]
 
     which creates two isoforms, composed of the 'A' and 'B' parts.
     """    
@@ -303,7 +303,7 @@ class Gene:
 	for iso in self.isoform_desc:
             isoform_parts = []
 	    isoform_seq = ""
-	    for part_label in iso.split('_'):
+            for part_label in iso:
 		# retrieve part 
 		part = self.get_part_by_label(part_label)
 		if not part:
@@ -932,16 +932,16 @@ def make_gene_from_gff_records(gene_label, gene_hierarchy,
         exon_labels = [exon.label for exon in exons]
 
         # Delimiter for internal representation of isoforms
-        iso_delim = "_"
+        #iso_delim = "_"
         
         # The transcript's description
-        for label in exon_labels:
-            if iso_delim in label:
-                raise Exception, "Cannot use %s in naming exons (%s) in GFF." %(iso_delim,
-                                                                                label)
+        #for label in exon_labels:
+        #    if iso_delim in label:
+        #        raise Exception, "Cannot use %s in naming exons (%s) in GFF." %(iso_delim,
+        #                                                                        label)
             
-        desc = iso_delim.join(exon_labels)
-        isoform_desc.append(desc)
+        #desc = iso_delim.join(exon_labels)
+        isoform_desc.append(exon_labels)
 
     # Compile all exons used in all transcripts
     all_exons = []
@@ -997,7 +997,7 @@ def se_event_to_gene(up_len, se_len, dn_len, chrom,
     se_exon = Exon(exon2_start, exon2_end, label='B')
     dn_exon = Exon(exon3_start, exon3_end, label='C')
     parts = [up_exon, se_exon, dn_exon]
-    gene = Gene(['A_B_C', 'A_C'], parts, label=label,
+    gene = Gene([['A', 'B', 'C'], ['A', 'C']], parts, label=label,
                 chrom=chrom)
     return gene
 
@@ -1014,7 +1014,7 @@ def tandem_utr_event_to_gene(core_len, ext_len, chrom, label=None):
     core_exon = Exon(exon1_start, exon1_end, label='TandemUTRCore')
     ext_exon = Exon(exon2_start, exon2_end, label='TandemUTRExt')
     parts = [core_exon, ext_exon]
-    gene = Gene(['TandemUTRCore_TandemUTRExt', 'TandemUTRCore'], parts,
+    gene = Gene([['TandemUTRCore', 'TandemUTRExt'], ['TandemUTRCore']], parts,
                 label=label, chrom=chrom)
     return gene
 

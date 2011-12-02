@@ -84,7 +84,7 @@ class TestMISO(unittest.TestCase):
         sam_dir = os.path.join(self.tests_output_dir, "sam-output")
         bam_filename = os.path.join(sam_dir, "c2c12.Atp2b1.sorted.bam")
 
-        read_len = 35
+        read_len = 36
         insert_mean = 250
         insert_sd = 30
 
