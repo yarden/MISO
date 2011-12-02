@@ -85,6 +85,13 @@ seqNames.splicingSAM <- function(reads) {
   reads$chrname
 }
 
+eachSeqName <- function(reads)
+  UseMethod("eachSeqName")
+
+eachSeqName.splicingSAM <- function(reads) {
+  reads$chrname[reads$chr+1]
+}
+
 getReadLength <- function(reads)
   UseMethod("getReadLength")
 

@@ -24,7 +24,8 @@ export(createGene, rpk, realPsi, simulateReads)
 export(readSAM, noReads, isPaired, isMixed, noPairs, noSingles, toTable,
        writeSAM, getReadLength, seqNames, selectReads, filterReads, FILTER,
        getStrand, getAttributes, listAttributes, getAttribute, getIsoform,
-       sortBAMFile, SAMFile2BAMFile, indexBAMFile, mergeReads)
+       sortBAMFile, SAMFile2BAMFile, indexBAMFile, mergeReads,
+       eachSeqName)
 
 S3method("noReads", "splicingSAM")
 S3method("isPaired", "splicingSAM")
@@ -36,6 +37,7 @@ S3method("writeSAM", "splicingSAM")
 S3method("print", "splicingSAM")
 S3method("getReadLength", "splicingSAM")
 S3method("seqNames", "splicingSAM")
+S3method("eachSeqName", "splicingSAM")
 S3method("selectReads", "splicingSAM")
 S3method("filterReads", "splicingSAM")
 S3method("getStrand", "splicingSAM")
