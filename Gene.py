@@ -7,7 +7,6 @@ from parse_csv import *
 from json_utils import *
 import pprint
 
-
 class Interval:
     def __init__(self, start, end):
         self.start = start
