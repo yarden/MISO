@@ -463,7 +463,7 @@ int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
        We convert (sp1i+minfl-1) to genomic coordinates, for all isoforms.
        This will be the actual value of sp2. */
 
-    splicing_vector_resize(&isoseq, noiso);
+    splicing_vector_int_resize(&isoseq, noiso);
     for (i=0; i<noiso; i++) { 
       VECTOR(sp2i)[i] = VECTOR(sp1i)[i] + minfl - readLength;
       VECTOR(isoseq)[i] = i;
