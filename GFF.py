@@ -317,14 +317,15 @@ class GFF:
         """
         Replace exon ID underscores (_) with another symbol.
         """
-        delim_symbol = "_"
-        if self.type == "exon" and "ID" in self.attributes:
-            exon_id = self.get_id()
-            if delim_symbol in exon_id:
-                new_exon_id = exon_id.replace(delim_symbol, replace_char)
-                print "Warning: replacing exon id %s with %s" %(exon_id,
-                                                                new_exon_id)
-                self.attributes['ID'] = [new_exon_id]
+        return
+        # delim_symbol = "_"
+        # if self.type == "exon" and "ID" in self.attributes:
+        #     exon_id = self.get_id()
+        #     if delim_symbol in exon_id:
+        #         new_exon_id = exon_id.replace(delim_symbol, replace_char)
+        #         print "Warning: replacing exon id %s with %s" %(exon_id,
+        #                                                         new_exon_id)
+        #         self.attributes['ID'] = [new_exon_id]
             
 
     def copy(self):
