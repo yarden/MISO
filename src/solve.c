@@ -262,6 +262,7 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 	if (l > 4) { SPLICING_WARNING("Long inserted alignment"); }
 	/* We do nothing, just ignore the part that does not appear in 
 	   the genome */
+	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, -l));
 	pos++;
 	s++;
       } else {
