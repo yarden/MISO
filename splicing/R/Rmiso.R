@@ -14,6 +14,14 @@ MISO <- function(geneStructure, gene=1L, reads,
     stop("Variable read length is currently not supported")
   }
 
+  useq <- unique(eachSeqName(reads))
+  if (length(useq) != 1) {
+    stop("Reads from multiple sequences")
+  }
+  if (useq != seqIds(geneStructure)[gene]) {
+    stop("Sequence ids no not match")
+  }
+  
   start <- switch(match.arg(start), "auto"=0L, "uniform"=1L, "random"=2L,
                   "given"=3L, "linear"=4L)
   stopCond <- switch(match.arg(stopCond), "fixedno"=0L, convMean=1L);

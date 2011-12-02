@@ -7,7 +7,6 @@ from parse_csv import *
 from json_utils import *
 import pprint
 
-import pysplicing
 
 class Interval:
     def __init__(self, start, end):
@@ -112,28 +111,6 @@ class Intron(Interval):
 	    return True
 	return False
 
-def py2c_gene(py_gene):
-    """
-    Convert a Python Gene object to a C gene object for use
-    with C MISO.
-    """
-    # Description of exon lens
-    CMISO_exon_lens = tuple([(part.start, part.end) \
-                             for part in py_gene.parts])
-    
-    # Description of isoforms of gene
-    isoforms_desc = []
-    for isoform in py_gene.isoforms:
-        curr_iso_desc = tuple([py_gene.parts.index(iso_part) \
-                               for iso_part in isoform.parts])
-        isoforms_desc.append(curr_iso_desc)
-        
-    CMISO_isoforms_desc = tuple(isoforms_desc)
-    c_gene = pysplicing.createGene(CMISO_exon_lens,
-                                   CMISO_isoforms_desc)
-    return c_gene
-    
-    
 class Gene:
     """
     A representation of a gene and its isoforms.  If a gene has two isoforms, make the inclusive
@@ -141,9 +118,9 @@ class Gene:
 
     Isoforms are made up of parts, which might be exons or introns.
 
-    isoform_desc is a list describing the structure of the isoforms, e.g.
+    isoform_desc is a of lists describing the structure of the isoforms, e.g.
 
-      ['A_B_A', 'A_A']
+      [['A', 'B', 'A'], ['A', 'A']]
 
     which creates two isoforms, composed of the 'A' and 'B' parts.
     """    
@@ -323,13 +300,10 @@ class Gene:
 
     def create_isoforms(self):
         self.isoforms = []
-
-        self.isoforms_numeric_desc = []
 	for iso in self.isoform_desc:
             isoform_parts = []
 	    isoform_seq = ""
-            
-	    for part_label in iso.split('_'):
+            for part_label in iso:
 		# retrieve part 
 		part = self.get_part_by_label(part_label)
 		if not part:
@@ -337,15 +311,12 @@ class Gene:
                           %(part, part_label, self.label)
                 isoform_parts.append(part)
 		isoform_seq += part.seq
-                
 	    # make isoform with the given parts
 	    isoform = Isoform(self, isoform_parts, seq=isoform_seq)
 	    isoform.desc = iso
 	    self.isoforms.append(isoform)
 	    self.iso_lens.append(isoform.len)
-            
         self.iso_lens = array(self.iso_lens)
-        
 
     def set_sequence(self, exon_id, seq):
         """
@@ -961,16 +932,16 @@ def make_gene_from_gff_records(gene_label, gene_hierarchy,
         exon_labels = [exon.label for exon in exons]
 
         # Delimiter for internal representation of isoforms
-        iso_delim = "_"
+        #iso_delim = "_"
         
         # The transcript's description
-        for label in exon_labels:
-            if iso_delim in label:
-                raise Exception, "Cannot use %s in naming exons (%s) in GFF." %(iso_delim,
-                                                                                label)
+        #for label in exon_labels:
+        #    if iso_delim in label:
+        #        raise Exception, "Cannot use %s in naming exons (%s) in GFF." %(iso_delim,
+        #                                                                        label)
             
-        desc = iso_delim.join(exon_labels)
-        isoform_desc.append(desc)
+        #desc = iso_delim.join(exon_labels)
+        isoform_desc.append(exon_labels)
 
     # Compile all exons used in all transcripts
     all_exons = []
@@ -982,6 +953,7 @@ def make_gene_from_gff_records(gene_label, gene_hierarchy,
 
     gene = Gene(isoform_desc, all_exons, label=gene_label,
                 chrom=chrom)
+
     return gene
                         
 
@@ -1025,7 +997,7 @@ def se_event_to_gene(up_len, se_len, dn_len, chrom,
     se_exon = Exon(exon2_start, exon2_end, label='B')
     dn_exon = Exon(exon3_start, exon3_end, label='C')
     parts = [up_exon, se_exon, dn_exon]
-    gene = Gene(['A_B_C', 'A_C'], parts, label=label,
+    gene = Gene([['A', 'B', 'C'], ['A', 'C']], parts, label=label,
                 chrom=chrom)
     return gene
 
@@ -1042,7 +1014,7 @@ def tandem_utr_event_to_gene(core_len, ext_len, chrom, label=None):
     core_exon = Exon(exon1_start, exon1_end, label='TandemUTRCore')
     ext_exon = Exon(exon2_start, exon2_end, label='TandemUTRExt')
     parts = [core_exon, ext_exon]
-    gene = Gene(['TandemUTRCore_TandemUTRExt', 'TandemUTRCore'], parts,
+    gene = Gene([['TandemUTRCore', 'TandemUTRExt'], ['TandemUTRCore']], parts,
                 label=label, chrom=chrom)
     return gene
 

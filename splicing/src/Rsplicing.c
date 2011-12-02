@@ -484,13 +484,14 @@ SEXP R_splicing_write_gff(SEXP pgff, SEXP file) {
 }
 
 SEXP R_splicing_matchIso(SEXP pgff, SEXP pgene, SEXP pposition, 
-			 SEXP pcigar, SEXP poverhang) {
+			 SEXP pcigar, SEXP poverhang, SEXP preadlength) {
 
   int i, noreads=GET_LENGTH(pcigar);
   int gene=INTEGER(pgene)[0]-1;
   splicing_vector_int_t exstart, exend, position;
   splicing_gff_t gff;
   int overhang=INTEGER(poverhang)[0];
+  int readlength=INTEGER(preadlength)[0];
   splicing_matrix_t res;
   SEXP result;
   const char **cigarstr;
@@ -506,7 +507,8 @@ SEXP R_splicing_matchIso(SEXP pgff, SEXP pgene, SEXP pposition,
     cigarstr[i] = CHAR(STRING_ELT(pcigar, i));
   }
 
-  splicing_matchIso(&gff, gene, &position, cigarstr, overhang, &res);
+  splicing_matchIso(&gff, gene, &position, cigarstr, overhang, readlength, 
+		    &res);
 
   PROTECT(result = R_splicing_matrix_to_SEXP(&res));
 
@@ -518,35 +520,41 @@ SEXP R_splicing_matchIso(SEXP pgff, SEXP pgene, SEXP pposition,
   return result;
 }
 
-SEXP R_splicing_parse_cigar(SEXP cigar) {
+SEXP R_splicing_parse_cigar(SEXP cigar, SEXP pmaxreadlength) {
   size_t i, n=GET_LENGTH(cigar);
+  int maxreadlength=INTEGER(pmaxreadlength)[0];
   SEXP result, names; 
-  splicing_vector_int_t numcigar, cigaridx;
+  splicing_vector_int_t numcigar, cigaridx, cigarlength;
   const char **strcigar;
   
   R_splicing_begin();
   
-  PROTECT(result = NEW_LIST(2));
-  PROTECT(names = NEW_CHARACTER(2));
+  PROTECT(result = NEW_LIST(3));
+  PROTECT(names = NEW_CHARACTER(3));
   SET_STRING_ELT(names, 0, mkChar("cigar"));
   SET_STRING_ELT(names, 1, mkChar("cigaridx"));
+  SET_STRING_ELT(names, 2, mkChar("cigarlength"));
   SET_NAMES(result, names);
   
   splicing_vector_int_init(&numcigar, 0);
   splicing_vector_int_init(&cigaridx, 0);
+  splicing_vector_int_init(&cigarlength, 0);
   strcigar = (const char**) R_alloc(n, sizeof(char*));
 
   for (i=0; i<n; i++) {
     strcigar[i] = CHAR(STRING_ELT(cigar, i));
   }
   
-  splicing_parse_cigar(strcigar, n, &numcigar, &cigaridx);
+  splicing_parse_cigar(strcigar, n, &numcigar, &cigaridx, &cigarlength,
+		       maxreadlength);
   
   SET_VECTOR_ELT(result, 0, R_splicing_vector_int_to_SEXP(&numcigar));
   SET_VECTOR_ELT(result, 1, R_splicing_vector_int_to_SEXP(&cigaridx));
+  SET_VECTOR_ELT(result, 1, R_splicing_vector_int_to_SEXP(&cigarlength));
   
   splicing_vector_int_destroy(&numcigar);
-  splicing_vector_int_destroy(&cigaridx);  
+  splicing_vector_int_destroy(&cigaridx);
+  splicing_vector_int_destroy(&cigarlength);
   
   R_splicing_end();
   

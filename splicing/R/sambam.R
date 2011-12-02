@@ -85,6 +85,13 @@ seqNames.splicingSAM <- function(reads) {
   reads$chrname
 }
 
+eachSeqName <- function(reads)
+  UseMethod("eachSeqName")
+
+eachSeqName.splicingSAM <- function(reads) {
+  reads$chrname[reads$chr+1]
+}
+
 getReadLength <- function(reads)
   UseMethod("getReadLength")
 
@@ -96,6 +103,8 @@ getReadLength.splicingSAM <- function(reads) {
 }
 
 ## To support different read lengths within the same file
+
+## TODO: speed this up
 
 eachReadLength <- function(reads) {
   len <- strsplit(reads$cigar, "[A-Z]")
@@ -342,12 +351,35 @@ filter.keepRegion <- function(reads, sequence, start, end) {
   selectReads(reads, keep)
 }
 
+## Filter out too short reads
+
+filter.dropShort <- function(reads, lengthLimit) {
+  rl <- eachReadLength(reads)
+  keep <- which(rl >= lengthLimit)
+  selectReads(reads, keep)
+}
+
+filter.dropLong <- function(reads, lengthLimit) {
+  rl <- eachReadLength(reads)
+  keep <- which(rl <= lengthLimit)
+  selectReads(reads, keep)
+}  
+
+filter.dropOtherLength <- function(reads, length) {
+  rl <- eachReadLength(reads)
+  keep <- which(rl == length)
+  selectReads(reads, keep)
+}
+
 myfilters <- list(noPaired=filter.noPaired,
                   noSingle=filter.noSingle,
                   notOppositeStrand=filter.notOppositeStrand,
                   notMatching=filter.notMatching,
                   badFlags=filter.badFlags,
-                  keepRegion=filter.keepRegion)
+                  keepRegion=filter.keepRegion,
+                  dropShort=filter.dropShort,
+                  dropLong=filter.dropLong,
+                  dropOtherLength=filter.dropOtherLength)
 
 FILTER <- function(name, ...) {
   if (! name %in% names(myfilters)) {
