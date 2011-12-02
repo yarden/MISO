@@ -7,18 +7,21 @@
 
 int splicing_matchIso(const splicing_gff_t *gff, int gene, 
 		      const splicing_vector_int_t *position, 
-		      const char **cigarstr, int overHang,
+		      const char **cigarstr, int overHang, int readLength,
 		      splicing_matrix_t *result) {
 
   int noreads=splicing_vector_int_size(position);
   int r, i;
-  splicing_vector_int_t exstart, exend, exidx, cigar, cigaridx;  
+  splicing_vector_int_t exstart, exend, exidx, cigar, cigaridx, cigarlength;
   size_t noiso;
 
   if (overHang==0) { overHang=1; }
   if (overHang < 1) {
     SPLICING_ERROR("Overhang length invalid. Must be positive", 
 		   SPLICING_EINVAL);
+  }
+  if (readLength < 0) { 
+    SPLICING_ERROR("Read length cannot be negative", SPLICING_EINVAL);
   }
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
@@ -35,19 +38,27 @@ int splicing_matchIso(const splicing_gff_t *gff, int gene,
   SPLICING_FINALLY(splicing_vector_int_destroy, &cigar);
   SPLICING_CHECK(splicing_vector_int_init(&cigaridx, 0));
   SPLICING_FINALLY(splicing_vector_int_destroy, &cigaridx);
-  SPLICING_CHECK(splicing_parse_cigar(cigarstr, noreads, &cigar, &cigaridx));
+  SPLICING_CHECK(splicing_vector_int_init(&cigarlength, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &cigarlength);
+  SPLICING_CHECK(splicing_parse_cigar(cigarstr, noreads, &cigar, &cigaridx, 
+				      &cigarlength, readLength));
 
   SPLICING_CHECK(splicing_matrix_resize(result, noiso, noreads));
 
   for (r=0; r<noreads; r++) {
     int *mycig=VECTOR(cigar) + VECTOR(cigaridx)[r];
-    int ex, nocig=VECTOR(cigaridx)[r+1] - VECTOR(cigaridx)[r];
+    int nocig=VECTOR(cigaridx)[r+1] - VECTOR(cigaridx)[r];
+    int len =VECTOR(cigarlength)[r];
 
-    /* We can filter out the reads that do not satisfy the overhang 
+    /* If the read length is specified, then filter out the reads
+       that are shorter */
+    if (len < readLength) { 
+      for (i=0; i<noiso; i++) { MATRIX(*result, i, r)=0; }
+
+    /* We can also filter out the reads that do not satisfy the overhang 
        constraint here. We assume that the CIGAR string starts and ends 
        with a match (of non-zero length). */
-    
-    if (mycig[0] < overHang || mycig[nocig-1] < overHang) {
+    } else if (mycig[0] < overHang || mycig[nocig-1] < overHang) {
       for (i=0; i<noiso; i++) { MATRIX(*result, i, r)=0; }
     } else {
 
@@ -85,12 +96,13 @@ int splicing_matchIso(const splicing_gff_t *gff, int gene,
     }   /* r < noreads */
   }	/* if overhang os OK */
 
+  splicing_vector_int_destroy(&cigarlength);
   splicing_vector_int_destroy(&cigaridx);
   splicing_vector_int_destroy(&cigar);
   splicing_vector_int_destroy(&exidx);
   splicing_vector_int_destroy(&exend);
   splicing_vector_int_destroy(&exstart);
-  SPLICING_FINALLY_CLEAN(5);
+  SPLICING_FINALLY_CLEAN(6);
   
   return 0;
 }
@@ -136,7 +148,7 @@ int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
 					 /*converter=*/ 0, &isopos));
   
   SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, overHang,
-				   result));
+				   readLength, result));
   
   if (fragmentLength) {
     SPLICING_CHECK(splicing_matrix_int_resize(fragmentLength, noiso, 
@@ -178,17 +190,21 @@ int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
 
 int splicing_parse_cigar(const char **cigar, size_t noreads,
 			 splicing_vector_int_t *numcigar,
-			 splicing_vector_int_t *cigaridx) {
+			 splicing_vector_int_t *cigaridx, 
+			 splicing_vector_int_t *cigarlength, 
+			 int maxReadLength) {
   
   size_t i, pos=0;
   
   splicing_vector_int_clear(numcigar);
   SPLICING_CHECK(splicing_vector_int_resize(cigaridx, noreads+1));
+  SPLICING_CHECK(splicing_vector_int_resize(cigarlength, noreads));
 
   for (i=0; i<noreads; i++) {
     char *s= (char*) cigar[i];
-    VECTOR(*cigaridx)[i] = pos;
     int mode=0;			/* 0: begin, 1:middle, 2:end */
+    int len=0;
+    VECTOR(*cigaridx)[i] = pos;
     while (*s) {
       long l = strtol(s, &s, 10L);
 
@@ -201,40 +217,60 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 		       "the beginning and the end", SPLICING_EINVAL);
       }
 
-      if (*s == 'M' || *s == '=') { 		/* MATCHING */
+      if (*s == 'M' || *s == '=') { /* MATCHING */
+	if (maxReadLength > 0 && len + l > maxReadLength) { 
+	  l = maxReadLength - len;
+	}
 	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
+	len += l;
 	pos++;
 	s++;
       } else if (*s == 'N') {	/* SKIPPING */
 	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, -l));
 	pos++;
 	s++;
-      } else if (*s == 'X') {
+      } else if (*s == 'X') {	/* SEQ MISMATCH */
 	if (l > 4) { SPLICING_WARNING("Long non-matching alignment"); }
+	/* We count this as matching */
+	if (maxReadLength > 0 && len + l > maxReadLength) { 
+	  l = maxReadLength - len;
+	}
 	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
+	len += l;
 	pos++;
 	s++;
-      } else if (*s == 'S' || *s == 'H') {
+      } else if (*s == 'S' || *s == 'H') { /* SOFT/HARD CLIPPING */
 	/* We consider these 'matching' */
+	if (maxReadLength > 0 && len + l > maxReadLength) { 
+	  l = maxReadLength - len;
+	}
 	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
+	len += l;
 	pos++;
 	s++;
-      } else if (*s == 'D') {	/* DELETED */
+      } else if (*s == 'D') {	/* DELETION FROM THE REFERENCE */
 	if (l > 4) { SPLICING_WARNING("Long deleted alignment"); }
+	/* We count this as matching */
+	if (maxReadLength > 0 && len + l > maxReadLength) { 
+	  l = maxReadLength - len;
+	}
 	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
+	len += l;
 	pos++;
 	s++;
-      } else if (*s == 'I') {
+      } else if (*s == 'I') {	/* INSERTION TO THE REFERENCE */
 	if (l > 4) { SPLICING_WARNING("Long inserted alignment"); }
 	/* We do nothing, just ignore the part that does not appear in 
 	   the genome */
 	pos++;
 	s++;
       } else {
-	SPLICING_ERROR("Unsupported CIGAR string (`MNSHDI=X' ara supported)", 
+	SPLICING_ERROR("Unsupported CIGAR string (`MNSHDI=X' are supported)", 
 		       SPLICING_EINVAL);
       }
+      if (maxReadLength && len == maxReadLength) { continue; }
     }
+    VECTOR(*cigarlength)[i] = len;
   }
   VECTOR(*cigaridx)[i] = pos;
 
@@ -280,7 +316,7 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 
   /* Calculate match vector from match matrix */
   SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, overHang,
-				   mymatch_matrix));
+				   readLength, mymatch_matrix));
   SPLICING_CHECK(splicing_vector_init(&match, no_classes));
   SPLICING_FINALLY(splicing_vector_destroy, &match);
   for (r=0; r<no_reads; r++) {

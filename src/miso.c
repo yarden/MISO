@@ -707,7 +707,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_vector_int_init(&match_order, noReads));
   SPLICING_FINALLY(splicing_vector_int_destroy, &match_order);
   SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, 
-				   overHang, mymatch_matrix));
+				   overHang, readLength, mymatch_matrix));
   SPLICING_CHECK(splicing_order_matches(mymatch_matrix, &match_order));
 
   if (class_templates && class_counts) { 

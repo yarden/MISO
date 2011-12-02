@@ -154,7 +154,7 @@ typedef enum splicing_miso_stop_t {
 
 int splicing_matchIso(const splicing_gff_t *gff, int gene, 
 		      const splicing_vector_int_t *position,
-		      const char **cigarstr, int overHang,
+		      const char **cigarstr, int overHang, int readLength,
 		      splicing_matrix_t *result);
 
 int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
@@ -169,7 +169,9 @@ int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
 
 int splicing_parse_cigar(const char **cigar, size_t noreads,
 			 splicing_vector_int_t *numcigar,
-			 splicing_vector_int_t *cigaridx);
+			 splicing_vector_int_t *cigaridx, 
+			 splicing_vector_int_t *cigarlength,
+			 int maxReadLength);
 
 int splicing_order_matches(const splicing_matrix_t *matches,
 			   splicing_vector_int_t *order);
