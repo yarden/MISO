@@ -22,7 +22,6 @@ import os
 import sys
 from Gene import Gene, Exon
 from py2c_gene import *
-import samples_plotter as sp 
 from collections import defaultdict
 import glob
 import logging
