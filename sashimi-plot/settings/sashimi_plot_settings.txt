@@ -40,13 +40,15 @@ resolution = .5
 posterior_bins = 40
 gene_posterior_ratio = 5
 
+# List of colors for read denisites of each sample
 colors = [
     "#CC0011",
     "#CC0011",
     "#FF8800",
     "#FF8800"]
 
-# Number of mapped reads in each file
+# Number of mapped reads in each sample
+# (Used to normalize the read density for RPKM calculation)
 coverages = [
     6830944,
     14039751,

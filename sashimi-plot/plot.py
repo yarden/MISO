@@ -111,7 +111,8 @@ def main():
     parser.add_option("--plot-event", dest="plot_event", nargs=3, default=None,
                       help="Plot read densities and MISO inferences for a given alternative event. "
                       "Takes the arguments: (1) event name (i.e. the ID= of the event based on MISO gff3 "
-                      "annotation file, (2) directory where the pickled annotation files are, "
+                      "annotation file, (2) directory where MISO output is for that event type (e.g. if event is a "
+                      "skipped exon, provide the directory where the output for all SE events are), "
                       "(3) path to plotting settings file.")
     parser.add_option("--with-intervals", dest="with_intervals", nargs=1, default=None,
                       help="Include confidence intervals in plot. To be used with --plot-posterior. "
