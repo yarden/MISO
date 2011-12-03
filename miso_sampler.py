@@ -35,7 +35,6 @@ import sys
 from read_simulator import simulate_two_iso_reads
 from psi_estimators import transformed_psi_bayes
 from Gene import Gene, Exon
-import samples_plotter as sp 
 from collections import defaultdict
 import glob
 import logging
