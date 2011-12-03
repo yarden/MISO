@@ -177,7 +177,7 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
             intron_scale=intron_scale, exon_scale=exon_scale, color=color,\
             ymax=ymax, logged=logged, coverage=coverage,\
             number_junctions=number_junctions, resolution=resolution,\
-            showXaxis=showXaxis, showYlabel=False, font_size=font_size,\
+            showXaxis=showXaxis, showYlabel=True, font_size=font_size,\
             junction_log_base=junction_log_base)
 
         if show_posteriors:
