@@ -28,7 +28,7 @@ logged = False
 font_size = 6
 
 # Max y-axis
-ymax = 100
+ymax = 150
 
 # Whether to plot posterior distributions inferred by MISO
 show_posteriors = True 
