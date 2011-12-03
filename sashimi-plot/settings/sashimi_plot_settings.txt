@@ -1,6 +1,7 @@
 [data]
 # directory where BAM files are
-bam_prefix = /home/et_wang/atf/mbnl1_tissues/pipeline_110217/rawdata/bam/
+#bam_prefix = /home/et_wang/atf/mbnl1_tissues/pipeline_110217/rawdata/bam/
+bam_prefix = ./test-data/bam-data/
 # directory where MISO output is
 miso_prefix = /home/et_wang/atf/mbnl1_tissues/pipeline_110217/analysis/rna_events/SE/eventdir/
 
