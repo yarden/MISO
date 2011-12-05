@@ -79,8 +79,8 @@ def plot_posterior(miso_filename, output_dir,
     sp = SamplesPlotter(samples, params)
     
     if with_intervals != None:
-        with_intervals = float(with_intervals)/10.
-        print "Plotting with %.2f confidence intervals" %(with_intervals)
+        with_intervals = float(with_intervals)/100.
+        print "Plotting with %d-percent confidence intervals" %(int(with_intervals * 100))
     else:
         with_intervals = False
 
@@ -122,7 +122,7 @@ def main():
                       "annotation file, (2) directory where MISO output is for that event type (e.g. if event is a "
                       "skipped exon, provide the directory where the output for all SE events are), "
                       "(3) path to plotting settings file.")
-    parser.add_option("--with-intervals", dest="with_intervals", nargs=1, default=None,
+    parser.add_option("--with-intervals", dest="with_intervals", nargs=1, default=None, 
                       help="Include confidence intervals in plot. To be used with --plot-posterior. "
                       "Takes an argument between 1 and 99 corresponding to the confidence "
                       "interval to be used, e.g.: 95")
@@ -157,7 +157,7 @@ def main():
         plot_mean = options.plot_mean
         
         if options.with_intervals != None:
-            with_intervals = options.with_intervals[0]
+            with_intervals = options.with_intervals
 
         plot_posterior(miso_filename, output_dir,
                        with_intervals=with_intervals,
