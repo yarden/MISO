@@ -23,7 +23,7 @@ class SamplesPlotter:
     """
     Visualize a set of samples from a run of MISO.
     """
-    def __init__(self, samples, gene, params, log_scores=None, percent_acceptance=None,
+    def __init__(self, samples, params, log_scores=None, percent_acceptance=None,
 		 true_psi=None):
 	"""
 	Given a sampler instance, store its properties.
@@ -31,14 +31,12 @@ class SamplesPlotter:
 	# sampler parameters
 	self.samples = samples	
 	self.params = params
-	self.gene = gene
 	self.log_scores = log_scores
 	self.percent_acceptance = percent_acceptance
 	self.true_psi = true_psi
 	
-	assert(len(samples) > 1)	
-	if gene:
-	    assert(len(gene.isoforms) > 1)
+	assert(len(samples) > 1)
+        
 
     def plot(self, fig=None, output_dir=None, num_rows=1, num_cols=1, subplot_start=1, title=None,
 	     plot_intervals=None, value_to_label=None, label=None, bins=10, bbox_coords=None, vanilla=False,
@@ -49,14 +47,17 @@ class SamplesPlotter:
 	 - credible_intervals: if set to true, plot Bayesian confidence intervals 
 	"""
 	plot_handle = None
-	if len(self.gene.isoforms) == 2:
-	    plot_handle = self.plot_two_iso_samples(fig=fig, plots_dir=output_dir, num_cols=num_cols,
-						    num_rows=num_rows, subplot_start=subplot_start,
-						    plot_intervals=plot_intervals,
-						    value_to_label=value_to_label,
-						    label=label, bbox_coords=bbox_coords, title=title, vanilla=vanilla,
+
+        num_samples, num_isoforms = shape(self.samples)
+
+        if num_isoforms == 2:
+            plot_handle = self.plot_two_iso_samples(fig=fig, plots_dir=output_dir, num_cols=num_cols,
+                                                    num_rows=num_rows, subplot_start=subplot_start,
+                                                    plot_intervals=plot_intervals,
+                                                    value_to_label=value_to_label,
+                                                    label=label, bbox_coords=bbox_coords, title=title, vanilla=vanilla,
                                                     plot_mean=plot_mean, fig_dims=fig_dims)
-	else:
+	elif num_isoforms > 2:
 	    num_isoforms = self.samples.shape[1] 
 	    num_rows = 1
 	    num_cols = num_isoforms
@@ -67,6 +68,8 @@ class SamplesPlotter:
                                                         plot_mean=plot_mean, fig_dims=fig_dims)
 		plt.ylabel('Frequency (Isoform %d)' %(c + 1))
 	    plt.subplots_adjust(wspace=0.5)
+        else:
+            raise Exception, "Invalid number of isoforms %d" %(num_isoforms)
 	return plot_handle
 	
     def plot_two_iso_samples(self, fig=None, isoform_index=0, num_rows=1, num_cols=1, subplot_start=1,
@@ -98,13 +101,13 @@ class SamplesPlotter:
         
 	if not vanilla:
 	    if bins != None:
-		plt.hist(samples_to_plot, align='center', lw=0.5, facecolor='#0276FD',
+		plt.hist(samples_to_plot, align='mid', lw=0.5, facecolor='#0276FD',
                          edgecolor='#ffffff')
 	    else:
-		plt.hist(samples_to_plot, align='center', lw=0.5, facecolor='#0276FD',
+		plt.hist(samples_to_plot, align='mid', lw=0.5, facecolor='#0276FD',
                          edgecolor='#ffffff')
 	else:
-	    plt.hist(samples_to_plot, align='center', facecolor='#0276FD', edgecolor='#0276FD')
+	    plt.hist(samples_to_plot, align='mid', facecolor='#0276FD', edgecolor='#0276FD')
 	plt.xlabel(r'${\hat{\Psi}}_{\mathregular{MISO}}$')
 	plt.ylabel('Frequency')
 	plt.xlim([0, 1])
@@ -179,45 +182,19 @@ class SamplesPlotter:
 	#plt.xlabel('Number of iterations (lag not shown)')
 	#plt.ylabel('Log joint score')
 	#plt.savefig(plots_dir + "log_joint_scores_skip%d_%s" %(skip, plot_id))
-
-def parse_sampler_params(header):
-    """
-    Parse parameters that were used to produce a set of samples.  Build a Gene instance
-    out of the Gene it was used on and return that as well.
-    """
-    if header[0] == '#':
-	# strip header start
-	header = header[1:]
-    fields = header.split('\t')
-    isoforms = []
-    params = {}
-    exon_lens = {}
-    for field in fields:
-	key, value = field.split('=')
-	if key == 'isoforms':
-	    isoform_desc = eval(value)
-	elif key == 'exon_lens':
-	    exon_lens = dict(eval(value))
-	else:
-	    params[key] = value
-    exons = []
-    for e, exon_len in exon_lens.iteritems():
-	exons.append(Gene.Exon(0, 0 + exon_len - 1, label=e))
-    gene = Gene.Gene(isoform_desc, exons)
-    return (params, gene)
 	    
-def load_samples(samples_filename):
-    """
-    Load a set of samples from a file and build an associated gene.
-    """
-    samples_data, h = csv2array(samples_filename, skiprows=1,
-                                raw_header=True)
-    samples = []
-    log_scores = []
-    for line in samples_data:
-	psi_vals = [float(v) for v in line['sampled_psi'].split(',')]
-	samples.append(psi_vals)
-	log_scores.append(float(line['log_score']))
-    params, gene = parse_sampler_params(h[0])
-    return (array(samples), array(log_scores), params, gene)
+# def load_samples(samples_filename):
+#     """
+#     Load a set of samples from a file and build an associated gene.
+#     """
+#     samples_data, h = csv2array(samples_filename, skiprows=1,
+#                                 raw_header=True)
+#     samples = []
+#     log_scores = []
+#     for line in samples_data:
+# 	psi_vals = [float(v) for v in line['sampled_psi'].split(',')]
+# 	samples.append(psi_vals)
+# 	log_scores.append(float(line['log_score']))
+#     params, gene = parse_sampler_params(h[0])
+#     return (array(samples), array(log_scores), params, gene)
 
