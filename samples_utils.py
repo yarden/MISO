@@ -42,6 +42,27 @@ def load_samples(samples_file):
             sampled_map_log_score, counts_info)
 
 
+def parse_sampler_params(miso_filename):
+    """
+    Parse parameters that were used to produce a set of samples.  
+    """
+    miso_file = open(miso_filename, 'r')
+    header = miso_file.readline().strip()
+    miso_file.close()
+    
+    if header[0] == '#':
+	# strip header start
+	header = header[1:]
+    fields = header.split('\t')
+    params = {}
+
+    for field in fields:
+	key, value = field.split('=')
+        params[key] = value
+
+    return params
+
+
 def get_isoforms_from_header(samples_header):
     """
     Given header of a raw MISO samples file, return the isoforms

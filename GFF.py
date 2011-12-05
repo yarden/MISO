@@ -766,8 +766,10 @@ def quote(s):
 def url_quote_sub(m):
     return url_quote(m.group(0))
 
-_seqid_pat = re.compile(r'[^a-zA-Z0-9.:^*$@!+_?-|]')
-_source_pat = re.compile(r'[^a-zA-Z0-9.: ^*$@!+_?-]')
+# Added slash '/' to allowable characters
+# as well as '(' and ')'
+_seqid_pat = re.compile(r'[^a-zA-Z0-9./:^*$@!+_?-|]')
+_source_pat = re.compile(r'[^a-zA-Z0-9./\(\): ^*$@!+_?-]')
 _type_pat = _source_pat
 _tag_pat = re.compile(r'[\t\n\r\f\v;=%&,]')
 _value_pat = _tag_pat
@@ -844,6 +846,7 @@ class Writer:
         print >>self.stream, '\t'.join(fields)
 
     def _write_rec_v3(self, rec):
+        _type_pat.sub(url_quote, rec.type)
         fields = [_seqid_pat.sub(url_quote, rec.seqid),
                   _source_pat.sub(url_quote, rec.source),
                   _type_pat.sub(url_quote, rec.type),

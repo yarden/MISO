@@ -5,6 +5,7 @@
 from collections import defaultdict
 from Gene import load_genes_from_gff
 
+import os
 import time
 import pysam
 import binascii
@@ -165,6 +166,7 @@ def load_bam_reads(bam_filename,
     """
     Load a set of indexed BAM reads.
     """
+    bam_filename = os.path.abspath(os.path.expanduser(bam_filename))
     print "Loading BAM filename from: %s" %(bam_filename)
     t1 = time.time()
     bamfile = pysam.Samfile(bam_filename, "rb",
