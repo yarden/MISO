@@ -11,12 +11,12 @@ import matplotlib
 import pysam
 import shelve
 import GFF as gff_utils
-from plot_utils.samples_plotter import SamplesPlotter, load_samples
+from plot_utils.samples_plotter import SamplesPlotter
+from samples_utils import load_samples, parse_sampler_params
 from plot_utils.plotting import *
 from plot_utils.plot_gene import *
 import matplotlib.pyplot as plt
 from matplotlib import rc
-
 
 def plot_event(event_name, pickle_dir, settings_filename,
                output_dir, png=False):
@@ -71,8 +71,12 @@ def plot_posterior(miso_filename, output_dir,
     """
     Plot posterior distribution.
     """
-    samples, log_scores, params, gene = load_samples(miso_filename)
-    sp = SamplesPlotter(samples, gene, params)
+#    samples, log_scores, params, gene = load_samples(miso_filename)
+    samples, h, log_scores, sampled_map,\
+             sampled_map_log_score, counts_info = load_samples(miso_filename)
+    params = parse_sampler_params(miso_filename)
+    
+    sp = SamplesPlotter(samples, params)
     
     if with_intervals != None:
         with_intervals = float(with_intervals)/10.
@@ -83,6 +87,10 @@ def plot_posterior(miso_filename, output_dir,
     if plot_mean:
         print "Plotting mean of posterior."
 
+    print "Plotting posterior distribution..."
+    print "  - MISO event file: %s" %(miso_filename)
+    print "  - Output dir: %s" %(output_dir)
+    
     sp.plot(plot_intervals=with_intervals, fig_dims=dimensions,
             plot_mean=plot_mean)
 
@@ -156,10 +164,6 @@ def main():
                        dimensions=dimensions,
                        plot_mean=plot_mean,
                        png=options.png)
-
-        pickle_filename = os.path.abspath(os.path.expanduser(options.plot_density[0]))
-        bam_filename = os.path.abspath(os.path.expanduser(options.plot_density[1]))
-        plot_density(pickle_filename, bam_filename)
 
     if options.plot_event != None:
         # Plot a MISO event along with its RNA-Seq read densities
