@@ -431,6 +431,15 @@ def cubic_bezier(pts, t):
     return p0 * (1 - t)**3 + 3 * t * p1 * (1 - t) ** 2 + \
         3 * t**2 * (1 - t) * p2 + t**3 * p3
 
+def get_miso_output_files(sample_names, miso_prefix):
+    """
+    Get MISO output files, in order of 'sample_names'.
+
+    Look recursively in subdirectories of MISO prefix.
+    """
+    return
+
+    
     
 # A wrapper to allow reading from a file.
 def plot_density_from_file(pickle_filename, event, settings_f, out_f):
