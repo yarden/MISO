@@ -209,8 +209,14 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,\
 
 # Parse the pickled gene.
 def parseGene(pickle_filename, event):
-
+    if not os.path.isfile(pickle_filename):
+        raise Exception, "Error: no filename %s" %(pickle_filename)
     gff_genes = gff_utils.load_indexed_gff_file(pickle_filename)
+
+    if gff_genes == None:
+        raise Exception, "Error: could not load genes from %s" \
+              %(pickle_filename)
+
     exon_starts = []
     exon_ends = []
     mRNAs = []
