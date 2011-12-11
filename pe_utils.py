@@ -146,6 +146,9 @@ def compute_inserts_from_paired_mates(paired_reads):
         interval_to_paired_dists[curr_gff_interval].append(insert_len)
         num_kept += 1
 
+    print "Used %d paired mates, threw out %d" \
+          %(num_kept, num_skipped)
+
     return interval_to_paired_dists
             
     
@@ -328,29 +331,54 @@ def output_insert_len_dist(interval_to_paired_dists,
                     
 #     t2 = time.time()
 #     print "Insert length computation took %.2f seconds." %(t2 - t1)
-    
+
+def summarize_insert_len_dists(insert_len_filenames,
+                               output_dir):
+    """
+    Summarize insert len distributions.
+    """
+    print "Summarizing insert length distributions..."
+    print "  - Output dir: %s" %(output_dir)
+    for dist_filename in insert_len_filename:
+        print "Summarizing %s" %(dist_filename)
+
 
 def main():
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--compute-insert-len", dest="compute_insert_len", nargs=3, default=None,
+    parser.add_option("--compute-insert-len", dest="compute_insert_len", nargs=2, default=None,
                       help="Compute insert length for given sample. Takes as input "
                       "(1) a comma-separated list of sorted, indexed BAM files with headers "
-                      "(or a single BAM filename), (2) a GFF file with constitutive exons, "
-                      "and (3) an output directory.")
+                      "(or a single BAM filename), (2) a GFF file with constitutive exons. "
+                      "Outputs the insert length distribution into the output directory.")
+    parser.add_option("--summarize-insert-len", dest="summarize_insert_len", nargs=2, default=None,
+                      help="Summarize an insert length distribution. Takes as input a comma separated "
+                      "set of insert length distrubitons files (*.insert_len). Computes mean, "
+                      "standard deviation, and dispersion constant.")
     parser.add_option("--min-exon-size", dest="min_exon_size", nargs=1, type="int", default=500,
                       help="Minimum size of constitutive exon (in nucleotides) that should be used "
                       "in the computation. Default is 500 bp.")
+    parser.add_option("--output-dir", dest="output_dir", nargs=1, default=None,
+                      help="Output directory.")
     (options, args) = parser.parse_args()
+
+    if options.output_dir == None:
+        print "Error: need --output-dir."
+        
+    output_dir = os.path.abspath(os.path.expanduser(options.output_dir))
 
     if options.compute_insert_len != None:
         bams_to_process = [os.path.abspath(os.path.expanduser(f)) for f in \
                            options.compute_insert_len[0].split(",")]
         gff_filename = os.path.abspath(os.path.expanduser(options.compute_insert_len[1]))
-        output_dir = os.path.abspath(os.path.expanduser(options.compute_insert_len[2]))
-
         compute_insert_len(bams_to_process, gff_filename, output_dir,
                            options.min_exon_size)
+
+    if options.summarize_insert_len != None:
+        insert_len_filenames = [os.path.abspath(os.path.expanduser(f)) for f in \
+                                options.summarize_insert_len[0].split(",")]
+        summarize_insert_len_dists(insert_len_filenames,
+                                   output_dir)
 
 
 if __name__ == "__main__":

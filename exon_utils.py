@@ -197,14 +197,6 @@ def map_bam2gff(bam_filename, gff_filename,
                   "does not exist. Are you sure tagBam is on your PATH?"
     if cmd_status != 0:
         raise Exception, "Error: tagBam call failed."
-    
-    mapped_bam = pysam.Samfile(output_filename, "rb")
-    n = 0
-    for r in mapped_bam:
-        print r
-        if n == 10:
-            break
-        n += 1
     t2 = time.time()
     print "tagBam call took %.2f seconds." \
           %(t2 - t1)
