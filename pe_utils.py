@@ -6,6 +6,7 @@
 import os
 import glob
 import time
+import pysam
 
 from scipy import *
 from numpy import *
@@ -43,11 +44,111 @@ def bedtools_map_bam_to_bed(bam_filename, gff_intervals_filename):
         raise Exception, "Error: %s or %s do not exist." %(bam_filename,
                                                            gff_intervals_filename)
     bed_stream = os.popen(bedtools_cmd)
-    return bed_stream 
+    return bed_stream
 
+
+def parse_tagBam_intervals(bam_read,
+                           gff_coords=True):
+    """
+    Return a list of intervals that are present in the current
+    BAM line returned by tagBam.
+
+    - If convert_coords is True, we add 1 to the
+      BAM coordinate to make it 1-based
+    """
+    gff_aligned_regions = bam_read.opt("YB")
+    parsed_regions = gff_aligned_regions.split("gff:")[1:]
+
+    gff_intervals = []
+
+    for region in parsed_regions:
+        strand = region.split(",")[3]
+        chrom, coord_field = region.split(",")[0].split(":")
+        region_start, region_end = coord_field.split("-")
+        region_start, region_end = int(region_start), \
+                                   int(region_end)
+        if gff_coords:
+            region_start += 1
+        curr_interval_str = "%s:%d-%d:%s" \
+                            %(chrom,
+                              region_start,
+                              region_end,
+                              strand)
+        gff_intervals.append(curr_interval_str)
+    return gff_intervals
+
+
+def compute_inserts_from_paired_mates(paired_reads):
+    """
+    Get insert lengths from paired-up paired ends reads
+    aligned to a set of constitutive exon intervals.
+
+    Return mapping from intervals to distances of read pairs
+    that land in them.
+    """
+    # Mapping from interval to 
+    interval_to_paired_dists = defaultdict(list)
+    num_skipped = 0
+    num_kept = 0
+    for read_id, read_pair in paired_reads.iteritems():
+        to_skip = False
+        # Get the intervals that each read pair lands in
+        # Consider here only the mate pairs that map to
+        # the same interval, and to exactly one interval, and
+        # not in a junction
+        left_mate, right_mate = read_pair
+        left_mate_intervals = parse_tagBam_intervals(left_mate)
+        right_mate_intervals = parse_tagBam_intervals(right_mate)
+        
+        # If either of the mates lands in more than one set of intervals,
+        # discard it.
+        if (len(left_mate_intervals) != 1 or \
+            len(right_mate_intervals) != 1):
+            to_skip = True
+        elif left_mate_intervals[0] != right_mate_intervals[0]:
+            # If each maps to one interval, but it's not the same,
+            # also discard it.
+            to_skip = True
+        elif (len(left_mate.cigar) != 1 or \
+              len(right_mate.cigar) != 1):
+            # One of the read mates was in a junction
+            to_skip = True
+        elif (left_mate.cigar[0][0] != 0 or \
+              right_mate.cigar[0][0] != 0):
+            # Both CIGAR operations must be M (matches)
+            to_skip = True
+
+        if to_skip:
+            # One of the conditions was violated, so skip read pair
+            num_skipped += 1
+            continue
+
+        # We have a match, so compute insert length distance,
+        # defined as the distance between the start position
+        # of the left and the end position of the right mate
+        left_start = left_mate.pos
+        left_end = sam_utils.cigar_to_end_coord(left_start,
+                                                left_mate.cigar)
+
+        right_start = right_mate.pos
+        right_end = sam_utils.cigar_to_end_coord(right_start,
+                                                 right_mate.cigar)
+
+        # Get the current GFF interval string
+        curr_gff_interval = left_mate_intervals[0]
+        
+        # Insert length is right.end - left.start + 1
+        insert_len = right_end - left_start + 1
+        interval_to_paired_dists[curr_gff_interval].append(insert_len)
+        num_kept += 1
+
+    return interval_to_paired_dists
+            
     
-def compute_insert_len(bams_to_process, gff_filename, output_dir,
-                       min_exon_size):
+def compute_insert_len(bams_to_process,
+                       const_exons_gff_filename,
+                       output_dir,
+                       min_exon_size=500):
     """
     Compute insert length distribution and output it to the given
     directory.
@@ -55,13 +156,13 @@ def compute_insert_len(bams_to_process, gff_filename, output_dir,
     Arguments:
 
     - bams_to_process: a list of BAM files to process
-    - gff_filename: GFF with gene models
+    - const_gff_filename: GFF with constitutive exons
     """
     bams_str = "\n  ".join(bams_to_process)
     num_bams = len(bams_to_process)
     print "Computing insert length distribution of %d files:\n  %s" \
           %(num_bams, bams_str)
-    print "  - Using gene models from: %s" %(gff_filename)
+    print "  - Using const. exons from: %s" %(const_exons_gff_filename)
     print "  - Outputting to: %s" %(output_dir)
     print "  - Minimum exon size used: %d" %(min_exon_size)
 
@@ -69,35 +170,31 @@ def compute_insert_len(bams_to_process, gff_filename, output_dir,
         print "Making directory: %s" %(output_dir)
         os.makedirs(output_dir)
 
-    # Get the constitutive exons that meet the size requirement
-    const_exons, gff_exons_filename = exon_utils.get_const_exons_by_gene(gff_filename, output_dir,
-                                                                         min_size=min_exon_size)
+    all_constitutive = True
 
+    const_exons, f = exon_utils.get_const_exons_by_gene(const_exons_gff_filename,
+                                                        output_dir,
+                                                        # Treat all exons as constitutive
+                                                        all_constitutive=True,
+                                                        min_size=min_exon_size)
     for bam_filename in bams_to_process:
+        t1 = time.time()
         output_filename = os.path.join(output_dir,
-                                       "%s.insert_len" %(os.path.basename(bam_filename)))
+                                       "%s.insert_len" \
+                                       %(os.path.basename(bam_filename)))
+        print "Fetching reads in constitutive exons"
+        mapped_bam_filename = exon_utils.map_bam2gff(bam_filename,
+                                                     const_exons_gff_filename,
+                                                     output_dir)
+        if mapped_bam_filename == None:
+            raise Exception, "Insert length computation failed."
 
-        # Load BAM file with reads
-        #bamfile = sam_utils.load_bam_reads(bam_filename)
-
-        t1 = time.time()
-        bed_mapped_reads = bedtools_map_bam_to_bed(bam_filename, gff_exons_filename)
-        t2 = time.time()
-
-        print "Fetching of reads in constitutive exons took: %.2f seconds" \
-              %(t1 - t2)
-
-        for mapped_read in bed_mapped_reads:
-            print "=> ", mapped_read
-
-        insert_lengths = []
-
-        t1 = time.time()
-
-        relevant_region = 0
-    
-        # paired_reads = sam_utils.pair_sam_reads(exon_reads)
-        # num_paired_reads = len(paired_reads)
+        # Load mapped BAM filename
+        mapped_bam = pysam.Samfile(mapped_bam_filename, "rb")
+        paired_reads = sam_utils.pair_sam_reads(mapped_bam)
+        num_paired_reads = len(paired_reads)
+        print "Num paired: %d" %(num_paired_reads)
+        interval_to_paired_dists = compute_inserts_from_paired_mates(paired_reads)
 
         # if num_paired_reads == 0:
         #     continue
@@ -231,7 +328,7 @@ def main():
     parser.add_option("--compute-insert-len", dest="compute_insert_len", nargs=3, default=None,
                       help="Compute insert length for given sample. Takes as input "
                       "(1) a comma-separated list of sorted, indexed BAM files with headers "
-                      "(or a single BAM filename), (2) a GFF file with gene models, "
+                      "(or a single BAM filename), (2) a GFF file with constitutive exons, "
                       "and (3) an output directory.")
     parser.add_option("--min-exon-size", dest="min_exon_size", nargs=1, type="int", default=500,
                       help="Minimum size of constitutive exon (in nucleotides) that should be used "

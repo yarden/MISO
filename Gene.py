@@ -844,7 +844,6 @@ def print_gene_hierarchy(gene_hierarchy):
     pretty(gene_hierarchy)
 #    pp = pprint.PrettyPrinter(indent=4)
 #    pp.pprint(gene_hierarchy)
-    
 
 def load_genes_from_gff(gff_filename):
     """
