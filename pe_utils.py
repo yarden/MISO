@@ -139,6 +139,10 @@ def compute_inserts_from_paired_mates(paired_reads):
         
         # Insert length is right.end - left.start + 1
         insert_len = right_end - left_start + 1
+
+        if insert_len <= 0:
+            raise Exception, "Error: 0 or negative insert length detected "\
+                  "in region %s." %(curr_gff_interval)
         interval_to_paired_dists[curr_gff_interval].append(insert_len)
         num_kept += 1
 
@@ -193,32 +197,36 @@ def compute_insert_len(bams_to_process,
         mapped_bam = pysam.Samfile(mapped_bam_filename, "rb")
         paired_reads = sam_utils.pair_sam_reads(mapped_bam)
         num_paired_reads = len(paired_reads)
-        print "Num paired: %d" %(num_paired_reads)
+
+        if num_paired_reads == 0:
+            print "WARNING: no paired mates in %s. Skipping...\n"\
+                  "Are you sure the read IDs match?" %(bam_filename)
+            continue
+        print "Using %d paired mates" %(num_paired_reads)
         interval_to_paired_dists = compute_inserts_from_paired_mates(paired_reads)
-
-        # if num_paired_reads == 0:
-        #     continue
-        # for read_pair_id, read_pair in paired_reads.iteritems():
-        #     if len(read_pair) != 2:
-        #         # Skip non-paired reads
-        #         continue
-
-        #     left_read, right_read = read_pair
-        #     insert_len = right_read.pos - left_read.pos + 1
-
-        #     if insert_len > 0:
-        #         insert_lengths.append(insert_len)
-        #     else:
-        #         print "Negative or zero insert length ignored..."
-
-        # Output results to file
-        #output_file = open(output_filename, 'w')
-        #insert_length_str = "\n".join(map(str, insert_lengths))
-        #output_file.write(insert_length_str)
-        #output_file.close()
-
+        output_insert_len_dist(interval_to_paired_dists,
+                               output_filename)
         t2 = time.time()
         print "Insert length computation took %.2f seconds." %(t2 - t1)
+
+
+def output_insert_len_dist(interval_to_paired_dists,
+                           output_filename):
+    """
+    Output insert length distribution divided up by regions.
+    """
+    print "Writing insert length distribution to: %s" %(output_filename)
+    header = "#%s\t%s\n" %("region", "insert_len")
+    output_file = open(output_filename, 'w')
+    output_file.write(header)
+
+    for region, insert_lens in interval_to_paired_dists.iteritems():
+        str_lens = ",".join([str(l) for l in insert_lens])
+        output_line = "%s\t%s\n" %(region, str_lens)
+        output_file.write(output_line)
+        
+    output_file.close()
+    
 
 
 # def pair_reads_from_bed_intervals(bed_stream):
