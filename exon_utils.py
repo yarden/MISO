@@ -248,10 +248,6 @@ def get_const_exons_by_gene(gff_filename, output_dir,
         num_exons += len(curr_const_exons)
 
     t2 = time.time()
-
-    print "Constitutive exon retrieval took %.2f seconds (%d exons)." \
-          %((t2 - t1), num_exons)
-
     output_filename = None
 
     if not all_constitutive:
@@ -260,6 +256,9 @@ def get_const_exons_by_gene(gff_filename, output_dir,
         output_filename = os.path.join(output_dir,
                                        "%s.const_exons" \
                                        %(os.path.basename(gff_filename)))
+
+        print "Constitutive exon retrieval took %.2f seconds (%d exons)." \
+              %((t2 - t1), num_exons)
 
         output_exons_to_file(const_exons_by_gene, output_filename,
                              output_format=output_format)
