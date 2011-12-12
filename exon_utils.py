@@ -174,6 +174,11 @@ def map_bam2gff(bam_filename, gff_filename,
     print "  - GFF: %s" %(gff_filename)
     print "  - Output file: %s" %(output_filename)
 
+    if os.path.isfile(output_filename):
+        print "WARNING: %s exists. Skipping.." \
+              %(output_filename)
+        return output_filename
+
     # "-intervals" option embeds the original GFF coordinates
     # in the output BAM file. Thanks to Aaron Quinlan for implementing
     # this helpful feature.

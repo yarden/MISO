@@ -197,7 +197,7 @@ def compute_insert_len(bams_to_process,
                                                      const_exons_gff_filename,
                                                      output_dir)
         if mapped_bam_filename == None:
-            raise Exception, "Insert length computation failed."
+            raise Exception, "Error: Insert length computation failed."
 
         # Load mapped BAM filename
         mapped_bam = pysam.Samfile(mapped_bam_filename, "rb")
