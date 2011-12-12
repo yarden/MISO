@@ -207,7 +207,9 @@ def compute_insert_len(bams_to_process,
 
         if num_paired_reads == 0:
             print "WARNING: no paired mates in %s. Skipping...\n"\
-                  "Are you sure the read IDs match?" %(bam_filename)
+                  "Are you sure the read IDs match? If your BAM paired flags are "\
+                  "unset, try using --no-bam-filter." \
+                  %(bam_filename)
             continue
         print "Using %d paired mates" %(num_paired_reads)
         interval_to_paired_dists = compute_inserts_from_paired_mates(paired_reads)
