@@ -17,13 +17,30 @@ import sam_utils
 import exon_utils
 
 
-def load_insert_dist(insert_dist_filename):
+def get_insert_dist_array(interval_to_paired_dists,
+                          delim='\t'):
     """
-    Read insert length distribution.
+    Read insert length distribution as array of numbers.
     """
+    insert_dist = []
+    for interval, paired_dists in interval_to_paired_dists.iteritems():
+        insert_dist.extend(paired_dists)
+    return insert_dist
+
+
+def load_insert_len_from_filename(insert_dist_filename):
     insert_dist_file = open(insert_dist_filename, "r")
-    insert_dist = array([int(line.strip()) \
-                         for line in insert_dist_file])
+    insert_lens = []
+    for line in insert_dist_file:
+        # Skip header
+        if line.startswith("#"):
+            continue
+        lens_list = line.strip().split(delim)[1].split(",")
+        curr_lens = [int(l) for l in lens_list]
+        insert_lens.extend(curr_lens)
+    print insert_lens
+    insert_dist = array(insert_lens)
+    insert_dist_file.close()
     return insert_dist
 
 
@@ -51,7 +68,8 @@ def parse_tagBam_intervals(bam_read,
                            gff_coords=True):
     """
     Return a list of intervals that are present in the current
-    BAM line returned by tagBam.
+    BAM line returned by tagBam. These intervals are encoded
+    in the YB option of the BAM flag.
 
     - If convert_coords is True, we add 1 to the
       BAM coordinate to make it 1-based
@@ -215,28 +233,9 @@ def compute_insert_len(bams_to_process,
             continue
         print "Using %d paired mates" %(num_paired_reads)
         interval_to_paired_dists = compute_inserts_from_paired_mates(paired_reads)
-        output_insert_len_dist(interval_to_paired_dists,
-                               output_filename)
+        summarize_insert_len_dist(interval_to_paired_dists, output_filename)
         t2 = time.time()
         print "Insert length computation took %.2f seconds." %(t2 - t1)
-
-
-def output_insert_len_dist(interval_to_paired_dists,
-                           output_filename):
-    """
-    Output insert length distribution divided up by regions.
-    """
-    print "Writing insert length distribution to: %s" %(output_filename)
-    header = "#%s\t%s\n" %("region", "insert_len")
-    output_file = open(output_filename, 'w')
-    output_file.write(header)
-
-    for region, insert_lens in interval_to_paired_dists.iteritems():
-        str_lens = ",".join([str(l) for l in insert_lens])
-        output_line = "%s\t%s\n" %(region, str_lens)
-        output_file.write(output_line)
-        
-    output_file.close()
 
 
 # def pair_reads_from_bed_intervals(bed_stream):
@@ -339,15 +338,67 @@ def output_insert_len_dist(interval_to_paired_dists,
 #     t2 = time.time()
 #     print "Insert length computation took %.2f seconds." %(t2 - t1)
 
-def summarize_insert_len_dists(insert_len_filenames,
-                               output_dir):
+
+def output_insert_len_dist(interval_to_paired_dists,
+                           output_file):
+    """
+    Output insert length distribution indexed by regions.
+    """
+    header = "#%s\t%s\n" %("region", "insert_len")
+    output_file.write(header)
+
+    for region, insert_lens in interval_to_paired_dists.iteritems():
+        str_lens = ",".join([str(l) for l in insert_lens])
+        output_line = "%s\t%s\n" %(region, str_lens)
+        output_file.write(output_line)
+
+
+def summarize_insert_len_dist(interval_to_paired_dists,
+                              output_filename):
     """
     Summarize insert len distributions.
     """
-    print "Summarizing insert length distributions..."
-    print "  - Output dir: %s" %(output_dir)
-    for dist_filename in insert_len_filename:
-        print "Summarizing %s" %(dist_filename)
+    print "Summarizing insert length distribution.."
+    print "  - Output file: %s" %(output_filename)
+
+    output_file = open(output_filename, "w")
+
+    # Get vector of insert lengths 
+    insert_dist = get_insert_dist_array(interval_to_paired_dists)
+
+    # Number of read pairs used 
+    num_pairs = len(insert_dist)
+    
+    # Compute mean and standard deviation of insert
+    # length distribution
+    mu = mean(insert_dist)
+    sdev = std(insert_dist)
+    
+    # Compute dispersion (d), where
+    #
+    # d = sdev / sqrt(mean)
+    #
+    # dispersion measures how variable
+    # the insert length distribution is
+    # about the mean
+    dispersion = sdev / sqrt(float(mu))
+
+    print "mean\tsdev\tdispersion"
+    print "%.1f\t%.1f\t%.1f" \
+          %(mu, sdev, dispersion)
+
+    # Write headers
+    header_line = "#%s=%.1f,%s=%.1f,%s=%.1f,%s=%d\n" \
+                  %("mean", mu,
+                    "sdev", sdev,
+                    "dispersion", dispersion,
+                    "num_pairs", num_pairs)
+    output_file.write(header_line)
+
+    # Write raw insert lengths indexed by region
+    output_insert_len_dist(interval_to_paired_dists,
+                           output_file)
+    output_file.close()
 
 
 def main():
@@ -362,10 +413,6 @@ def main():
                       help="If provided, this ignores the BAM file flags that state whether the read was paired "
                       "or not, and instead uses only the read IDs to pair up the mates. Use this if your "
                       "paired-end BAM was the result of a samtools merge operation.")
-    parser.add_option("--summarize-insert-len", dest="summarize_insert_len", nargs=2, default=None,
-                      help="Summarize an insert length distribution. Takes as input a comma separated "
-                      "set of insert length distrubitons files (*.insert_len). Computes mean, "
-                      "standard deviation, and dispersion constant.")
     parser.add_option("--min-exon-size", dest="min_exon_size", nargs=1, type="int", default=500,
                       help="Minimum size of constitutive exon (in nucleotides) that should be used "
                       "in the computation. Default is 500 bp.")
@@ -385,13 +432,6 @@ def main():
         compute_insert_len(bams_to_process, gff_filename, output_dir,
                            options.min_exon_size,
                            no_bam_filter=options.no_bam_filter)
-
-    if options.summarize_insert_len != None:
-        insert_len_filenames = [os.path.abspath(os.path.expanduser(f)) for f in \
-                                options.summarize_insert_len[0].split(",")]
-        summarize_insert_len_dists(insert_len_filenames,
-                                   output_dir)
-
 
 if __name__ == "__main__":
     main()
