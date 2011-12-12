@@ -141,8 +141,10 @@ def compute_inserts_from_paired_mates(paired_reads):
         insert_len = right_end - left_start + 1
 
         if insert_len <= 0:
-            raise Exception, "Error: 0 or negative insert length detected "\
+            print "WARNING: 0 or negative insert length detected " \
                   "in region %s." %(curr_gff_interval)
+            continue
+        
         interval_to_paired_dists[curr_gff_interval].append(insert_len)
         num_kept += 1
 
