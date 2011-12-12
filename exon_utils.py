@@ -229,7 +229,8 @@ def get_const_exons_by_gene(gff_filename, output_dir,
         os.makedirs(output_dir)
 
     if min_size > 0:
-        print "  - Including only exons greater than %d-bp" \
+        print "  - Including only exons greater than or " \
+              "equal to %d-bp" \
               %(min_size)
 
     t1 = time.time()
@@ -254,8 +255,9 @@ def get_const_exons_by_gene(gff_filename, output_dir,
         # If we were not given a constitutive exons GFF file, output
         # a separate file containing the constitutive exons
         output_filename = os.path.join(output_dir,
-                                       "%s.const_exons" \
-                                       %(os.path.basename(gff_filename)))
+                                       "%s.min_%d.const_exons.gff" \
+                                       %(os.path.basename(gff_filename).replace(".gff", ""),
+                                         min_size))
 
         print "Constitutive exon retrieval took %.2f seconds (%d exons)." \
               %((t2 - t1), num_exons)
@@ -269,7 +271,28 @@ def get_const_exons_by_gene(gff_filename, output_dir,
 
 
 def main():
-    pass
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("--get-const-exons", dest="get_const_exons", nargs=1, default=None,
+                      help="Get constitutive exons from an input GFF file.")
+    parser.add_option("--min-exon-size", dest="min_exon_size", nargs=1, type="int", default=20,
+                      help="Minimum size of constitutive exon (in nucleotides) that should be used "
+                      "in the computation. Default is 20 bp.")
+    parser.add_option("--output-dir", dest="output_dir", nargs=1, default=None,
+                      help="Output directory.")
+    (options, args) = parser.parse_args()
+
+    if options.output_dir == None:
+        print "Error: need --output-dir."
+        
+    output_dir = os.path.abspath(os.path.expanduser(options.output_dir))
+
+    if options.get_const_exons != None:
+        gff_filename = os.path.abspath(os.path.expanduser(options.get_const_exons))
+        get_const_exons_by_gene(gff_filename,
+                                output_dir,
+                                min_size=options.min_exon_size)
+        
 
 if __name__ == '__main__':
     main()

@@ -155,7 +155,8 @@ def compute_inserts_from_paired_mates(paired_reads):
 def compute_insert_len(bams_to_process,
                        const_exons_gff_filename,
                        output_dir,
-                       min_exon_size=500):
+                       min_exon_size,
+                       no_bam_filter=False):
     """
     Compute insert length distribution and output it to the given
     directory.
@@ -184,11 +185,13 @@ def compute_insert_len(bams_to_process,
                                                         # Treat all exons as constitutive
                                                         all_constitutive=True,
                                                         min_size=min_exon_size)
+    filter_reads = not no_bam_filter
     for bam_filename in bams_to_process:
         t1 = time.time()
         output_filename = os.path.join(output_dir,
-                                       "%s.insert_len" \
-                                       %(os.path.basename(bam_filename)))
+                                       "%s.%d_exon.insert_len" \
+                                       %(os.path.basename(bam_filename),
+                                         min_exon_size))
         print "Fetching reads in constitutive exons"
         mapped_bam_filename = exon_utils.map_bam2gff(bam_filename,
                                                      const_exons_gff_filename,
@@ -198,7 +201,8 @@ def compute_insert_len(bams_to_process,
 
         # Load mapped BAM filename
         mapped_bam = pysam.Samfile(mapped_bam_filename, "rb")
-        paired_reads = sam_utils.pair_sam_reads(mapped_bam)
+        paired_reads = sam_utils.pair_sam_reads(mapped_bam,
+                                                filter_reads=filter_reads)
         num_paired_reads = len(paired_reads)
 
         if num_paired_reads == 0:
@@ -229,7 +233,6 @@ def output_insert_len_dist(interval_to_paired_dists,
         output_file.write(output_line)
         
     output_file.close()
-    
 
 
 # def pair_reads_from_bed_intervals(bed_stream):
@@ -351,6 +354,10 @@ def main():
                       "(1) a comma-separated list of sorted, indexed BAM files with headers "
                       "(or a single BAM filename), (2) a GFF file with constitutive exons. "
                       "Outputs the insert length distribution into the output directory.")
+    parser.add_option("--no-bam-filter", dest="no_bam_filter", action="store_true", default=False,
+                      help="If provided, this ignores the BAM file flags that state whether the read was paired "
+                      "or not, and instead uses only the read IDs to pair up the mates. Use this if your "
+                      "paired-end BAM was the result of a samtools merge operation.")
     parser.add_option("--summarize-insert-len", dest="summarize_insert_len", nargs=2, default=None,
                       help="Summarize an insert length distribution. Takes as input a comma separated "
                       "set of insert length distrubitons files (*.insert_len). Computes mean, "
@@ -372,7 +379,8 @@ def main():
                            options.compute_insert_len[0].split(",")]
         gff_filename = os.path.abspath(os.path.expanduser(options.compute_insert_len[1]))
         compute_insert_len(bams_to_process, gff_filename, output_dir,
-                           options.min_exon_size)
+                           options.min_exon_size,
+                           no_bam_filter=options.no_bam_filter)
 
     if options.summarize_insert_len != None:
         insert_len_filenames = [os.path.abspath(os.path.expanduser(f)) for f in \
