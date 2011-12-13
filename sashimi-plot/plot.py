@@ -10,7 +10,10 @@ import matplotlib
 
 import pysam
 import shelve
+
 import GFF as gff_utils
+import pe_utils
+
 from plot_utils.samples_plotter import SamplesPlotter
 from samples_utils import load_samples, parse_sampler_params
 from plot_utils.plotting import *
@@ -62,6 +65,67 @@ def plot_event(event_name, pickle_dir, settings_filename,
                            settings_filename,
                            output_filename)
 
+
+def plot_insert_len(insert_len_filename,
+                    output_dir,
+                    dimensions=None,
+                    num_bins=25,
+                    sd_max=4,
+                    plot_sd=2,
+                    png=False):
+    """
+    Plot insert length distribution.
+    """
+    if dimensions == None:
+        dimensions = [7, 5]
+    plt.figure(figsize=dimensions)
+    if png:
+        ext = "png"
+    else:
+        ext = "pdf"
+
+    s = plt.subplot(1, 1, 1)
+    plot_name = os.path.basename(insert_len_filename)
+    output_filename = os.path.join(output_dir,
+                                   "%s.%s" %(plot_name,
+                                             ext))
+    print "Plotting insert length distribution..."
+    print "  - Distribution file: %s" %(insert_len_filename)
+    print "  - Output plot: %s" %(output_filename)
+    insert_dist, params = pe_utils.load_insert_len(insert_len_filename)
+    print "Params prior to filtering: "
+    print params
+
+    print "Filtering insert length to exclude values %d-many sdevs outside mean."\
+          %(sd_max)
+    filtered_insert_dist = pe_utils.filter_insert_len(insert_dist,
+                                                      sd_max)
+    mean, sdev, dispersion, num_pairs \
+          = pe_utils.compute_insert_len_stats(filtered_insert_dist)
+    print "min filtered: %.1f" %(min(filtered_insert_dist))
+    print "max filtered: %.1f" %(max(filtered_insert_dist))
+    plt.title("%s (%d read-pairs)" \
+              %(plot_name,
+                num_pairs),
+              fontsize=10)
+    plt.hist(filtered_insert_dist, bins=num_bins, color='k',
+             edgecolor="#ffffff", align='mid')
+    axes_square(s)
+    ymin, ymax = s.get_ylim()
+    plt.text(0.05, 0.95, "$\mu$: %.1f\n$\sigma$: %.1f\n$d$: %.1f" \
+             %(mean,
+               sdev,
+               dispersion),
+             horizontalalignment='left',
+             verticalalignment='top',
+             bbox=dict(edgecolor='k', facecolor="#ffffff",
+                       alpha=0.5),
+             fontsize=10,
+             transform=s.transAxes)
+    plt.xlabel("Insert length (nt)")
+    plt.ylabel("No. read pairs")
+    plt.savefig(output_filename)
+        
 
 def plot_posterior(miso_filename, output_dir,
                    with_intervals=None,
@@ -116,6 +180,9 @@ def main():
     parser.add_option("--plot-posterior", dest="plot_posterior", nargs=1, default=None,
                       help="Plot the posterior distribution. Takes as input a raw MISO output "
                       "file (.miso)")
+    parser.add_option("--plot-insert-len", dest="plot_insert_len", nargs=1, default=False,
+                      help="Plot the insert length distribution from a given insert length (*.insert_len) "
+                      "filename.")
     parser.add_option("--plot-event", dest="plot_event", nargs=3, default=None,
                       help="Plot read densities and MISO inferences for a given alternative event. "
                       "Takes the arguments: (1) event name (i.e. the ID= of the event based on MISO gff3 "
@@ -149,6 +216,10 @@ def main():
 
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
+
+    if options.plot_insert_len != None:
+        insert_len_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len))
+        plot_insert_len(insert_len_filename, output_dir, png=options.png)
 
     if options.plot_posterior != None:
         miso_filename = os.path.abspath(os.path.expanduser(options.plot_posterior))

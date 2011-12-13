@@ -28,9 +28,41 @@ def get_insert_dist_array(interval_to_paired_dists,
     return insert_dist
 
 
-def load_insert_len_from_filename(insert_dist_filename):
+def parse_insert_len_params(insert_len_header):
+    params = {}
+    insert_len_header = insert_len_header.strip()
+    if insert_len_header.startswith("#"):
+        insert_len_header = insert_len_header[1:]
+    for param in insert_len_header.split(","):
+        p, v = param.split("=")
+        params[p] = v
+    return params
+
+        
+def filter_insert_len(insert_dist,
+                      sd_max):
+    filtered_insert_dist = insert_dist.copy()
+    mu = mean(insert_dist)
+    sdev = std(insert_dist)
+    
+    min_cutoff = mu - (sd_max * sdev)
+    max_cutoff = mu + (sd_max * sdev)
+    print "Excluding values < %.2f or > %.2f" \
+          %(min_cutoff, max_cutoff)
+    filtered_insert_dist = delete(filtered_insert_dist, nonzero(insert_dist < min_cutoff)[0])
+    filtered_insert_dist = delete(filtered_insert_dist, nonzero(insert_dist > max_cutoff)[0])
+    return filtered_insert_dist
+               
+
+def load_insert_len(insert_dist_filename,
+                    delim='\t'):
     insert_dist_file = open(insert_dist_filename, "r")
     insert_lens = []
+    params_header = insert_dist_file.readline().strip()
+    
+    # Get parameters of distribution from header
+    params = parse_insert_len_params(params_header)
+    
     for line in insert_dist_file:
         # Skip header
         if line.startswith("#"):
@@ -38,10 +70,9 @@ def load_insert_len_from_filename(insert_dist_filename):
         lens_list = line.strip().split(delim)[1].split(",")
         curr_lens = [int(l) for l in lens_list]
         insert_lens.extend(curr_lens)
-    print insert_lens
     insert_dist = array(insert_lens)
     insert_dist_file.close()
-    return insert_dist
+    return insert_dist, params
 
 
 def bedtools_map_bam_to_bed(bam_filename, gff_intervals_filename):
@@ -352,23 +383,10 @@ def output_insert_len_dist(interval_to_paired_dists,
         output_line = "%s\t%s\n" %(region, str_lens)
         output_file.write(output_line)
 
-
-def summarize_insert_len_dist(interval_to_paired_dists,
-                              output_filename):
+def compute_insert_len_stats(insert_dist):
     """
-    Summarize insert len distributions.
+    Return insert length statistics.
     """
-    print "Summarizing insert length distribution.."
-    print "  - Output file: %s" %(output_filename)
-
-    output_file = open(output_filename, "w")
-
-    # Get vector of insert lengths 
-    insert_dist = get_insert_dist_array(interval_to_paired_dists)
-
-    # Number of read pairs used 
-    num_pairs = len(insert_dist)
-    
     # Compute mean and standard deviation of insert
     # length distribution
     mu = mean(insert_dist)
@@ -382,7 +400,28 @@ def summarize_insert_len_dist(interval_to_paired_dists,
     # the insert length distribution is
     # about the mean
     dispersion = sdev / sqrt(float(mu))
+    
+    # Number of read pairs used 
+    num_pairs = len(insert_dist)
 
+    return mu, sdev, dispersion, num_pairs
+    
+
+def summarize_insert_len_dist(interval_to_paired_dists,
+                              output_filename):
+    """
+    Summarize insert len distributions.
+    """
+    print "Summarizing insert length distribution.."
+    print "  - Output file: %s" %(output_filename)
+
+    output_file = open(output_filename, "w")
+
+    # Get vector of insert lengths 
+    insert_dist = get_insert_dist_array(interval_to_paired_dists)
+    mu, sdev, dispersion, num_pairs = \
+        compute_insert_len_stats(insert_dist)
+    
     print "mean\tsdev\tdispersion"
     print "%.1f\t%.1f\t%.1f" \
           %(mu, sdev, dispersion)
