@@ -43,7 +43,6 @@ getEnsemblGenes <- function(speciesName,
   ## TODO: something faster
   myfile <- gzfile(tmp)
   lines <- read.delim(myfile, header=FALSE, stringsAsFactors=FALSE)
-  close(myfile)
   unlink(tmp)
   
   cn <- c("seqname", "source", "feature", "start", "end", "score", "strand",
