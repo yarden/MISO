@@ -75,7 +75,8 @@ gtf2gff3 <- function(gtf, verbose=TRUE) {
   gtf$seqname    <- as.character(gtf$seqname)
   gtf$source     <- as.character(gtf$source)
   gtf$feature    <- as.character(gtf$feature)
-  gtf$score      <- as.character(gtf$score)
+  gtf$score[gtf$score=="."] <- "-1"
+  gtf$score      <- as.numeric(gtf$score)
   gtf$strand     <- as.character(gtf$strand)  
   gtf$frame      <- as.character(gtf$frame)
   gtf$attributes <- as.character(gtf$attributes)

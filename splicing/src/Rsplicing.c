@@ -1983,7 +1983,7 @@ SEXP R_splicing_gtf2gff3(SEXP gtf, SEXP gid, SEXP tid) {
   SET_VECTOR_ELT(result, 2, NEW_CHARACTER(Fnrow)); /* type */
   SET_VECTOR_ELT(result, 3, NEW_INTEGER(Fnrow));   /* start */
   SET_VECTOR_ELT(result, 4, NEW_INTEGER(Fnrow));   /* end */
-  SET_VECTOR_ELT(result, 5, NEW_CHARACTER(Fnrow)); /* score */
+  SET_VECTOR_ELT(result, 5, NEW_NUMERIC(Fnrow));   /* score */
   SET_VECTOR_ELT(result, 6, NEW_CHARACTER(Fnrow)); /* strand */
   SET_VECTOR_ELT(result, 7, NEW_CHARACTER(Fnrow)); /* phase */
   SET_VECTOR_ELT(result, 8, NEW_CHARACTER(Fnrow)); /* attributes */
@@ -2076,7 +2076,7 @@ SEXP R_splicing_gtf2gff3(SEXP gtf, SEXP gid, SEXP tid) {
     SET_STRING_ELT(Ftype, i, mkChar("gene"));
     INTEGER(Fstart)[i]=min;
     INTEGER(Fend)[i]=max;
-    SET_STRING_ELT(Fscore, i, STRING_ELT(Tscore, gStart));
+    REAL(Fscore)[i] = REAL(Tscore)[gStart];
     SET_STRING_ELT(Fstrand, i, STRING_ELT(Tstrand, gStart));
     SET_STRING_ELT(Fphase, i, STRING_ELT(Tframe, gStart));
     snprintf(attr, sizeof(attr)/sizeof(char)-sizeof(char), 
@@ -2095,7 +2095,7 @@ SEXP R_splicing_gtf2gff3(SEXP gtf, SEXP gid, SEXP tid) {
       SET_STRING_ELT(Ftype, i, mkChar("mRNA"));
       INTEGER(Fstart)[i]=min;
       INTEGER(Fend)[i]=max;
-      SET_STRING_ELT(Fscore, i, STRING_ELT(Tscore, tStart));
+      REAL(Fscore)[i] = REAL(Tscore)[tStart];
       SET_STRING_ELT(Fstrand, i, STRING_ELT(Tstrand, tStart));
       SET_STRING_ELT(Fphase, i, STRING_ELT(Tframe, tStart));
       snprintf(attr, sizeof(attr)/sizeof(char)-sizeof(char), 
@@ -2108,7 +2108,7 @@ SEXP R_splicing_gtf2gff3(SEXP gtf, SEXP gid, SEXP tid) {
 	SET_STRING_ELT(Ftype, i, STRING_ELT(Tfeature, j));
 	INTEGER(Fstart)[i]=INTEGER(Tstart)[j];
 	INTEGER(Fend)[i]=INTEGER(Tend)[j];
-	SET_STRING_ELT(Fscore, i, STRING_ELT(Tscore, j));
+	REAL(Fscore)[i] = REAL(Tscore)[j];
 	SET_STRING_ELT(Fstrand, i, STRING_ELT(Tstrand, j));
 	SET_STRING_ELT(Fphase, i, STRING_ELT(Tframe, j));
 	if (!strcmp(CHARACTER_VALUE(STRING_ELT(Tfeature, j)), "exon")) {
