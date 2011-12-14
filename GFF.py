@@ -151,7 +151,8 @@ class GFFDatabase:
         for record in reader.read_recs():
 	    if record.type == "gene":
 		self.genes.append(record)
-	    elif record.type == "mRNA":
+            # Allow "transcript" 
+	    elif record.type == "mRNA" or record.type == "transcript":
 		self.mRNAs.append(record)
                 self.mRNAs_by_gene[record.get_parent()].append(record)
 	    elif record.type == "exon":
@@ -218,8 +219,12 @@ class GFFDatabase:
 			cdss.append(cds_rec)
                         
 	    if len(mRNAs) == len(exons) == len(cdss) == 0:
-		raise Exception, "No entries found for gene %s in GFF: %s" %(gene,
-                                                                             self.from_filename)
+                print "WARNING: No entries found for gene %s in GFF %s" \
+                      %(gene, self.from_filename)
+                # Remove from gene hierarchy
+                del gene_hierarchy[gene]
+#		raise Exception, "No entries found for gene %s in GFF: %s" %(gene,
+#                                                                             self.from_filename)
 	    # add mRNAs
 	    recs.extend(mRNAs)
 	    # add exons
@@ -403,7 +408,8 @@ class GFF:
         If no such key, return the empty list."""
 
         if key in self.attributes:
-            return self.attributes[key][0]
+            # Ensure that trailing whitespace is removed
+            return self.attributes[key][0].rstrip()
         return ""
  
     def get_id (self):
@@ -765,8 +771,10 @@ def quote(s):
 def url_quote_sub(m):
     return url_quote(m.group(0))
 
-_seqid_pat = re.compile(r'[^a-zA-Z0-9.:^*$@!+_?-|]')
-_source_pat = re.compile(r'[^a-zA-Z0-9.: ^*$@!+_?-]')
+# Added slash '/' to allowable characters
+# as well as '(' and ')'
+_seqid_pat = re.compile(r'[^a-zA-Z0-9./:^*$@!+_?-|]')
+_source_pat = re.compile(r'[^a-zA-Z0-9./\(\): ^*$@!+_?-]')
 _type_pat = _source_pat
 _tag_pat = re.compile(r'[\t\n\r\f\v;=%&,]')
 _value_pat = _tag_pat
@@ -843,6 +851,7 @@ class Writer:
         print >>self.stream, '\t'.join(fields)
 
     def _write_rec_v3(self, rec):
+        _type_pat.sub(url_quote, rec.type)
         fields = [_seqid_pat.sub(url_quote, rec.seqid),
                   _source_pat.sub(url_quote, rec.source),
                   _type_pat.sub(url_quote, rec.type),

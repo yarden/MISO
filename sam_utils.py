@@ -274,7 +274,9 @@ def pair_sam_reads(samfile, filter_reads=True,
             continue
         
         if left_read.pos > right_read.pos:
-            raise Exception, (left_read.qname, left_read.pos, right_read.pos)
+            print "WARNING: %s left mate starts later than right "\
+                  "mate" %(left_read.qname)
+#            raise Exception, (left_read.qname, left_read.pos, right_read.pos)
 
     # Delete reads that are on the same strand
     for del_key in to_delete:
