@@ -4,8 +4,8 @@ min_event_reads = 20
 
 [cluster]
 cluster_command = qsub
-long_queue_name = long
-short_queue_name = quick
+long_queue_name = bigmem
+short_queue_name = bigmem
 
 [sampler]
 burn_in = 500

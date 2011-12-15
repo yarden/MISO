@@ -16,12 +16,18 @@ import cluster_utils
 miso_path = os.path.dirname(os.path.abspath(__file__))
 
 def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
-                          use_cluster=False, chunk_jobs=200,
+                          use_cluster=False, SGEarray=False, chunk_jobs=200,
                           overhang_len=1, paired_end=None,
-                          settings=None):
+                          settings=None, job_name="misojob"):
     """
     Compute Psi values for genes using a GFF and a BAM filename.
     """
+
+
+
+
+  
+    
     gene_ids_to_gff_index = gff_utils.get_gene_ids_to_gff_index(gff_dir)
 
     num_genes = len(gene_ids_to_gff_index.keys())
@@ -42,7 +48,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     all_miso_cmds = []
 
     for gene_id, gff_index_filename in gene_ids_to_gff_index.iteritems():
-        miso_cmd = "python %s --compute-gene-psi \"%s\" \"%s\" %s %s --read-len %d " \
+        miso_cmd = "python %s --compute-gene-psi \"%s\" %s %s %s --read-len %d " \
                    %(miso_run, gene_id, gff_index_filename, bam_filename, output_dir,
                      read_len)
         
@@ -69,53 +75,64 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     miso_settings = Settings.load(settings)
 
     if use_cluster:
-        # Threshold for putting jobs in the long queue
-        long_thresh = 201
-
-        # Delay between jobs
-        delay_constant = 0.9
-        
-        # Invoke the commands using the cluster
-        print "Sending %d genes to be run on cluster in chunks of %d..." \
-              %(num_genes, chunk_jobs)
-
-        if not chunk_jobs:
-            print "  - Using default chunk jobs = %d" %(200)
-            chunk_jobs = 200
-
-	chunk_jobs = max(1, int(round(num_genes / float(chunk_jobs))))
-
-        # Split the gene records into batches
-	cmd_batches = cluster_utils.chunk_list(all_miso_cmds, chunk_jobs)
-
-        time_str = time.strftime("%m-%d-%y_%H:%M:%S")
-
-        for batch_num, batch in enumerate(cmd_batches):
-            batch_size = len(batch)
-            print "Running batch %d (batch size = %d)" %(batch_num,
-                                                         batch_size)
-
-            if batch_size >= long_thresh:
-                queue_type = "long"
-            else:
-                queue_type = "short"
+        if SGEarray:
+            if not chunk_jobs:
+                chunk_jobs = 2500
+                print "  - Using default chunk jobs = %d" %(chunk_jobs)
+            cluster_output_dir = os.path.join(output_dir, "cluster_scripts")
+            if not os.path.isdir(cluster_output_dir):
+                os.makedirs(cluster_output_dir)
+            batch_argfile = os.path.join(cluster_output_dir, "run_args.txt");
+            cluster_utils.run_SGEarray_cluster(all_miso_cmds, batch_argfile, output_dir, settings=settings, job_name=job_name, chunk=chunk_jobs)
+        else:
+            # Threshold for putting jobs in the long queue
+            long_thresh = 50
             
-            # Pool all the MISO commands belonging to this batch
-            batch_logs_dir = os.path.join(output_dir, "batch-logs")
-            if not os.path.isdir(batch_logs_dir):
-                os.makedirs(batch_logs_dir)
-            batch_logfile = os.path.join(batch_logs_dir,
-                                         "batch-%d-%s.log" %(batch_num,
-                                                             time_str))
-            redirected_output = " >> %s;\n" %(batch_logfile)
-            cmd_to_run = redirected_output.join(batch)
+            # Delay between jobs
+            delay_constant = 0.9
+        
+            # Invoke the commands using the cluster
+            print "Sending %d genes to be run on cluster in chunks of %d..." \
+                %(num_genes, chunk_jobs)
 
-            # Run on cluster
-            job_name = "gene_psi_batch_%d" %(batch_num)
-            cluster_utils.run_on_cluster(cmd_to_run, job_name, output_dir,
-                                         queue_type=queue_type,
-                                         settings=settings)
-            time.sleep(delay_constant)
+            if not chunk_jobs:
+                print "  - Using default chunk jobs = %d" %(200)
+                chunk_jobs = 200
+
+            chunk_jobs = max(1, int(round(num_genes / float(chunk_jobs))))
+
+            # Split the gene records into batches
+            cmd_batches = cluster_utils.chunk_list(all_miso_cmds, chunk_jobs)
+
+            time_str = time.strftime("%m-%d-%y_%H:%M:%S")
+
+            for batch_num, batch in enumerate(cmd_batches):
+                batch_size = len(batch)
+                print "Running batch %d (batch size = %d)" %(batch_num,
+                                                             batch_size)
+
+                if batch_size >= long_thresh:
+                    queue_type = "long"
+                else:
+                    queue_type = "short"
+
+                # Pool all the MISO commands belonging to this batch
+                batch_logs_dir = os.path.join(output_dir, "batch-logs")
+                if not os.path.isdir(batch_logs_dir):
+                    os.makedirs(batch_logs_dir)
+                batch_logfile = os.path.join(batch_logs_dir,
+                                             "batch-%d-%s.log" %(batch_num,
+                                                                 time_str))
+                redirected_output = " >> %s;\n" %(batch_logfile)
+                cmd_to_run = redirected_output.join(batch)
+
+                # Run on cluster
+                job_name = "gene_psi_batch_%d" %(batch_num)
+                cluster_utils.run_on_cluster(cmd_to_run, job_name, output_dir,
+                                             queue_type=queue_type,
+                                             settings=settings)
+                time.sleep(delay_constant)
+        
             
         
 def compute_psi(sample_filenames, output_dir, event_type, read_len, overhang_len,
@@ -320,6 +337,8 @@ def main():
 		      help="Length of overhang constraints imposed on junctions.")
     parser.add_option("--output-dir", dest="output_dir", default=None,
 		      help="Directory for MISO output.")
+    parser.add_option("--job-name", dest="job_name", nargs=1, help="name for jobs submitted to queue. default is misojob", default="misojob")
+    parser.add_option("--SGEarray", dest="SGEarray", action="store_true", default=False)
     (options, args) = parser.parse_args()
 
     ##
@@ -327,8 +346,17 @@ def main():
     ##
     settings_filename = os.path.abspath(os.path.expanduser(options.settings_filename))
     Settings.load(settings_filename)
-
+    
     print "Loading settings file from: %s" %(settings_filename)
+
+
+    if (not options.use_cluster) and options.chunk_jobs:
+        print "Error: Chunking jobs only applies when using the --use-cluster option to run MISO on cluster."
+        sys.exit(1)
+    if (not options.use_cluster) and options.SGEarray:
+        print "Error: SGEarray implies that you are using an SGE cluster, please run again with --use-cluster option enabled."
+        sys.exit(1)
+
     
     if options.pool_counts:
         if options.output_dir == None:
@@ -381,10 +409,7 @@ def main():
 	    print "Error: Need output directory to run MISO."
             sys.exit(1)
 
-	if (not options.use_cluster) and options.chunk_jobs:
-	    print "Error: Chunking jobs only applies when using the --use-cluster option to run MISO on cluster."
-            sys.exit(1)
-	
+
 	labels = options.compute_events_psi[0].split(',')
 	filenames = options.compute_events_psi[1].split(',')
 	assert(len(labels) == len(filenames))
@@ -441,9 +466,12 @@ def main():
         if options.overhang_len != None:
             overhang_len = options.overhang_len
         
+   
         compute_all_genes_psi(gff_filename, bam_filename, options.read_len, output_dir,
                               overhang_len=overhang_len,
                               use_cluster=options.use_cluster,
+                              SGEarray=options.SGEarray,
+                              job_name=options.job_name,
                               chunk_jobs=options.chunk_jobs,
                               paired_end=options.paired_end,
                               settings=settings_filename)
