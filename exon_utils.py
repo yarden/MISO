@@ -78,28 +78,6 @@ def get_const_exons_from_mRNA(gff_in, mRNAs,
     return const_exons
 
 
-def get_bam_reads_in_exons(exons_filename, bam_filename):
-    """
-    Get the BAM reads that land inside the boundaries of a set of exons.
-
-    Arguments:
-
-    - exons filename (in GFF format)
-
-    - BAM filename
-
-    Returns results in BED format.
-
-    Relies on intersectBed being available.
-    """
-    #intersectBed -abam reads.bam -b exons.gff -wb -f 1 | coverageBed -abam stdin -b exons.gff
-    cmd = "intersectBed -abam %s -b %s -wb -f 1 | coverageBed -abam stdin -b %s -bed" \
-          %(bam_filename, exons_filename, exons_filename)
-    print "Getting BAM reads in exons..."
-#    a = subprocess.Popen("intersectBed -abam test-output/sam-output/c2c12.Atp2b1.sorted.bam -b test-gff/Atp2b1.mm9.gff.const_exons -wb -f 1 -bed".split(), stdout=subprocess.PIPE,stderr=subprocess.PIPE)    
-    return bam_reads
-
-
 def output_exons_to_file(recs, output_filename,
                          output_format='gff'):
     """

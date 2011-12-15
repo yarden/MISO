@@ -237,12 +237,17 @@ def compute_insert_len(bams_to_process,
                                                         all_constitutive=True,
                                                         min_size=min_exon_size)
     filter_reads = not no_bam_filter
+
+    if filter_reads:
+        print "Filtering BAM reads"
+    else:
+        print "Turning off filtering of BAM reads"
+        
     for bam_filename in bams_to_process:
         t1 = time.time()
         output_filename = os.path.join(output_dir,
-                                       "%s.%d_exon.insert_len" \
-                                       %(os.path.basename(bam_filename),
-                                         min_exon_size))
+                                       "%s.insert_len" \
+                                       %(os.path.basename(bam_filename)))
         print "Fetching reads in constitutive exons"
         mapped_bam_filename = exon_utils.map_bam2gff(bam_filename,
                                                      const_exons_gff_filename,

@@ -151,7 +151,8 @@ class GFFDatabase:
         for record in reader.read_recs():
 	    if record.type == "gene":
 		self.genes.append(record)
-	    elif record.type == "mRNA":
+            # Allow "transcript" 
+	    elif record.type == "mRNA" or record.type == "transcript":
 		self.mRNAs.append(record)
                 self.mRNAs_by_gene[record.get_parent()].append(record)
 	    elif record.type == "exon":
@@ -218,8 +219,12 @@ class GFFDatabase:
 			cdss.append(cds_rec)
                         
 	    if len(mRNAs) == len(exons) == len(cdss) == 0:
-		raise Exception, "No entries found for gene %s in GFF: %s" %(gene,
-                                                                             self.from_filename)
+                print "WARNING: No entries found for gene %s in GFF %s" \
+                      %(gene, self.from_filename)
+                # Remove from gene hierarchy
+                del gene_hierarchy[gene]
+#		raise Exception, "No entries found for gene %s in GFF: %s" %(gene,
+#                                                                             self.from_filename)
 	    # add mRNAs
 	    recs.extend(mRNAs)
 	    # add exons

@@ -902,7 +902,11 @@ def make_gene_from_gff_records(gene_label, gene_hierarchy,
     # Iterate through mRNAs in the order in which they were given in the
     # GFF file
     transcript_ids = [rec.get_id() for rec in gene_records \
-                      if rec.type == "mRNA"]
+                      if (rec.type == "mRNA" or rec.type == "transcript")]
+
+    if len(transcript_ids) == 0:
+        raise Exception, "Error: %s has no transcripts..." \
+              %(gene_label)
 
     for transcript_id in transcript_ids:
         transcript_info = mRNAs[transcript_id]
