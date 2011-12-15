@@ -75,7 +75,6 @@ def load_insert_len(insert_dist_filename,
     params = parse_insert_len_params(params_header)
     
     for line in insert_dist_file:
-        print line
         # Skip header
         if line.startswith("#"):
             continue
