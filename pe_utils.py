@@ -66,6 +66,7 @@ def filter_insert_len(interval_to_dists,
 
 def load_insert_len(insert_dist_filename,
                     delim='\t'):
+    print "Loading insert length from: %s" %(insert_dist_filename)
     insert_dist_file = open(insert_dist_filename, "r")
     insert_lens = []
     params_header = insert_dist_file.readline().strip()
@@ -77,7 +78,10 @@ def load_insert_len(insert_dist_filename,
         # Skip header
         if line.startswith("#"):
             continue
-        lens_list = line.strip().split(delim)[1].split(",")
+        insert_fields = line.strip().split(delim)
+        if len(insert_fields) != 2:
+            continue
+        lens_list = insert_fields[1].split(",")
         curr_lens = [int(l) for l in lens_list]
         insert_lens.extend(curr_lens)
     insert_dist = array(insert_lens)
@@ -396,6 +400,8 @@ def output_insert_len_dist(interval_to_paired_dists,
     output_file.write(header)
 
     for region, insert_lens in interval_to_paired_dists.iteritems():
+        if len(insert_lens) == 0:
+            continue
         str_lens = ",".join([str(l) for l in insert_lens])
         output_line = "%s\t%s\n" %(region, str_lens)
         output_file.write(output_line)
