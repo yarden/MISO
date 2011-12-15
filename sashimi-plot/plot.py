@@ -70,7 +70,6 @@ def plot_insert_len(insert_len_filename,
                     output_dir,
                     dimensions=None,
                     num_bins=25,
-                    sd_max=4,
                     plot_sd=2,
                     png=False):
     """
@@ -93,22 +92,16 @@ def plot_insert_len(insert_len_filename,
     print "  - Distribution file: %s" %(insert_len_filename)
     print "  - Output plot: %s" %(output_filename)
     insert_dist, params = pe_utils.load_insert_len(insert_len_filename)
-    print "Params prior to filtering: "
-    print params
 
-    print "Filtering insert length to exclude values %d-many sdevs outside mean."\
-          %(sd_max)
-    filtered_insert_dist = pe_utils.filter_insert_len(insert_dist,
-                                                      sd_max)
     mean, sdev, dispersion, num_pairs \
-          = pe_utils.compute_insert_len_stats(filtered_insert_dist)
-    print "min filtered: %.1f" %(min(filtered_insert_dist))
-    print "max filtered: %.1f" %(max(filtered_insert_dist))
+          = pe_utils.compute_insert_len_stats(insert_dist)
+    print "min insert: %.1f" %(min(insert_dist))
+    print "max insert: %.1f" %(max(insert_dist))
     plt.title("%s (%d read-pairs)" \
               %(plot_name,
                 num_pairs),
               fontsize=10)
-    plt.hist(filtered_insert_dist, bins=num_bins, color='k',
+    plt.hist(insert_dist, bins=num_bins, color='k',
              edgecolor="#ffffff", align='mid')
     axes_square(s)
     ymin, ymax = s.get_ylim()

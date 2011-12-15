@@ -39,19 +39,29 @@ def parse_insert_len_params(insert_len_header):
     return params
 
         
-def filter_insert_len(insert_dist,
-                      sd_max):
-    filtered_insert_dist = insert_dist.copy()
-    mu = mean(insert_dist)
-    sdev = std(insert_dist)
+def filter_insert_len(interval_to_dists,
+                     sd_max):
+    # Get vector of insert lengths 
+    insert_dist = get_insert_dist_array(interval_to_dists)
+    
+    mu, sdev, dispersion, num_pairs = \
+        compute_insert_len_stats(insert_dist)
+
+    filtered_interval_to_dists = defaultdict(list)
     
     min_cutoff = mu - (sd_max * sdev)
     max_cutoff = mu + (sd_max * sdev)
     print "Excluding values < %.2f or > %.2f" \
           %(min_cutoff, max_cutoff)
-    filtered_insert_dist = delete(filtered_insert_dist, nonzero(insert_dist < min_cutoff)[0])
-    filtered_insert_dist = delete(filtered_insert_dist, nonzero(insert_dist > max_cutoff)[0])
-    return filtered_insert_dist
+
+    for interval, dists in interval_to_dists.iteritems():
+        dists = array(dists)
+        filtered_dists = delete(dists, nonzero(dists < min_cutoff)[0])
+        filtered_dists = delete(filtered_dists,
+                                nonzero(dists > max_cutoff)[0])
+        filtered_interval_to_dists[interval] = filtered_dists
+                                             
+    return filtered_interval_to_dists
                
 
 def load_insert_len(insert_dist_filename,
@@ -425,23 +435,22 @@ def summarize_insert_len_dist(interval_to_paired_dists,
 
     output_file = open(output_filename, "w")
 
-    # Get vector of insert lengths 
-    insert_dist = get_insert_dist_array(interval_to_paired_dists)
-
     print "Removing values %d-many deviations outside the mean" \
           %(sd_max)
 
     # Filter insert length distribution based on sd_max
-    insert_dist = filter_insert_len(insert_dist,
-                                    sd_max)
+    filtered_interval_to_dist = filter_insert_len(interval_to_paired_dists,
+                                                  sd_max)
+    filtered_insert_dist = get_insert_dist_array(filtered_interval_to_dist)
+
     mu, sdev, dispersion, num_pairs = \
-        compute_insert_len_stats(insert_dist)
+        compute_insert_len_stats(filtered_insert_dist)
         
     print "mean\tsdev\tdispersion"
     print "%.1f\t%.1f\t%.1f" \
           %(mu, sdev, dispersion)
-    min_insert = min(insert_dist)
-    max_insert = max(insert_dist)
+    min_insert = min(filtered_insert_dist)
+    max_insert = max(filtered_insert_dist)
     print "min insert: %d" %(min_insert)
     print "max insert: %d" %(max_insert)
 
@@ -454,7 +463,7 @@ def summarize_insert_len_dist(interval_to_paired_dists,
     output_file.write(header_line)
 
     # Write raw insert lengths indexed by region
-    output_insert_len_dist(interval_to_paired_dists,
+    output_insert_len_dist(filtered_interval_to_dist,
                            output_file)
     output_file.close()
 
