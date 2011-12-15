@@ -106,9 +106,9 @@ def plot_insert_len(insert_len_filename,
     axes_square(s)
     ymin, ymax = s.get_ylim()
     plt.text(0.05, 0.95, "$\mu$: %.1f\n$\sigma$: %.1f\n$d$: %.1f" \
-             %(mean,
-               sdev,
-               dispersion),
+             %(round(mean, 2),
+               round(sdev, 2),
+               round(dispersion, 2)),
              horizontalalignment='left',
              verticalalignment='top',
              bbox=dict(edgecolor='k', facecolor="#ffffff",
