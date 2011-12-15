@@ -25,7 +25,7 @@ def get_insert_dist_array(interval_to_paired_dists,
     insert_dist = []
     for interval, paired_dists in interval_to_paired_dists.iteritems():
         insert_dist.extend(paired_dists)
-    return insert_dist
+    return array(insert_dist)
 
 
 def parse_insert_len_params(insert_len_header):
@@ -207,7 +207,8 @@ def compute_insert_len(bams_to_process,
                        const_exons_gff_filename,
                        output_dir,
                        min_exon_size,
-                       no_bam_filter=False):
+                       no_bam_filter=False,
+                       sd_max=2):
     """
     Compute insert length distribution and output it to the given
     directory.
@@ -269,7 +270,8 @@ def compute_insert_len(bams_to_process,
             continue
         print "Using %d paired mates" %(num_paired_reads)
         interval_to_paired_dists = compute_inserts_from_paired_mates(paired_reads)
-        summarize_insert_len_dist(interval_to_paired_dists, output_filename)
+        summarize_insert_len_dist(interval_to_paired_dists, output_filename,
+                                  sd_max=sd_max)
         t2 = time.time()
         print "Insert length computation took %.2f seconds." %(t2 - t1)
 
@@ -413,7 +415,8 @@ def compute_insert_len_stats(insert_dist):
     
 
 def summarize_insert_len_dist(interval_to_paired_dists,
-                              output_filename):
+                              output_filename,
+                              sd_max=2):
     """
     Summarize insert len distributions.
     """
@@ -424,12 +427,23 @@ def summarize_insert_len_dist(interval_to_paired_dists,
 
     # Get vector of insert lengths 
     insert_dist = get_insert_dist_array(interval_to_paired_dists)
+
+    print "Removing values %d-many deviations outside the mean" \
+          %(sd_max)
+
+    # Filter insert length distribution based on sd_max
+    insert_dist = filter_insert_len(insert_dist,
+                                    sd_max)
     mu, sdev, dispersion, num_pairs = \
         compute_insert_len_stats(insert_dist)
-    
+        
     print "mean\tsdev\tdispersion"
     print "%.1f\t%.1f\t%.1f" \
           %(mu, sdev, dispersion)
+    min_insert = min(insert_dist)
+    max_insert = max(insert_dist)
+    print "min insert: %d" %(min_insert)
+    print "max insert: %d" %(max_insert)
 
     # Write headers
     header_line = "#%s=%.1f,%s=%.1f,%s=%.1f,%s=%d\n" \
@@ -460,14 +474,21 @@ def main():
     parser.add_option("--min-exon-size", dest="min_exon_size", nargs=1, type="int", default=500,
                       help="Minimum size of constitutive exon (in nucleotides) that should be used "
                       "in the computation. Default is 500 bp.")
+    parser.add_option("--sd-max", dest="sd_max", nargs=1, default=2, type="int",
+                      help="Number of standard deviations used to define outliers. By default, set "
+                      "to 2, meaning that any points at least 2*sigma away from the mean of the "
+                      "insert length distribution will be discarded.")
     parser.add_option("--output-dir", dest="output_dir", nargs=1, default=None,
                       help="Output directory.")
     (options, args) = parser.parse_args()
 
     if options.output_dir == None:
         print "Error: need --output-dir."
+        return
         
     output_dir = os.path.abspath(os.path.expanduser(options.output_dir))
+
+    sd_max = options.sd_max
 
     if options.compute_insert_len != None:
         bams_to_process = [os.path.abspath(os.path.expanduser(f)) for f in \
@@ -475,7 +496,8 @@ def main():
         gff_filename = os.path.abspath(os.path.expanduser(options.compute_insert_len[1]))
         compute_insert_len(bams_to_process, gff_filename, output_dir,
                            options.min_exon_size,
-                           no_bam_filter=options.no_bam_filter)
+                           no_bam_filter=options.no_bam_filter,
+                           sd_max=sd_max)
 
 if __name__ == "__main__":
     main()
