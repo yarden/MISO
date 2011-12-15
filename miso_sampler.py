@@ -323,7 +323,12 @@ class MISOSampler:
         # Get a string representation of the isoforms - use '_'
         # in the delimiter regardless
         iso_delim = '_'
-        str_isoforms = '[' + ",".join(["\'" + iso_delim.join(iso.desc) + "\'" for iso in gene.isoforms]) + ']'     
+        if type(gene.isoforms[0].desc) == list:
+            str_isoforms = '[' + ",".join(["\'" + iso_delim.join(iso.desc) + "\'" \
+                                           for iso in gene.isoforms]) + ']'
+        else:
+            str_isoforms = '[' + ",".join(["\'" + iso.desc + "\'" \
+                                           for iso in gene.isoforms]) + ']'
 
         num_isoforms = len(gene.isoforms)
 
