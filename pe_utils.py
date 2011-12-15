@@ -15,7 +15,7 @@ from parse_csv import *
 import Gene as gene_utils
 import sam_utils
 import exon_utils
-
+from collections import defaultdict
 
 def get_insert_dist_array(interval_to_paired_dists,
                           delim='\t'):
