@@ -173,7 +173,7 @@ def main():
     parser.add_option("--plot-posterior", dest="plot_posterior", nargs=1, default=None,
                       help="Plot the posterior distribution. Takes as input a raw MISO output "
                       "file (.miso)")
-    parser.add_option("--plot-insert-len", dest="plot_insert_len", nargs=1, default=False,
+    parser.add_option("--plot-insert-len", dest="plot_insert_len", nargs=1, default=None,
                       help="Plot the insert length distribution from a given insert length (*.insert_len) "
                       "filename.")
     parser.add_option("--plot-event", dest="plot_event", nargs=3, default=None,
