@@ -259,9 +259,10 @@ def filter_events(data, h, num_total, num_inc, num_exc, num_sum,
             # Get Bayes factor
             bayes_factor = event['bayes_factor']
             bf_pass = False
-            for bf in bayes_factor:
-                if abs(bf) > abs(bf_filter):
-                    bf_pass = True
+            if bayes_factor != 0:
+                for bf in bayes_factor:
+                    if abs(bf) > abs(bf_filter):
+                        bf_pass = True
 
             if not bf_pass:
                 continue
