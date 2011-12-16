@@ -286,7 +286,7 @@ def pool_comparisons(comparison_dir, event_type, output_dir):
                                                      'diff':
                                                      event['diff']}
 
-    json_serialize(pooled_comparisons, json_output_filename, use_jsonpickle=False)
+    json_serialize(pooled_comparisons, json_output_filename)
     
                             
 def get_psi_info_by_sample(event_comparison_data, sample1_or_sample2):

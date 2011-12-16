@@ -42,7 +42,7 @@ if __name__ == '__main__':
 		       help="Try to add modules using the 'modules' system.")
     (options, args) = parser.parse_args()
     
-    required_modules = ['numpy', 'scipy', 'simplejson', 'jsonpickle', 'matplotlib',
+    required_modules = ['numpy', 'scipy', 'simplejson', 'matplotlib',
                         'pysam']
     
     if options.add_modules:

@@ -1027,23 +1027,6 @@ def make_proximal_distal_exon_pair(proximal_exons, distal_exons):
     """
     return
 
-def load_multi_isoform_reads(reads_filename):
-    reads_data, h = csv2dictlist(reads_filename)
-    reads = []
-    for alignment_type in reads_data:
-        alignment = eval(alignment_type['read_type'])
-        num_reads = int(alignment_type['num_reads'])
-        reads.extend([alignment] * num_reads)
-    return array(reads)
-
-
-def load_multi_isoform_gene(multi_isoform_filename):
-    isoforms_info = json_load_file(multi_isoform_filename, use_jsonpickle=False)
-    multi_isoform_gene = make_gene(isoforms_info["exons"],
-                                   isoforms_info["isoforms"])
-    return multi_isoform_gene
-
-
 def afe_ale_event_to_gene(proximal_exons, distal_exons, event_type,
                           chrom, read_len=None, overhang_len=None,
                           label=None):
