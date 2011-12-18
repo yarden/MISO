@@ -27,6 +27,8 @@ exon_scale = 4
 logged = False 
 font_size = 6
 
+#bar_posteriors = True
+
 # Max y-axis
 ymax = 150
 
