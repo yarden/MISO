@@ -12,7 +12,7 @@ import matplotlib
 from plotting import *
 import matplotlib.pyplot as plt
 from matplotlib import rc
-rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+#rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 from parse_csv import csv2array
 import time
 

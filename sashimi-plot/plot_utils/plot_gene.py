@@ -1,4 +1,5 @@
 import os, sys, operator, subprocess
+import glob
 try:
     import simplejson as json
 except:
@@ -431,36 +432,137 @@ def cubic_bezier(pts, t):
     return p0 * (1 - t)**3 + 3 * t * p1 * (1 - t) ** 2 + \
         3 * t**2 * (1 - t) * p2 + t**3 * p3
 
-def get_miso_output_files(sample_names, miso_prefix):
+
+def get_miso_files_from_dir(dirname):
     """
-    Get MISO output files, in order of 'sample_names'.
+    Return MISO output files from a directory.
+    """
+    miso_basename_files = []
+    if not os.path.isdir(dirname):
+        print "Error: %s not a directory." \
+              %(dirname)
+        return miso_basename_files
+    miso_files = glob.glob(os.path.join(dirname, "*.miso"))
+    # return basenames
+    miso_basename_files = [os.path.basename(f) for f in miso_files]
+    return miso_basename_files
+
+
+def get_miso_output_files(event_name, settings):
+    """
+    Get MISO output files, in order of 'miso_files'
 
     Look recursively in subdirectories of MISO prefix.
     """
-    return
+    miso_filenames = []
+    
+    # Apply MISO prefix path if given
+    if "miso_prefix" in settings:
+        miso_prefix = os.path.abspath(os.path.expanduser(settings["miso_prefix"]))
+    else:
+        miso_prefix = ""
+
+    print "miso_prefix: ", miso_prefix
+
+    if "miso_files" not in settings:
+        print "Error: need \'miso_files\' to be set in settings file in " \
+              "order to plot MISO estimates."
+        return miso_filenames
+
+    miso_files = settings['miso_files']
+
+    miso_sample_paths = [os.path.abspath(os.path.expanduser(os.path.join(miso_prefix, f))) \
+                         for f in miso_files]
+
+    # Event's chromosome
+    chrom = event_name.split(":")[0]
+    event_with_miso_ext = "%s.miso" %(event_name)
+
+    for curr_sample_path in miso_sample_paths:
+        event_found = False
+        print "Searching for MISO files in: %s" %(curr_sample_path)
+
+        if event_with_miso_ext in get_miso_files_from_dir(curr_sample_path):
+            # Allow the event to be in a top-level directory outside of a
+            # chromosome folder
+            event_found = True
+            event_filename = os.path.join(curr_sample_path,
+                                          event_with_miso_ext)
+            miso_filenames.append(event_filename)
+            print "Found %s MISO file in top-level directory." %(event_name)
+            print "  - Location: %s" %(event_filename)
+            print "Please try to keep MISO event files in their chromosome "\
+                  "directory."
+            break
+
+        for root, dirs, files in os.walk(curr_sample_path):
+            # First check if the file is in the current directory
+            ### TODO FILL ME IN
+
+            # If there's a directory named after the event's chromosome,
+            # see if the MISO file is in there
+            if chrom in dirs:
+                chrom_dirname = os.path.abspath(os.path.join(root, chrom))
+                print "Looking for MISO files in: %s" %(chrom_dirname)
+                # Fetch MISO files, if any
+                curr_miso_files = get_miso_files_from_dir(chrom_dirname)
+
+                # Is the event in there?
+                if event_with_miso_ext in curr_miso_files:
+                    # Found relevant event
+                    event_found = True
+                    # Add to list
+                    event_filename = os.path.join(root, chrom,
+                                                  event_with_miso_ext)
+                    print "Found %s MISO file." %(event_name)
+                    print "  - Location: %s" %(event_filename)
+                    miso_filenames.append(event_filename)
+                    break
+
+        if not event_found:
+            # If we're here, it means we couldn't find the MISO
+            # output files for the current sample
+            print "Error: Could not find MISO output files for " \
+                  "sample %s (after searching in %s and its subdirectories). " \
+                  "Are you sure MISO output files are present in that " \
+                  "directory?" %(os.path.basename(curr_sample_path),
+                                 curr_sample_path)
+            # Include empty path for this sample
+            miso_filenames.append('')
+
+    # Number of event filenames retrieved must equal
+    # the number of samples to be plotted
+    if len(miso_filenames) != len(miso_files):
+        print "WARNING: Could not find MISO files for all samples."
+        print "  - miso_filenames: ", miso_filenames
+        print "  - miso_samples to be plotted: ", miso_files
+
+    return miso_filenames
 
     
     
 # A wrapper to allow reading from a file.
 def plot_density_from_file(pickle_filename, event, settings_f, out_f):
-
+    """
+    Read MISO estimates given an event name.
+    """
     config = ConfigParser.ConfigParser()
     config.read(settings_f) 
    
-    settings = {"intron_scale": 30,\
-        "exon_scale": 1,\
-        "logged": False,\
-        "ymax": None,\
-        "show_posteriors": True,\
-        "number_junctions": True,\
-        "posterior_bins": 40,\
-        "gene_posterior_ratio": 5,\
-        "resolution": .5,\
-        "fig_width": 8.5,\
-        "fig_height": 11,\
-        "junction_log_base": 10.,\
-        "reverse_minus": False,\
-        "font_size": 6} 
+    settings = {"intron_scale": 30,
+                "exon_scale": 1,
+                "logged": False,
+                "ymax": None,
+                "show_posteriors": True,
+                "number_junctions": True,
+                "posterior_bins": 40,
+                "gene_posterior_ratio": 5,
+                "resolution": .5,
+                "fig_width": 8.5,
+                "fig_height": 11,
+                "junction_log_base": 10.,
+                "reverse_minus": False,
+                "font_size": 6} 
     for section in config.sections():
         for option in config.options(section):
             if option in ["intron_scale", "exon_scale", "ymax", "resolution",\
@@ -488,13 +590,13 @@ def plot_density_from_file(pickle_filename, event, settings_f, out_f):
     chrom = event.split(":")[0]
     strand = event.split(":")[-1]
     if "miso_prefix" in settings:
-        miso_files = [os.path.join(settings["miso_prefix"], x, chrom,\
-            event) + ".miso" for x in settings["miso_files"]]
+        miso_files = get_miso_output_files(event, settings)
     else:
         miso_files = settings["miso_files"]
     if "coverages" in settings:
         coverages = json.loads(settings["coverages"])
         coverages = map(float, coverages)
+        # Normalize coverages per M
         coverages = [x / 1e6  for x in coverages]
     else:
         coverages = [1 for x in settings["bam_files"]]
