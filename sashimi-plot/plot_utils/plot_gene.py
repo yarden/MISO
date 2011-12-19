@@ -388,7 +388,6 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,
     clow, chigh = [psis[lidx], psis[hidx]]
 
     nyticks = 4
-    
 
     if not bar_posterior:
         y, x, p = hist(psis, linspace(0, 1, posterior_bins),\
@@ -399,14 +398,14 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,
 
         ymax = max(y) * 1.5
         ymin = -.5 * ymax
+#             "$\Psi$ = %.2f\n$\Psi_{0.05}$ = %.2f\n$\Psi_{0.95}$ = %.2f" %\
 
-        #text(1, ymax,\
-        #    "$\Psi$ = %.2f"%(mean(psis)), va='top', ha='left',\
-        #    fontsize=font_size)
-
-        text(1, ymax,\
-            "$\Psi$ = %.2f\n$\Psi_{0.05}$ = %.2f\n$\Psi_{0.95}$ = %.2f"%\
-            (mean(psis), clow, chigh), fontsize=font_size, va='top', ha='left')
+        text(1, ymax,
+             "$\Psi$ = %.2f\n[%.2f, %.2f]" % \
+             (mean(psis), clow, chigh),
+             fontsize=font_size,
+             va='top',
+             ha='left')
 
         ylim(ymin, ymax)
         axvar.spines['left'].set_bounds(0, ymax)
@@ -438,6 +437,12 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,
                  ecolor='k',
                  markerfacecolor="#ffffff",
                  markeredgecolor="k")
+        text(1, 1,
+             "$\Psi$ = %.2f\n[%.2f, %.2f]" % \
+             (mean(psis), clow, chigh),
+             fontsize=font_size,
+             va='top',
+             ha='left')
         yticks([])
 
     # Use same x-axis for all subplots
