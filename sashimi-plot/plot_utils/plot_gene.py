@@ -45,7 +45,7 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,\
     # Reduce memory footprint by using incremented graphcoords.
     compressed_x = []
     compressed_wiggle = []
-    prevx = 0
+    prevx = graphcoords[0]
     tmpval = []
     for i in range(len(graphcoords)):
         tmpval.append(wiggle[i])
