@@ -1,0 +1,3 @@
+include include/*
+include src/f2c/*
+include src/lapack/*
