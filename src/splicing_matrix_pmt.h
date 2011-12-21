@@ -167,6 +167,8 @@ int FUNCTION(splicing_matrix,add_cols)(TYPE(splicing_matrix) *m, long int n);
 int FUNCTION(splicing_matrix,add_rows)(TYPE(splicing_matrix) *m, long int n);
 int FUNCTION(splicing_matrix,remove_col)(TYPE(splicing_matrix) *m, long int col);
 int FUNCTION(splicing_matrix,remove_row)(TYPE(splicing_matrix) *m, long int row);
+int FUNCTION(splicing_matrix,remove_cols_section)(TYPE(splicing_matrix) *m, 
+						  long int from, long int to);
 
 /*------------------------*/
 /* Print as text          */

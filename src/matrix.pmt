@@ -253,6 +253,14 @@ int FUNCTION(splicing_matrix,remove_col)(TYPE(splicing_matrix) *m, long int col)
   return 0;
 }
 
+int FUNCTION(splicing_matrix,remove_cols_section)(TYPE(splicing_matrix) *m, 
+						  long int from, long int to){
+  FUNCTION(splicing_vector,remove_section)(&m->data, (m->nrow)*from,
+					   (m->nrow)*to);
+  m->ncol -= (to-from);
+  return 0;
+}
+
 /**
  * \ingroup matrix
  * \function splicing_matrix_permdelete_rows

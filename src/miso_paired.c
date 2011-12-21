@@ -519,8 +519,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
     noS=0;
     noIterations = 3*noIterations - 2*noBurnIn;
     noBurnIn = m;
-    rundata->noSamples = noSamples = 
-      noChains * (noIterations - noBurnIn) / noLag;
+    noSamples = noChains * (noIterations - noBurnIn) / noLag;
     lagCounter = 0;
 
     SPLICING_CHECK(splicing_matrix_resize(samples, noiso, noSamples));
@@ -561,6 +560,14 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   if (!fragmentProb) { 
     splicing_vector_destroy(&vfragmentProb);
     SPLICING_FINALLY_CLEAN(1);
+  }
+
+  /* We always return the same number of samples. */
+
+  if (rundata->noSamples != noSamples) {
+    splicing_vector_remove_section(logLik, 0, noSamples-rundata->noSamples);
+    splicing_matrix_remove_cols_section(samples, 0,
+					noSamples-rundata->noSamples);
   }
 
   return 0;
