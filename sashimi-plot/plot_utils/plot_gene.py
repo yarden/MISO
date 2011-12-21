@@ -17,7 +17,7 @@ from matplotlib.path import Path
 # Plot MISO events using BAM files and posterior distribution files.
 # If comparison files are available, plot bayes factors too.
 def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,\
-    graphToGene, bam_filename, axvar, paired_end=False, intron_scale=30,\
+    graphToGene, bam_filename, axvar, chrom, paired_end=False, intron_scale=30,\
     exon_scale=4, color='r', ymax=None, logged=False, coverage=1,\
     number_junctions=True, resolution=.5, showXaxis=True, showYaxis=True,\
     showYlabel=True, font_size=6, junction_log_base=10):
@@ -148,7 +148,7 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,
                  font_size=6, junction_log_base=10, reverse_minus=False,
                  bar_posterior=False):
     # Parse gene pickle and get scaling information.
-    tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand = \
+    tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand, chrom = \
         parseGene(pickle_filename, event)
     graphcoords, graphToGene = getScaling(tx_start, tx_end, strand,\
         exon_starts, exon_ends, intron_scale, exon_scale, reverse_minus)
@@ -176,7 +176,7 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,
         ax1 = subplot2grid((nfiles + 2, gene_posterior_ratio), (i, 0),\
             colspan=gene_posterior_ratio - 1)
         plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand,\
-            graphcoords, graphToGene, bam_file, ax1, paired_end=False,\
+            graphcoords, graphToGene, bam_file, ax1, chrom, paired_end=False,\
             intron_scale=intron_scale, exon_scale=exon_scale, color=color,\
             ymax=ymax, logged=logged, coverage=coverage,\
             number_junctions=number_junctions, resolution=resolution,\
@@ -194,7 +194,8 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,
 
                 print "Loading MISO file: %s" %(miso_file)
                 plot_posterior_single(miso_file, ax2, posterior_bins,\
-                    showXaxis=showXaxis, showYlabel=False, font_size=font_size,
+                                      showXaxis=showXaxis, showYlabel=False,
+                                      font_size=font_size,
                                       bar_posterior=bar_posterior)
             except e:
                 box(on=False)
@@ -224,12 +225,14 @@ def parseGene(pickle_filename, event):
     exon_starts = []
     exon_ends = []
     mRNAs = []
+    chrom = None
     for gene_id, gene_info in gff_genes.iteritems():
         if event == gene_id:
             gene_obj = gene_info['gene_object']
             gene_hierarchy = gene_info['hierarchy']
             tx_start, tx_end = gff_utils.get_inclusive_txn_bounds(\
                 gene_hierarchy[gene_id])
+            chrom = gene_obj.chrom
 
             for mRNA_id, mRNA_info in gene_hierarchy[gene_id]['mRNAs'].iteritems():
                 mRNA = []
@@ -248,7 +251,8 @@ def parseGene(pickle_filename, event):
             break
 
     mRNAs.sort(key=len)
-    return tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand
+    return tx_start, tx_end, exon_starts, exon_ends, gene_obj, \
+           mRNAs, strand, chrom
 
 # Compute the scaling factor across various genic regions.
 def getScaling(tx_start, tx_end, strand, exon_starts, exon_ends,\
@@ -496,7 +500,7 @@ def get_miso_files_from_dir(dirname):
     return miso_basename_files
 
 
-def get_miso_output_files(event_name, settings):
+def get_miso_output_files(event_name, chrom, settings):
     """
     Get MISO output files, in order of 'miso_files'
 
@@ -522,13 +526,12 @@ def get_miso_output_files(event_name, settings):
     miso_sample_paths = [os.path.abspath(os.path.expanduser(os.path.join(miso_prefix, f))) \
                          for f in miso_files]
 
-    # Event's chromosome
-    chrom = event_name.split(":")[0]
     event_with_miso_ext = "%s.miso" %(event_name)
 
     for curr_sample_path in miso_sample_paths:
         event_found = False
         print "Searching for MISO files in: %s" %(curr_sample_path)
+        print "  - Looking for chromosome %s directories" %(chrom)
 
         if event_with_miso_ext in get_miso_files_from_dir(curr_sample_path):
             # Allow the event to be in a top-level directory outside of a
@@ -595,7 +598,13 @@ def plot_density_from_file(pickle_filename, event, settings_f, out_f):
     Read MISO estimates given an event name.
     """
     config = ConfigParser.ConfigParser()
-    config.read(settings_f) 
+    config.read(settings_f)
+
+    ##
+    ## Read information about gene
+    ##
+    tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand, chrom = \
+        parseGene(pickle_filename, event)
    
     settings = {"intron_scale": 30,
                 "exon_scale": 1,
@@ -636,10 +645,8 @@ def plot_density_from_file(pickle_filename, event, settings_f, out_f):
             for x in settings["bam_files"]]
     else:
         bam_files = settings["bam_files"]
-    chrom = event.split(":")[0]
-    strand = event.split(":")[-1]
     if "miso_prefix" in settings:
-        miso_files = get_miso_output_files(event, settings)
+        miso_files = get_miso_output_files(event, chrom, settings)
     else:
         miso_files = settings["miso_files"]
     if "coverages" in settings:
