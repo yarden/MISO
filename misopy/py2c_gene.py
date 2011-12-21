@@ -1,5 +1,5 @@
 import misopy
-import misopy.pysplicing as pysplicing
+import pysplicing
 
 def py2c_gene(py_gene):
     """

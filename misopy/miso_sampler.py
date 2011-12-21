@@ -16,7 +16,7 @@ from misopy.Gene import Gene, Exon
 from misopy.py2c_gene import *
 
 # C MISO interface
-import misopy.pysplicing
+import pysplicing
 
 from scipy import *
 from numpy import *
