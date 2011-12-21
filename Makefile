@@ -1,5 +1,5 @@
 
-all: Rpackage Pythonpackage
+all: Pythonpackage
 
 ########################################################
 
