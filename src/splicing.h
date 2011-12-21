@@ -141,15 +141,15 @@ typedef struct splicing_miso_rundata_t {
 } splicing_miso_rundata_t;
 
 typedef enum splicing_miso_start_t {
-  SPLICING_MISO_START_AUTO=1,
-  SPLICING_MISO_START_UNIFORM=2,
-  SPLICING_MISO_START_RANDOM=3,
-  SPLICING_MISO_START_GIVEN=4,
-  SPLICING_MISO_START_LINEAR=5 } splicing_miso_start_t;
+  SPLICING_MISO_START_AUTO,
+  SPLICING_MISO_START_UNIFORM,
+  SPLICING_MISO_START_RANDOM,
+  SPLICING_MISO_START_GIVEN,
+  SPLICING_MISO_START_LINEAR } splicing_miso_start_t;
 
 typedef enum splicing_miso_stop_t {
-  SPLICING_MISO_STOP_FIXEDNO=1,
-  SPLICING_MISO_STOP_CONVERGENT_MEAN=2,
+  SPLICING_MISO_STOP_FIXEDNO,
+  SPLICING_MISO_STOP_CONVERGENT_MEAN,
 } splicing_miso_stop_t;
 
 int splicing_matchIso(const splicing_gff_t *gff, int gene, 

@@ -43,9 +43,6 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   int gene, readLength, noIterations=5000, maxIterations=100000, 
     noBurnIn=500, noLag=10;
   int overhang=1;
-  int noChains=2;
-  splicing_miso_start_t start=SPLICING_MISO_START_AUTO;
-  splicing_miso_stop_t stop=SPLICING_MISO_STOP_CONVERGENT_MEAN;
   splicing_gff_t *mygff;
   splicing_strvector_t myreadcigar;
   splicing_vector_int_t myreadpos;
@@ -58,12 +55,9 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   splicing_miso_rundata_t rundata;
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
   
-  if (!PyArg_ParseTuple(args, "OiOOi|iiiOiiii", &gff, &gene, &readpos, 
-			&readcigar, &readLength, &noIterations, &noBurnIn,
-			&noLag, &hyperp, &overhang, &noChains, &start, 
-			&stop)) { 
-    return NULL; 
-  }
+  if (!PyArg_ParseTuple(args, "OiOOi|iiiOi", &gff, &gene, &readpos, &readcigar,
+			&readLength, &noIterations, &noBurnIn, &noLag, 
+			&hyperp, &overhang)) { return NULL; }
   
   mygff=PyCObject_AsVoidPtr(gff);
 
@@ -94,10 +88,11 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   
   SPLICING_PYCHECK(splicing_miso(mygff, gene, &myreadpos, 
 				 (const char**) myreadcigar.table, 
-				 readLength, overhang, noChains,
+				 readLength, overhang, /*noChains=*/ 1L,
 				 noIterations, maxIterations, 
 				 noBurnIn, noLag,
-				 &myhyperp, start, stop, /*startpsi=*/ 0,
+				 &myhyperp, SPLICING_MISO_START_AUTO, 
+				 SPLICING_MISO_STOP_FIXEDNO, 0,
 				 &samples, &logLik, 
 				 /*match_matrix=*/ 0, &class_templates,
 				 &class_counts, &assignment, &rundata));
@@ -152,9 +147,6 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   int gene, readLength, noIterations=5000, maxIterations=100000, 
     noBurnIn=500, noLag=10;
   int overhang=1;
-  int noChains=2;
-  splicing_miso_start_t start=SPLICING_MISO_START_AUTO;
-  splicing_miso_stop_t stop=SPLICING_MISO_STOP_CONVERGENT_MEAN;
   double normalMean, normalVar, numDevs;
   splicing_gff_t *mygff;
   splicing_strvector_t myreadcigar;
@@ -168,12 +160,10 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_miso_rundata_t rundata;
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
   
-  if (!PyArg_ParseTuple(args, "OiOOiddd|iiiOiiii", &gff, &gene, &readpos, 
+  if (!PyArg_ParseTuple(args, "OiOOiddd|iiiOi", &gff, &gene, &readpos, 
 			&readcigar, &readLength, &normalMean, &normalVar,
 			&numDevs, &noIterations, &noBurnIn, &noLag,
-			&hyperp, &overhang, &noChains, &start, &stop)) {
-    return NULL;
-  }
+			&hyperp, &overhang)) { return NULL; }
 
   mygff=PyCObject_AsVoidPtr(gff);
   
@@ -206,9 +196,9 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   
   splicing_miso_paired(mygff, gene, &myreadpos,
 		       (const char**) myreadcigar.table, readLength,
-		       overhang, noChains, noIterations, 
+		       overhang, /*noChains=*/ 1, noIterations, 
 		       maxIterations, noBurnIn, noLag, &myhyperp, 
-		       start, stop, /*start_psi=*/ 0,
+		       /*start=*/ 0, /*stop=*/ 0, /*start_psi=*/ 0,
 		       /*insertProb=*/ 0, /*insertStart=*/ 0,
 		       normalMean, normalVar, numDevs, &samples, &logLik,
 		       /*match_matrix=*/ 0, /*class_templates=*/ 0, 
