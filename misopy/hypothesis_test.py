@@ -8,7 +8,8 @@ from scipy import stats
 from scipy.stats import gaussian_kde
 from decimal import Decimal
 import misopy
-from misopy.samples_utils import load_samples, format_credible_intervals
+from misopy.samples_utils import load_samples, format_credible_intervals, \
+     get_samples_dir_filenames
 
 #import matplotlib
 #import matplotlib.pyplot as plt
