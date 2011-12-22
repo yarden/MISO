@@ -10,6 +10,8 @@ from matplotlib.path import Path
 import misopy
 import misopy.gff_utils as gff_utils
 import misopy.sam_utils as sam_utils
+
+from misopy.sashimi_plot.Sashimi import Sashimi
 import misopy.sashimi_plot.plot_utils.plotting as plotting
 import misopy.sashimi_plot.plot_utils.plot_settings as plot_settings
 from misopy.sashimi_plot.plot_utils.plotting import show_spines
@@ -157,7 +159,8 @@ def plot_density(sashimi_obj, pickle_filename, event):
 #                 bar_posterior=False):
     # Get the settings we need
     settings = sashimi_obj.settings
-    
+    bam_files = settings["bam_files"]
+    miso_files = settings["miso_files"]
     intron_scale = settings["intron_scale"]
     exon_scale = settings["exon_scale"]
     gene_posterior_ratio = settings["gene_posterior_ratio"]
@@ -169,6 +172,8 @@ def plot_density(sashimi_obj, pickle_filename, event):
     coverages = settings["coverages"]
     number_junctions = settings["number_junctions"]
     resolution = settings["resolution"]
+    junction_log_base = settings["junction_log_base"]
+    reverse_minus = settings["reverse_minus"]
     bar_posterior = settings["bar_posteriors"]
     font_size = settings["font_size"]
     
@@ -237,10 +242,11 @@ def plot_density(sashimi_obj, pickle_filename, event):
     subplots_adjust(hspace=.1, wspace=.7)
 
 
-
-# Compute the scaling factor across various genic regions.
 def getScaling(tx_start, tx_end, strand, exon_starts, exon_ends,
                intron_scale, exon_scale, reverse_minus):
+    """
+    Compute the scaling factor across various genic regions.
+    """
    
     exoncoords = zeros((tx_end - tx_start + 1))
     for i in range(len(exon_starts)):
@@ -269,9 +275,10 @@ def getScaling(tx_start, tx_end, strand, exon_starts, exon_ends,
     return graphcoords, graphToGene
 
 
-# Get wiggle and junction densities from reads.
 def readsToWiggle(reads, tx_start, tx_end):
-
+    """
+    Get wiggle and junction densities from reads.
+    """
     read_positions, read_cigars = reads
     wiggle = zeros((tx_end - tx_start + 1), dtype='f')
     jxns = {}
@@ -314,9 +321,10 @@ def readsToWiggle(reads, tx_start, tx_end):
     return wiggle, jxns
 
 
-# Draw the gene structure.
 def plot_mRNAs(tx_start, mRNAs, strand, graphcoords, axvar):
-  
+    """
+    Draw the gene structure.
+    """
     yloc = 0 
     exonwidth = .3
     narrows = 50
@@ -351,14 +359,15 @@ def plot_mRNAs(tx_start, mRNAs, strand, graphcoords, axvar):
 
 
 
-# Plot a posterior probability distribution for a MISO event
 def plot_posterior_single(miso_f, axvar, posterior_bins,
                           showXaxis=True,
                           showYaxis=True,
                           showYlabel=True,
                           font_size=6,
                           bar_posterior=False):
-  
+    """
+    Plot a posterior probability distribution for a MISO event.
+    """
     posterior_bins = int(posterior_bins) 
     psis = [] 
     for line in open(miso_f):
@@ -458,8 +467,10 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,
         [label.set_visible(False) for label in axvar.get_xticklabels()]
 
 
-# Get points in a cubic bezier.
 def cubic_bezier(pts, t):
+    """
+    Get points in a cubic bezier.
+    """
     p0, p1, p2, p3 = pts
     p0 = array(p0)
     p1 = array(p1)
@@ -469,9 +480,8 @@ def cubic_bezier(pts, t):
         3 * t**2 * (1 - t) * p2 + t**3 * p3
 
     
-    
-# A wrapper to allow reading from a file.
-def plot_density_from_file(sashimi_obj, pickle_filename, event):
+def plot_density_from_file(settings_f, pickle_filename, event,
+                           output_dir):
     """
     Read MISO estimates given an event name.
     """
@@ -480,29 +490,42 @@ def plot_density_from_file(sashimi_obj, pickle_filename, event):
     ##
     tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand, chrom = \
         parseGene(pickle_filename, event)
-
+    
+    sashimi_obj = Sashimi(event, output_dir,
+                          event=event,
+                          chrom=chrom,
+                          settings_filename=settings_f)
+    
+    print "Plotting read densities and MISO estimates along event..."
+    print "  - Event: %s" %(event)
+    
     # Parse user given settings
-    settings = plot_settings.parse_plot_settings(settings_f, event, chrom)
+    settings = plot_settings.parse_plot_settings(settings_f,
+                                                 event=event,
+                                                 chrom=chrom)
     bam_files = settings['bam_files']
     miso_files = settings['miso_files']
 
-    plot_density(sashimi_obj, pickle_filename, event):
-                 intron_scale=settings["intron_scale"],
-                 exon_scale=settings["exon_scale"],
-                 gene_posterior_ratio=settings["gene_posterior_ratio"],
-                 posterior_bins=settings["posterior_bins"],
-                 show_posteriors=settings["show_posteriors"],
-                 logged=settings["logged"],
-                 colors=settings["colors"],
-                 ymax=settings["ymax"],
-                 coverages=settings["coverages"],
-                 number_junctions=settings["number_junctions"],
-                 resolution=settings["resolution"],
-                 fig_width=settings["fig_width"],
-                 fig_height=settings["fig_height"],
-                 font_size=settings["font_size"],
-                 junction_log_base=settings["junction_log_base"],
-                 reverse_minus=settings["reverse_minus"],
-                 bar_posterior=settings["bar_posteriors"])
+    plot_density(sashimi_obj, pickle_filename, event)
+
+    # Save figure
+    sashimi_obj.save_plot()
+                 # intron_scale=settings["intron_scale"],
+                 # exon_scale=settings["exon_scale"],
+                 # gene_posterior_ratio=settings["gene_posterior_ratio"],
+                 # posterior_bins=settings["posterior_bins"],
+                 # show_posteriors=settings["show_posteriors"],
+                 # logged=settings["logged"],
+                 # colors=settings["colors"],
+                 # ymax=settings["ymax"],
+                 # coverages=settings["coverages"],
+                 # number_junctions=settings["number_junctions"],
+                 # resolution=settings["resolution"],
+                 # fig_width=settings["fig_width"],
+                 # fig_height=settings["fig_height"],
+                 # font_size=settings["font_size"],
+                 # junction_log_base=settings["junction_log_base"],
+                 # reverse_minus=settings["reverse_minus"],
+                 # bar_posterior=settings["bar_posteriors"])
 
 

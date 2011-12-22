@@ -9,15 +9,20 @@ from matplotlib import rc
 
 import misopy.sashimi_plot.plot_utils.plot_settings as plot_settings
 
-def Sashimi:
+class Sashimi:
     """
     Representation of a figure.
     """
     def __init__(self, label, output_dir, dimensions=None, png=False,
-                 output_filename=None, settings_filename=None):
+                 output_filename=None, settings_filename=None,
+                 event=None, chrom=None):
         """
         Initialize image settings.
         """
+        self.output_ext = ".pdf"
+        if png:
+            self.output_ext = ".png"
+        
         # Plot label, will be used in creating the plot
         # output filename
         self.label = label
@@ -29,7 +34,9 @@ def Sashimi:
         self.settings_filename = settings_filename
 
         if self.settings_filename != None:
-            self.settings = plot_settings.parse_plot_settings(settings_filename)
+            self.settings = plot_settings.parse_plot_settings(settings_filename,
+                                                              event=event,
+                                                              chrom=chrom)
         else:
             # Load default settings if no settings filename was given
             self.settings = plot_settings.get_default_settings
@@ -46,16 +53,12 @@ def Sashimi:
         else:
             self.dimensions = [7, 5]
 
-        if png:
-            self.output_ext = ".png"
-        else:
-            self.output_ext = ".pdf"
 
     def set_output_dir(self, output_dir):
         self.output_dir = os.path.abspath(os.path.expanduser(output_dir))
 
     def set_output_filename(self):
-        plot_basename = "%s%s" %(label, self.output_ext)
+        plot_basename = "%s%s" %(self.label, self.output_ext)
         self.output_filename = os.path.join(self.output_dir, plot_basename)
 
     def setup_figure(self):

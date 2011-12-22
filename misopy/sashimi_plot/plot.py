@@ -16,11 +16,13 @@ import misopy.gff_utils as gff_utils
 import misopy.pe_utils as pe_utils
 
 from misopy.samples_utils import load_samples, parse_sampler_params
+from misopy.sashimi_plot.Sashimi import Sashimi
 from misopy.sashimi_plot.plot_utils.samples_plotter import SamplesPlotter
 from misopy.sashimi_plot.plot_utils.plotting import *
 from misopy.sashimi_plot.plot_utils.plot_gene import plot_density_from_file
 import matplotlib.pyplot as plt
 from matplotlib import rc
+
 
 def plot_event(event_name, pickle_dir, settings_filename,
                output_dir):
@@ -47,16 +49,8 @@ def plot_event(event_name, pickle_dir, settings_filename,
     
     pickle_filename = event_to_filenames[event_name]
 
-    sashimi_obj = Sashimi(event_name, output_dir,
-                          settings_filename=settings_filename)
-        
-    print "Plotting read densities and MISO estimates along event..."
-    print "  - Event: %s" %(event_name)
-    print "  - Output filename: %s" %(output_filename)
-        
-    plot_density_from_file(pickle_filename, event_name,
-                           settings_filename,
-                           output_filename)
+    plot_density_from_file(settings_filename, pickle_filename, event_name,
+                           output_dir)
 
 
 def plot_insert_len(insert_len_filename,

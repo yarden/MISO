@@ -33,7 +33,7 @@ def get_default_settings():
                 "font_size": 6}
     return settings
 
-def parse_plot_settings(settings_filename, event, chrom,
+def parse_plot_settings(settings_filename, event=None, chrom=None,
                         FLOAT_PARAMS=["intron_scale", "exon_scale", "ymax",
                                       "resolution", "fig_width", "fig_height",
                                       "font_size", "junction_log_base"],
@@ -75,7 +75,7 @@ def parse_plot_settings(settings_filename, event, chrom,
         bam_files = settings["bam_files"]
     settings["bam_files"] = bam_files
 
-    if "miso_prefix" in settings:
+    if "miso_prefix" in settings and (event != None and chrom != None):
         miso_files = miso_utils.get_miso_output_files(event, chrom, settings)
     else:
         miso_files = settings["miso_files"]
