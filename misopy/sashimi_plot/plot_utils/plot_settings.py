@@ -1,6 +1,11 @@
 ##
 ## Parse plotting configuration files for sashimi_plot
 ##
+try:
+    import simplejson as json
+except:
+    import json
+
 import ConfigParser
 
 def get_default_settings():
@@ -24,7 +29,7 @@ def get_default_settings():
                 "font_size": 6}
     return settings
 
-def parse_plot_settings(settings,
+def parse_plot_settings(settings, config,
                         FLOAT_PARAMS=["intron_scale", "exon_scale", "ymax",
                                       "resolution", "fig_width", "fig_height",
                                       "font_size", "junction_log_base"],

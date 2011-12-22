@@ -1,10 +1,8 @@
+##
+## Draw gene structure from a GFF file
+##
 import os, sys, operator, subprocess
 import glob
-try:
-    import simplejson as json
-except:
-    import json
-import ConfigParser
 from pylab import *
 from matplotlib.patches import PathPatch 
 from matplotlib.path import Path
@@ -13,8 +11,9 @@ import misopy
 import misopy.gff_utils as gff_utils
 import misopy.sam_utils as sam_utils
 import misopy.sashimi_plot.plot_utils.plotting as plotting
+import misopy.sashimi_plot.plot_utils.plot_settings as plot_settings
+from misopy.sashimi_plot.plot_utils.plotting import show_spines
 from misopy.parse_gene import parseGene
-from plotting import show_spines
 
 def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,
                         graphToGene, bam_filename, axvar, chrom, paired_end=False,
@@ -91,15 +90,15 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,
                 leftdens = wiggle[leftss - tx_start - 1]
                 rightdens = wiggle[rightss - tx_start]
 
-                pts = [(ss1, leftdens),\
-                    (ss1, leftdens + h),\
-                    (ss2, rightdens + h),\
-                    (ss2, rightdens)]
+                pts = [(ss1, leftdens),
+                       (ss1, leftdens + h),
+                       (ss2, rightdens + h),
+                       (ss2, rightdens)]
                 midpt = cubic_bezier(pts, .5)
 
             if number_junctions:
-                text(midpt[0], midpt[1], '%s'%(jxns[jxn]),\
-                    fontsize=6, ha='center', va='center', backgroundcolor='w')
+                text(midpt[0], midpt[1], '%s'%(jxns[jxn]),
+                     fontsize=6, ha='center', va='center', backgroundcolor='w')
 
             a = Path(pts, [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])
             p = PathPatch(a, ec=color, lw=log(jxns[jxn] + 1) /\
@@ -117,11 +116,12 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,
 
     if showXaxis:
         axvar.xaxis.set_ticks_position('bottom')
-        xlabel('Genomic coordinate (%s), "%s" strand'%(gene_obj.chrom,\
-            strand), fontsize=font_size)
-        xticks(linspace(0, max(graphcoords), nxticks),\
-            [graphToGene[int(x)] for x in \
-            linspace(0, max(graphcoords), nxticks)], fontsize=font_size)
+        xlabel('Genomic coordinate (%s), "%s" strand'%(gene_obj.chrom,
+                                                       strand),
+               fontsize=font_size)
+        xticks(linspace(0, max(graphcoords), nxticks),
+               [graphToGene[int(x)] for x in \
+                linspace(0, max(graphcoords), nxticks)], fontsize=font_size)
     else:
         axvar.spines['bottom'].set_color('none')
         xticks([])
@@ -134,13 +134,17 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,
     if showYaxis:
         axvar.yaxis.set_ticks_position('left')
         yticks(linspace(0, ymax, nyticks), ['%d'%(x) for x in \
-            linspace(0, ymax, nyticks)], fontsize=font_size)
+                                            linspace(0, ymax, nyticks)],
+               fontsize=font_size)
     else:
         axvar.spines['left'].set_color('none')
         yticks([])
     
-    text(max(graphcoords), ymax, os.path.basename(bam_filename).split(".")[0],\
-        fontsize=font_size, va='bottom', ha='right', color=color)
+    text(max(graphcoords), ymax, os.path.basename(bam_filename).split(".")[0],
+         fontsize=font_size,
+         va='bottom',
+         ha='right',
+         color=color)
     xlim(0, max(graphcoords))
 
 
@@ -151,9 +155,11 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,
                  number_junctions=True, resolution=.5, fig_width=8.5, fig_height=11,
                  font_size=6, junction_log_base=10, reverse_minus=False,
                  bar_posterior=False):
-    # Parse gene pickle and get scaling information.
+    # Parse gene pickle file to get information about gene
     tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand, chrom = \
         parseGene(pickle_filename, event)
+
+    # Get the right scalings
     graphcoords, graphToGene = getScaling(tx_start, tx_end, strand,\
         exon_starts, exon_ends, intron_scale, exon_scale, reverse_minus)
 
@@ -567,57 +573,12 @@ def plot_density_from_file(pickle_filename, event, settings_f, out_f):
     ##
     tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand, chrom = \
         parseGene(pickle_filename, event)
-   
-    settings = {"intron_scale": 30,
-                "exon_scale": 1,
-                "logged": False,
-                "ymax": None,
-                "show_posteriors": True,
-                "number_junctions": True,
-                "posterior_bins": 40,
-                "gene_posterior_ratio": 5,
-                "resolution": .5,
-                "fig_width": 8.5,
-                "fig_height": 11,
-                "bar_posteriors": False,
-                "junction_log_base": 10.,
-                "reverse_minus": False,
-                "font_size": 6} 
-    for section in config.sections():
-        for option in config.options(section):
-            if option in ["intron_scale", "exon_scale", "ymax", "resolution",\
-                "fig_width", "fig_height", "font_size", "junction_log_base"]:
-                settings[option] = config.getfloat(section, option)
-            elif option in ["posterior_bins", "gene_posterior_ratio"]:
-                settings[option] = config.getint(section, option)
-            elif option in ["logged", "show_posteriors", "number_junctions",\
-                "reverse_minus", "bar_posteriors"]:
-                settings[option] = config.getboolean(section, option)
-            else:
-                settings[option] = config.get(section, option)
-    settings["bam_files"] = json.loads(settings["bam_files"])
-    settings["miso_files"] = json.loads(settings["miso_files"])
-    
-    if "colors" in settings:
-        colors = json.loads(settings["colors"])
-    else:
-        colors = [None for x in settings["bam_files"]]
-    if "bam_prefix" in settings:
-        bam_files = [os.path.join(settings["bam_prefix"], x) \
-            for x in settings["bam_files"]]
-    else:
-        bam_files = settings["bam_files"]
-    if "miso_prefix" in settings:
-        miso_files = get_miso_output_files(event, chrom, settings)
-    else:
-        miso_files = settings["miso_files"]
-    if "coverages" in settings:
-        coverages = json.loads(settings["coverages"])
-        coverages = map(float, coverages)
-        # Normalize coverages per M
-        coverages = [x / 1e6  for x in coverages]
-    else:
-        coverages = [1 for x in settings["bam_files"]]
+
+    # Load default plotting settings
+    settings = plot_settings.get_default_settings()
+
+    # Parse user given settings
+    settings = plot_settings.parse_plot_settings(settings, config)
 
     plot_density(pickle_filename, event, bam_files, miso_files, out_f,
                  intron_scale=settings["intron_scale"],
