@@ -102,7 +102,7 @@ def plot_insert_len(insert_len_filename,
     sashimi_obj.save_plot()
         
 
-def plot_posterior(miso_filename, output_dir):
+def plot_posterior(miso_filename, settings_filename, output_dir):
     """
     Plot posterior distribution.
     """
@@ -148,9 +148,9 @@ def plot_posterior(miso_filename, output_dir):
 def main():
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--plot-posterior", dest="plot_posterior", nargs=1, default=None,
-                      help="Plot the posterior distribution. Takes as input a raw MISO output "
-                      "file (.miso)")
+    parser.add_option("--plot-posterior", dest="plot_posterior", nargs=2, default=None,
+                      help="Plot the posterior distribution. Takes the arguments: (1) a raw MISO output "
+                      "file (.miso), (2) a settings filename.")
     parser.add_option("--plot-insert-len", dest="plot_insert_len", nargs=2, default=None,
                       help="Plot the insert length distribution from a given insert length (*.insert_len) "
                       "filename.")
@@ -183,12 +183,11 @@ def main():
         plot_insert_len(insert_len_filename, settings_filename, output_dir)
 
     if options.plot_posterior != None:
-        miso_filename = os.path.abspath(os.path.expanduser(options.plot_posterior))
-
-        plot_posterior(miso_filename, output_dir)
+        miso_filename = os.path.abspath(os.path.expanduser(options.plot_posterior[0]))
+        settings_filename = os.path.abspath(os.path.expanduser(options.plot_posterior[1]))
+        plot_posterior(miso_filename, settings_filename, output_dir)
 
     if options.plot_event != None:
-        # Plot a MISO event along with its RNA-Seq read densities
         event_name = options.plot_event[0]
         pickle_dir = os.path.abspath(os.path.expanduser(options.plot_event[1]))
         settings_filename = os.path.abspath(os.path.expanduser(options.plot_event[2]))
