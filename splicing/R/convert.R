@@ -367,12 +367,26 @@ getSpecies.gff3 <- function(gff3) {
   if (is.null(res)) NA else res
 }
 
+constitutiveExons <- function(gff3, min.length)
+  UseMethod("constitutiveExons")
+
+constitutiveExons.gff3 <- function(gff3, min.length) {
+  if (!isGFF3(gff3)) {
+    stop("Not a GFF3 object")
+  }
+  .Call("R_splicing_constitutive_exons", gff3, as.integer(min.length),
+        PACKAGE="splicing")
+}
+
 print.gff3 <- function(x, verbose=TRUE, ...) {
   gff3 <- x
   nog <- noGenes(gff3)
   spec <- getSpecies(gff3)
   if (is.na(spec)) { spec <- "Unknown species" }
-  if (nog != 1 || !verbose) {
+  if (nog == 0) {
+    cat(sprintf('GFF3 %s, no genes, %i exons.\n', spec,
+                sum(x$type==SPLICING_EXON)))
+  } else if (nog != 1 || !verbose) {
     cat(sprintf('GFF3 %s, %i genes, %i transcripts.\n', spec, nog,
                 length(gff3$tid)))
   } else {
@@ -380,7 +394,6 @@ print.gff3 <- function(x, verbose=TRUE, ...) {
     ## TODO: more
   }
 }
-
 
 ##############
 '

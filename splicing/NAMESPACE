@@ -2,7 +2,8 @@
 export(listEnsemblGenes, getEnsemblGenes, readGFF3, writeGFF3)
 
 export(isGFF3, noGenes, seqIds, geneIds, selectGenes, noIso, geneTypes,
-       noExons, getIso, geneLength, isoLength, totalExonLength, getSpecies)
+       noExons, getIso, geneLength, isoLength, totalExonLength, getSpecies,
+       constitutiveExons)
 
 S3method("noGenes", "gff3")
 S3method("seqIds", "gff3")
@@ -18,6 +19,7 @@ S3method("totalExonLength", "gff3")
 S3method("print", "gff3")
 S3method("getSpecies", "gff3")
 S3method("merge", "gff3")
+S3method("constitutiveExons", "gff3")
 
 export(createGene, rpk, realPsi, simulateReads)
 

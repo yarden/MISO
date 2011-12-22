@@ -1217,3 +1217,79 @@ int splicing_gff_fprint(const splicing_gff_t *gff,
 int splicing_gff_print(const splicing_gff_t *gff) {
   return splicing_gff_fprint(gff, stdout);
 }
+
+int splicing_i_const_cmp(const void *a, const void *b) {
+  int *aa=(int*) a, *bb=(int*) b;
+  int aaa = *aa < 0 ? -*aa : *aa;
+  int bbb = *bb < 0 ? -*bb : *bb;
+  return aaa - bbb;
+}
+
+/* Extract the long constitutive exons from a set of genes.
+   For each gene we keep only a single transctipt, that 
+   includes all long constitutive exons.
+ */
+
+int splicing_gff_constitutive_exons(const splicing_gff_t *gff,
+				    splicing_gff_t *newgff,
+				    int min_length) {
+
+  size_t g, nogenes;
+  splicing_vector_int_t events;
+
+  SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
+
+  SPLICING_CHECK(splicing_gff_init(newgff, 1));
+  SPLICING_FINALLY(splicing_gff_destroy, newgff);
+  SPLICING_CHECK(splicing_vector_int_init(&events, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &events);
+  
+  for (g=0; g<nogenes; g++) {
+    int noex, idx, noEvents, i;
+    size_t noiso;
+    int start=VECTOR(gff->genes)[g];
+    int end= g+1 < nogenes ? VECTOR(gff->genes)[g+1] : gff->n;
+    splicing_gff_noiso_one(gff, g, &noiso);
+    
+    /* Collect and sort all events */
+    splicing_vector_int_clear(&events);
+    for (idx=start+1; idx<end; idx++) {
+      if (VECTOR(gff->type)[idx] == SPLICING_TYPE_EXON) {
+	SPLICING_CHECK(splicing_vector_int_push_back2
+		       (&events, VECTOR(gff->start)[idx],
+			-VECTOR(gff->end)[idx]));
+      }
+    }
+    noEvents=splicing_vector_int_size(&events);
+    splicing_qsort(VECTOR(events), noEvents, sizeof(int),
+		   splicing_i_const_cmp);
+
+    /* Now go over the sorted events and extract the constitutive exons */
+    for (noex=0, i=0; i<noEvents; i++) {
+      int ev=VECTOR(events)[i];
+      if (ev > 0) { noex++; } 
+      if (ev < 0) { 
+	int prev=VECTOR(events)[i-1];
+	if (noex == noiso && (-ev)-prev+1 >= min_length) {
+	  /* constitutive exon */
+	  const char *seqid=
+	    splicing_strvector_get(&gff->seqids, VECTOR(gff->seqid)[g]);
+	  const char *source=
+	    splicing_strvector_get(&gff->sources, VECTOR(gff->source)[g]);
+	  SPLICING_CHECK(splicing_gff_append(newgff, seqid, source, 
+					     SPLICING_TYPE_EXON, prev, -ev,
+					     VECTOR(gff->score)[start], 
+					     VECTOR(gff->strand)[g], 
+					     /*phase=*/ -1, /*ID=*/ "", 
+					     /*parent=*/ 0));
+	}
+	noex--;
+      }
+    }
+  }
+
+  splicing_vector_int_destroy(&events);
+  SPLICING_FINALLY_CLEAN(2);	/* + newgff */
+
+  return 0;
+}
