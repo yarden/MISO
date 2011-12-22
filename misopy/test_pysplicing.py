@@ -3,7 +3,7 @@
 ##
 
 import misopy
-import misopy.GFF
+import misopy.gff_utils
 import pysplicing
 
 gene = pysplicing.createGene( ((1,100), (201,300), (401,500)),
