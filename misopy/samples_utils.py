@@ -8,10 +8,9 @@ from numpy import *
 import os
 import glob
 import misopy
-import misopy.credible_intervals as ci
 
 from misopy.parse_csv import *
-
+from misopy.credible_intervals import *
 
 def maxi(l):
     m = max(l)
@@ -99,33 +98,6 @@ def get_counts_from_header(samples_header):
                   'assigned_counts': 'n/a'}
         
     return counts
-
-
-def format_credible_intervals(event_name, samples,
-                              confidence_level=0.95):
-    """
-    Returns a list of print-able credible intervals for an NxM samples
-    matrix. Handles both the two isoform and multi-isoform cases.
-    """
-    num_samples, num_isoforms = shape(samples)
-    if num_isoforms > 2:
-        cred_interval = ci.compute_multi_iso_credible_intervals(samples,
-                                                                confidence_level=confidence_level)
-        cred_interval_lowbounds = ",".join([str("%.2f" %(ci[0])) for ci in cred_interval])
-        cred_interval_highbounds = ",".join([str("%.2f" %(ci[1])) for ci in cred_interval])
-        posterior_mean = ",".join("%.2f" %(val) for val in mean(samples, 0))
-        output_fields = [event_name,
-                         "%s" %(posterior_mean),
-                         "%s" %(cred_interval_lowbounds),
-                         "%s" %(cred_interval_highbounds)]
-    else:
-        cred_interval = ci.compute_credible_intervals(samples)
-        posterior_mean = mean(samples, 0)[0]
-        output_fields = [event_name,
-                         "%.2f" %(posterior_mean),
-                         "%.2f" %(cred_interval[0]),
-                         "%.2f" %(cred_interval[1])]
-    return output_fields
 
 
 def summarize_sampler_results(samples_dir, summary_filename):
