@@ -7,9 +7,8 @@ import time
 import os
 import sys
 
-from settings import Settings
-
 import misopy
+from misopy.settings import Settings
 import misopy.hypothesis_test as ht
 import misopy.as_events as as_events
 import misopy.cluster_utils as cluster_utils

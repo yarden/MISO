@@ -4,6 +4,8 @@
 import os
 import time
 import string
+import misopy
+import misopy.settings as settings
 from settings import Settings, load_settings
 
 def write_cluster_preface(file_handle):

@@ -1,7 +1,8 @@
 ##
 ## Settings with relevant directories
 ##
-from parse_csv import *
+import misopy
+from misopy.parse_csv import *
 import ConfigParser
 import os
 
@@ -83,6 +84,7 @@ class Settings(object):
         """
         Return the name of the long queue (for long jobs.)
         """
+        print "cls.global_settings: ", cls.global_settings
         if 'long_queue_name' in cls.global_settings:
             return cls.global_settings['long_queue_name']
         else:
