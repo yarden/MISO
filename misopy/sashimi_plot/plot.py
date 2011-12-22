@@ -18,12 +18,12 @@ import misopy.pe_utils as pe_utils
 from misopy.samples_utils import load_samples, parse_sampler_params
 from misopy.sashimi_plot.plot_utils.samples_plotter import SamplesPlotter
 from misopy.sashimi_plot.plot_utils.plotting import *
-from misopy.sashimi_plot.plot_utils.plot_gene import *
+from misopy.sashimi_plot.plot_utils.plot_gene import plot_density_from_file
 import matplotlib.pyplot as plt
 from matplotlib import rc
 
 def plot_event(event_name, pickle_dir, settings_filename,
-               output_dir, png=False):
+               output_dir):
     """
     Visualize read densities across the exons and junctions
     of a given MISO alternative RNA processing event.
@@ -47,16 +47,8 @@ def plot_event(event_name, pickle_dir, settings_filename,
     
     pickle_filename = event_to_filenames[event_name]
 
-    # Output filename is the event name
-    output_filename = os.path.join(output_dir, event_name)
-
-    # Determine format of output file
-    if png:
-        format_type = "png"
-    else:
-        format_type = "pdf"
-
-    output_filename += ".%s" %(format_type)
+    sashimi_obj = Sashimi(event_name, output_dir,
+                          settings_filename=settings_filename)
         
     print "Plotting read densities and MISO estimates along event..."
     print "  - Event: %s" %(event_name)
@@ -187,16 +179,6 @@ def main():
                       "annotation file, (2) directory where MISO output is for that event type (e.g. if event is a "
                       "skipped exon, provide the directory where the output for all SE events are), "
                       "(3) path to plotting settings file.")
-    parser.add_option("--with-intervals", dest="with_intervals", nargs=1, default=None, 
-                      help="Include confidence intervals in plot. To be used with --plot-posterior. "
-                      "Takes an argument between 1 and 99 corresponding to the confidence "
-                      "interval to be used, e.g.: 95")
-    parser.add_option("--plot-mean", dest="plot_mean", action="store_true", default=False,
-                      help="Plot the mean of the posterior distribution. To be used with --plot-posterior.")
-    parser.add_option("--dimensions", dest="dimensions", nargs=2, default=None,
-                      help="Dimensions of the outputted figure: takes width by height (in inches).")
-    parser.add_option("--png", dest="png", default=False, action="store_true",
-                      help="Output plot in PNG format (the default is PDF).")    
     parser.add_option("--output-dir", dest="output_dir", nargs=1, default=None,
                       help="Output directory.")
     (options, args) = parser.parse_args()
@@ -206,11 +188,6 @@ def main():
         return
 
     output_dir = os.path.abspath(os.path.expanduser(options.output_dir))
-    dimensions = None
-
-    if options.dimensions != None:
-        dimensions = (int(options.dimensions[0]),
-                      int(options.dimensions[1]))
 
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
@@ -222,25 +199,14 @@ def main():
     if options.plot_posterior != None:
         miso_filename = os.path.abspath(os.path.expanduser(options.plot_posterior))
 
-        with_intervals = None
-        plot_mean = options.plot_mean
-        
-        if options.with_intervals != None:
-            with_intervals = options.with_intervals
-
-        plot_posterior(miso_filename, output_dir,
-                       with_intervals=with_intervals,
-                       dimensions=dimensions,
-                       plot_mean=plot_mean,
-                       png=options.png)
+        plot_posterior(miso_filename, output_dir)
 
     if options.plot_event != None:
         # Plot a MISO event along with its RNA-Seq read densities
         event_name = options.plot_event[0]
         pickle_dir = os.path.abspath(os.path.expanduser(options.plot_event[1]))
         settings_filename = os.path.abspath(os.path.expanduser(options.plot_event[2]))
-        plot_event(event_name, pickle_dir, settings_filename, output_dir,
-                   png=options.png)
+        plot_event(event_name, pickle_dir, settings_filename, output_dir)
         
 
 if __name__ == '__main__':

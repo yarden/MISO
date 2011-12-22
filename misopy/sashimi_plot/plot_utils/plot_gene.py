@@ -149,22 +149,39 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,
 
 
 # Plot density for a series of bam files.
-def plot_density(pickle_filename, event, bam_files, miso_files, out_f,
-                 intron_scale=30, exon_scale=1, gene_posterior_ratio=5, posterior_bins=40,
-                 colors=None, ymax=None, logged=False, show_posteriors=True, coverages=None,
-                 number_junctions=True, resolution=.5, fig_width=8.5, fig_height=11,
-                 font_size=6, junction_log_base=10, reverse_minus=False,
-                 bar_posterior=False):
+def plot_density(sashimi_obj, pickle_filename, event):
+#                 intron_scale=30, exon_scale=1, gene_posterior_ratio=5, posterior_bins=40,
+#                 colors=None, ymax=None, logged=False, show_posteriors=True, coverages=None,
+#                 number_junctions=True, resolution=.5, fig_width=8.5, fig_height=11,
+#                 font_size=6, junction_log_base=10, reverse_minus=False,
+#                 bar_posterior=False):
+    # Get the settings we need
+    settings = sashimi_obj.settings
+    
+    intron_scale = settings["intron_scale"]
+    exon_scale = settings["exon_scale"]
+    gene_posterior_ratio = settings["gene_posterior_ratio"]
+    posterior_bins = settings["posterior_bins"]
+    colors = settings["colors"]
+    ymax = settings["ymax"]
+    logged = settings["logged"]
+    show_posteriors = settings["show_posteriors"]
+    coverages = settings["coverages"]
+    number_junctions = settings["number_junctions"]
+    resolution = settings["resolution"]
+    bar_posterior = settings["bar_posteriors"]
+    font_size = settings["font_size"]
+    
     # Parse gene pickle file to get information about gene
     tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand, chrom = \
         parseGene(pickle_filename, event)
 
     # Get the right scalings
-    graphcoords, graphToGene = getScaling(tx_start, tx_end, strand,\
-        exon_starts, exon_ends, intron_scale, exon_scale, reverse_minus)
+    graphcoords, graphToGene = getScaling(tx_start, tx_end, strand,
+                                          exon_starts, exon_ends, intron_scale,
+                                          exon_scale, reverse_minus)
 
     nfiles = len(bam_files)
-    figure(figsize=(fig_width, fig_height))
     suptitle(event, fontsize=10)
     
     for i in range(nfiles):
@@ -185,13 +202,14 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,
         miso_file = os.path.expanduser(miso_files[i])
         ax1 = subplot2grid((nfiles + 2, gene_posterior_ratio), (i, 0),\
             colspan=gene_posterior_ratio - 1)
-        plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand,\
-            graphcoords, graphToGene, bam_file, ax1, chrom, paired_end=False,\
-            intron_scale=intron_scale, exon_scale=exon_scale, color=color,\
-            ymax=ymax, logged=logged, coverage=coverage,\
-            number_junctions=number_junctions, resolution=resolution,\
-            showXaxis=showXaxis, showYlabel=True, font_size=font_size,\
-            junction_log_base=junction_log_base)
+        plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand,
+                            graphcoords, graphToGene, bam_file, ax1, chrom,
+                            paired_end=False, intron_scale=intron_scale,
+                            exon_scale=exon_scale, color=color,
+                            ymax=ymax, logged=logged, coverage=coverage,
+                            number_junctions=number_junctions, resolution=resolution,
+                            showXaxis=showXaxis, showYlabel=True, font_size=font_size,
+                            junction_log_base=junction_log_base)
 
         if show_posteriors:
             try:
@@ -200,32 +218,29 @@ def plot_density(pickle_filename, event, bam_files, miso_files, out_f,
 
                 if not os.path.isfile(miso_file):
                     print "Warning: MISO file %s not found" %(miso_file)
-                    raise Exception
 
                 print "Loading MISO file: %s" %(miso_file)
                 plot_posterior_single(miso_file, ax2, posterior_bins,\
                                       showXaxis=showXaxis, showYlabel=False,
                                       font_size=font_size,
                                       bar_posterior=bar_posterior)
-            except e:
+            except:
                 box(on=False)
                 xticks([])
                 yticks([])
-                print "Posterior plot failed.", e
+                print "Posterior plot failed."
 
     # Draw gene structure
-    ax = subplot2grid((nfiles + 2, gene_posterior_ratio), (nfiles, 0),\
-        colspan=gene_posterior_ratio - 1, rowspan=2)
+    ax = subplot2grid((nfiles + 2, gene_posterior_ratio), (nfiles, 0),
+                      colspan=gene_posterior_ratio - 1, rowspan=2)
     plot_mRNAs(tx_start, mRNAs, strand, graphcoords, ax)
-
     subplots_adjust(hspace=.1, wspace=.7)
-    savefig(out_f)
 
 
 
 # Compute the scaling factor across various genic regions.
-def getScaling(tx_start, tx_end, strand, exon_starts, exon_ends,\
-    intron_scale, exon_scale, reverse_minus):
+def getScaling(tx_start, tx_end, strand, exon_starts, exon_ends,
+               intron_scale, exon_scale, reverse_minus):
    
     exoncoords = zeros((tx_end - tx_start + 1))
     for i in range(len(exon_starts)):
@@ -456,7 +471,7 @@ def cubic_bezier(pts, t):
     
     
 # A wrapper to allow reading from a file.
-def plot_density_from_file(pickle_filename, event, settings_f, out_f):
+def plot_density_from_file(sashimi_obj, pickle_filename, event):
     """
     Read MISO estimates given an event name.
     """
@@ -471,7 +486,7 @@ def plot_density_from_file(pickle_filename, event, settings_f, out_f):
     bam_files = settings['bam_files']
     miso_files = settings['miso_files']
 
-    plot_density(pickle_filename, event, bam_files, miso_files, out_f,
+    plot_density(sashimi_obj, pickle_filename, event):
                  intron_scale=settings["intron_scale"],
                  exon_scale=settings["exon_scale"],
                  gene_posterior_ratio=settings["gene_posterior_ratio"],
