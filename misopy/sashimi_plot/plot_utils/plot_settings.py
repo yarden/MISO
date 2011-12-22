@@ -30,6 +30,7 @@ def get_default_settings():
                 "bar_posteriors": False,
                 "junction_log_base": 10.,
                 "reverse_minus": False,
+                "bf_dist_bins": 20,
                 "font_size": 6,
                 "insert_len_bins": 25}
     return settings

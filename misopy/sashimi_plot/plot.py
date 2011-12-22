@@ -8,12 +8,16 @@
 import os
 import matplotlib
 
+from scipy import *
+from numpy import *
+
 import pysam
 import shelve
 
 import misopy
 import misopy.gff_utils as gff_utils
 import misopy.pe_utils as pe_utils
+from misopy.parse_csv import csv2dictlist_raw
 
 from misopy.samples_utils import load_samples, parse_sampler_params
 from misopy.sashimi_plot.Sashimi import Sashimi
@@ -22,6 +26,53 @@ from misopy.sashimi_plot.plot_utils.plotting import *
 from misopy.sashimi_plot.plot_utils.plot_gene import plot_density_from_file
 import matplotlib.pyplot as plt
 from matplotlib import rc
+
+def plot_bf_dist(bf_filename, settings_filename, output_dir,
+                 max_bf=1e12):
+    """
+    Plot a Bayes factor distribution from a .miso_bf file.
+    """
+    if not bf_filename.endswith(".miso_bf"):
+        print "WARNING: %s does not end in .miso_bf, are you sure it is the "
+        "output of a MISO samples comparison?" %(bf_filename)
+
+    # Load BF data
+    data, h = csv2dictlist_raw(bf_filename)
+    
+    plot_name = os.path.basename(bf_filename)
+    sashimi_obj = Sashimi(plot_name, output_dir,
+                          settings_filename=settings_filename)
+    settings = sashimi_obj.settings
+
+    # Matrix of bayes factors and delta psi pairs
+    bfs_and_deltas = []
+    for event in data:
+        bf = event['bayes_factor']
+        delta_psi = event['diff']
+
+        if type(bf) == str and "," in bf:
+            print "WARNING: %s is a multi-isoform event, skipping..."
+            continue
+        else:
+            # Impose upper limit on Bayes factor
+            bf = min(1e12, float(bf))
+            delta_psi = float(delta_psi)
+
+        bfs_and_deltas.append([bf, delta_psi])
+
+    bfs_and_deltas = array(bfs_and_deltas)
+    num_events = len(bfs_and_deltas)
+
+    print "Loaded %d event comparisons." %(num_events)
+    print bfs_and_deltas
+
+    print "Plotting Bayes factors distribution"
+    print "  - Using %d bins" %(settings["bf_dist_bins"])
+    #plt.hist(bfs_and_deltas, bins=settings["bf_dist_bins"])
+    plt.scatter(log2(bfs_and_deltas[:, 0]),
+                bfs_and_deltas[:, 1])
+    sashimi_obj.save_plot()
+    
 
 
 def plot_event(event_name, pickle_dir, settings_filename,
@@ -186,6 +237,11 @@ def main():
         miso_filename = os.path.abspath(os.path.expanduser(options.plot_posterior[0]))
         settings_filename = os.path.abspath(os.path.expanduser(options.plot_posterior[1]))
         plot_posterior(miso_filename, settings_filename, output_dir)
+
+    if options.plot_bf_dist != None:
+        bf_filename = os.path.abspath(os.path.expanduser(options.plot_bf_dist[0]))
+        settings_filename = os.path.abspath(os.path.expanduser(options.plot_bf_dist[1]))
+        plot_bf_dist(bf_filename, settings_filename, output_dir)
 
     if options.plot_event != None:
         event_name = options.plot_event[0]
