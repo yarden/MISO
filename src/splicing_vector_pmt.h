@@ -179,6 +179,8 @@ int FUNCTION(splicing_vector,insert)(TYPE(splicing_vector) *v, long int pos, BAS
 void FUNCTION(splicing_vector,remove)(TYPE(splicing_vector) *v, long int elem);
 void FUNCTION(splicing_vector,remove_section)(TYPE(splicing_vector) *v, 
 					    long int from, long int to);
+int FUNCTION(splicing_vector,push_back2)(TYPE(splicing_vector)* v, BASE e1, 
+					BASE e2);
 
 /*-----------*/
 /* Sorting   */             
