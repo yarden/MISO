@@ -177,6 +177,10 @@ def main():
     parser.add_option("--plot-insert-len", dest="plot_insert_len", nargs=1, default=None,
                       help="Plot the insert length distribution from a given insert length (*.insert_len) "
                       "filename.")
+    parser.add_option("--plot-bf-dist", dest="", nargs=1, default=None,
+                      help="Plot Bayes factor distributon. Takes the arguments: "
+                      "(1) Bayes factor filename (*.miso_bf) settings filename, "
+                      "(2) a settings filename.")
     parser.add_option("--plot-event", dest="plot_event", nargs=3, default=None,
                       help="Plot read densities and MISO inferences for a given alternative event. "
                       "Takes the arguments: (1) event name (i.e. the ID= of the event based on MISO gff3 "

@@ -1,12 +1,16 @@
 ##
 ## Parse plotting configuration files for sashimi_plot
 ##
+import os
 try:
     import simplejson as json
 except:
     import json
 
 import ConfigParser
+
+import misopy
+import misopy.miso_utils as miso_utils
 
 def get_default_settings():
     """
@@ -29,7 +33,7 @@ def get_default_settings():
                 "font_size": 6}
     return settings
 
-def parse_plot_settings(settings, config,
+def parse_plot_settings(settings_filename, event, chrom,
                         FLOAT_PARAMS=["intron_scale", "exon_scale", "ymax",
                                       "resolution", "fig_width", "fig_height",
                                       "font_size", "junction_log_base"],
@@ -40,6 +44,11 @@ def parse_plot_settings(settings, config,
     Populate a settings dictionary with the plotting parameters, parsed
     as the right datatype.
     """
+    settings = get_default_settings()
+    
+    config = ConfigParser.ConfigParser()
+    config.read(settings_filename)
+    
     for section in config.sections():
         for option in config.options(section):
             if option in FLOAT_PARAMS:
@@ -57,15 +66,21 @@ def parse_plot_settings(settings, config,
         colors = json.loads(settings["colors"])
     else:
         colors = [None for x in settings["bam_files"]]
+    settings["colors"] = colors
+        
     if "bam_prefix" in settings:
         bam_files = [os.path.join(settings["bam_prefix"], x) \
-                     for x in settings["bam_files"]]
+                    for x in settings["bam_files"]]
     else:
         bam_files = settings["bam_files"]
+    settings["bam_files"] = bam_files
+
     if "miso_prefix" in settings:
-        miso_files = get_miso_output_files(event, chrom, settings)
+        miso_files = miso_utils.get_miso_output_files(event, chrom, settings)
     else:
         miso_files = settings["miso_files"]
+    settings["miso_files"] = miso_files
+    
     if "coverages" in settings:
         coverages = json.loads(settings["coverages"])
         coverages = map(float, coverages)
@@ -73,4 +88,6 @@ def parse_plot_settings(settings, config,
         coverages = [x / 1e6  for x in coverages]
     else:
         coverages = [1 for x in settings["bam_files"]]
+    settings["coverages"] = coverages
+    
     return settings
