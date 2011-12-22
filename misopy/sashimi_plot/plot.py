@@ -54,30 +54,22 @@ def plot_event(event_name, pickle_dir, settings_filename,
 
 
 def plot_insert_len(insert_len_filename,
-                    output_dir,
-                    dimensions=None,
-                    num_bins=25,
-                    plot_sd=2,
-                    png=False):
+                    output_dir):
     """
     Plot insert length distribution.
     """
-    if dimensions == None:
-        dimensions = [7, 5]
-    plt.figure(figsize=dimensions)
-    if png:
-        ext = "png"
-    else:
-        ext = "pdf"
-
-    s = plt.subplot(1, 1, 1)
+    num_bins = settings["insert_len_bins"]
     plot_name = os.path.basename(insert_len_filename)
-    output_filename = os.path.join(output_dir,
-                                   "%s.%s" %(plot_name,
-                                             ext))
+    
+    sashimi_obj = Sashimi(plot_name, output_dir,
+                          settings_filename=settings_f)
+    output_filename = sashimi_obj.output_filename
+    s = plt.subplot(1, 1, 1)
+    
     print "Plotting insert length distribution..."
     print "  - Distribution file: %s" %(insert_len_filename)
     print "  - Output plot: %s" %(output_filename)
+    
     insert_dist, params = pe_utils.load_insert_len(insert_len_filename)
 
     mean, sdev, dispersion, num_pairs \
@@ -104,7 +96,7 @@ def plot_insert_len(insert_len_filename,
              transform=s.transAxes)
     plt.xlabel("Insert length (nt)")
     plt.ylabel("No. read pairs")
-    plt.savefig(output_filename)
+    sashimi_obj.save_plot()
         
 
 def plot_posterior(miso_filename, output_dir,

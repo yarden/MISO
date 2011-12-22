@@ -30,14 +30,16 @@ def get_default_settings():
                 "bar_posteriors": False,
                 "junction_log_base": 10.,
                 "reverse_minus": False,
-                "font_size": 6}
+                "font_size": 6,
+                "insert_len_bins": 25}
     return settings
 
 def parse_plot_settings(settings_filename, event=None, chrom=None,
                         FLOAT_PARAMS=["intron_scale", "exon_scale", "ymax",
                                       "resolution", "fig_width", "fig_height",
                                       "font_size", "junction_log_base"],
-                        INT_PARAMS=["posterior_bins", "gene_posterior_ratio"],
+                        INT_PARAMS=["posterior_bins", "gene_posterior_ratio",
+                                    "insert_len_bins"],
                         BOOL_PARAMS=["logged", "show_posteriors", "number_junctions",
                                      "reverse_minus", "bar_posteriors"]):
     """
