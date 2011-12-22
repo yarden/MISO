@@ -269,6 +269,7 @@ def main():
 
     if options.output_dir == None:
         print "Error: need --output-dir."
+        return
         
     output_dir = os.path.abspath(os.path.expanduser(options.output_dir))
 
