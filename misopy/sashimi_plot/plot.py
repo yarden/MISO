@@ -54,15 +54,18 @@ def plot_event(event_name, pickle_dir, settings_filename,
 
 
 def plot_insert_len(insert_len_filename,
+                    settings_filename,
                     output_dir):
     """
     Plot insert length distribution.
     """
-    num_bins = settings["insert_len_bins"]
     plot_name = os.path.basename(insert_len_filename)
     
     sashimi_obj = Sashimi(plot_name, output_dir,
-                          settings_filename=settings_f)
+                          settings_filename=settings_filename)
+
+    settings = sashimi_obj.settings
+    num_bins = settings["insert_len_bins"]
     output_filename = sashimi_obj.output_filename
     s = plt.subplot(1, 1, 1)
     
@@ -99,11 +102,7 @@ def plot_insert_len(insert_len_filename,
     sashimi_obj.save_plot()
         
 
-def plot_posterior(miso_filename, output_dir,
-                   with_intervals=None,
-                   dimensions=None,
-                   plot_mean=False,
-                   png=False):
+def plot_posterior(miso_filename, output_dir):
     """
     Plot posterior distribution.
     """
@@ -131,19 +130,19 @@ def plot_posterior(miso_filename, output_dir,
             plot_mean=plot_mean)
 
     # Determine output format type
-    if not png:
-        matplotlib.use('PDF')
-        plt.rcParams['ps.useafm'] = True
-        plt.rcParams['pdf.fonttype'] = 42
-        file_ext = ".pdf"
-    else:
-        file_ext = ".png"
+    # if not png:
+    #     matplotlib.use('PDF')
+    #     plt.rcParams['ps.useafm'] = True
+    #     plt.rcParams['pdf.fonttype'] = 42
+    #     file_ext = ".pdf"
+    # else:
+    #     file_ext = ".png"
 
-    output_filename = os.path.join(output_dir,
-                                   os.path.basename(miso_filename).replace(".miso",
-                                                                           file_ext))
-    print "Outputting plot to: %s" %(output_filename)
-    plt.savefig(output_filename)
+    # output_filename = os.path.join(output_dir,
+    #                                os.path.basename(miso_filename).replace(".miso",
+    #                                                                        file_ext))
+    # print "Outputting plot to: %s" %(output_filename)
+    # plt.savefig(output_filename)
     
 
 def main():
@@ -152,10 +151,10 @@ def main():
     parser.add_option("--plot-posterior", dest="plot_posterior", nargs=1, default=None,
                       help="Plot the posterior distribution. Takes as input a raw MISO output "
                       "file (.miso)")
-    parser.add_option("--plot-insert-len", dest="plot_insert_len", nargs=1, default=None,
+    parser.add_option("--plot-insert-len", dest="plot_insert_len", nargs=2, default=None,
                       help="Plot the insert length distribution from a given insert length (*.insert_len) "
                       "filename.")
-    parser.add_option("--plot-bf-dist", dest="", nargs=1, default=None,
+    parser.add_option("--plot-bf-dist", dest="plot_bf_dist", nargs=2, default=None,
                       help="Plot Bayes factor distributon. Takes the arguments: "
                       "(1) Bayes factor filename (*.miso_bf) settings filename, "
                       "(2) a settings filename.")
@@ -179,8 +178,9 @@ def main():
         os.makedirs(output_dir)
 
     if options.plot_insert_len != None:
-        insert_len_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len))
-        plot_insert_len(insert_len_filename, output_dir, png=options.png)
+        insert_len_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len[0]))
+        settings_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len[1]))
+        plot_insert_len(insert_len_filename, settings_filename, output_dir)
 
     if options.plot_posterior != None:
         miso_filename = os.path.abspath(os.path.expanduser(options.plot_posterior))
