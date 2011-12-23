@@ -21,7 +21,7 @@ def plot_cumulative_bars(data, bins,
     num_events = [sum(data >= curr_bin).astype('float')/n \
                   for curr_bin in bins]
     if logged:
-        num_events = log2(logged)
+        num_events = log2(num_events)
     plt.bar(bins, num_events,
             align='center',
             color=color,
