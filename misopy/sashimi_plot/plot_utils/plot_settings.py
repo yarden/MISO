@@ -33,7 +33,8 @@ def get_default_settings():
                 "bf_dist_bins": 20,
                 "font_size": 6,
                 "insert_len_bins": 25,
-                "bf_thresholds": [0, 1, 2, 5, 10, 20]}
+                "bf_thresholds": [0, 1, 2, 5, 10, 20],
+                "bar_color": "k"}
     return settings
 
 def parse_plot_settings(settings_filename, event=None, chrom=None,
