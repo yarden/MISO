@@ -70,10 +70,14 @@ def plot_bf_dist(bf_filename, settings_filename, output_dir,
 
     print "Plotting Bayes factors distribution"
     print "  - Output filename: %s" %(output_filename)
+    ###
+    ### TODO: read bf_thresholds and bar_color from settings
+    ##
     bf_thresholds = [0, 1, 2, 5, 10, 20]
+    bar_color = 'k'
+
     min_bf_thresh = min(bf_thresholds)
     num_events_used = sum(bfs_and_deltas[:, 0] >= min_bf_thresh)
-    bar_color = 'k'
     plot_cumulative_bars(bfs_and_deltas[:, 0],
                          bf_thresholds,
                          color=bar_color,
