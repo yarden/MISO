@@ -20,8 +20,12 @@ def plot_cumulative_bars(data, bins,
     n = 1
     num_events = [sum(data >= curr_bin).astype('float')/n \
                   for curr_bin in bins]
+#    if logged:
+#        num_events = log2(num_events)
+
+    ax = plt.gca()
     if logged:
-        num_events = log2(num_events)
+        ax.set_yscale('log')
     plt.bar(bins, num_events,
             align='center',
             color=color,

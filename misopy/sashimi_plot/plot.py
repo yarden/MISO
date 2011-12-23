@@ -83,6 +83,8 @@ def plot_bf_dist(bf_filename, settings_filename, output_dir,
     plt.xlim([bf_thresholds[0] - c, bf_thresholds[-1] + c])
     plt.title("Bayes factor distributions\n(using %d/%d events)" \
               %(num_events_used, num_events))
+    plt.xlabel("Bayes factor thresh.")
+    plt.ylabel("No. events")
 #    plt.scatter(log2(bfs_and_deltas[:, 0]),
 #                bfs_and_deltas[:, 1])
     sashimi_obj.save_plot()
