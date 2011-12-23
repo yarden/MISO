@@ -32,17 +32,24 @@ def get_default_settings():
                 "reverse_minus": False,
                 "bf_dist_bins": 20,
                 "font_size": 6,
-                "insert_len_bins": 25}
+                "insert_len_bins": 25,
+                "bf_thresholds": [0, 1, 2, 5, 10, 20]}
     return settings
 
 def parse_plot_settings(settings_filename, event=None, chrom=None,
+                        # Float parameters
                         FLOAT_PARAMS=["intron_scale", "exon_scale", "ymax",
                                       "resolution", "fig_width", "fig_height",
                                       "font_size", "junction_log_base"],
+                        # Integer parameters
                         INT_PARAMS=["posterior_bins", "gene_posterior_ratio",
                                     "insert_len_bins"],
+                        # Boolean parameters
                         BOOL_PARAMS=["logged", "show_posteriors", "number_junctions",
-                                     "reverse_minus", "bar_posteriors"]):
+                                     "reverse_minus", "bar_posteriors"],
+                        # Parameters to be interpreted as Python lists or
+                        # data structures
+                        DATA_PARAMS=["miso_files", "bam_files", "bf_thresholds"]):
     """
     Populate a settings dictionary with the plotting parameters, parsed
     as the right datatype.
@@ -60,10 +67,10 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
                 settings[option] = config.getint(section, option)
             elif option in BOOL_PARAMS:
                 settings[option] = config.getboolean(section, option)
+            elif option in DATA_PARAMS:
+                settings[option] = json.loads(config.get(section, option))
             else:
                 settings[option] = config.get(section, option)
-    settings["bam_files"] = json.loads(settings["bam_files"])
-    settings["miso_files"] = json.loads(settings["miso_files"])
     
     if "colors" in settings:
         colors = json.loads(settings["colors"])
