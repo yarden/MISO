@@ -9,14 +9,15 @@ from numpy import *
 
 import matplotlib
 #from plotting import colors, show_spines, axes_square
-from plotting import *
+
 import matplotlib.pyplot as plt
 from matplotlib import rc
 #rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-import misopy
-from misopy.parse_csv import csv2array
 import time
 
+import misopy
+from misopy.parse_csv import csv2array
+from misopy.sashimi_plot.plot_utils.plotting import *
 import misopy.Gene as Gene
 import misopy.hypothesis_test as ht
 
@@ -24,7 +25,8 @@ class SamplesPlotter:
     """
     Visualize a set of samples from a run of MISO.
     """
-    def __init__(self, samples, params, log_scores=None, percent_acceptance=None,
+    def __init__(self, samples, params, log_scores=None,
+                 percent_acceptance=None,
 		 true_psi=None):
 	"""
 	Given a sampler instance, store its properties.
@@ -39,8 +41,9 @@ class SamplesPlotter:
 	assert(len(samples) > 1)
         
 
-    def plot(self, fig=None, output_dir=None, num_rows=1, num_cols=1, subplot_start=1, title=None,
-	     plot_intervals=None, value_to_label=None, label=None, bins=10, bbox_coords=None, vanilla=False,
+    def plot(self, fig=None, output_dir=None, num_rows=1, num_cols=1, subplot_start=1,
+             title=None, plot_intervals=None, value_to_label=None, label=None, bins=10,
+             bbox_coords=None, vanilla=False,
              plot_mean=False, fig_dims=(5, 5)):
 	"""
 	Plot a set of samples.
@@ -56,14 +59,16 @@ class SamplesPlotter:
                                                     num_rows=num_rows, subplot_start=subplot_start,
                                                     plot_intervals=plot_intervals,
                                                     value_to_label=value_to_label,
-                                                    label=label, bbox_coords=bbox_coords, title=title, vanilla=vanilla,
+                                                    label=label, bbox_coords=bbox_coords,
+                                                    title=title, vanilla=vanilla,
                                                     plot_mean=plot_mean, fig_dims=fig_dims)
 	elif num_isoforms > 2:
 	    num_isoforms = self.samples.shape[1] 
 	    num_rows = 1
 	    num_cols = num_isoforms
 	    for c in range(num_cols):
-		plot_handle = self.plot_two_iso_samples(fig, isoform_index=c, subplot_start=c + 1, num_cols=num_cols,
+		plot_handle = self.plot_two_iso_samples(fig, isoform_index=c,
+                                                        subplot_start=c + 1, num_cols=num_cols,
                                                         plot_intervals=plot_intervals,
 							title=title, bins=bins, vanilla=vanilla,
                                                         plot_mean=plot_mean, fig_dims=fig_dims)
@@ -139,11 +144,13 @@ class SamplesPlotter:
 	    l = plt.axvline(x=map_estimate, color='b', linewidth=1.2, ls='-', label=r'${\hat{\Psi}}_{MAP}\ =\ %.2f$' %(map_estimate))
 	# Plot true Psi
 	if self.true_psi:
-	    plot_id = "%dsimul_%diters_%dburnin_%dlag_%s_truepsi_%.2f.pdf" %(simulation_num, num_iters, burn_in, lag, proposal_type, self.true_psi)
+	    plot_id = "%dsimul_%diters_%dburnin_%dlag_%s_truepsi_%.2f.pdf" \
+                      %(simulation_num, num_iters, burn_in, lag, proposal_type, self.true_psi)
 	    l = plt.axvline(x=self.true_psi, color='r', linewidth=1.2, ls='-', label=r'True $\Psi$')
 	else:
 	    # Unknown true Psi
-	    plot_id = "%dsimul_%diters_%dburnin_%dlag_%s_%s_truepsi.pdf" %(simulation_num, num_iters, burn_in, lag, proposal_type, 'unknown')
+	    plot_id = "%dsimul_%diters_%dburnin_%dlag_%s_%s_truepsi.pdf" \
+                      %(simulation_num, num_iters, burn_in, lag, proposal_type, 'unknown')
 	if value_to_label:
 	    l = plt.axvline(x=value_to_label, color='r', linewidth=1.2, ls='-', label=label)
 	# plot credible intervals if given
@@ -158,9 +165,11 @@ class SamplesPlotter:
 	    plt.axvline(x=sample_mean, color='r', linewidth=0.8, label='Mean')
 	if with_legend and (plot_intervals or self.true_psi):
 	    if not bbox_coords:
-		lg = plt.legend(handletextpad=0.172, borderpad=0.01, labelspacing=.008, handlelength=1.4, loc='best', numpoints=1)
+		lg = plt.legend(handletextpad=0.172, borderpad=0.01, labelspacing=.008,
+                                handlelength=1.4, loc='best', numpoints=1)
 	    else:
-		lg = plt.legend(handletextpad=0.172, borderpad=0.01, labelspacing=.008, handlelength=1.4, loc='best', numpoints=1,
+		lg = plt.legend(handletextpad=0.172, borderpad=0.01, labelspacing=.008,
+                                handlelength=1.4, loc='best', numpoints=1,
 				bbox_to_anchor=bbox_coords)
 	    lg.get_frame().set_linewidth(0)
 	    for t in lg.get_texts():

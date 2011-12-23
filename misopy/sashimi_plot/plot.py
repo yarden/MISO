@@ -66,11 +66,25 @@ def plot_bf_dist(bf_filename, settings_filename, output_dir,
     print "Loaded %d event comparisons." %(num_events)
     print bfs_and_deltas
 
+    output_filename = sashimi_obj.output_filename 
+
     print "Plotting Bayes factors distribution"
-    print "  - Using %d bins" %(settings["bf_dist_bins"])
-    #plt.hist(bfs_and_deltas, bins=settings["bf_dist_bins"])
-    plt.scatter(log2(bfs_and_deltas[:, 0]),
-                bfs_and_deltas[:, 1])
+    print "  - Output filename: %s" %(output_filename)
+    bf_thresholds = [0, 1, 2, 5, 10, 20]
+    min_bf_thresh = min(bf_thresholds)
+    num_events_used = sum(bfs_and_deltas[:, 0] >= min_bf_thresh)
+    bar_color = 'k'
+    plot_cumulative_bars(bfs_and_deltas[:, 0],
+                         bf_thresholds,
+                         color=bar_color,
+                         logged=True)
+    plt.xticks(bf_thresholds)
+    c = 1
+    plt.xlim([bf_thresholds[0] - c, bf_thresholds[-1] + c])
+    plt.title("Bayes factor distributions\n(using %d/%d events)" \
+              %(num_events_used, num_events))
+#    plt.scatter(log2(bfs_and_deltas[:, 0]),
+#                bfs_and_deltas[:, 1])
     sashimi_obj.save_plot()
     
 

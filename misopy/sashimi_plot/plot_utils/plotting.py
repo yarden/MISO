@@ -5,8 +5,28 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid.axislines import SubplotZero
 import scipy.stats as stats
 from scipy import *
+from numpy import array
 from scipy import linalg
 import sys
+
+def plot_cumulative_bars(data, bins,
+                         color='k',
+                         edgecolor='#ffffff',
+                         logged=False):
+    """
+    Plot a cumulative discrete and bounded CDF.
+    """
+    data = array(data)
+    n = 1
+    num_events = [sum(data >= curr_bin).astype('float')/n \
+                  for curr_bin in bins]
+    if logged:
+        num_events = log2(logged)
+    plt.bar(bins, num_events,
+            align='center',
+            color=color,
+            edgecolor=edgecolor)
+    
 
 def make_errorbar_plot(labels, bar_locations,
                        bar_values, bar_errors,
