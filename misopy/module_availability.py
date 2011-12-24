@@ -10,6 +10,15 @@ def check_module_availability(required_modules):
 	print "Checking for availability of: %s" %(module_name)
 	try:
 	    __import__(module_name)
+            # Manually check for correct matplotlib version
+            # required for sashimi_plot
+            if module_name == "matplotlib":
+                import matplotlib.pyplot as plt
+                if not hasattr(plt, "subplot2grid"):
+                    print "WARNING: subplot2grid function is not available in matplotlib. " \
+                          "to use sashimi_plot, you must upgrade your matplotlib " \
+                          "to version 1.1.0 or later. This function is *not* required " \
+                          "for MISO use."
 	except ImportError:
 	    print "  - Module %s not available!" %(module_name)
 	    unavailable_mods += 1
@@ -19,27 +28,12 @@ def check_module_availability(required_modules):
 	print "All modules are available!"
     return unavailable_mods
 
-def add_modules(required_modules):
-    """
-    Try to add modules using the 'module' system.  Only supports Bash shell for now.
-    """
-    time_str = time.strftime("%m-%d-%y_%H:%M:%S")
-    module_script_filename = "/tmp/add_module_%s.sh" %(time_str)
-    module_script = open(module_script_filename, 'w')
-    module_script.write("#!/bin/bash\n")
-    for module_name in required_modules:
-	print "Trying to add %s to path..." %(module_name)
-	module_script.write("source /etc/profile.d/modules.sh\n")
-	module_script.write("module add %s\n" %(module_name))
-    module_script.close()
-    os.system("chmod +x %s" %(module_script_filename))
-    os.system("%s" %(module_script_filename))
 
 if __name__ == '__main__':
     from optparse import OptionParser
-    parser = OptionParser()
-    parser.add_option("--add-modules", dest="add_modules", action="store_true", default=False,
-		       help="Try to add modules using the 'modules' system.")
+#    parser = OptionParser()
+#    parser.add_option("--add-modules", dest="add_modules", action="store_true", default=False,
+#		       help="Try to add modules using the 'modules' system.")
     (options, args) = parser.parse_args()
     
     required_modules = ['numpy', 'scipy', 'simplejson', 'matplotlib',
