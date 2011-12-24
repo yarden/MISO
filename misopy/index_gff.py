@@ -112,6 +112,9 @@ def main():
         gff_filename = os.path.abspath(os.path.expanduser(options.index_gff[0]))
         output_dir = os.path.abspath(os.path.expanduser(options.index_gff[1]))
 
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+
         index_gff(gff_filename, output_dir)
 
 
