@@ -31,17 +31,14 @@ def check_module_availability(required_modules):
 
 
 if __name__ == '__main__':
-    from optparse import OptionParser
+#    from optparse import OptionParser
 #    parser = OptionParser()
 #    parser.add_option("--add-modules", dest="add_modules", action="store_true", default=False,
 #		       help="Try to add modules using the 'modules' system.")
-    (options, args) = parser.parse_args()
+#    (options, args) = parser.parse_args()
     
     required_modules = ['numpy', 'scipy', 'simplejson', 'matplotlib',
                         'pysam']
-    
-    if options.add_modules:
-	add_modules(required_modules)
-	
+ 	
     check_module_availability(required_modules)
     
