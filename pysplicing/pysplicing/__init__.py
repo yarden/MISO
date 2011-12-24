@@ -1,6 +1,5 @@
 
 from pysplicing import *
-from GFF import *
 
 MISO_START_AUTO=0L
 MISO_START_UNIFORM=1L
