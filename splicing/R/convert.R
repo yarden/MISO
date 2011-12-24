@@ -367,15 +367,17 @@ getSpecies.gff3 <- function(gff3) {
   if (is.null(res)) NA else res
 }
 
-constitutiveExons <- function(gff3, min.length)
+constitutiveExons <- function(gff3, min.length, mode=c("full", "all"))
   UseMethod("constitutiveExons")
 
-constitutiveExons.gff3 <- function(gff3, min.length) {
+constitutiveExons.gff3 <- function(gff3, min.length, mode=c("full", "all")) {
   if (!isGFF3(gff3)) {
     stop("Not a GFF3 object")
   }
+  mode <- match.arg(mode)
+  mode <- switch(mode, "full"=0L, "all"=1L)
   .Call("R_splicing_constitutive_exons", gff3, as.integer(min.length),
-        PACKAGE="splicing")
+        as.integer(mode), PACKAGE="splicing")
 }
 
 print.gff3 <- function(x, verbose=TRUE, ...) {

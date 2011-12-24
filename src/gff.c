@@ -1230,9 +1230,9 @@ int splicing_i_const_cmp(const void *a, const void *b) {
    includes all long constitutive exons.
  */
 
-int splicing_gff_constitutive_exons(const splicing_gff_t *gff,
-				    splicing_gff_t *newgff,
-				    int min_length) {
+int splicing_i_gff_constitutive_exons_all(const splicing_gff_t *gff,
+					  splicing_gff_t *newgff,
+					  int min_length) {
 
   size_t g, nogenes;
   splicing_vector_int_t events;
@@ -1292,4 +1292,99 @@ int splicing_gff_constitutive_exons(const splicing_gff_t *gff,
   SPLICING_FINALLY_CLEAN(2);	/* + newgff */
 
   return 0;
+}
+
+int splicing_i_const_cmp2(const void *a, const void *b) {
+  int *aa=(int*) a, *bb=(int*) b;
+  int aaa1 = *aa, aaa2 = *(aa+1);
+  int bbb1 = *bb, bbb2 = *(bb+1);
+  if (aaa1 < bbb1) { 
+    return -1; 
+  } else if (aaa1 > bbb1) { 
+    return 1;
+  } else {
+    return aaa2 - bbb2;
+  }
+}
+
+int splicing_i_gff_constitutive_exons_full(const splicing_gff_t *gff,
+					   splicing_gff_t *newgff,
+					   int min_length) {
+  size_t g, nogenes;
+  splicing_vector_int_t events;
+
+  SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
+  
+  SPLICING_CHECK(splicing_gff_init(newgff, 1));
+  SPLICING_FINALLY(splicing_gff_destroy, newgff);
+  SPLICING_CHECK(splicing_vector_int_init(&events, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &events);
+  
+  for (g=0; g<nogenes; g++) {
+    const char *seqid=
+      splicing_strvector_get(&gff->seqids, VECTOR(gff->seqid)[g]);
+    const char *source=
+	    splicing_strvector_get(&gff->sources, VECTOR(gff->source)[g]);
+    int i, idx, noExons, noSame;
+    size_t noiso;
+    int start=VECTOR(gff->genes)[g];
+    int end= g+1 < nogenes ? VECTOR(gff->genes)[g+1] : gff->n;
+    splicing_gff_noiso_one(gff, g, &noiso);
+    
+    /* Collect and sort all events */
+    splicing_vector_int_clear(&events);
+    for (idx=start+1; idx<end; idx++) {
+      if (VECTOR(gff->type)[idx] == SPLICING_TYPE_EXON) {
+	SPLICING_CHECK(splicing_vector_int_push_back2
+		       (&events, VECTOR(gff->start)[idx],
+			VECTOR(gff->end)[idx]));
+      }
+    }
+    noExons=splicing_vector_int_size(&events)/2;
+    splicing_qsort(VECTOR(events), noExons, sizeof(int)*2,
+		   splicing_i_const_cmp2);
+    
+    /* Now go over them and check how many times each exon appears */
+    for (noSame=1, i=2; i<noExons*2; i+=2) { 
+      if (VECTOR(events)[i] == VECTOR(events)[i-2] && 
+	  VECTOR(events)[i+1] == VECTOR(events)[i-1]) {
+	noSame++;
+      } else {
+	noSame=1;
+      }
+      if (noSame == noiso) {
+	SPLICING_CHECK(splicing_gff_append(newgff, seqid, source, 
+					   SPLICING_TYPE_EXON, 
+					   VECTOR(events)[i], 
+					   VECTOR(events)[i+1],
+					   VECTOR(gff->score)[start],
+					   VECTOR(gff->strand)[g],
+					   /*phase=*/ -1, /*ID=*/ "",
+					   /*parent=*/ 0));
+      }
+    }
+  }
+  
+  splicing_vector_int_destroy(&events);
+  SPLICING_FINALLY_CLEAN(2);	/* + newgff */
+
+  return 0;
+}
+
+int splicing_gff_constitutive_exons(const splicing_gff_t *gff,
+				    splicing_gff_t *newgff,
+				    int min_length, 
+				    splicing_constitutive_mode_t mode) {
+
+  switch (mode) {
+  case SPLICING_CONSTITUTIVE_ALL:
+    return splicing_i_gff_constitutive_exons_all(gff, newgff, min_length);
+    break;
+  case SPLICING_CONSTITUTIVE_FULL:
+    return splicing_i_gff_constitutive_exons_full(gff, newgff, min_length);
+    break;
+  default:
+    SPLICING_ERROR("Unknown `mode' argument for constitutive exon finding",
+		   SPLICING_EINVAL);
+  }
 }

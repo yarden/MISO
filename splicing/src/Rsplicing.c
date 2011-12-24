@@ -2370,16 +2370,17 @@ SEXP R_splicing_iso_to_genomic_all(SEXP pgff, SEXP pgene, SEXP pposition) {
   return result;
 }
 				  
-SEXP R_splicing_constitutive_exons(SEXP pgff, SEXP pmin_length) {
+SEXP R_splicing_constitutive_exons(SEXP pgff, SEXP pmin_length, SEXP pmode) {
   SEXP result;
   splicing_gff_t gff;
   splicing_gff_t newgff;
   int min_length=INTEGER(pmin_length)[0];
+  splicing_constitutive_mode_t mode=INTEGER(pmode)[0];
   
   R_splicing_begin();
 
   R_splicing_SEXP_to_gff(pgff, &gff);
-  splicing_gff_constitutive_exons(&gff, &newgff, min_length);
+  splicing_gff_constitutive_exons(&gff, &newgff, min_length, mode);
   PROTECT(result = R_splicing_gff_to_SEXP(&newgff));
   splicing_gff_destroy(&newgff);
   

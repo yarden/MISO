@@ -19,3 +19,8 @@ ex
 ex$start
 ex$end
 
+ex <- constitutiveExons(gene, 10, mode="all")
+ex
+ex$start
+ex$end
+

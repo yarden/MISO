@@ -483,8 +483,13 @@ int splicing_rng_get_dirichlet(splicing_rng_t *rng,
 			       const splicing_vector_t *alpha, 
 			       splicing_vector_t *result);
 
+typedef enum {
+  SPLICING_CONSTITUTIVE_FULL=0,
+  SPLICING_CONSTITUTIVE_ALL=1 } splicing_constitutive_mode_t;
+
 int splicing_gff_constitutive_exons(const splicing_gff_t *gff,
 				    splicing_gff_t *newgff,
-				    int min_length);
+				    int min_length, 
+				    splicing_constitutive_mode_t mode);
 
 #endif

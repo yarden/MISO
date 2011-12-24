@@ -37,6 +37,14 @@ GFF3 Unknown species, no genes, 1 exons.
 > 
 > ex <- constitutiveExons(gene, 10)
 > ex
+GFF3 Unknown species, no genes, 0 exons.
+> ex$start
+integer(0)
+> ex$end
+integer(0)
+> 
+> ex <- constitutiveExons(gene, 10, mode="all")
+> ex
 GFF3 Unknown species, no genes, 1 exons.
 > ex$start
 [1] 101
