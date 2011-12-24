@@ -23,7 +23,8 @@ def check_module_availability(required_modules):
 	    print "  - Module %s not available!" %(module_name)
 	    unavailable_mods += 1
     if unavailable_mods != 0:
-	print "Total of %d modules were not available.  Please install these and try again." %(unavailable_mods)
+	print "Total of %d modules were not available. " \
+              "Please install these and try again." %(unavailable_mods)
     else:
 	print "All modules are available!"
     return unavailable_mods
