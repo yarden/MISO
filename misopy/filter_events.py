@@ -6,7 +6,8 @@
 import os
 import re
 import string
-from parse_csv import *
+import misopy
+from misopy.parse_csv import *
 from collections import defaultdict
 
 def fname_callback(option, op_str, value, parser):

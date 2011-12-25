@@ -37,33 +37,24 @@ if cc.has_function('double fmin(double, double); fmin(1.0,0.0);rand',
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_FMIN', '1'))
 
-# new -- prefix for pysplicing
+# prefix directory for pysplicing module
 pysplicing_dir = 'pysplicing'
 
-# new
 splicingsources = glob.glob(os.path.join(pysplicing_dir, 'src', '*.c'))
 lapacksources = glob.glob(os.path.join(pysplicing_dir, 'src', 'lapack', '*.c'))
 f2csources = glob.glob(os.path.join(pysplicing_dir, 'src', 'f2c', '*.c'))
 
-#old
-#splicingsources = glob.glob(os.path.join('src', '*.c'))
-#lapacksources = glob.glob(os.path.join('src/lapack', '*.c'))
-#f2csources = glob.glob(os.path.join('src/f2c', '*.c'))
-
 sources = splicingsources + lapacksources + f2csources
 
-#new
 include_dirs = [os.path.join(pysplicing_dir, 'include'),
                 os.path.join(pysplicing_dir, 'src', 'lapack'),
                 os.path.join(pysplicing_dir, 'src', 'f2c')]
-#old
-#include_dirs = ['include', 'src/lapack', 'src/f2c']
 
 splicing_extension = Extension('pysplicing.pysplicing', sources, 
                                include_dirs=include_dirs,
                                define_macros=defines)
 
-
+# Extract long description of MISO from README
 long_description = open('README').read()
 
 if sys.version_info > (3, 0):
@@ -75,15 +66,28 @@ setup(name = 'misopy',
       long_description = long_description,
 #      license = 'MIT License',
       author = 'Yarden Katz,Gabor Csardi',
-      author_email = 'gcsardi@stat.harvard.edu,yarden@mit.edu',
+      author_email = 'yarden@mit.edu,gcsardi@stat.harvard.edu',
+      # Py version issues should go to Yarden, R version to Gabor
+      # No good way to say that here, but nobody looks at this anyway
+      maintainer = 'Yarden Katz',
+      maintainer_email = 'yarden@mit.edu',
       url = 'http://genes.mit.edu/burgelab/miso/',
       ext_modules = [splicing_extension],
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy', 'pysplicing'],
-      scripts=['misopy/run_events_analysis.py'],
+      scripts = [os.path.join('misopy', 'module_availability.py'),
+                 os.path.join('misopy', 'test_miso.py'),
+                 os.path.join('misopy', 'test_cluster.py'),
+                 os.path.join('misopy', 'index_gff.py'),
+                 os.path.join('misopy', 'sam_to_bam.py'),
+                 os.path.join('misopy', 'run_events_analysis.py'),
+                 os.path.join('misopy', 'run_miso.py'),                 
+                 os.path.join('misopy', 'exon_utils.py'),
+                 os.path.join('misopy', 'pe_utils.py'),
+                 os.path.join('misopy', 'filter_events.py')],
       # Required modules
-      install_requires=[
+      install_requires = [
 #          "matplotlib >= 1.1.0",
           "matplotlib",
           "numpy >= 1.5.0",
