@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##
 ## Utilities for fetching exons from GFF files
 ##

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##
 ## Utilities for working with paired-end reads and
 ## fragment distributions

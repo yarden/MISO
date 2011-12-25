@@ -81,6 +81,7 @@ setup(name = 'misopy',
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy', 'pysplicing'],
+      scripts=['misopy/run_events_analysis.py'],
       # Required modules
       install_requires=[
 #          "matplotlib >= 1.1.0",

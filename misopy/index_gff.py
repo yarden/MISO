@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##
 ## Script to build an indexed representation of a GFF file for efficient
 ## retrieval of genes

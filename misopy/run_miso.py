@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##
 ## Interface for running MISO locally or on cluster
 ##

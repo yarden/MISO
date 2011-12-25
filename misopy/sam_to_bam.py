@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##
 ## Convert SAM to indexed, sorted BAM file with headers
 ##

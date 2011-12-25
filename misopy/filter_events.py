@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##
 ## Filter two-isoform events
 ##

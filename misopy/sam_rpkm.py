@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##
 ## Compute RPKM from SAM/BAM files
 ##

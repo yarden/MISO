@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##
 ## Check if all the necessary modules to run MISO are available
 ##
