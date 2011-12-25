@@ -13,13 +13,10 @@ import misopy.as_events as as_events
 import misopy.run_miso as run_miso
 from misopy.parse_csv import *
 from misopy.settings import Settings, load_settings
+from misopy.settings import miso_path as miso_settings_path
 import misopy.cluster_utils as cluster_utils
 
 miso_path = os.path.dirname(os.path.abspath(__file__))
-miso_settings_path = sys.prefix
-print "==>",sys.prefix
-print __name__
-print __file__
 
 def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           use_cluster=False, SGEarray=False, chunk_jobs=200,
@@ -73,8 +70,6 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
         else:
             print "  - Executing: %s" %(miso_cmd)
             os.system(miso_cmd)
-
-    miso_settings = Settings.load(settings)
 
     if use_cluster:
         if SGEarray:
@@ -205,99 +200,6 @@ def compute_psi(sample_filenames, output_dir, event_type, read_len, overhang_len
 	os.system(miso_cmd)
 
 
-def pool_counts(counts_filenames, event_type, output_dir,
-                counts_delimiter=';', column_delimiter='\t',
-		NA_delimiter='n/a'):
-    """
-    Pool together the counts in counts_filenames, save output to output_dir.
-    """
-    print "Pooling together %d count filenames into: %s" %(len(counts_filenames),
-                                                           output_dir)
-    print "  - Events type: %s" %(event_type)
-    
-    if not os.path.isdir(output_dir):
-        print "Creating directory: %s" %(output_dir)
-        os.makedirs(output_dir)
-
-    # Compute labels for each counts file
-    labels_to_filenames = {}
-
-    all_sample_labels = []
-    
-    for counts_filename in counts_filenames:
-        counts_filename = os.path.abspath(os.path.expanduser(counts_filename))
-        if not counts_filename.endswith(counts_filename):
-            print "Skipping file %s, it does not end with .counts" %(counts_filename)
-            continue
-
-        counts_label = os.path.basename(counts_filename).split('.counts')
-        
-        if len(counts_label) != 2:
-            print "Skipping file %s, does not look like counts file" %(counts_filename)
-            continue
-
-        counts_label = counts_label[0]
-        all_sample_labels.append(counts_label)
-        labels_to_filenames[counts_label] = counts_filename
-
-    # Set of ordered labels which will determine the order
-    # in which counts are outputted
-    fieldnames = ['event_name']
-    fieldnames.extend(all_sample_labels)
-    fieldnames.append('sum')
-    
-    pooled_counts_data = defaultdict(dict)
-    
-    for counts_label, counts_filename in labels_to_filenames.iteritems():
-        counts_file = open(counts_filename)
-        counts_data = csv.reader(counts_file, delimiter=column_delimiter)
-
-        for event_name, event_counts in counts_data:
-            counts = [int(c) for c in event_counts.split(counts_delimiter)]
-            if len(counts) <= 1:
-                raise Exception, "Malformed counts file: %s in %s" %(event_counts,
-                                                                     counts_filename)
-            pooled_counts_data[event_name][counts_label] = counts
-        counts_file.close()
-
-    # Serialize counts data
-    pooled_counts_filename = os.path.join(output_dir,
-                                          "%s.pooled_counts" %("_".join(all_sample_labels)))
-    pooled_counts_file = open(pooled_counts_filename, 'w')
-    
-    # Write header
-    header = column_delimiter.join(fieldnames)
-    pooled_counts_file.write(header + "\n")
-
-    pooled_counts_out = csv.writer(pooled_counts_file, delimiter=column_delimiter,
-                                   quoting=csv.QUOTE_NONE)
-
-    # Compile all counts for the event as strings; if a count
-    # is unavailable, use NA_delimiter to denote it
-    for event_name, event_counts in pooled_counts_data.iteritems():
-        event_values = [event_name]
-        all_sample_counts = []
-        for sample_label in all_sample_labels:
-            if sample_label not in event_counts:
-                event_values.append(NA_delimiter)
-            else:
-                # Compile all of the event's counts from the sample
-                curr_sample_counts = [c for c in event_counts[sample_label]]
-                all_sample_counts.append(curr_sample_counts)
-
-                # Convert them to strings for outputting to file
-                curr_sample_counts_str = [str(c) for c in curr_sample_counts]
-                event_values.append(counts_delimiter.join(curr_sample_counts_str))
-
-        # Sum all the event's counts from the samples in which it is non-NA
-        sum_of_counts = [str(c) for c in sum(all_sample_counts, 0)]
-
-        # Format the summed counts
-        event_values.append(counts_delimiter.join(sum_of_counts))
-        pooled_counts_out.writerow(event_values)
-    return pooled_counts_data
-
-
 def main():
     from optparse import OptionParser
     parser = OptionParser()
@@ -332,10 +234,6 @@ def main():
                       default=os.path.join(miso_settings_path,
                                            "settings", "miso_settings.txt"),                    
                       help="Filename specifying MISO settings.")
-    parser.add_option("--pool-counts", dest="pool_counts", default=None,
-		      help="Given a series of comma separated filenames (no spaces), "
-		      "pool them together. Must specify an output directory "
-		      "with --output-dir.")
     parser.add_option("--read-len", dest="read_len", default=None, type="int",
 		      help="Length of sequenced reads.")
     parser.add_option("--paired-end", dest="paired_end", nargs=2, default=None, 
@@ -367,31 +265,6 @@ def main():
               "please run again with --use-cluster option enabled."
         sys.exit(1)
     
-    if options.pool_counts:
-        if options.output_dir == None:
-            print "Error: Need output directory to pool counts together. Use --output-dir."
-            sys.exit(1)
-
-        if options.event_type == None:
-            print "Error: Need event type to perform pooling."
-            sys.exit(1)
-
-        
-        counts_filenames = [os.path.normpath(os.path.expanduser(count_filename)) \
-                            for count_filename in options.pool_counts.split(',')]
-
-        if len(counts_filenames) < 2:
-            print "Error: Need 2 filenames or more to perform pooling."
-            sys.exit(1)
-        
-        print "Pooling together: "
-        for filename in counts_filenames:
-            print "  - %s" %(filename)
-            
-        print "Outputting pooled counts to: %s" %(options.output_dir)
-        pool_counts(counts_filenames, options.event_type,
-                    os.path.expanduser(options.output_dir))
-
     ##
     ## Event types that require additional event files
     ##
