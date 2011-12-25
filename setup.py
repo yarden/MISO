@@ -89,15 +89,15 @@ setup(name = 'misopy',
 #      package_data = {'': ['misopy/settings/*.txt']},
       # distutils always uses forward slashes
       scripts = ['misopy/module_availability.py',
-#                 'misopy/test_miso.py',
-#                 'misopy/test_cluster.py',
                  'misopy/index_gff.py',
                  'misopy/sam_to_bam.py',
                  'misopy/run_events_analysis.py',
                  'misopy/run_miso.py',
                  'misopy/exon_utils.py',
                  'misopy/pe_utils.py',
-                 'misopy/filter_events.py'],
+                 'misopy/filter_events.py',
+                 # sashimi_plot scripts
+                 'misopy/sashimi_plot/plot.py'],
       data_files = [('miso_settings', ['misopy/settings/miso_settings.txt',
                                        'misopy/sashimi_plot/settings/sashimi_plot_settings.txt'])],
       # Required modules
