@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##
 ## Test running of MISO on cluster
 ##
