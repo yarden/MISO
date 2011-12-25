@@ -86,7 +86,7 @@ setup(name = 'misopy',
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy', 'misopy.sashimi_plot',
-                  'misopy.sasimi_plot.plot_utils',
+                  'misopy.sashimi_plot.plot_utils',
                   'pysplicing'],
 #      package_data = {'': ['misopy/settings/*.txt']},
       # distutils always uses forward slashes
