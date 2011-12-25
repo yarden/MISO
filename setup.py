@@ -97,9 +97,6 @@ setup(name = 'misopy',
                  'misopy/exon_utils.py',
                  'misopy/pe_utils.py',
                  'misopy/filter_events.py',
-                 # test scripts
-                 'misopy/test_miso.py',
-                 'misopy/test_cluster.py',
                  # sashimi_plot scripts
                  'misopy/sashimi_plot/plot.py'],
       data_files = [('miso_settings', ['misopy/settings/miso_settings.txt',
