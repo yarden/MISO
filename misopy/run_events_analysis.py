@@ -16,6 +16,10 @@ from misopy.settings import Settings, load_settings
 import misopy.cluster_utils as cluster_utils
 
 miso_path = os.path.dirname(os.path.abspath(__file__))
+miso_settings_path = sys.prefix
+print "==>",sys.prefix
+print __name__
+print __file__
 
 def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           use_cluster=False, SGEarray=False, chunk_jobs=200,
@@ -325,7 +329,8 @@ def main():
 		      "sufficient number of junction reads. The default filter "
 		      "varies by event type.")
     parser.add_option("--settings-filename", dest="settings_filename",
-                      default=os.path.join(miso_path, "settings", "miso_settings.txt"),                    
+                      default=os.path.join(miso_settings_path,
+                                           "settings", "miso_settings.txt"),                    
                       help="Filename specifying MISO settings.")
     parser.add_option("--pool-counts", dest="pool_counts", default=None,
 		      help="Given a series of comma separated filenames (no spaces), "

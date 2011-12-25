@@ -60,6 +60,16 @@ long_description = open('README').read()
 if sys.version_info > (3, 0):
     options["use_2to3"] = True
 
+# This forces distutils to place the data files
+# in the directory where the Py packages are installed
+# (usually 'site-packages'). This is unfortunately
+# required since there's no good way to retrieve
+# data_files= from setup() in a platform independent
+# way.
+from distutils.command.install import INSTALL_SCHEMES
+for scheme in INSTALL_SCHEMES.values():
+        scheme['data'] = scheme['purelib']
+        
 setup(name = 'misopy',
       version = '0.1',
       description = 'Mixture of Isoforms model (MISO) for isoform quantitation using RNA-Seq',
@@ -76,16 +86,22 @@ setup(name = 'misopy',
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy', 'pysplicing'],
-      scripts = [os.path.join('misopy', 'module_availability.py'),
-                 os.path.join('misopy', 'test_miso.py'),
-                 os.path.join('misopy', 'test_cluster.py'),
-                 os.path.join('misopy', 'index_gff.py'),
-                 os.path.join('misopy', 'sam_to_bam.py'),
-                 os.path.join('misopy', 'run_events_analysis.py'),
-                 os.path.join('misopy', 'run_miso.py'),                 
-                 os.path.join('misopy', 'exon_utils.py'),
-                 os.path.join('misopy', 'pe_utils.py'),
-                 os.path.join('misopy', 'filter_events.py')],
+#      package_data = {'': ['misopy/settings/*.txt']},
+      # distutils always uses forward slashes
+      scripts = ['misopy/module_availability.py',
+                 'misopy/test_miso.py',
+                 'misopy/test_cluster.py',
+                 'misopy/index_gff.py',
+                 'misopy/sam_to_bam.py',
+                 'misopy/run_events_analysis.py',
+                 'misopy/run_miso.py',
+                 'misopy/exon_utils.py',
+                 'misopy/pe_utils.py',
+                 'misopy/filter_events.py',
+                 'misopy/settings/miso_settings.txt'],
+      data_files = [('miso_settings', [os.path.join('misopy', 'settings', 'miso_settings.txt'),
+                                       os.path.join('misopy', 'sashimi_plot',
+                                                    'settings', 'sashimi_plot_settings.txt')])],
       # Required modules
       install_requires = [
 #          "matplotlib >= 1.1.0",
