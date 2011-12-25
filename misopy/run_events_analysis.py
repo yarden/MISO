@@ -243,7 +243,9 @@ def main():
 		      help="Length of overhang constraints imposed on junctions.")
     parser.add_option("--output-dir", dest="output_dir", default=None,
 		      help="Directory for MISO output.")
-    parser.add_option("--job-name", dest="job_name", nargs=1, help="name for jobs submitted to queue. default is misojob", default="misojob")
+    parser.add_option("--job-name", dest="job_name", nargs=1,
+                      help="Name for jobs submitted to queue for SGE jobs. " \
+                      "Default is misojob", default="misojob")
     parser.add_option("--SGEarray", dest="SGEarray", action="store_true", default=False)
     (options, args) = parser.parse_args()
 

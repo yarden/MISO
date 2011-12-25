@@ -10,6 +10,7 @@ import sys
 
 import misopy
 from misopy.settings import Settings
+from misopy.settings import miso_path as miso_settings_path
 import misopy.hypothesis_test as ht
 import misopy.as_events as as_events
 import misopy.cluster_utils as cluster_utils
@@ -429,7 +430,7 @@ def main():
 		      help="Size (in number of events) of each job to chunk events file into. "
                       "Only applies when running on cluster.")
     parser.add_option("--settings-filename", dest="settings_filename",
-                      default=os.path.join(miso_path, "settings", "miso_settings.txt"),
+                      default=os.path.join(miso_settings_path, "settings", "miso_settings.txt"),
                       help="Filename specifying MISO settings.")
     parser.add_option("--read-len", dest="read_len", type="int", default=None)
     parser.add_option("--overhang-len", dest="overhang_len", type="int", default=None)
