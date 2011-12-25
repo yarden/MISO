@@ -1,0 +1,3 @@
+include pysplicing/include/*
+include pysplicing/src/f2c/*
+include pysplicing/src/lapack/*

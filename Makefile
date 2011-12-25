@@ -44,8 +44,8 @@ PSRC6 = $(wildcard pysplicing/src/*.c) $(wildcard pysplicing/include/*.h) \
 
 Pythonpackage: pysplicing-0.1.tar.gz
 
-pysplicing-0.1.tar.gz: $(PSRC3) $(PSRC4) $(PSRC5) $(PSRC6) pysplicing/setup.py pysplicing/MANIFEST.in
-	rm -f pysplicing/MANIFEST
+pysplicing-0.1.tar.gz: $(PSRC3) $(PSRC4) $(PSRC5) $(PSRC6) pysplicing/setup.py MANIFEST.in
+	rm -f MANIFEST
 	cd pysplicing && python setup.py sdist -d ..
 
 pysplicing/src/%.c: src/%.c

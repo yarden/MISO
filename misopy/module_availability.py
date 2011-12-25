@@ -36,7 +36,6 @@ if __name__ == '__main__':
 #    parser.add_option("--add-modules", dest="add_modules", action="store_true", default=False,
 #		       help="Try to add modules using the 'modules' system.")
 #    (options, args) = parser.parse_args()
-    
     required_modules = ['numpy', 'scipy', 'simplejson', 'matplotlib',
                         'pysam']
  	
