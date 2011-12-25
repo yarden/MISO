@@ -2,6 +2,7 @@
 ## Draw gene structure from a GFF file
 ##
 import os, sys, operator, subprocess
+import pysam
 import glob
 from pylab import *
 from matplotlib.patches import PathPatch 
@@ -24,18 +25,22 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,
                         showXaxis=True, showYaxis=True, showYlabel=True, font_size=6,
                         junction_log_base=10):
     """
-    Plot mISO events using BAM files nad posterior distribution files.
+    Plot MISO events using BAM files and posterior distribution files.
     TODO: If comparison files are available, plot Bayes factors too.
     """
     bamfile = sam_utils.load_bam_reads(bam_filename) 
 
-    gene_reads = sam_utils.fetch_bam_reads_in_gene(bamfile, gene_obj.chrom,\
-        tx_start, tx_end, gene_obj)
-    reads, num_raw_reads = sam_utils.sam_parse_reads(gene_reads,\
-        paired_end=paired_end)
-    wiggle, jxns = readsToWiggle(reads, tx_start, tx_end)
-
+    bamfile = pysam.Samfile(bam_filename, 'rb')
+    subset_reads = bamfile.fetch(reference=chrom, start=tx_start,end=tx_end)
+    wiggle, jxns =readsToWiggle_pysam(subset_reads,tx_start, tx_end)
     wiggle = 1e3 * wiggle / coverage
+                
+    # gene_reads = sam_utils.fetch_bam_reads_in_gene(bamfile, gene_obj.chrom,\
+    #     tx_start, tx_end, gene_obj)
+    # reads, num_raw_reads = sam_utils.sam_parse_reads(gene_reads,\
+    #     paired_end=paired_end)
+    # wiggle, jxns = readsToWiggle(reads, tx_start, tx_end)
+    #wiggle = 1e3 * wiggle / coverage
  
     if logged:
         wiggle = log10(wiggle + 1)
@@ -273,6 +278,32 @@ def getScaling(tx_start, tx_end, strand, exon_starts, exon_ends,
                 x += 1. / intron_scale
     
     return graphcoords, graphToGene
+
+def readsToWiggle_pysam(reads, tx_start, tx_end):
+    wiggle = zeros((tx_end - tx_start + 1), dtype='f')
+    jxns = {}
+    for read in reads:
+        aligned_positions = read.positions
+        for i,pos in enumerate(aligned_positions):
+            if pos < tx_start or pos > tx_end:
+                continue
+            wig_index = pos-tx_start
+            wiggle[wig_index] += 1./read.qlen
+            try:
+                #if there is a junction coming up                
+                if aligned_positions[i+1] > pos + 1: 
+                    leftss = pos+1
+                    rightss= aligned_positions[i+1]+1
+                    if leftss > tx_start and leftss < tx_end \
+                           and rightss > tx_start and rightss < tx_end:                      
+                        jxn = ":".join(map(str, [leftss, rightss]))
+                        try:
+                            jxns[jxn] += 1 
+                        except:
+                            jxns[jxn] = 1
+            except:
+                pass
+    return wiggle, jxns
 
 
 def readsToWiggle(reads, tx_start, tx_end):
