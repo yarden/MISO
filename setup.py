@@ -78,7 +78,7 @@ setup(name = 'misopy',
       author_email = 'gcsardi@stat.harvard.edu,yarden@mit.edu',
       url = 'http://genes.mit.edu/burgelab/miso/',
       ext_modules = [splicing_extension],
-#      pymodules = ['misopy', 'pysplicing.pysplicing'],
+      # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy', 'pysplicing'],
       # Required modules
@@ -90,7 +90,8 @@ setup(name = 'misopy',
           "pysam >= 0.5.0"
           ],
       platforms = 'ALL',
-      keywords = ['biology', 'genetics', 'alternative splicing', 'RNA-Seq'],
+      keywords = ['bioinformatics', 'sequence analysis',
+                  'alternative splicing', 'RNA-Seq'],
       classifiers = [
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
