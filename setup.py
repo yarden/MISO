@@ -88,7 +88,6 @@ setup(name = 'misopy',
       packages = ['misopy', 'misopy.sashimi_plot',
                   'misopy.sashimi_plot.plot_utils',
                   'pysplicing'],
-#      package_data = {'': ['misopy/settings/*.txt']},
       # distutils always uses forward slashes
       scripts = ['misopy/module_availability.py',
                  'misopy/index_gff.py',
@@ -98,6 +97,9 @@ setup(name = 'misopy',
                  'misopy/exon_utils.py',
                  'misopy/pe_utils.py',
                  'misopy/filter_events.py',
+                 # test scripts
+                 'misopy/test_miso.py',
+                 'misopy/test_cluster.py',
                  # sashimi_plot scripts
                  'misopy/sashimi_plot/plot.py'],
       data_files = [('miso_settings', ['misopy/settings/miso_settings.txt',
