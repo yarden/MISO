@@ -99,8 +99,8 @@ setup(name = 'misopy',
                  'misopy/filter_events.py',
                  # sashimi_plot scripts
                  'misopy/sashimi_plot/plot.py'],
-      data_files = [('miso_settings', ['misopy/settings/miso_settings.txt',
-                                       'misopy/sashimi_plot/settings/sashimi_plot_settings.txt'])],
+      data_files = [('settings', ['misopy/settings/miso_settings.txt',
+                                  'misopy/sashimi_plot/settings/sashimi_plot_settings.txt'])],
       # Required modules
       install_requires = [
 #          "matplotlib >= 1.1.0",
