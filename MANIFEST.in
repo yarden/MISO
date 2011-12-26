@@ -1,3 +1,5 @@
 include pysplicing/include/*
 include pysplicing/src/f2c/*
 include pysplicing/src/lapack/*
+include misopy/settings/*
+include misopy/sashimi_plot/settings/*
