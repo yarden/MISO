@@ -298,6 +298,14 @@ class MISOSampler:
         # read_assignments[n]-many reads.
         reads_data = (read_classes, read_class_data)
 
+        assignments = array(assignments)
+
+        # Skip events where all reads are incompatible with the annotation;
+        # do not output a file for those.
+        if all(assignments == -1):
+            print "All reads incompatible with annotation, skipping..."
+            return
+        
         accepted_proposals = run_stats[4]
         rejected_proposals = run_stats[5]
         
@@ -309,7 +317,6 @@ class MISOSampler:
         # Write MISO output to file
 	print "Outputting samples to: %s..." %(output_file)
         self.miso_logger.info("Outputting samples to: %s" %(output_file))
-        assignments = array(assignments)
         self.output_miso_results(output_file, gene, reads_data, assignments, psi_vectors,
                                  kept_log_scores, num_iters, burn_in,
                                  lag, percent_acceptance, proposal_type)
