@@ -385,16 +385,20 @@ print.gff3 <- function(x, verbose=TRUE, ...) {
   nog <- noGenes(gff3)
   spec <- getSpecies(gff3)
   if (is.na(spec)) { spec <- "Unknown species" }
-  if (nog == 0) {
-    cat(sprintf('GFF3 %s, no genes, %i exons.\n', spec,
-                sum(x$type==SPLICING_EXON)))
-  } else if (nog != 1 || !verbose) {
+  if (nog != 1 || !verbose) {
     cat(sprintf('GFF3 %s, %i genes, %i transcripts.\n', spec, nog,
                 length(gff3$tid)))
   } else {
     cat(sprintf('GFF3 %s gene, %i isoforms.\n', spec, length(gff3$tid)))
     ## TODO: more
   }
+}
+
+print.splicingExonset <- function(x, ...) {
+  s <- if (length(x$start)==1) "" else "s"
+  cat(sprintf('Set of %i exon%s, from %i sequences.\n', length(x$start), s,
+              length(x$seqid_str)))
+  invisible(x)
 }
 
 ##############

@@ -21,6 +21,8 @@ S3method("getSpecies", "gff3")
 S3method("merge", "gff3")
 S3method("constitutiveExons", "gff3")
 
+S3method("print", "splicingExonset")
+
 export(createGene, rpk, realPsi, simulateReads)
 
 export(readSAM, noReads, isPaired, isMixed, noPairs, noSingles, toTable,

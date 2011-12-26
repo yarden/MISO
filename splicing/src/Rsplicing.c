@@ -401,6 +401,30 @@ SEXP R_splicing_gff_to_SEXP(splicing_gff_t *gff) {
   return result;
 }
 
+SEXP R_splicing_exonset_to_SEXP(splicing_exonset_t *exons) {
+  SEXP result, class, names;
+  
+  PROTECT(result=NEW_LIST(4));
+  SET_VECTOR_ELT(result, 0, R_splicing_strvector_to_SEXP(&exons->seqids));
+  SET_VECTOR_ELT(result, 1, R_splicing_vector_int_to_SEXP(&exons->seqid));
+  SET_VECTOR_ELT(result, 2, R_splicing_vector_int_to_SEXP(&exons->start));
+  SET_VECTOR_ELT(result, 3, R_splicing_vector_int_to_SEXP(&exons->end));
+  
+  PROTECT(names=NEW_CHARACTER(4));
+  SET_STRING_ELT(names, 0, mkChar("seqid_str"));
+  SET_STRING_ELT(names, 1, mkChar("seqid"));
+  SET_STRING_ELT(names, 2, mkChar("start"));
+  SET_STRING_ELT(names, 3, mkChar("end"));
+  SET_NAMES(result, names);
+  
+  PROTECT(class=NEW_CHARACTER(1));
+  SET_STRING_ELT(class, 0, mkChar("splicingExonset"));
+  SET_CLASS(result, class);
+  
+  UNPROTECT(3);
+  return result;
+}
+
 SEXP R_splicing_delbit(SEXP pv, SEXP pbit) {
   int *v=INTEGER(pv);
   int bit=INTEGER(pbit)[0]-1;
@@ -2373,16 +2397,16 @@ SEXP R_splicing_iso_to_genomic_all(SEXP pgff, SEXP pgene, SEXP pposition) {
 SEXP R_splicing_constitutive_exons(SEXP pgff, SEXP pmin_length, SEXP pmode) {
   SEXP result;
   splicing_gff_t gff;
-  splicing_gff_t newgff;
+  splicing_exonset_t exons;
   int min_length=INTEGER(pmin_length)[0];
   splicing_constitutive_mode_t mode=INTEGER(pmode)[0];
   
   R_splicing_begin();
 
   R_splicing_SEXP_to_gff(pgff, &gff);
-  splicing_gff_constitutive_exons(&gff, &newgff, min_length, mode);
-  PROTECT(result = R_splicing_gff_to_SEXP(&newgff));
-  splicing_gff_destroy(&newgff);
+  splicing_gff_constitutive_exons(&gff, &exons, min_length, mode);
+  PROTECT(result = R_splicing_exonset_to_SEXP(&exons));
+  splicing_exonset_destroy(&exons);
   
   R_splicing_end();
   

@@ -487,8 +487,20 @@ typedef enum {
   SPLICING_CONSTITUTIVE_FULL=0,
   SPLICING_CONSTITUTIVE_ALL=1 } splicing_constitutive_mode_t;
 
+typedef struct {
+  splicing_strvector_t seqids;
+  splicing_vector_int_t seqid;
+  splicing_vector_int_t start;
+  splicing_vector_int_t end;
+} splicing_exonset_t;
+
+int splicing_exonset_init(splicing_exonset_t *ex, size_t size);
+void splicing_exonset_destroy(splicing_exonset_t *ex);
+int splicing_exonset_append(splicing_exonset_t *ex, const char *seqid, 
+			    int start, int end);
+
 int splicing_gff_constitutive_exons(const splicing_gff_t *gff,
-				    splicing_gff_t *newgff,
+				    splicing_exonset_t *exons,
 				    int min_length, 
 				    splicing_constitutive_mode_t mode);
 
