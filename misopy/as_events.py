@@ -1,10 +1,11 @@
 ##
 ## Representation for AS events
 ##
-import json_utils
-import pickle_utils
-import Gene
-import as_events
+import misopy
+import misopy.json_utils as json_utils
+import misopy.pickle_utils as pickle_utils
+import misopy.Gene as Gene
+import misopy.as_events as as_events
 import time
 import csv
 import os
