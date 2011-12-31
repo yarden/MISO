@@ -565,7 +565,7 @@ def main():
 
         if gff_genes == None:
             print "No genes."
-            return
+            sys.exit(1)
 
         for gene_id, gene_info in gff_genes.iteritems():
             print "Gene %s" %(gene_id)

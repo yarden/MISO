@@ -7,6 +7,7 @@
 ##
 
 import os
+import sys
 import matplotlib
 
 from scipy import *
@@ -242,7 +243,7 @@ def main():
 
     if options.output_dir == None:
         print "Error: need --output-dir"
-        return
+        sys.exit(1)
 
     output_dir = os.path.abspath(os.path.expanduser(options.output_dir))
 
