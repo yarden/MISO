@@ -100,7 +100,10 @@ setup(name = 'misopy',
                  # sashimi_plot scripts
                  'misopy/sashimi_plot/plot.py'],
       data_files = [('misopy/settings', ['misopy/settings/miso_settings.txt',
-                                         'misopy/sashimi_plot/settings/sashimi_plot_settings.txt'])],
+                                         'misopy/sashimi_plot/settings/sashimi_plot_settings.txt']),
+                    ('misopy/test-data', ['misopy/test-data/sam-data/c2c12.Atp2b1.sam']),
+                    ('misopy/gff-events', ['misopy/gff-events/mm9/SE.mm9.gff',
+                                           'misopy/gff-events/mm9/genes/Atp2b1.mm9.gff'])],
       # Required modules
       install_requires = [
 #          "matplotlib >= 1.1.0",
