@@ -66,23 +66,26 @@ def plot_bf_dist(bf_filename, settings_filename, output_dir,
     num_events = len(bfs_and_deltas)
 
     print "Loaded %d event comparisons." %(num_events)
-    print bfs_and_deltas
 
     output_filename = sashimi_obj.output_filename 
 
     print "Plotting Bayes factors distribution"
     print "  - Output filename: %s" %(output_filename)
-    ###
-    ### TODO: read bf_thresholds and bar_color from settings
-    ##
     bf_thresholds = settings["bf_thresholds"]
     bar_color = settings["bar_color"]
 
     min_bf_thresh = min(bf_thresholds)
     num_events_used = sum(bfs_and_deltas[:, 0] >= min_bf_thresh)
+    for thresh in bf_thresholds:
+        if type(thresh) != int:
+            print "Error: BF thresholds must be integers."
+            sys.exit(1)
+    print "Using BF thresholds: "
+    print bf_thresholds
+    print "Using bar color: %s" %(bar_color)
     plot_cumulative_bars(bfs_and_deltas[:, 0],
                          bf_thresholds,
-                         color=bar_color,
+                         bar_color=bar_color,
                          logged=True)
     plt.xticks(bf_thresholds)
     c = 1
@@ -91,8 +94,6 @@ def plot_bf_dist(bf_filename, settings_filename, output_dir,
               %(num_events_used, num_events))
     plt.xlabel("Bayes factor thresh.")
     plt.ylabel("No. events")
-#    plt.scatter(log2(bfs_and_deltas[:, 0]),
-#                bfs_and_deltas[:, 1])
     sashimi_obj.save_plot()
     
 
@@ -229,7 +230,7 @@ def main():
                       "filename.")
     parser.add_option("--plot-bf-dist", dest="plot_bf_dist", nargs=2, default=None,
                       help="Plot Bayes factor distributon. Takes the arguments: "
-                      "(1) Bayes factor filename (*.miso_bf) settings filename, "
+                      "(1) Bayes factor filename (*.miso_bf) filename, "
                       "(2) a settings filename.")
     parser.add_option("--plot-event", dest="plot_event", nargs=3, default=None,
                       help="Plot read densities and MISO inferences for a given alternative event. "

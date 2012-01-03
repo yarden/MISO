@@ -56,3 +56,21 @@ coverages = [
     14039751,
     4449737, 
     6720151]
+
+# Bar color for Bayes factor distribution
+# plots (--plot-bf-dist)
+# Paint them blue
+bar_color = "b"
+
+# Bayes factors thresholds to use for --plot-bf-dist
+bf_thresholds = [0, 1, 2, 5, 10, 20]
+
+##
+## Names of colors for plotting
+##
+# "b" for blue
+# "k" for black
+# "r" for red
+# "g" for green
+#
+# Hex colors are accepted too.

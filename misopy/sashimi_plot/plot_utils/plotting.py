@@ -10,7 +10,7 @@ from scipy import linalg
 import sys
 
 def plot_cumulative_bars(data, bins,
-                         color='k',
+                         bar_color='k',
                          edgecolor='#ffffff',
                          logged=False):
     """
@@ -26,9 +26,10 @@ def plot_cumulative_bars(data, bins,
     ax = plt.gca()
     if logged:
         ax.set_yscale('log')
+    bar_color=str(bar_color)
     plt.bar(bins, num_events,
             align='center',
-            color=color,
+            color=bar_color,
             edgecolor=edgecolor)
     
 

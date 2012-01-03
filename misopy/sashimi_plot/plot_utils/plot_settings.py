@@ -50,7 +50,8 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
                                      "reverse_minus", "bar_posteriors"],
                         # Parameters to be interpreted as Python lists or
                         # data structures
-                        DATA_PARAMS=["miso_files", "bam_files", "bf_thresholds"]):
+                        DATA_PARAMS=["miso_files", "bam_files", "bf_thresholds",
+                                     "bar_color"]):
     """
     Populate a settings dictionary with the plotting parameters, parsed
     as the right datatype.
@@ -58,6 +59,8 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
     settings = get_default_settings()
     
     config = ConfigParser.ConfigParser()
+
+    print "Reading settings from: %s" %(settings_filename)
     config.read(settings_filename)
     
     for section in config.sections():
@@ -72,6 +75,9 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
                 settings[option] = json.loads(config.get(section, option))
             else:
                 settings[option] = config.get(section, option)
+
+    # Ensure that bf_thresholds are integers
+    settings["bf_thresholds"] = [int(t) for t in settings["bf_thresholds"]]
     
     if "colors" in settings:
         colors = json.loads(settings["colors"])
