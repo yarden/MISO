@@ -72,6 +72,11 @@ int splicing_bam_sort(const char *infile, const char *outprefix,
 		      splicing_bam_sort_key_t key);
 int splicing_bam_index(const char *filename);
 
+int splicing_estimate_fragment_length(const splicing_exonset_t *exons,
+				      const char *readsfile, 
+				      const splicing_reads_t *reads,
+				      splicing_vector_int_t *fraglen);
+
 SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads);
 
 #endif

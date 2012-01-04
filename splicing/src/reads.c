@@ -299,6 +299,54 @@ int splicing_i_add_read(splicing_reads_t *reads, const bam1_t *read) {
   return 0;
 }
 
+int splicing_i_add_read_minimal(splicing_reads_t *reads, const bam1_t *read) {
+
+  int i, ncigar=read->core.n_cigar;
+  char buffer[4096];
+  char *cigarcode="MIDNSHP";
+  char *bufptr=buffer;
+  uint32_t *actcigar=bam1_cigar(read);
+
+  /* Reads without a pair are skipped already here */
+  if (read->core.mpos < 0) { return 0; }
+
+  SPLICING_CHECK(splicing_vector_int_push_back(&reads->position, 
+					       read->core.pos+1));
+  SPLICING_CHECK(splicing_strvector_append2(&reads->qname, bam1_qname(read), 
+					    read->core.l_qname-1));
+  if (read->core.n_cigar == 0) {
+    SPLICING_CHECK(splicing_strvector_append(&reads->cigar, "*"));
+  } else {
+    for (i=0; i<ncigar; i++) {
+      int l=snprintf(bufptr, REMAINING,
+		     "%i%c", (int) (actcigar[i] >> BAM_CIGAR_SHIFT), 
+		     cigarcode[actcigar[i] & BAM_CIGAR_MASK]);
+      bufptr += l;
+    }
+    SPLICING_CHECK(splicing_strvector_append2(&reads->cigar, buffer,
+					      bufptr-buffer));
+  }
+  SPLICING_CHECK(splicing_vector_int_push_back(&reads->chr, read->core.tid));
+  SPLICING_CHECK(splicing_vector_int_push_back(&reads->pairpos, 
+					       read->core.mpos+1));
+  SPLICING_CHECK(splicing_vector_int_push_back(&reads->flags, 
+					       read->core.flag));
+  SPLICING_CHECK(splicing_vector_int_push_back(&reads->rnext, 
+					       read->core.mtid));
+  /* MAPQ skipped */
+  /* TLEN skipped */
+  /* SEQ skipped */
+  /* QUAL skipped */
+  
+  SPLICING_CHECK(splicing_vector_int_push_back(&reads->mypair, -1));
+  
+  /* ATTRIBUTES skipped */
+  
+  reads->noPairs += 1;
+
+  return 0;
+}
+
 #undef REMAINING
 
 int splicing_i_order_reads(splicing_reads_t *reads) {
@@ -375,6 +423,10 @@ int splicing_i_order_reads(splicing_reads_t *reads) {
   splicing_vector_int_iindex(&reads->position, &idx2);
   splicing_vector_int_iindex(&reads->flags, &idx2);
   splicing_vector_int_iindex(&reads->pairpos, &idx2);
+  splicing_vector_int_iindex(&reads->mapq, &idx2);
+  splicing_vector_int_iindex(&reads->rnext, &idx2);
+  splicing_vector_int_iindex(&reads->tlen, &idx2);
+  splicing_strvector_permute(&reads->seq, &idx2);
   splicing_strvector_permute(&reads->attributes, &idx2);
   
   splicing_vector_destroy(&idx2);
@@ -465,6 +517,7 @@ int splicing_read_sambam(const char *filename,
 int splicing_i_read_sambam_cb(const bam1_t *read, void *data) {
   splicing_reads_t *reads = (splicing_reads_t*) data;
   SPLICING_CHECK(splicing_i_add_read(reads, read));
+  return 0;
 }
 
 int splicing_read_sambam_region(const char *filename,
@@ -474,7 +527,6 @@ int splicing_read_sambam_region(const char *filename,
 				splicing_reads_t *reads) {
 
   samfile_t *infile=0;
-  int bytesread;
   bam1_t *read = bam_init1();
   int i;
   char *mode_r="r", *mode_rb="rb", *mode=mode_rb;
@@ -694,4 +746,119 @@ int splicing_bam_index(const char *filename) {
   bam_verbose=0;
   bam_index_build(filename);
   return 0;
+}
+
+int splicing_i_estfraglen_cb(const bam1_t *read, void *data) {
+  splicing_reads_t *reads = (splicing_reads_t*) data;
+  SPLICING_CHECK(splicing_i_add_read_minimal(reads, read));
+  return 0;  
+}
+
+int splicing_i_fraglen_check_cigar(const splicing_reads_t *reads, int idx) {
+  const char *cigar=splicing_strvector_get(&reads->cigar, idx);
+  char *ptr=(char *) cigar;
+  long l=strtol(cigar, &ptr, 10L);
+  return (ptr[0] == 'M' && ptr[1]=='\0') ? l : -1;
+}
+
+int splicing_estimate_fragment_length_file(const splicing_exonset_t *exons,
+					   const char *readsfile,
+					   splicing_vector_int_t *fraglen) {
+  samfile_t *infile=0;
+  bam1_t *read = bam_init1();
+  char *mode="rb";
+  char *myindexfile=0;
+  bam_index_t *idx=0;
+  FILE * ifp;
+  int flen;
+  int noexons=splicing_vector_int_size(&exons->seqid);
+  char buf[500];
+  const size_t buflen=sizeof(buf)/sizeof(char);
+  int i, tid, beg, end, result;
+  
+  bam_verbose=0;
+  
+  SPLICING_FINALLY(splicing_i_bam_destroy1, read);
+  
+  splicing_vector_int_clear(fraglen);
+
+  flen=strlen(readsfile);
+  myindexfile = malloc(flen + 5);
+  strcpy(myindexfile, readsfile);
+  strcat(myindexfile, ".bai");
+  ifp = fopen(myindexfile, "rb");
+  free(myindexfile);
+  if (ifp) { 
+    idx = bam_index_load_core(ifp);
+    SPLICING_FINALLY(bam_index_destroy, idx);
+    fclose(ifp);
+  }
+  if (!idx) {
+    SPLICING_ERROR("Cannot read BAM index file", SPLICING_EFILE);
+  }
+
+  infile=samopen(readsfile, mode, /*aux=*/ 0);
+  if (!infile) { 
+    SPLICING_ERROR("Cannot open SAM/BAM file", SPLICING_EFILE);
+  }
+
+  for (i=0; i<noexons; i++) {
+    const char *seq=splicing_strvector_get(&exons->seqids, 
+					   VECTOR(exons->seqid)[i]);
+    snprintf(buf, buflen, "%s:%i-%i", seq, VECTOR(exons->start)[i],
+	     VECTOR(exons->end)[i]);
+    bam_parse_region(infile->header, buf, &tid, &beg, &end);
+    if (tid < 0) {
+      /* We silently skip this exon, it has no reads */
+    } else {
+      splicing_reads_t reads;
+      int j, n, l, rl1, rl2;
+      splicing_reads_init(&reads);
+      result = bam_fetch(infile->x.bam, idx, tid, beg, end, &reads,
+			 splicing_i_estfraglen_cb);
+      if (reads.noPairs != 0) {
+	SPLICING_CHECK(splicing_i_order_reads(&reads));	
+      }
+      n=reads.noPairs;
+      for (j=0; j<n; ) {
+	if (VECTOR(reads.pairpos)[j] <= 0) { 
+	  j++; 
+	} else {
+	  int pos=VECTOR(reads.position)[j];
+	  int ppos=VECTOR(reads.pairpos)[j];
+	  /* Cigar strings must have a single matching part */
+	  rl1=splicing_i_fraglen_check_cigar(&reads, j);
+	  rl2=splicing_i_fraglen_check_cigar(&reads, j+1);
+	  if (rl1 > 0 && rl2 > 0 && 
+	      pos  >= beg && pos+rl1-1  <= end && 
+	      ppos >= beg && ppos+rl2-1 <= end) {
+	    l=ppos + rl2 - 1 - pos + 1;
+	    SPLICING_CHECK(splicing_vector_int_push_back(fraglen, l));
+	  }
+	  j+=2;
+	}
+      }
+      splicing_reads_destroy(&reads);
+    }
+  }
+  
+  return 0;
+}
+
+int splicing_estimate_fragment_length(const splicing_exonset_t *exons,
+				      const char *readsfile,
+				      const splicing_reads_t *reads,
+				      splicing_vector_int_t *fraglen) {
+
+  if ( (readsfile ? 1 : 0) + (reads ? 1 : 0) != 1) {
+    SPLICING_ERROR("Give exactly one of `readsfile' and `reads'", 
+		   SPLICING_EINVAL);
+  }
+  
+  if (readsfile) { 
+    return splicing_estimate_fragment_length_file(exons, readsfile, fraglen);
+  } else {
+    SPLICING_ERROR("`reads' is not yet implemented", 
+		   SPLICING_UNIMPLEMENTED);
+  }
 }

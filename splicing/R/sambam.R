@@ -478,3 +478,23 @@ mergeReads <- function(...) {
   res
 }
                   
+estimateFragLength <- function(genes, readsfile, reads, min_length, ...) {
+  if (isGFF3(genes)) {
+    genes <- constitutiveExons(genes, min_length, ...)
+  }
+  if (!inherits(genes, "splicingExonset")) {
+    stop("`genes' must be an exon set or a GFF3 object")
+  }
+  if (missing(readsfile)) { readsfile <- NULL }
+  if (missing(reads))     { reads     <- NULL }
+
+  if (is.null(readsfile) && is.null(reads)) {
+    stop("Please give the reads or the name of the reads file.")
+  }
+  if (!is.null(readsfile) && !is.null(reads)) {
+    stop("Please give only one of `readsfile' and `reads'")
+  }
+  
+  .Call("R_splicing_estimate_fraglength", genes, readsfile, reads,
+        PACKAGE="splicing")
+}

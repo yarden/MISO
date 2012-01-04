@@ -213,6 +213,53 @@ SEXP R_splicing_reads_to_SEXP(const splicing_reads_t *reads) {
   return result;
 }
 
+int R_splicing_SEXP_to_reads(SEXP preads, splicing_reads_t *reads) {
+
+  SEXP chrname, chrlen, chr, qname, cigar, position, flag, pairpos,
+    noPairs, noSingles, paired, mapq, rnext, tlen, seq, qual, mypair, 
+    attributes;
+
+  chrname = R_splicing_getListElement(preads, "chrname");
+  chrlen = R_splicing_getListElement(preads, "chrlen");
+  chr = R_splicing_getListElement(preads, "chr");
+  qname = R_splicing_getListElement(preads, "qname");
+  cigar = R_splicing_getListElement(preads, "cigar");
+  position = R_splicing_getListElement(preads, "position");
+  flag = R_splicing_getListElement(preads, "flag");
+  pairpos = R_splicing_getListElement(preads, "pairpos");
+  noPairs = R_splicing_getListElement(preads, "noPairs");
+  noSingles = R_splicing_getListElement(preads, "noSingles");
+  paired = R_splicing_getListElement(preads, "paired");
+  mapq = R_splicing_getListElement(preads, "mapq");
+  rnext = R_splicing_getListElement(preads, "rnext");
+  tlen = R_splicing_getListElement(preads, "tlen");
+  seq = R_splicing_getListElement(preads, "seq");
+  qual = R_splicing_getListElement(preads, "qual");
+  mypair = R_splicing_getListElement(preads, "mypair");
+  attributes = R_splicing_getListElement(preads, "attributes");
+  
+  R_splicing_SEXP_to_strvector(chrname, &reads->chrname);
+  R_splicing_SEXP_to_vector_int(chrlen, &reads->chrlen);
+  R_splicing_SEXP_to_vector_int(chr, &reads->chr);
+  R_splicing_SEXP_to_strvector(qname, &reads->qname);
+  R_splicing_SEXP_to_strvector(cigar, &reads->cigar);
+  R_splicing_SEXP_to_vector_int(position, &reads->position);
+  R_splicing_SEXP_to_vector_int(pairpos, &reads->pairpos);
+  R_splicing_SEXP_to_vector_int(flag, &reads->flags);
+  reads->noPairs=INTEGER(noPairs)[0];
+  reads->noSingles=INTEGER(noSingles)[0];
+  reads->paired=LOGICAL(paired)[0];
+  R_splicing_SEXP_to_vector_int(mapq, &reads->mapq);
+  R_splicing_SEXP_to_vector_int(rnext, &reads->rnext);
+  R_splicing_SEXP_to_vector_int(tlen, &reads->tlen);
+  R_splicing_SEXP_to_strvector(seq, &reads->seq);
+  R_splicing_SEXP_to_strvector(qual, &reads->qual);
+  R_splicing_SEXP_to_vector_int(mypair, &reads->mypair);
+  R_splicing_SEXP_to_strvector(attributes, &reads->attributes);
+  
+  return 0;
+}
+
 int R_splicing_SEXP_to_vector_int(SEXP pv, splicing_vector_int_t *v) {
   v->stor_begin = INTEGER(pv);
   v->stor_end = v->end = v->stor_begin + GET_LENGTH(pv);
@@ -299,6 +346,23 @@ int R_splicing_SEXP_to_gff(SEXP pgff, splicing_gff_t *gff) {
   R_splicing_SEXP_to_strvector(source_str, &gff->sources);
 
   gff->n = GET_LENGTH(start);
+
+  return 0;
+}
+
+int R_splicing_SEXP_to_exonset(SEXP pexons, splicing_exonset_t *exons) {
+  
+  SEXP seqid_str, seqid, start, end;
+  
+  seqid = R_splicing_getListElement(pexons, "seqid");
+  start = R_splicing_getListElement(pexons, "start");
+  end = R_splicing_getListElement(pexons, "end");
+  seqid_str = R_splicing_getListElement(pexons, "seqid_str");
+
+  R_splicing_SEXP_to_vector_int(seqid, &exons->seqid);
+  R_splicing_SEXP_to_vector_int(start, &exons->start);
+  R_splicing_SEXP_to_vector_int(end, &exons->end);
+  R_splicing_SEXP_to_strvector(seqid_str, &exons->seqids);
 
   return 0;
 }
@@ -2407,6 +2471,31 @@ SEXP R_splicing_constitutive_exons(SEXP pgff, SEXP pmin_length, SEXP pmode) {
   splicing_gff_constitutive_exons(&gff, &exons, min_length, mode);
   PROTECT(result = R_splicing_exonset_to_SEXP(&exons));
   splicing_exonset_destroy(&exons);
+  
+  R_splicing_end();
+  
+  UNPROTECT(1);
+  return result;
+}
+
+SEXP R_splicing_estimate_fraglength(SEXP pexons, SEXP preadsfile, 
+				    SEXP preads) {
+  SEXP result;
+  splicing_exonset_t exons;
+  const char *readsfile= isNull(preadsfile) ? 0 : 
+    CHAR(STRING_ELT(preadsfile, 0));
+  splicing_reads_t reads;
+  splicing_vector_int_t fraglen;
+  
+  R_splicing_begin();
+  
+  R_splicing_SEXP_to_exonset(pexons, &exons);
+  if (!isNull(preads)) { R_splicing_SEXP_to_reads(preads, &reads); }
+  splicing_vector_int_init(&fraglen, 0);
+  splicing_estimate_fragment_length(&exons, readsfile, 
+				    isNull(preads) ? 0 : &reads, &fraglen);
+  PROTECT(result = R_splicing_vector_int_to_SEXP(&fraglen));
+  splicing_vector_int_destroy(&fraglen);
   
   R_splicing_end();
   
