@@ -27,7 +27,8 @@ matchIso <- function(geneStructure, gene=1, reads, overHang=1L,
 
 solveIso <- function(geneStructure, gene=1L, reads,
                      readLength=getReadLength(reads),
-                     overHang=1L, paired=isPaired(reads), fragmentProb=NULL,
+                     overHang=1L, scale=TRUE,
+                     paired=isPaired(reads), fragmentProb=NULL,
                      fragmentStart=0L, normalMean, normalVar, numDevs) {
 
   if (length(readLength) != 1) {
@@ -39,11 +40,11 @@ solveIso <- function(geneStructure, gene=1L, reads,
   if (!paired) { 
     .Call("R_splicing_solve_gene", geneStructure, as.integer(gene),
           as.integer(readLength), as.integer(reads$position),
-          as.character(reads$cigar), as.integer(overHang),
+          as.character(reads$cigar), as.integer(overHang), as.logical(scale),
           PACKAGE="splicing")
   } else {
     .Call("R_splicing_solve_gene_paired", geneStructure, as.integer(gene),
-          as.integer(readLength), as.integer(overHang),
+          as.integer(readLength), as.integer(overHang), as.lofical(scale),
           as.integer(reads$position), as.character(reads$cigar), fragmentProb,
           as.integer(fragmentStart), as.double(normalMean),
           as.double(normalVar), as.double(numDevs),

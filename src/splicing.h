@@ -351,10 +351,11 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 			const char **cigarstr,
 			splicing_matrix_t *match_matrix,
 			splicing_matrix_t *assignment_matrix, 
-			splicing_vector_t *expression);
+			splicing_vector_t *expression,
+			int scale);
 
 int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
-			       int readLength, int overHang,
+			       int readLength, int overHang, 
 			       const splicing_vector_int_t *position,
 			       const char **cigarstr,
 			       const splicing_vector_t *fragmentProb,
@@ -362,7 +363,8 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       double normalVar, double numDevs,
 			       splicing_matrix_t *match_matrix,
 			       splicing_matrix_t *assignment_matrix,
-			       splicing_vector_t *expression);
+			       splicing_vector_t *expression, 
+			       int scale);
 
 typedef struct splicing_gff_converter_t {
   size_t noiso;

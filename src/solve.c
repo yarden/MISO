@@ -283,8 +283,9 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 			const char **cigarstr,
 			splicing_matrix_t *match_matrix,
 			splicing_matrix_t *assignment_matrix, 
-			splicing_vector_t *expression) {
-
+			splicing_vector_t *expression,
+			int scale) {
+  
   splicing_matrix_t A;
   splicing_vector_t match;
   splicing_vector_long_t index;
@@ -356,7 +357,9 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
   splicing_vector_destroy(&match);
   SPLICING_FINALLY_CLEAN(3);
 
-  splicing_vector_scale(expression, 1.0/splicing_vector_sum(expression));
+  if (scale) {
+    splicing_vector_scale(expression, 1.0/splicing_vector_sum(expression));
+  }
 
   return 0;
 }
@@ -370,7 +373,8 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       double normalVar, double numDevs,
 			       splicing_matrix_t *match_matrix,
 			       splicing_matrix_t *assignment_matrix,
-			       splicing_vector_t *expression) {
+			       splicing_vector_t *expression, 
+			       int scale) {
   
   splicing_matrix_t A;
   splicing_vector_t match;
@@ -456,7 +460,9 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
   splicing_vector_destroy(&match);
   SPLICING_FINALLY_CLEAN(3);
 
-  splicing_vector_scale(expression, 1.0/splicing_vector_sum(expression));
+  if (scale) {
+    splicing_vector_scale(expression, 1.0/splicing_vector_sum(expression));
+  }
 
   return 0;
   

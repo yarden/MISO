@@ -1646,7 +1646,8 @@ SEXP R_splicing_gff_isolength(SEXP pgff) {
 }
 
 SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength, 
-			   SEXP pposition, SEXP pcigar, SEXP poverhang) {
+			   SEXP pposition, SEXP pcigar, SEXP poverhang, 
+			   SEXP pscale) {
 
   splicing_gff_t gff;
   int gene=INTEGER(pgene)[0]-1;
@@ -1654,6 +1655,7 @@ SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength,
   splicing_vector_int_t position;
   const char **cigarstr;
   int overhang=INTEGER(poverhang)[0];
+  int scale=LOGICAL(pscale)[0];
   int i, noReads=GET_LENGTH(pcigar);
   splicing_matrix_t match_matrix, assignment_matrix;
   splicing_vector_t expression;
@@ -1673,7 +1675,8 @@ SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength,
   }
   
   splicing_solve_gene(&gff, gene, readLength, overhang, &position, cigarstr, 
-		      &match_matrix, &assignment_matrix, &expression);
+		      &match_matrix, &assignment_matrix, &expression, 
+		      scale);
   
   PROTECT(result=NEW_LIST(3));
   SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&match_matrix));
@@ -1696,7 +1699,8 @@ SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength,
 }
 
 SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength, 
-				  SEXP poverhang, SEXP pposition, SEXP pcigar,
+				  SEXP poverhang, SEXP pscale, 
+				  SEXP pposition, SEXP pcigar,
 				  SEXP pfragmentprob, SEXP pfragmentstart, 
 				  SEXP pnormalMean, SEXP pnormalVar, 
 				  SEXP pnumDevs) {
@@ -1705,6 +1709,7 @@ SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength,
   int gene=INTEGER(pgene)[0]-1;
   int readLength=INTEGER(preadLength)[0];
   int overhang=INTEGER(poverhang)[0];
+  int scale=LOGICAL(pscale)[0];
   splicing_vector_int_t position;
   const char **cigarstr;
   int i, noReads=GET_LENGTH(pcigar);
@@ -1737,7 +1742,8 @@ SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength,
 			     cigarstr, 
 			     isNull(pfragmentprob) ? 0 : &fragmentprob, 
 			     fragmentstart, normalMean, normalVar, numDevs,
-			     &match_matrix, &assignment_matrix, &expression);
+			     &match_matrix, &assignment_matrix, &expression, 
+			     scale);
   
   PROTECT(result=NEW_LIST(3));
   SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&match_matrix));
