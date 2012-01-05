@@ -44,7 +44,7 @@ solveIso <- function(geneStructure, gene=1L, reads,
           PACKAGE="splicing")
   } else {
     .Call("R_splicing_solve_gene_paired", geneStructure, as.integer(gene),
-          as.integer(readLength), as.integer(overHang), as.lofical(scale),
+          as.integer(readLength), as.integer(overHang), as.logical(scale),
           as.integer(reads$position), as.character(reads$cigar), fragmentProb,
           as.integer(fragmentStart), as.double(normalMean),
           as.double(normalVar), as.double(numDevs),
