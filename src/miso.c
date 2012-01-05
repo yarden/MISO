@@ -390,14 +390,16 @@ int splicing_drift_proposal_init(int noiso, int noChains,
 				       overHang, position, cigarstr,
 				       /*match_matrix=*/ 0, 
 				       /*assignment_matrix=*/ 0,
-				       &tmp));
+				       &tmp, /*residuals=*/ 0,
+				       /*scale=*/ 1));
       } else {
 	SPLICING_CHECK(splicing_solve_gene_paired(gff, gene, readLength,
 				       overHang, position,
 				       cigarstr, fragmentProb, fragmentStart,
 				       normalMean, normalVar, numDevs,
 				       /*match_matrix=*/ 0,
-				       /*assignment_matrix=*/ 0, &tmp));
+				       /*assignment_matrix=*/ 0, &tmp,
+				       /*residuals=*/ 0, /*scale*/ 1));
       }
       
       for (j=0; j<noChains; j++) {
