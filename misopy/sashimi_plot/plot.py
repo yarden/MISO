@@ -110,7 +110,8 @@ def plot_event(event_name, pickle_dir, settings_filename,
     genes_filename = os.path.join(pickle_dir,
                                   "genes_to_filenames.shelve")
 
-    if not os.path.isfile(genes_filename):
+    # Check that file basename exists 
+    if len(glob.glob("%s*" %(genes_filename))) == 0:
         raise Exception, "Cannot find file %s. Are you sure the events " \
               "were indexed with the latest version of index_gff.py?" \
               %(genes_filename)
