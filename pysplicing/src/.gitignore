@@ -20,3 +20,4 @@ util.c
 miso_paired.c
 lapack.c
 complexity.c
+blas.c

@@ -284,10 +284,10 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 			splicing_matrix_t *match_matrix,
 			splicing_matrix_t *assignment_matrix, 
 			splicing_vector_t *expression,
-			int scale) {
+			splicing_vector_t *residuals, int scale) {
   
   splicing_matrix_t A;
-  splicing_vector_t match;
+  splicing_vector_t match, omatch;
   splicing_vector_long_t index;
   size_t no_classes;
   size_t no_reads=splicing_vector_int_size(position);
@@ -339,6 +339,22 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_matrix_transpose(&A));
   SPLICING_CHECK(splicing_vector_long_init(&index, 0));
   SPLICING_FINALLY(splicing_vector_long_destroy, &index);
+  SPLICING_CHECK(splicing_vector_init(&omatch, no_classes));
+  SPLICING_FINALLY(splicing_vector_destroy, &omatch);
+  splicing_vector_update(&omatch, &match);
+    
+  SPLICING_CHECK(splicing_nnls(&A, &match, expression, &rnorm, &index, 
+			       &nsetp));
+
+  if (residuals) {
+    int i, n=splicing_vector_size(&match);
+    splicing_dgemv(/*transpose=*/ 1, /*alpha=*/ 1.0, myass_matrix, 
+		   expression, /*beta=*/ 0.0, &match);
+    SPLICING_CHECK(splicing_vector_resize(residuals, no_classes));
+    for (i=0; i<n; i++) {
+      VECTOR(*residuals)[i] = VECTOR(omatch)[i] - VECTOR(match)[i];
+    }
+  }
 
   if (!assignment_matrix) {
     splicing_matrix_destroy(myass_matrix);
@@ -348,17 +364,16 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
     splicing_matrix_destroy(mymatch_matrix);
     SPLICING_FINALLY_CLEAN(1);
   }
-  
-  SPLICING_CHECK(splicing_nnls(&A, &match, expression, &rnorm, &index, 
-			       &nsetp));
-  
+
+  splicing_vector_destroy(&omatch);
   splicing_vector_long_destroy(&index);
   splicing_matrix_destroy(&A);
   splicing_vector_destroy(&match);
-  SPLICING_FINALLY_CLEAN(3);
+  SPLICING_FINALLY_CLEAN(4);
 
   if (scale) {
-    splicing_vector_scale(expression, 1.0/splicing_vector_sum(expression));
+    double fac=1.0/splicing_vector_sum(expression);
+    splicing_vector_scale(expression, fac);
   }
 
   return 0;
@@ -374,10 +389,10 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       splicing_matrix_t *match_matrix,
 			       splicing_matrix_t *assignment_matrix,
 			       splicing_vector_t *expression, 
-			       int scale) {
+			       splicing_vector_t *residuals, int scale) {
   
   splicing_matrix_t A;
-  splicing_vector_t match;
+  splicing_vector_t match, omatch;
   splicing_vector_long_t index;
   size_t no_classes;
   size_t no_reads=splicing_vector_int_size(position);
@@ -442,6 +457,22 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_matrix_transpose(&A));
   SPLICING_CHECK(splicing_vector_long_init(&index, 0));
   SPLICING_FINALLY(splicing_vector_long_destroy, &index);
+  SPLICING_CHECK(splicing_vector_init(&omatch, no_classes));
+  SPLICING_FINALLY(splicing_vector_destroy, &omatch);
+  splicing_vector_update(&omatch, &match);
+  
+  SPLICING_CHECK(splicing_nnls(&A, &match, expression, &rnorm, &index,
+			       &nsetp));
+
+  if (residuals) {
+    int i, n=splicing_vector_size(&match);
+    splicing_dgemv(/*transpose=*/ 1, /*alpha=*/ 1.0, myass_matrix, 
+		   expression, /*beta=*/ 0.0, &match);
+    SPLICING_CHECK(splicing_vector_resize(residuals, no_classes));
+    for (i=0; i<n; i++) {
+      VECTOR(*residuals)[i] = VECTOR(omatch)[i] - VECTOR(match)[i];
+    }
+  }
 
   if (!assignment_matrix) {
     splicing_matrix_destroy(myass_matrix);
@@ -450,18 +481,17 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
   if (!match_matrix) {
     splicing_matrix_destroy(mymatch_matrix);
     SPLICING_FINALLY_CLEAN(1);
-  }
-  
-  SPLICING_CHECK(splicing_nnls(&A, &match, expression, &rnorm, &index,
-			       &nsetp));
-  
+  }  
+
+  splicing_vector_destroy(&omatch);
   splicing_vector_long_destroy(&index);
   splicing_matrix_destroy(&A);
   splicing_vector_destroy(&match);
-  SPLICING_FINALLY_CLEAN(3);
+  SPLICING_FINALLY_CLEAN(4);
 
   if (scale) {
-    splicing_vector_scale(expression, 1.0/splicing_vector_sum(expression));
+    double fac=1.0/splicing_vector_sum(expression);
+    splicing_vector_scale(expression, fac);
   }
 
   return 0;

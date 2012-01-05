@@ -105,3 +105,4 @@ vcf.c
 lapack.c
 splicing_lapack.h
 complexity.c
+blas.c

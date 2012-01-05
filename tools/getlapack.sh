@@ -1,6 +1,6 @@
 #! /bin/sh
 # 
-# ./getlapack.sh dgesdd
+# ./getlapack.sh dgesdd dgemv
 #
 
 make

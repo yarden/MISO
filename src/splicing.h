@@ -352,7 +352,7 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 			splicing_matrix_t *match_matrix,
 			splicing_matrix_t *assignment_matrix, 
 			splicing_vector_t *expression,
-			int scale);
+			splicing_vector_t *residuals, int scale);
 
 int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       int readLength, int overHang, 
@@ -364,7 +364,7 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       splicing_matrix_t *match_matrix,
 			       splicing_matrix_t *assignment_matrix,
 			       splicing_vector_t *expression, 
-			       int scale);
+			       splicing_vector_t *residuals, int scale);
 
 typedef struct splicing_gff_converter_t {
   size_t noiso;
@@ -461,6 +461,10 @@ int splicing_metropolis_hastings_ratio_paired(
 			      splicing_vector_t *acceptP, 
 			      splicing_vector_t *pcJS, 
 			      splicing_vector_t *ppJS);
+
+int splicing_dgemv(int transpose, double alpha,
+		   const splicing_matrix_t* a, const splicing_vector_t* x,
+		   double beta, splicing_vector_t* y);
 
 int splicing_dgesdd(const splicing_matrix_t *matrix, 
 		    splicing_vector_t *values);
