@@ -862,6 +862,11 @@ def load_genes_from_gff(gff_filename):
 
         # Record the gene's GFF record
         gene_label = gene.get_id()
+
+        if gene_label not in gene_hierarchy:
+            print "Skipping gene %s..." %(gene_label)
+            continue
+        
         gene_hierarchy[gene_label]['gene'] = gene
 
         # Make a gene object out of the GFF records
