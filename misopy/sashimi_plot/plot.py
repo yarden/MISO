@@ -8,6 +8,7 @@
 
 import os
 import sys
+import glob
 import matplotlib
 
 from scipy import *
