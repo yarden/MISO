@@ -296,6 +296,12 @@ def readsToWiggle_pysam(reads, tx_start, tx_end):
     jxns = {}
     for read in reads:
         cigar_str = sam_utils.sam_cigar_to_str(read.cigar)
+
+        if cigar_str.index("N") > 1:
+            print "Skipping read with multiple junctions crossed: %s" \
+                  %(cigar_str)
+            continue
+        
         # Check if the read contains an insertion (I)
         # or deletion (D) -- if so, skip it
         for cigar_part in read.cigar:
