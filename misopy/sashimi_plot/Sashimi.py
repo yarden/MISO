@@ -51,7 +51,12 @@ class Sashimi:
         if dimensions != None:
             self.dimensions = dimensions
         else:
-            self.dimensions = [7, 5]
+            fig_height = self.settings["fig_height"]
+            fig_width = self.settings["fig_width"]
+            print "Reading dimensions from settings..."
+            print " - Height: %.2f" %(float(fig_height))
+            print " - Width: %.2f" %(float(fig_width))
+            self.dimensions = [fig_width, fig_height]
 
 
     def set_output_dir(self, output_dir):
@@ -62,6 +67,7 @@ class Sashimi:
         self.output_filename = os.path.join(self.output_dir, plot_basename)
 
     def setup_figure(self):
+        print "Setting up plot using dimensions: ", self.dimensions
         plt.figure(figsize=self.dimensions)
 
     def save_plot(self):

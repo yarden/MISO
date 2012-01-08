@@ -47,6 +47,9 @@ def plot_bf_dist(bf_filename, settings_filename, output_dir,
                           settings_filename=settings_filename)
     settings = sashimi_obj.settings
 
+    # Setup the figure
+    sashimi_obj.setup_figure()
+
     # Matrix of bayes factors and delta psi pairs
     bfs_and_deltas = []
     for event in data:

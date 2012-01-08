@@ -1,6 +1,7 @@
 ##
 ## Parse plotting configuration files for sashimi_plot
 ##
+import sys
 import os
 try:
     import simplejson as json
@@ -51,7 +52,7 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
                         # Parameters to be interpreted as Python lists or
                         # data structures
                         DATA_PARAMS=["miso_files", "bam_files", "bf_thresholds",
-                                     "bar_color"]):
+                                     "bar_color", "sample_labels"]):
     """
     Populate a settings dictionary with the plotting parameters, parsed
     as the right datatype.
@@ -91,6 +92,15 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
     else:
         bam_files = settings["bam_files"]
     settings["bam_files"] = bam_files
+
+    # Make the sample labels be the BAM files by default
+    if "sample_labels" not in settings:
+        settings["sample_labels"] = [os.path.basename(bfile) \
+                                     for bfile in settings["bam_files"]]
+    if len(settings["sample_labels"]) != \
+       len(settings["bam_files"]):
+        print "Error: Must provide sample label for each entry in bam_files!"
+        sys.exit(1)
 
     if "miso_prefix" in settings and (event != None and chrom != None):
         miso_files = miso_utils.get_miso_output_files(event, chrom, settings)

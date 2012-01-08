@@ -18,21 +18,20 @@ import misopy.sashimi_plot.plot_utils.plot_settings as plot_settings
 from misopy.sashimi_plot.plot_utils.plotting import show_spines
 from misopy.parse_gene import parseGene
 
-def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,
-                        graphToGene, bam_filename, axvar, chrom, paired_end=False,
-                        intron_scale=30, exon_scale=4, color='r', ymax=None,
-                        logged=False, coverage=1, number_junctions=True, resolution=.5,
-                        showXaxis=True, showYaxis=True, showYlabel=True, font_size=6,
-                        junction_log_base=10):
+def plot_density_single(settings, sample_label,
+                        tx_start, tx_end, gene_obj, mRNAs, strand,
+                        graphcoords, graphToGene, bam_filename, axvar, chrom,
+                        paired_end=False, intron_scale=30, exon_scale=4, color='r',
+                        ymax=None, logged=False, coverage=1, number_junctions=True,
+                        resolution=.5, showXaxis=True, showYaxis=True, showYlabel=True,
+                        font_size=6, junction_log_base=10):
     """
     Plot MISO events using BAM files and posterior distribution files.
     TODO: If comparison files are available, plot Bayes factors too.
     """
-    bamfile = sam_utils.load_bam_reads(bam_filename) 
-
     bamfile = pysam.Samfile(bam_filename, 'rb')
     subset_reads = bamfile.fetch(reference=chrom, start=tx_start,end=tx_end)
-    wiggle, jxns =readsToWiggle_pysam(subset_reads,tx_start, tx_end)
+    wiggle, jxns = readsToWiggle_pysam(subset_reads, tx_start, tx_end)
     wiggle = 1e3 * wiggle / coverage
                 
     # gene_reads = sam_utils.fetch_bam_reads_in_gene(bamfile, gene_obj.chrom,\
@@ -112,7 +111,7 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,
                 log(junction_log_base), fc='none')
             axvar.add_patch(p) 
 
-    # Format plot.
+    # Format plot
     nyticks = 4
     nxticks = 5
     ylim(ymin, ymax)
@@ -126,9 +125,11 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,
         xlabel('Genomic coordinate (%s), "%s" strand'%(gene_obj.chrom,
                                                        strand),
                fontsize=font_size)
-        xticks(linspace(0, max(graphcoords), nxticks),
+        max_graphcoords = max(graphcoords) - 1
+        xticks(linspace(0, max_graphcoords, nxticks),
                [graphToGene[int(x)] for x in \
-                linspace(0, max(graphcoords), nxticks)], fontsize=font_size)
+                linspace(0, max_graphcoords, nxticks)],
+               fontsize=font_size)
     else:
         axvar.spines['bottom'].set_color('none')
         xticks([])
@@ -147,7 +148,8 @@ def plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand, graphcoords,
         axvar.spines['left'].set_color('none')
         yticks([])
     
-    text(max(graphcoords), ymax, os.path.basename(bam_filename).split(".")[0],
+    text(max(graphcoords), ymax,
+         sample_label,
          fontsize=font_size,
          va='bottom',
          ha='right',
@@ -212,7 +214,14 @@ def plot_density(sashimi_obj, pickle_filename, event):
         miso_file = os.path.expanduser(miso_files[i])
         ax1 = subplot2grid((nfiles + 2, gene_posterior_ratio), (i, 0),\
             colspan=gene_posterior_ratio - 1)
-        plot_density_single(tx_start, tx_end, gene_obj, mRNAs, strand,
+        
+        # Read sample label
+        sample_label = settings["sample_labels"][i]
+
+        print "Reading sample label: %s" %(sample_label)
+        
+        plot_density_single(settings, sample_label,
+                            tx_start, tx_end, gene_obj, mRNAs, strand,
                             graphcoords, graphToGene, bam_file, ax1, chrom,
                             paired_end=False, intron_scale=intron_scale,
                             exon_scale=exon_scale, color=color,
@@ -276,21 +285,32 @@ def getScaling(tx_start, tx_end, strand, exon_starts, exon_ends,
                 x += 1. / exon_scale
             else:
                 x += 1. / intron_scale
-    
     return graphcoords, graphToGene
 
+
 def readsToWiggle_pysam(reads, tx_start, tx_end):
+    """
+    Convert reads to wiggles; uses pysam.
+    """
     wiggle = zeros((tx_end - tx_start + 1), dtype='f')
     jxns = {}
     for read in reads:
+        cigar_str = sam_utils.sam_cigar_to_str(read.cigar)
+        # Check if the read contains an insertion (I)
+        # or deletion (D) -- if so, skip it
+        for cigar_part in read.cigar:
+            if cigar_part[0] == 1 or \
+               cigar_part[1] == 2:
+                print "Skipping read with CIGAR %s" \
+                      %(cigar_str)
         aligned_positions = read.positions
-        for i,pos in enumerate(aligned_positions):
+        for i, pos in enumerate(aligned_positions):
             if pos < tx_start or pos > tx_end:
                 continue
             wig_index = pos-tx_start
             wiggle[wig_index] += 1./read.qlen
             try:
-                #if there is a junction coming up                
+                # if there is a junction coming up                
                 if aligned_positions[i+1] > pos + 1: 
                     leftss = pos+1
                     rightss= aligned_positions[i+1]+1
@@ -306,50 +326,49 @@ def readsToWiggle_pysam(reads, tx_start, tx_end):
     return wiggle, jxns
 
 
-def readsToWiggle(reads, tx_start, tx_end):
-    """
-    Get wiggle and junction densities from reads.
-    """
-    read_positions, read_cigars = reads
-    wiggle = zeros((tx_end - tx_start + 1), dtype='f')
-    jxns = {}
-    for i in range(len(read_positions)):
-        pos, cigar = [read_positions[i], read_cigars[i]]
-        if "N" not in cigar:
-            rlen = int(cigar[:-1])
-            s = max([pos - tx_start, 0])
-            e = min([pos - tx_start + rlen, len(wiggle) - 1])
-            wiggle[s : e] += 1. / rlen
-        else:
-            left, right = cigar.split("N")
-            left, middle = map(int, left.split("M"))
-            right = int(right[:-1])
-            rlen = left + right
-            s1 = pos - tx_start
-            e1 = pos - tx_start + left
-            s2 = pos + left + middle - tx_start
-            e2 = pos + left + middle + right - tx_start
+# def readsToWiggle(reads, tx_start, tx_end):
+#     """
+#     Get wiggle and junction densities from reads.
+#     """
+#     read_positions, read_cigars = reads
+#     wiggle = zeros((tx_end - tx_start + 1), dtype='f')
+#     jxns = {}
+#     for i in range(len(read_positions)):
+#         pos, cigar = [read_positions[i], read_cigars[i]]
+#         if "N" not in cigar:
+#             rlen = int(cigar[:-1])
+#             s = max([pos - tx_start, 0])
+#             e = min([pos - tx_start + rlen, len(wiggle) - 1])
+#             wiggle[s : e] += 1. / rlen
+#         else:
+#             left, right = cigar.split("N")
+#             left, middle = map(int, left.split("M"))
+#             right = int(right[:-1])
+#             rlen = left + right
+#             s1 = pos - tx_start
+#             e1 = pos - tx_start + left
+#             s2 = pos + left + middle - tx_start
+#             e2 = pos + left + middle + right - tx_start
 
-            # Include read coverage from adjacent junctions.
-            if (e1 >= 0 and e1 < len(wiggle)) or (s1 >= 0 and s1 < len(wiggle)):
-                wiggle[max([s1, 0]) : min([e1, len(wiggle)])] += 1. / rlen
-            if (e2 >= 0 and e2 < len(wiggle)) or (s2 >= 0 and s2 < len(wiggle)):
-                wiggle[max([s2, 0]) : min([e2, len(wiggle)])] += 1. / rlen
+#             # Include read coverage from adjacent junctions.
+#             if (e1 >= 0 and e1 < len(wiggle)) or (s1 >= 0 and s1 < len(wiggle)):
+#                 wiggle[max([s1, 0]) : min([e1, len(wiggle)])] += 1. / rlen
+#             if (e2 >= 0 and e2 < len(wiggle)) or (s2 >= 0 and s2 < len(wiggle)):
+#                 wiggle[max([s2, 0]) : min([e2, len(wiggle)])] += 1. / rlen
 
-            # Plot a junction if both splice sites are within locus.
-            leftss = pos + left
-            rightss = pos + left + middle + 1
-            if leftss - tx_start >= 0 and leftss - tx_start < len(wiggle) \
-                and rightss - tx_start >= 0 and rightss - tx_start < \
-                len(wiggle): 
+#             # Plot a junction if both splice sites are within locus.
+#             leftss = pos + left
+#             rightss = pos + left + middle + 1
+#             if leftss - tx_start >= 0 and leftss - tx_start < len(wiggle) \
+#                 and rightss - tx_start >= 0 and rightss - tx_start < \
+#                 len(wiggle): 
 
-                jxn = ":".join(map(str, [leftss, rightss]))
-                try:
-                    jxns[jxn] += 1 
-                except:
-                    jxns[jxn] = 1 
-
-    return wiggle, jxns
+#                 jxn = ":".join(map(str, [leftss, rightss]))
+#                 try:
+#                     jxns[jxn] += 1 
+#                 except:
+#                     jxns[jxn] = 1 
+#     return wiggle, jxns
 
 
 def plot_mRNAs(tx_start, mRNAs, strand, graphcoords, axvar):
@@ -478,6 +497,9 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,
     xlim([0, 1])
     xticks([0, .2, .4, .6, .8, 1])
     xticks(fontsize=font_size)
+    
+    # Adjust x-ticks to be lighter
+    # ....
 
     if (not bar_posterior) and showYaxis:
         axes_to_show = ['bottom', 'left']
@@ -531,11 +553,15 @@ def plot_density_from_file(settings_f, pickle_filename, event,
     print "  - Event: %s" %(event)
     
     # Parse user given settings
-    settings = plot_settings.parse_plot_settings(settings_f,
-                                                 event=event,
-                                                 chrom=chrom)
+    #settings = plot_settings.parse_plot_settings(settings_f,
+    #                                             event=event,
+    #                                             chrom=chrom)
+    settings = sashimi_obj.settings
     bam_files = settings['bam_files']
     miso_files = settings['miso_files']
+
+    # Setup the figure
+    sashimi_obj.setup_figure()
 
     plot_density(sashimi_obj, pickle_filename, event)
 
