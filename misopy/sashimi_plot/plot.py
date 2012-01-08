@@ -142,10 +142,10 @@ def plot_insert_len(insert_len_filename,
     
     sashimi_obj = Sashimi(plot_name, output_dir,
                           settings_filename=settings_filename)
-
     settings = sashimi_obj.settings
     num_bins = settings["insert_len_bins"]
     output_filename = sashimi_obj.output_filename
+    sashimi_obj.setup_figure()
     s = plt.subplot(1, 1, 1)
     
     print "Plotting insert length distribution..."
