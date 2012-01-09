@@ -1,0 +1,49 @@
+
+R version 2.14.0 (2011-10-31)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> library(splicing)
+> 
+> gffFile1 <- system.file("test_files/Atp2b1.mm9.gff", package="splicing")
+> gffFile2 <- system.file("test_files/ENSMUSG00000026173.gff",
++                         package="splicing")
+> 
+> g1 <- readGFF3(gffFile1)
+> g2 <- readGFF3(gffFile2)
+> 
+> g <- merge(g1, g2)
+> str(g)
+List of 15
+ $ seqid_str : chr [1:2] "10" "chr1"
+ $ seqid     : int [1:2] 0 1
+ $ source_str: chr "protein_coding"
+ $ source    : int [1:2] 0 0
+ $ type      : int [1:330] 0 1 2 2 4 3 3 2 3 2 ...
+ $ start     : int [1:330] 98377804 98377804 98377804 98431328 98431551 98431551 98442338 98442338 98449525 98449525 ...
+ $ end       : int [1:330] 98486420 98486420 98378005 98431758 98431553 98431758 98442535 98442535 98449779 98449779 ...
+ $ score     : num [1:330] -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ...
+ $ strand    : int [1:2] 0 0
+ $ phase     : int [1:330] -1 -1 -1 -1 0 0 2 -1 2 -1 ...
+ $ attributes: NULL
+ $ gid       : int [1:2] 0 60
+ $ tid       : int [1:11] 1 45 61 98 133 155 190 227 263 266 ...
+ $ ID        : chr [1:330] "ENSMUSG00000019943" "ENSMUST00000020107" "ENSMUST00000020107:1" "ENSMUST00000020107:2" ...
+ $ parent    : int [1:330] -1 0 1 1 1 1 1 1 1 1 ...
+ - attr(*, "class")= chr "gff3"
+> 
+> 
