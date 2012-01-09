@@ -781,7 +781,7 @@ int splicing_gff_exon_start_end(const splicing_gff_t *gff,
 int splicing_gff_write(FILE *output, const splicing_gff_t *gff) {
 
   size_t i, n=gff->n;
-  size_t gene=-1;
+  int gene=-1;
   const char *types[] = { "gene", "mRNA", "exon", "CDS", "start_codon",
 			  "stop_codon" };
   const char *strands[] = { "+", "-", "." };
@@ -789,7 +789,7 @@ int splicing_gff_write(FILE *output, const splicing_gff_t *gff) {
   for (i=0; i<n; i++) {
 
     if (VECTOR(gff->type)[i] == SPLICING_TYPE_GENE) { gene++; }
-
+    
     fprintf(output, "%s\t%s\t%s\t%li\t%li\t", 
 	    splicing_strvector_get(&gff->seqids, VECTOR(gff->seqid)[gene]),
 	    splicing_strvector_get(&gff->sources, VECTOR(gff->source)[gene]),

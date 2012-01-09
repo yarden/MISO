@@ -100,18 +100,19 @@ gtf2gff3 <- function(gtf, verbose=TRUE) {
                "-"=SPLICING_STRAND_MINUS,
                "."=SPLICING_STRAND_UNKNOWN)
              
-  res$seqid_str <- unique(res$seqid)
-  res$seqid <- match(res$seqid, res$seqid_str)-1L
-  res$source_str <- unique(res$source)
-  res$source <- match(res$source, res$source_str)-1L
   res$type <- types[res$type]
-  res$strand <- strands[res$strand]
   res$phase[res$phase=="."] <- "-1"
   res$phase <- as.integer(res$phase)
   res$species <- attr(gtf, "species")
   
   res <- addGidTid(res)
-  
+
+  res$seqid_str <- unique(res$seqid)
+  res$seqid <- match(res$seqid[res$gid+1L], res$seqid_str)-1L
+  res$source_str <- unique(res$source)
+  res$source <- match(res$source[res$gid+1L], res$source_str)-1L
+  res$strand <- strands[res$strand[res$gid+1L]]
+
   res
 }
 
@@ -124,6 +125,7 @@ addGidTid <- function(gff3) {
   if (! "parent" %in% names(gff3)) {
     gff3$parent <- sub(".*;Parent=([^;]+);?.*", "\\1", gff3$attributes)
     gff3$parent <- match(gff3$parent, gff3$ID)-1L
+    gff3$parent[is.na(gff3$parent)] <- -1L
   }
   gff3
 }
