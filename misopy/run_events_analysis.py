@@ -246,7 +246,9 @@ def main():
     parser.add_option("--job-name", dest="job_name", nargs=1,
                       help="Name for jobs submitted to queue for SGE jobs. " \
                       "Default is misojob", default="misojob")
-    parser.add_option("--SGEarray", dest="SGEarray", action="store_true", default=False)
+    parser.add_option("--SGEarray", dest="SGEarray", action="store_true", default=False,
+                      help="Use MISO on cluster with Sun Grid Engine. To be used in "
+                      "conjunction with --use-cluster option.")
     (options, args) = parser.parse_args()
 
     ##
