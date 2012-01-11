@@ -262,7 +262,6 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 	if (l > 4) { SPLICING_WARNING("Long inserted alignment"); }
 	/* We do nothing, just ignore the part that does not appear in 
 	   the genome */
-	pos++;
 	s++;
       } else {
 	SPLICING_ERROR("Unsupported CIGAR string (`MNSHDI=X' are supported)", 
