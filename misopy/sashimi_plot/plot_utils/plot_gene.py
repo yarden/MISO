@@ -23,7 +23,8 @@ def plot_density_single(settings, sample_label,
                         graphcoords, graphToGene, bam_filename, axvar, chrom,
                         paired_end=False, intron_scale=30, exon_scale=4, color='r',
                         ymax=None, logged=False, coverage=1, number_junctions=True,
-                        resolution=.5, showXaxis=True, showYaxis=True, showYlabel=True,
+                        resolution=.5, showXaxis=True, showYaxis=True,
+                        nyticks=3, nxticks=4, show_ylabel=True, show_xlabel=True,
                         font_size=6, junction_log_base=10):
     """
     Plot MISO events using BAM files and posterior distribution files.
@@ -112,8 +113,6 @@ def plot_density_single(settings, sample_label,
             axvar.add_patch(p) 
 
     # Format plot
-    nyticks = 4
-    nxticks = 5
     ylim(ymin, ymax)
 
     axvar.spines['left'].set_bounds(0, ymax)
@@ -134,7 +133,7 @@ def plot_density_single(settings, sample_label,
         axvar.spines['bottom'].set_color('none')
         xticks([])
 
-    if showYlabel:
+    if show_ylabel:
         if logged:
             ylabel('RPKM $(log_{10})$', fontsize=font_size)
         else:
@@ -183,6 +182,10 @@ def plot_density(sashimi_obj, pickle_filename, event):
     reverse_minus = settings["reverse_minus"]
     bar_posterior = settings["bar_posteriors"]
     font_size = settings["font_size"]
+    nyticks = settings["nyticks"]
+    nxticks = settings["nxticks"]
+    show_ylabel = settings["show_ylabel"]
+    show_xlabel = settings["show_xlabel"]
     
     # Parse gene pickle file to get information about gene
     tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand, chrom = \
@@ -212,7 +215,7 @@ def plot_density(sashimi_obj, pickle_filename, event):
 
         bam_file = os.path.expanduser(bam_files[i])
         miso_file = os.path.expanduser(miso_files[i])
-        ax1 = subplot2grid((nfiles + 2, gene_posterior_ratio), (i, 0),\
+        ax1 = subplot2grid((nfiles + 3, gene_posterior_ratio), (i, 0),\
             colspan=gene_posterior_ratio - 1)
         
         # Read sample label
@@ -227,12 +230,14 @@ def plot_density(sashimi_obj, pickle_filename, event):
                             exon_scale=exon_scale, color=color,
                             ymax=ymax, logged=logged, coverage=coverage,
                             number_junctions=number_junctions, resolution=resolution,
-                            showXaxis=showXaxis, showYlabel=True, font_size=font_size,
+                            showXaxis=showXaxis, nyticks=nyticks, nxticks=nxticks,
+                            show_ylabel=show_ylabel, show_xlabel=show_xlabel,
+                            font_size=font_size,
                             junction_log_base=junction_log_base)
 
         if show_posteriors:
             try:
-                ax2 = subplot2grid((nfiles + 2, gene_posterior_ratio),\
+                ax2 = subplot2grid((nfiles + 3, gene_posterior_ratio),\
                     (i, gene_posterior_ratio - 1))
 
                 if not os.path.isfile(miso_file):
@@ -240,7 +245,7 @@ def plot_density(sashimi_obj, pickle_filename, event):
 
                 print "Loading MISO file: %s" %(miso_file)
                 plot_posterior_single(miso_file, ax2, posterior_bins,\
-                                      showXaxis=showXaxis, showYlabel=False,
+                                      showXaxis=showXaxis, show_ylabel=False,
                                       font_size=font_size,
                                       bar_posterior=bar_posterior)
             except:
@@ -250,9 +255,9 @@ def plot_density(sashimi_obj, pickle_filename, event):
                 print "Posterior plot failed."
 
     # Draw gene structure
-    ax = subplot2grid((nfiles + 2, gene_posterior_ratio), (nfiles, 0),
+    ax = subplot2grid((nfiles + 3, gene_posterior_ratio), (nfiles + 1, 0),
                       colspan=gene_posterior_ratio - 1, rowspan=2)
-    plot_mRNAs(tx_start, mRNAs, strand, graphcoords, ax)
+    plot_mRNAs(tx_start, mRNAs, strand, graphcoords, reverse_minus)
     subplots_adjust(hspace=.1, wspace=.7)
 
 
@@ -301,7 +306,7 @@ def readsToWiggle_pysam(reads, tx_start, tx_end):
             print "Skipping read with multiple junctions crossed: %s" \
                   %(cigar_str)
             continue
-        
+
         # Check if the read contains an insertion (I)
         # or deletion (D) -- if so, skip it
         for cigar_part in read.cigar:
@@ -377,7 +382,7 @@ def readsToWiggle_pysam(reads, tx_start, tx_end):
 #     return wiggle, jxns
 
 
-def plot_mRNAs(tx_start, mRNAs, strand, graphcoords, axvar):
+def plot_mRNAs(tx_start, mRNAs, strand, graphcoords, reverse_minus):
     """
     Draw the gene structure.
     """
@@ -401,7 +406,10 @@ def plot_mRNAs(tx_start, mRNAs, strand, graphcoords, axvar):
         spread = .2 * max(graphcoords) / narrows
         for i in range(narrows):
             loc = float(i) * max(graphcoords) / narrows
-            x = [loc - spread, loc, loc - spread]
+            if strand == '+' or reverse_minus:
+                x = [loc - spread, loc, loc - spread]
+            else:
+                x = [loc + spread, loc, loc + spread]
             y = [yloc - exonwidth / 5, yloc, yloc + exonwidth / 5]
             plot(x, y, lw=.5, color='k')
 
@@ -418,7 +426,7 @@ def plot_mRNAs(tx_start, mRNAs, strand, graphcoords, axvar):
 def plot_posterior_single(miso_f, axvar, posterior_bins,
                           showXaxis=True,
                           showYaxis=True,
-                          showYlabel=True,
+                          show_ylabel=True,
                           font_size=6,
                           bar_posterior=False):
     """
@@ -473,7 +481,7 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,
                 fontsize=font_size)
         else:
             yticks([])
-        if showYlabel:
+        if show_ylabel:
             ylabel("Frequency", fontsize=font_size, ha='right', va='center')
     else:
         ##

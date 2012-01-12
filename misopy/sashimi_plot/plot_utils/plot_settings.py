@@ -35,6 +35,10 @@ def get_default_settings():
                 "font_size": 6,
                 "insert_len_bins": 25,
                 "bf_thresholds": [0, 1, 2, 5, 10, 20],
+                "nyticks": 3,
+                "nxticks": 4,
+                "show_ylabel": True,
+                "show_xlabel": True,
                 "bar_color": "k"}
     return settings
 
@@ -45,10 +49,11 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
                                       "font_size", "junction_log_base"],
                         # Integer parameters
                         INT_PARAMS=["posterior_bins", "gene_posterior_ratio",
-                                    "insert_len_bins"],
+                                    "insert_len_bins", "nyticks", "nxticks"],
                         # Boolean parameters
                         BOOL_PARAMS=["logged", "show_posteriors", "number_junctions",
-                                     "reverse_minus", "bar_posteriors"],
+                                     "reverse_minus", "bar_posteriors", "show_ylabel",
+                                     "show_xlabel"],
                         # Parameters to be interpreted as Python lists or
                         # data structures
                         DATA_PARAMS=["miso_files", "bam_files", "bf_thresholds",

@@ -32,6 +32,14 @@ bar_posteriors = False
 # Max y-axis
 ymax = 150
 
+# Axis tick marks
+nyticks = 3
+nxticks = 4
+
+# Whether to show axis labels
+show_ylabel = True
+show_xlabel = True
+
 # Whether to plot posterior distributions inferred by MISO
 show_posteriors = True 
 
