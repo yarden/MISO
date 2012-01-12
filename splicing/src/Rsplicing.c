@@ -638,7 +638,7 @@ SEXP R_splicing_parse_cigar(SEXP cigar, SEXP pmaxreadlength) {
   
   SET_VECTOR_ELT(result, 0, R_splicing_vector_int_to_SEXP(&numcigar));
   SET_VECTOR_ELT(result, 1, R_splicing_vector_int_to_SEXP(&cigaridx));
-  SET_VECTOR_ELT(result, 1, R_splicing_vector_int_to_SEXP(&cigarlength));
+  SET_VECTOR_ELT(result, 2, R_splicing_vector_int_to_SEXP(&cigarlength));
   
   splicing_vector_int_destroy(&numcigar);
   splicing_vector_int_destroy(&cigaridx);
