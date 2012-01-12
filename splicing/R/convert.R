@@ -231,6 +231,39 @@ noIso.gff3 <- function(gff3) {
   .Call("R_splicing_gff_noiso", gff3, PACKAGE="splicing")
 }
 
+selectIso <- function(gff3, iso)
+  UseMethod("selectIso")
+
+selectIso.gff3 <- function(gff3, iso) {
+  if (!isGFF3(gff3)) {
+    stop("Not a GFF3 object")
+  }
+  if (noGenes(gff3) != 1) {
+    stop("GFF should contain a single gene")
+  }
+
+  ktid <- gff3$tid[iso]
+  ktidID <- gff3$ID[ktid+1L]
+  par <- sapply(gff3$parent, function(x) if (x==-1) NA else gff3$ID[x+1])
+  keep <- which(gff3$type==SPLICING_GENE | gff3$ID %in% ktidID |
+                par %in% ktidID)
+
+  attributes <- if (is.null(gff3$attributes)) NULL else gff3$attributes[keep]
+  
+  res <- list(seqid_str=gff3$seqid_str, seqid=gff3$seqid,
+              source_str=gff3$source_str, source=gff3$source,
+              type=gff3$type[keep], start=gff3$start[keep],
+              end=gff3$end[keep], score=gff3$score[keep],
+              strand=gff3$strand, phase=gff3$phase[keep],
+              attributes=attributes, ID=gff3$ID[keep])
+  res$parent <- match(par[keep], res$ID)-1L
+  res$parent[is.na(res$parent)] <- -1L
+  res$gid <- which(res$type == SPLICING_GENE)-1L
+  res$tid <- which(res$type == SPLICING_MRNA)-1L
+  class(res) <- "gff3"
+  res
+}  
+
 ## Number of exons, exons are different if they have a different
 ## start position
 

@@ -1,0 +1,143 @@
+
+R version 2.14.0 (2011-10-31)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> library(splicing)
+> 
+> iso3file <- system.file("test_files/iso3.gff", package="splicing")
+> 
+> iso <- readGFF3(iso3file)
+> 
+> iso1 <- selectIso(iso, 1)
+> iso2 <- selectIso(iso, 2)
+> iso3 <- selectIso(iso, 3)
+> 
+> iso12 <- selectIso(iso, 1:2)
+> iso13 <- selectIso(iso, c(1,3))
+> iso23 <- selectIso(iso, 2:3)
+> 
+> str(iso1)
+List of 15
+ $ seqid_str : chr "16"
+ $ seqid     : int 0
+ $ source_str: chr "protein_coding"
+ $ source    : int 0
+ $ type      : int [1:42] 0 1 2 2 5 3 2 3 3 2 ...
+ $ start     : int [1:42] 18780540 18780540 18780540 18781989 18781991 18781994 18784899 18784899 18785166 18785166 ...
+ $ end       : int [1:42] 18812080 18812080 18780666 18782055 18781993 18782055 18784975 18784975 18785284 18785284 ...
+ $ score     : num [1:42] -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ...
+ $ strand    : int 0
+ $ phase     : int [1:42] 0 0 -1 -1 0 2 -1 1 0 -1 ...
+ $ attributes: NULL
+ $ ID        : chr [1:42] "ENSMUSG00000000028" "ENSMUST00000000028" "ENSMUST00000000028:exon:20" "ENSMUST00000000028:exon:19" ...
+ $ parent    : int [1:42] -1 0 1 1 1 1 1 1 1 1 ...
+ $ gid       : int 0
+ $ tid       : int 1
+ - attr(*, "class")= chr "gff3"
+> str(iso2)
+List of 15
+ $ seqid_str : chr "16"
+ $ seqid     : int 0
+ $ source_str: chr "protein_coding"
+ $ source    : int 0
+ $ type      : int [1:39] 0 1 2 2 5 3 2 3 3 2 ...
+ $ start     : int [1:39] 18780540 18780540 18780546 18781989 18781991 18781994 18784899 18784899 18785166 18785166 ...
+ $ end       : int [1:39] 18812080 18812080 18780666 18782055 18781993 18782055 18784975 18784975 18785284 18785284 ...
+ $ score     : num [1:39] -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ...
+ $ strand    : int 0
+ $ phase     : int [1:39] 0 0 -1 -1 0 2 -1 1 0 -1 ...
+ $ attributes: NULL
+ $ ID        : chr [1:39] "ENSMUSG00000000028" "ENSMUST00000096990" "ENSMUST00000096990:exon:18" "ENSMUST00000096990:exon:17" ...
+ $ parent    : int [1:39] -1 0 1 1 1 1 1 1 1 1 ...
+ $ gid       : int 0
+ $ tid       : int 1
+ - attr(*, "class")= chr "gff3"
+> str(iso3)
+List of 15
+ $ seqid_str : chr "16"
+ $ seqid     : int 0
+ $ source_str: chr "protein_coding"
+ $ source    : int 0
+ $ type      : int [1:14] 0 1 5 2 3 3 2 2 3 2 ...
+ $ start     : int [1:14] 18780540 18780540 18807449 18807449 18807452 18808825 18808825 18810482 18810482 18811398 ...
+ $ end       : int [1:14] 18812080 18812080 18807451 18807516 18807516 18808962 18808962 18810574 18810574 18811457 ...
+ $ score     : num [1:14] -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ...
+ $ strand    : int 0
+ $ phase     : int [1:14] 0 0 0 -1 0 0 -1 -1 0 -1 ...
+ $ attributes: NULL
+ $ ID        : chr [1:14] "ENSMUSG00000000028" "ENSMUST00000115585" "ENSMUST00000115585:stop_codon:1" "ENSMUST00000115585:exon:5" ...
+ $ parent    : int [1:14] -1 0 1 1 1 1 1 1 1 1 ...
+ $ gid       : int 0
+ $ tid       : int 1
+ - attr(*, "class")= chr "gff3"
+> 
+> str(iso12)
+List of 15
+ $ seqid_str : chr "16"
+ $ seqid     : int 0
+ $ source_str: chr "protein_coding"
+ $ source    : int 0
+ $ type      : int [1:80] 0 1 2 2 5 3 2 3 3 2 ...
+ $ start     : int [1:80] 18780540 18780540 18780540 18781989 18781991 18781994 18784899 18784899 18785166 18785166 ...
+ $ end       : int [1:80] 18812080 18812080 18780666 18782055 18781993 18782055 18784975 18784975 18785284 18785284 ...
+ $ score     : num [1:80] -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ...
+ $ strand    : int 0
+ $ phase     : int [1:80] 0 0 -1 -1 0 2 -1 1 0 -1 ...
+ $ attributes: NULL
+ $ ID        : chr [1:80] "ENSMUSG00000000028" "ENSMUST00000000028" "ENSMUST00000000028:exon:20" "ENSMUST00000000028:exon:19" ...
+ $ parent    : int [1:80] -1 0 1 1 1 1 1 1 1 1 ...
+ $ gid       : int 0
+ $ tid       : int [1:2] 1 42
+ - attr(*, "class")= chr "gff3"
+> str(iso13)
+List of 15
+ $ seqid_str : chr "16"
+ $ seqid     : int 0
+ $ source_str: chr "protein_coding"
+ $ source    : int 0
+ $ type      : int [1:55] 0 1 2 2 5 3 2 3 3 2 ...
+ $ start     : int [1:55] 18780540 18780540 18780540 18781989 18781991 18781994 18784899 18784899 18785166 18785166 ...
+ $ end       : int [1:55] 18812080 18812080 18780666 18782055 18781993 18782055 18784975 18784975 18785284 18785284 ...
+ $ score     : num [1:55] -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ...
+ $ strand    : int 0
+ $ phase     : int [1:55] 0 0 -1 -1 0 2 -1 1 0 -1 ...
+ $ attributes: NULL
+ $ ID        : chr [1:55] "ENSMUSG00000000028" "ENSMUST00000000028" "ENSMUST00000000028:exon:20" "ENSMUST00000000028:exon:19" ...
+ $ parent    : int [1:55] -1 0 1 1 1 1 1 1 1 1 ...
+ $ gid       : int 0
+ $ tid       : int [1:2] 1 42
+ - attr(*, "class")= chr "gff3"
+> str(iso23)
+List of 15
+ $ seqid_str : chr "16"
+ $ seqid     : int 0
+ $ source_str: chr "protein_coding"
+ $ source    : int 0
+ $ type      : int [1:52] 0 1 2 2 5 3 2 3 3 2 ...
+ $ start     : int [1:52] 18780540 18780540 18780546 18781989 18781991 18781994 18784899 18784899 18785166 18785166 ...
+ $ end       : int [1:52] 18812080 18812080 18780666 18782055 18781993 18782055 18784975 18784975 18785284 18785284 ...
+ $ score     : num [1:52] -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ...
+ $ strand    : int 0
+ $ phase     : int [1:52] 0 0 -1 -1 0 2 -1 1 0 -1 ...
+ $ attributes: NULL
+ $ ID        : chr [1:52] "ENSMUSG00000000028" "ENSMUST00000096990" "ENSMUST00000096990:exon:18" "ENSMUST00000096990:exon:17" ...
+ $ parent    : int [1:52] -1 0 1 1 1 1 1 1 1 1 ...
+ $ gid       : int 0
+ $ tid       : int [1:2] 1 39
+ - attr(*, "class")= chr "gff3"
+> 
