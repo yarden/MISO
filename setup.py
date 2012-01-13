@@ -71,7 +71,7 @@ for scheme in INSTALL_SCHEMES.values():
         scheme['data'] = scheme['purelib']
         
 setup(name = 'misopy',
-      version = '0.3',
+      version = '0.4',
       description = 'Mixture of Isoforms model (MISO) for isoform quantitation using RNA-Seq',
       long_description = long_description,
 #      license = 'MIT License',
