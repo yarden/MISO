@@ -165,7 +165,7 @@ def compute_delta_densities(samples1_filename, samples2_filename, diff_range,
             warning_outputted = True
             # Edge case: if improperly samples, maintain Bayes factors
             # as list to be consistent with multi-isoform case
-            densities['bayes_factor'] = [0]
+            densities['bayes_factor'].append(0)
 
         if mean_abs_posterior_diff <= .009 or all_same_diff:
             posterior_density = NullPeakedDensity(posterior_diff)
