@@ -163,7 +163,9 @@ def compute_delta_densities(samples1_filename, samples2_filename, diff_range,
             print "Warning: %s or %s were not properly sampled." \
                   %(samples1_filename, samples2_filename)
             warning_outputted = True
-            densities['bayes_factor'] = 0
+            # Edge case: if improperly samples, maintain Bayes factors
+            # as list to be consistent with multi-isoform case
+            densities['bayes_factor'] = [0]
 
         if mean_abs_posterior_diff <= .009 or all_same_diff:
             posterior_density = NullPeakedDensity(posterior_diff)
