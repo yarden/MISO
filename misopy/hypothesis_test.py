@@ -163,18 +163,18 @@ def compute_delta_densities(samples1_filename, samples2_filename, diff_range,
             print "Warning: %s or %s were not properly sampled." \
                   %(samples1_filename, samples2_filename)
             warning_outputted = True
-            # Edge case: if improperly samples, maintain Bayes factors
-            # as list to be consistent with multi-isoform case
-            densities['bayes_factor'].append(0)
 
         if mean_abs_posterior_diff <= .009 or all_same_diff:
             posterior_density = NullPeakedDensity(posterior_diff)
         else:
             # Smoothing by fitting Gaussian kernel density estimator
-            posterior_density = gaussian_kde_covfact(posterior_diff, smoothing_param)
+            posterior_density = gaussian_kde_covfact(posterior_diff,
+                                                     smoothing_param)
 
         bayes_factor, diff_prior, diff_posterior = compute_bayes_factor(analytic_prior_density,
                                                                         posterior_density)
+        # Edge case: if improperly samples, maintain Bayes factors
+        # as list to be consistent with multi-isoform case
         densities['bayes_factor'].append(bayes_factor)
         densities['posterior_density'].append(posterior_density)
     
