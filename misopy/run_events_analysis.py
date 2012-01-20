@@ -47,7 +47,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     all_miso_cmds = []
 
     for gene_id, gff_index_filename in gene_ids_to_gff_index.iteritems():
-        miso_cmd = "python %s --compute-gene-psi \"%s\" %s %s %s --read-len %d " \
+        miso_cmd = "python %s --compute-gene-psi \"%s\" \"%s\" %s %s --read-len %d " \
                    %(miso_run, gene_id, gff_index_filename, bam_filename, output_dir,
                      read_len)
         
