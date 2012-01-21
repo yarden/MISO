@@ -89,7 +89,6 @@ class Settings(object):
             return cls.global_settings['long_queue_name']
         else:
             return None
-
         
     @classmethod
     def get_short_queue_name(cls):

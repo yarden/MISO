@@ -256,6 +256,7 @@ def pair_sam_reads(samfile, filter_reads=True,
     to_delete = []
 
     num_unpaired = 0
+    num_total = 0
 
     for read_name, read in paired_reads.iteritems():
         if len(read) != 2:
@@ -278,6 +279,7 @@ def pair_sam_reads(samfile, filter_reads=True,
         if left_read.pos > right_read.pos:
             print "WARNING: %s left mate starts later than right "\
                   "mate" %(left_read.qname)
+        num_total += 1
 #            raise Exception, (left_read.qname, left_read.pos, right_read.pos)
 
     # Delete reads that are on the same strand
@@ -286,6 +288,7 @@ def pair_sam_reads(samfile, filter_reads=True,
 
     print "Filtered out %d read pairs that were on same strand." %(len(to_delete))
     print "Filtered out %d reads that had no paired mate." %(num_unpaired)
+    print "  - Total read pairs: %d" %(num_total)
 
     if not return_unpaired:
         return paired_reads

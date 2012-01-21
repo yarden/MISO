@@ -303,6 +303,11 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
 
     if settings and "sam_template" in settings:
         template = settings["sam_template"]
+
+    if "filter_reads" not in settings:
+        filter_reads = True
+    else:
+        filter_reads = settings["filter_reads"]
         
     # Load the BAM file upfront
     bamfile = sam_utils.load_bam_reads(bam_filename, template=template)
@@ -331,10 +336,11 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
                                                          paired_end=paired_end)
                                    
         # Skip gene if none of the reads align to gene boundaries
-        if num_raw_reads < min_event_reads:
-            print "Only %d reads in gene, skipping (needed >= %d reads)" \
-                  %(num_raw_reads, min_event_reads)
-            continue
+        if filter_reads:
+            if num_raw_reads < min_event_reads:
+                print "Only %d reads in gene, skipping (needed >= %d reads)" \
+                      %(num_raw_reads, min_event_reads)
+                continue
 
         num_isoforms = len(gene_obj.isoforms)
         hyperparameters = ones(num_isoforms)
