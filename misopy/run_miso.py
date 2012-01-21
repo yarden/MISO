@@ -421,6 +421,11 @@ def main():
                       "Expects three directories: the first is sample1's MISO output, "
                       "the second is sample2's MISO output, and the third is the directory where "
 		      "results of the sample comparison will be outputted.")
+    parser.add_option("--comparison-labels", dest="comparison_labels", nargs=2, default=None,
+                      help="Use these labels for the sample comparison made by --compare-samples. "
+                      "Takes two arguments: the label for sample 1 and the label for sample 2, "
+                      "where sample 1 and sample 2 correspond to the order of samples given "
+                      "to --compare-samples.")
     parser.add_option("--run-two-iso-event", dest="run_two_iso_event", nargs=3, default=None,
 		      help="Run MISO on two isoform event, given an event name, an events file "
                       "(in JSON/Pickle format) and an output directory.")
@@ -464,7 +469,8 @@ def main():
             print "Making comparisons directory: %s" %(output_dirname)
 	    os.makedirs(output_dirname)
 	ht.output_samples_comparison(sample1_dirname, sample2_dirname,
-                                     output_dirname)
+                                     output_dirname,
+                                     sample_labels=options.comparison_labels)
 	
     if options.run_two_iso_event:
 	if options.read_len == None or options.overhang_len == None:

@@ -182,7 +182,8 @@ def compute_delta_densities(samples1_filename, samples2_filename, diff_range,
 
 
 def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
-                              alpha=.95):
+                              alpha=.95,
+                              sample_labels=None):
     """
     Compute the bayes factors, posterior means, and other statistics
     between the two samples and output them to a directory.
@@ -201,8 +202,13 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
     print "  - # files in %s: %d" %(sample2_dir, len(sample2_filenames))
 
     # Output header for Bayes factor file
-    sample1_label = os.path.basename(os.path.normpath(sample1_dir))
-    sample2_label = os.path.basename(os.path.normpath(sample2_dir))
+    if sample_labels == None:
+        sample1_label = os.path.basename(os.path.normpath(sample1_dir))
+        sample2_label = os.path.basename(os.path.normpath(sample2_dir))
+    else:
+        sample1_label, sample2_label = sample_labels
+        print "Using user-given sample labels (sample1 = %s, sample2 = %s)" \
+              %(sample1_label, sample2_label)
     output_dir = os.path.join(output_dir, "%s_vs_%s" %(sample1_label,
                                                        sample2_label))
 
