@@ -14,7 +14,6 @@ class TestMISO(unittest.TestCase):
                                                                "run_events_analysis.py"))
         self.tests_output_dir = os.path.join(self.miso_path, "test-output")
         self.test_sam_filename = os.path.join(self.tests_data_dir,
-                                              "sam-data",
                                               "c2c12.Atp2b1.sam")
         self.gff_events_dir = os.path.join(self.miso_path, "gff-events")
         self.sam_to_bam_script = os.path.join(self.miso_path, "sam_to_bam.py")
