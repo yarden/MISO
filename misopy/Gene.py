@@ -957,8 +957,8 @@ def make_gene_from_gff_records(gene_label, gene_hierarchy,
     [all_exons.extend(transcript) for transcript in transcripts]
 
     # Prefix chromosome with "chr" if it does not have it already
-    if not chrom.startswith("chr"):
-        chrom = "chr%s" %(chrom)
+    #if not chrom.startswith("chr"):
+    #    chrom = "chr%s" %(chrom)
 
     gene = Gene(isoform_desc, all_exons, label=gene_label,
                 chrom=chrom)

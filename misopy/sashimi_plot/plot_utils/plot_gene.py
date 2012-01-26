@@ -135,7 +135,7 @@ def plot_density_single(settings, sample_label,
 
     if show_ylabel:
         if logged:
-            ylabel('RPKM $(log_{10})$', fontsize=font_size)
+            ylabel('RPKM $(\log_{10})$', fontsize=font_size)
         else:
             ylabel('RPKM', fontsize=font_size)
     if showYaxis:

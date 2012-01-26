@@ -39,7 +39,7 @@ class Sashimi:
                                                               chrom=chrom)
         else:
             # Load default settings if no settings filename was given
-            self.settings = plot_settings.get_default_settings
+            self.settings = plot_settings.get_default_settings()
 
         if output_filename != None:
             # If explicit output filename is given to us, use it
