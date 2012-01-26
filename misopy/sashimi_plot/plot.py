@@ -232,7 +232,7 @@ def main():
                       "file (.miso), (2) a settings filename.")
     parser.add_option("--plot-insert-len", dest="plot_insert_len", nargs=2, default=None,
                       help="Plot the insert length distribution from a given insert length (*.insert_len) "
-                      "filename.")
+                      "filename. Second argument is a settings file name.")
     parser.add_option("--plot-bf-dist", dest="plot_bf_dist", nargs=2, default=None,
                       help="Plot Bayes factor distributon. Takes the arguments: "
                       "(1) Bayes factor filename (*.miso_bf) filename, "
