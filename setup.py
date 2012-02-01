@@ -71,7 +71,7 @@ for scheme in INSTALL_SCHEMES.values():
         scheme['data'] = scheme['purelib']
         
 setup(name = 'misopy',
-      version = '0.4',
+      version = '0.4.1',
       description = 'Mixture of Isoforms model (MISO) for isoform quantitation using RNA-Seq',
       long_description = long_description,
 #      license = 'MIT License',
@@ -103,7 +103,13 @@ setup(name = 'misopy',
                                          'misopy/sashimi_plot/settings/sashimi_plot_settings.txt']),
                     ('misopy/test-data', ['misopy/test-data/sam-data/c2c12.Atp2b1.sam']),
                     ('misopy/gff-events', ['misopy/gff-events/mm9/SE.mm9.gff',
-                                           'misopy/gff-events/mm9/genes/Atp2b1.mm9.gff'])],
+                                           'misopy/gff-events/mm9/genes/Atp2b1.mm9.gff']),
+                    ('misopy/sashimi_plot/test-data', 
+                      ['misopy/sashimi_plot/test-data/events.gff',
+                       'misopy/sashimi_plot/test-data/miso-data/heartKOa/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso',
+                       'misopy/sashimi_plot/test-data/miso-data/heartKOb/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso',
+                       'misopy/sashimi_plot/test-data/miso-data/heartWT1/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso',
+                       'misopy/sashimi_plot/test-data/miso-data/heartWT2/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso'])],
       # Required modules
       install_requires = [
 #          "matplotlib >= 1.1.0",

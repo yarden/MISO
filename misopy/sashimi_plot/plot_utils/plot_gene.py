@@ -2,6 +2,7 @@
 ## Draw gene structure from a GFF file
 ##
 import os, sys, operator, subprocess
+import math
 import pysam
 import glob
 from pylab import *
@@ -113,9 +114,8 @@ def plot_density_single(settings, sample_label,
             axvar.add_patch(p) 
 
     # Format plot
-    ylim(ymin, ymax)
-
-    axvar.spines['left'].set_bounds(0, ymax)
+    # ylim(ymin, ymax)
+    # axvar.spines['left'].set_bounds(0, ymax)
     axvar.spines['right'].set_color('none')
     axvar.spines['top'].set_color('none')
 
@@ -133,27 +133,18 @@ def plot_density_single(settings, sample_label,
         axvar.spines['bottom'].set_color('none')
         xticks([])
 
-    if show_ylabel:
-        if logged:
-            ylabel('RPKM $(\log_{10})$', fontsize=font_size)
-        else:
-            ylabel('RPKM', fontsize=font_size)
-    if showYaxis:
-        axvar.yaxis.set_ticks_position('left')
-        yticks(linspace(0, ymax, nyticks), ['%d'%(x) for x in \
-                                            linspace(0, ymax, nyticks)],
-               fontsize=font_size)
-    else:
-        axvar.spines['left'].set_color('none')
-        yticks([])
+    # if showYaxis:
+    #     axvar.yaxis.set_ticks_position('left')
+    #     yticks(linspace(0, ymax, nyticks), ['%d'%(x) for x in \
+    #                                         linspace(0, ymax, nyticks)],
+    #            fontsize=font_size)
+    # else:
+    #     axvar.spines['left'].set_color('none')
+    #     yticks([])
     
-    text(max(graphcoords), ymax,
-         sample_label,
-         fontsize=font_size,
-         va='bottom',
-         ha='right',
-         color=color)
     xlim(0, max(graphcoords))
+    # Return modified axis
+    return axvar
 
 
 # Plot density for a series of bam files.
@@ -186,6 +177,9 @@ def plot_density(sashimi_obj, pickle_filename, event):
     nxticks = settings["nxticks"]
     show_ylabel = settings["show_ylabel"]
     show_xlabel = settings["show_xlabel"]
+
+    # Always show y-axis for read densities for now
+    showYaxis = True
     
     # Parse gene pickle file to get information about gene
     tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand, chrom = \
@@ -198,7 +192,8 @@ def plot_density(sashimi_obj, pickle_filename, event):
 
     nfiles = len(bam_files)
     suptitle(event, fontsize=10)
-    
+    plotted_axes = []
+
     for i in range(nfiles):
         if colors is not None:
             color = colors[i]
@@ -215,25 +210,26 @@ def plot_density(sashimi_obj, pickle_filename, event):
 
         bam_file = os.path.expanduser(bam_files[i])
         miso_file = os.path.expanduser(miso_files[i])
-        ax1 = subplot2grid((nfiles + 3, gene_posterior_ratio), (i, 0),\
-            colspan=gene_posterior_ratio - 1)
+        ax1 = subplot2grid((nfiles + 3, gene_posterior_ratio), (i, 0),
+                           colspan=gene_posterior_ratio - 1)
         
         # Read sample label
         sample_label = settings["sample_labels"][i]
 
         print "Reading sample label: %s" %(sample_label)
         
-        plot_density_single(settings, sample_label,
-                            tx_start, tx_end, gene_obj, mRNAs, strand,
-                            graphcoords, graphToGene, bam_file, ax1, chrom,
-                            paired_end=False, intron_scale=intron_scale,
-                            exon_scale=exon_scale, color=color,
-                            ymax=ymax, logged=logged, coverage=coverage,
-                            number_junctions=number_junctions, resolution=resolution,
-                            showXaxis=showXaxis, nyticks=nyticks, nxticks=nxticks,
-                            show_ylabel=show_ylabel, show_xlabel=show_xlabel,
-                            font_size=font_size,
-                            junction_log_base=junction_log_base)
+        plotted_ax = plot_density_single(settings, sample_label,
+                                         tx_start, tx_end, gene_obj, mRNAs, strand,
+                                         graphcoords, graphToGene, bam_file, ax1, chrom,
+                                         paired_end=False, intron_scale=intron_scale,
+                                         exon_scale=exon_scale, color=color,
+                                         ymax=ymax, logged=logged, coverage=coverage,
+                                         number_junctions=number_junctions, resolution=resolution,
+                                         showXaxis=showXaxis, nyticks=nyticks, nxticks=nxticks,
+                                         show_ylabel=show_ylabel, show_xlabel=show_xlabel,
+                                         font_size=font_size,
+                                         junction_log_base=junction_log_base)
+        plotted_axes.append(plotted_ax)
 
         if show_posteriors:
             try:
@@ -244,7 +240,7 @@ def plot_density(sashimi_obj, pickle_filename, event):
                     print "Warning: MISO file %s not found" %(miso_file)
 
                 print "Loading MISO file: %s" %(miso_file)
-                plot_posterior_single(miso_file, ax2, posterior_bins,\
+                plot_posterior_single(miso_file, ax2, posterior_bins,
                                       showXaxis=showXaxis, show_ylabel=False,
                                       font_size=font_size,
                                       bar_posterior=bar_posterior)
@@ -253,6 +249,78 @@ def plot_density(sashimi_obj, pickle_filename, event):
                 xticks([])
                 yticks([])
                 print "Posterior plot failed."
+
+    ##
+    ## Figure out correct y-axis values
+    ##
+    ymax_vals = []
+    if ymax != None:
+        # Use user-given ymax values if provided
+        max_used_yval = ymax
+    else:
+        # Compute best ymax value for all samples: take
+        # maximum y across all.
+        used_yvals = [curr_ax.get_ylim()[1] for curr_ax in plotted_axes]
+        # Round up
+        max_used_yval = math.ceil(max(used_yvals))
+
+    # Reset axes based on this.
+    # Set fake ymin bound to allow lower junctions to be visible
+    fake_ymin = -0.5 * max_used_yval
+    universal_yticks = linspace(0, max_used_yval,
+                                nyticks + 1)
+    for sample_num, curr_ax in enumerate(plotted_axes):
+        if showYaxis:
+            curr_ax.set_ybound(lower=fake_ymin, upper=max_used_yval)
+            curr_yticklabels = []
+            for label in universal_yticks:
+                if label <= 0:
+                    # Exclude label for 0
+                    curr_yticklabels.append("")
+                else:
+                    if label % 1 != 0:
+                        curr_yticklabels.append("%.1f" %(label))
+                    else:
+                        curr_yticklabels.append("%d" %(label))
+            curr_ax.set_yticklabels(curr_yticklabels,
+                                    fontsize=font_size)
+            curr_ax.spines["left"].set_bounds(0, max_used_yval)
+            curr_ax.set_yticks(universal_yticks)
+            curr_ax.yaxis.set_ticks_position('left')
+            curr_ax.spines["right"].set_color('none')
+            if show_ylabel:
+                y_horz_alignment = 'left'
+                if logged:
+                    curr_ax.set_ylabel('RPKM $(\mathregular{\log}_{\mathregular{10}})$',
+                                       fontsize=font_size,
+                                       ha=y_horz_alignment)
+                else:
+                    curr_ax.set_ylabel('RPKM',
+                                       fontsize=font_size,
+                                       ha=y_horz_alignment)
+
+        else:
+            curr_ax.spines["left"].set_color('none')
+            curr_ax.spines["right"].set_color('none')
+            curr.ax.set_yticks([])
+        ##
+        ## Plot sample labels
+        ##
+        sample_color = colors[sample_num]
+        # Make sample label y position be halfway between highest
+        # and next to highest ytick
+        if len(universal_yticks) >= 2:
+            halfway_ypos = (universal_yticks[-1] - universal_yticks[-2]) / 2.
+            label_ypos = universal_yticks[-2] + halfway_ypos
+        else:
+            label_ypos = universal_yticks[-1]
+        curr_ax.text(max(graphcoords), label_ypos,
+                     sample_label,
+                     fontsize=font_size,
+                     va='bottom',
+                     ha='right',
+                     color=sample_color)
+                
 
     # Draw gene structure
     ax = subplot2grid((nfiles + 3, gene_posterior_ratio), (nfiles + 1, 0),
@@ -512,21 +580,27 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,
     xticks([0, .2, .4, .6, .8, 1])
     xticks(fontsize=font_size)
     
-    # Adjust x-ticks to be lighter
-    # ....
-
     if (not bar_posterior) and showYaxis:
         axes_to_show = ['bottom', 'left']
     else:
         axes_to_show = ['bottom']
-        
+
+    # Adjust x-axis to be lighter
+    axis_size = 0.2
+    tick_size = 1.2
+    axis_color = "k"
+    for shown_axis in axes_to_show:
+        if shown_axis in axvar.spines:
+            print "Setting color on %s axis" %(shown_axis)
+            axvar.spines[shown_axis].set_linewidth(axis_size)
+            axvar.xaxis.set_tick_params(size=tick_size,
+                                        color=axis_color)
     if showXaxis:
         from matplotlib.ticker import FormatStrFormatter
         majorFormatter = FormatStrFormatter('%g')
         axvar.xaxis.set_major_formatter(majorFormatter)
         
         [label.set_visible(True) for label in axvar.get_xticklabels()]
-        foo = axvar.get_xticklabels()[0]
         xlabel("MISO $\Psi$", fontsize=font_size)
         show_spines(axvar, axes_to_show)
     else:
