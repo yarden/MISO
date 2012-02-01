@@ -5,6 +5,8 @@
 from scipy import *
 from numpy import *
 
+from collections import defaultdict
+
 import os
 import glob
 import misopy
@@ -99,6 +101,23 @@ def get_counts_from_header(samples_header):
         
     return counts
 
+    
+def get_gene_info_from_params(params):
+    """
+    Return gene information from parameters of
+    a MISO samples file.
+    """
+    gene_info = defaultdict(lambda: "NA")
+    if "chrom" in params:
+        gene_info["chrom"] = params["chrom"]
+    if "strand" in params:
+        gene_info["strand"] = params["strand"]
+    if "mRNA_starts" in params:
+        gene_info["mRNA_starts"] = params["mRNA_starts"]
+    if "mRNA_ends" in params:
+        gene_info["mRNA_ends"] = params["mRNA_ends"]
+    return gene_info
+    
 
 def summarize_sampler_results(samples_dir, summary_filename):
     """
@@ -106,7 +125,12 @@ def summarize_sampler_results(samples_dir, summary_filename):
     """
     summary_file = open(summary_filename, 'w')
     header_fields = ["event_name", "miso_posterior_mean", "ci_low", "ci_high",
-                     "isoforms", "counts", "assigned_counts"]
+                     "isoforms", "counts", "assigned_counts",
+                     # Fields related to gene/event
+                     "chrom",
+                     "strand",
+                     "mRNA_starts",
+                     "mRNA_ends"]
     summary_header = "%s\n" %("\t".join(header_fields))
     summary_file.write(summary_header)
     print "Loading events from: %s" %(samples_dir)
@@ -115,6 +139,9 @@ def summarize_sampler_results(samples_dir, summary_filename):
     num_events = 0
     
     for samples_filename in all_filenames:
+        # Parse sampler parameters
+        params = parse_sampler_params(samples_filename)
+
         basename = os.path.basename(samples_filename)
     	event_name = basename.split('.')[0]
 
@@ -137,6 +164,12 @@ def summarize_sampler_results(samples_dir, summary_filename):
         # Add counts information to output fields
         output_fields.append(counts_info['counts'])
         output_fields.append(counts_info['assigned_counts'])
+
+        gene_info = get_gene_info_from_params(params)
+        output_fields.append(gene_info["chrom"])
+        output_fields.append(gene_info["strand"])
+        output_fields.append(gene_info["mRNA_starts"])
+        output_fields.append(gene_info["mRNA_ends"])
         
         output_line = "%s\n" %("\t".join(output_fields))
 	summary_file.write(output_line)

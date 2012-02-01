@@ -375,13 +375,32 @@ class MISOSampler:
         # Get number of reads assigned to each isoform
         assigned_counts_str = ",".join(["%d:%d" %(c[0], c[1]) \
                                         for c in assigned_counts])
-        
+
+        # coordinates where mRNAs start
+        mRNA_starts = []
+        mRNA_ends = []
+        for iso in gene.isoforms:
+            mRNA_starts.append(iso.genomic_start)
+            mRNA_ends.append(iso.genomic_end)
+        mRNA_start_coords = ",".join([str(start) for start in mRNA_starts])
+        mRNA_end_coords = ",".join([str(end) for end in mRNA_ends])
+        chrom = gene.chrom
+        if chrom == None:
+            chrom = "NA"
+        strand = gene.strand
+        if strand == None:
+            strand = "NA"
         header = "#isoforms=%s\texon_lens=%s\titers=%d\tburn_in=%d\tlag=%d\t" \
                  "percent_accept=%.2f\tproposal_type=%s\t" \
-                 "counts=%s\tassigned_counts=%s\n" \
+                 "counts=%s\tassigned_counts=%s\tchrom=%s\tstrand=%s\tmRNA_starts=%s\tmRNA_ends=%s\n" \
                  %(str_isoforms, exon_lens, num_iters, burn_in, lag,
                    percent_acceptance, proposal_type, read_counts_str,
-                   assigned_counts_str)
+                   assigned_counts_str,
+                   # Fields related to gene/event
+                   chrom,
+                   strand,               
+                   mRNA_start_coords,
+                   mRNA_end_coords)
         output.write(header)
             
         # Output samples and their associated log scores, as well as read counts

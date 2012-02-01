@@ -241,7 +241,11 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
                      'sample1_counts',
                      'sample1_assigned_counts',
                      'sample2_counts',
-                     'sample2_assigned_counts']
+                     'sample2_assigned_counts',
+                     'chrom',
+                     'strand',
+                     'mRNA_starts',
+                     'mRNA_ends']
     header_line = "\t".join(header_fields) + "\n"
     output_filename = os.path.join(bf_output_dir, "%s_vs_%s.miso_bf" %(sample1_label,
                                                                        sample2_label))
@@ -261,6 +265,11 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
     for sample1_filename in sample1_filenames:
         split_id = ".miso"
 	sample1_event_name = os.path.basename(sample1_filename).split(split_id)[0]
+
+        # Parameters from raw MISO samples file
+        params = parse_sampler_params(sample1_filename)
+        # Extract gene information if available
+        gene_info = get_gene_info_from_params(params)
         
 	# Find corresponding event filename in sample 2
         sample2_filename = filter(lambda filename:
@@ -342,7 +351,12 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
                          "%s" %(sample1_counts_info['assigned_counts']),
                          # Counts information for sample 2
                          "%s" %(sample2_counts_info['counts']),
-                         "%s" %(sample2_counts_info['assigned_counts'])]
+                         "%s" %(sample2_counts_info['assigned_counts']),
+                         # Gene information
+                         gene_info["chrom"],
+                         gene_info["strand"],
+                         gene_info["mRNA_starts"],
+                         gene_info["mRNA_ends"]]
 	output_line = "%s\n" %("\t".join(output_fields))
 	output_file.write(output_line)
         

@@ -126,7 +126,7 @@ class Gene:
     which creates two isoforms, composed of the 'A' and 'B' parts.
     """    
     def __init__(self, isoform_desc, parts, chrom=None, exons_seq=None,
-                 label="", strand=None):
+                 label="", strand="NA"):
 	self.isoform_desc = isoform_desc
 	self.iso_lens = []
 	if label == "":
@@ -886,25 +886,21 @@ def load_genes_from_gff(gff_filename):
     return gff_genes
 
 
-def make_gene_from_gff_records(gene_label, gene_hierarchy,
+def make_gene_from_gff_records(gene_label,
+                               gene_hierarchy,
                                gene_records):
     """
     Make a gene from a gene hierarchy.
     """
-#    print "Making gene %s from GFF hierarchy" %(gene_label)
     mRNAs = gene_hierarchy['mRNAs']
-#    print "Gene has %d transcripts" %(len(mRNAs))
 
     # Each transcript is a set of exons
     transcripts = []
     isoform_desc = []
 
     chrom = None
+    strand = "NA"
 
-    strand = None
-
-    #for transcript_id, transcript_info in mRNAs.iteritems():
-    
     # Iterate through mRNAs in the order in which they were given in the
     # GFF file
     transcript_ids = [rec.get_id() for rec in gene_records \
@@ -919,6 +915,7 @@ def make_gene_from_gff_records(gene_label, gene_hierarchy,
         transcript_rec = transcript_info['record']
 
         chrom = transcript_rec.seqid
+        strand = transcript_rec.strand
         transcript_exons = transcript_info['exons']
         exons = []
 
@@ -960,8 +957,10 @@ def make_gene_from_gff_records(gene_label, gene_hierarchy,
     #if not chrom.startswith("chr"):
     #    chrom = "chr%s" %(chrom)
 
-    gene = Gene(isoform_desc, all_exons, label=gene_label,
-                chrom=chrom)
+    gene = Gene(isoform_desc, all_exons,
+                label=gene_label,
+                chrom=chrom,
+                strand=strand)
 
     return gene
                         
