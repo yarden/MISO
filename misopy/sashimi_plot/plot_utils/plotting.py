@@ -165,6 +165,15 @@ def label_stacked_bars(rects1, rects2, labels, h=1.02):
 
 import matplotlib.transforms as mtransforms
 
+def make_sans_serif(font_size=10):
+    from matplotlib import rc
+    plt.rcParams['ps.useafm'] = True
+    plt.rcParams['pdf.fonttype'] = 42
+    #rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+    rc('font',**{'family':'sans-serif','sans-serif':['FreeSans']})
+    plt.rcParams['pdf.fonttype'] = 42
+    plt.rcParams['font.size'] = font_size
+
 def expand_subplot(ax, num2):
     update_params_orig = ax.update_params
 

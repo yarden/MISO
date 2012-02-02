@@ -39,6 +39,7 @@ def get_default_settings():
                 "nxticks": 4,
                 "show_ylabel": True,
                 "show_xlabel": True,
+                "sans_serif": False,
                 "bar_color": "k"}
     return settings
 
@@ -53,7 +54,7 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
                         # Boolean parameters
                         BOOL_PARAMS=["logged", "show_posteriors", "number_junctions",
                                      "reverse_minus", "bar_posteriors", "show_ylabel",
-                                     "show_xlabel"],
+                                     "show_xlabel", "sans_serif"],
                         # Parameters to be interpreted as Python lists or
                         # data structures
                         DATA_PARAMS=["miso_files", "bam_files", "bf_thresholds",

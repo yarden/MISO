@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 
 import misopy.sashimi_plot.plot_utils.plot_settings as plot_settings
+import misopy.sashimi_plot.plot_utils.plotting as plotting
 
 class Sashimi:
     """
@@ -69,6 +70,12 @@ class Sashimi:
     def setup_figure(self):
         print "Setting up plot using dimensions: ", self.dimensions
         plt.figure(figsize=self.dimensions)
+
+        # If asked, use sans serif fonts
+        font_size = self.settings["font_size"]
+        if self.settings["sans_serif"]:
+            print "Using sans serif fonts."
+            plotting.make_sans_serif(font_size=font_size)
 
     def save_plot(self):
         """
