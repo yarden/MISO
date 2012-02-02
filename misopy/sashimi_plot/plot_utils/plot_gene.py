@@ -314,8 +314,10 @@ def plot_density(sashimi_obj, pickle_filename, event):
             label_ypos = universal_yticks[-2] + halfway_ypos
         else:
             label_ypos = universal_yticks[-1]
+        curr_label = settings["sample_labels"][sample_num]
+        print "Curr label: %s" %(curr_label)
         curr_ax.text(max(graphcoords), label_ypos,
-                     sample_label,
+                     curr_label,
                      fontsize=font_size,
                      va='bottom',
                      ha='right',
