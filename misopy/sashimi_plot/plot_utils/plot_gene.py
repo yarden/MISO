@@ -624,7 +624,8 @@ def cubic_bezier(pts, t):
 
     
 def plot_density_from_file(settings_f, pickle_filename, event,
-                           output_dir):
+                           output_dir,
+                           no_posteriors=False):
     """
     Read MISO estimates given an event name.
     """
@@ -633,20 +634,21 @@ def plot_density_from_file(settings_f, pickle_filename, event,
     ##
     tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand, chrom = \
         parseGene(pickle_filename, event)
-    
+
+    # Override settings flag on whether to show posterior plots
+    # if --no-posteriors was given to plot.py
     sashimi_obj = Sashimi(event, output_dir,
                           event=event,
                           chrom=chrom,
-                          settings_filename=settings_f)
+                          settings_filename=settings_f,
+                          no_posteriors=no_posteriors)
     
     print "Plotting read densities and MISO estimates along event..."
     print "  - Event: %s" %(event)
     
-    # Parse user given settings
-    #settings = plot_settings.parse_plot_settings(settings_f,
-    #                                             event=event,
-    #                                             chrom=chrom)
     settings = sashimi_obj.settings
+    if no_posteriors:
+        settings["show_posteriors"] = False
     bam_files = settings['bam_files']
     miso_files = settings['miso_files']
 

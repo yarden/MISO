@@ -58,7 +58,8 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
                         # Parameters to be interpreted as Python lists or
                         # data structures
                         DATA_PARAMS=["miso_files", "bam_files", "bf_thresholds",
-                                     "bar_color", "sample_labels"]):
+                                     "bar_color", "sample_labels"],
+                        no_posteriors=False):
     """
     Populate a settings dictionary with the plotting parameters, parsed
     as the right datatype.
@@ -108,7 +109,11 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
         print "Error: Must provide sample label for each entry in bam_files!"
         sys.exit(1)
 
-    if "miso_prefix" in settings and (event != None and chrom != None):
+    if no_posteriors:
+        settings["show_posteriors"] = False
+
+    if ("miso_prefix" in settings) and (event != None and chrom != None) \
+        and settings["show_posteriors"]:
         miso_files = miso_utils.get_miso_output_files(event, chrom, settings)
     else:
         miso_files = settings["miso_files"]

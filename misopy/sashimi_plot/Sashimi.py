@@ -16,7 +16,7 @@ class Sashimi:
     """
     def __init__(self, label, output_dir, dimensions=None, png=False,
                  output_filename=None, settings_filename=None,
-                 event=None, chrom=None):
+                 event=None, chrom=None, no_posteriors=False):
         """
         Initialize image settings.
         """
@@ -37,7 +37,8 @@ class Sashimi:
         if self.settings_filename != None:
             self.settings = plot_settings.parse_plot_settings(settings_filename,
                                                               event=event,
-                                                              chrom=chrom)
+                                                              chrom=chrom,
+                                                              no_posteriors=no_posteriors)
         else:
             # Load default settings if no settings filename was given
             self.settings = plot_settings.get_default_settings()

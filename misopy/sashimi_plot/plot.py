@@ -103,7 +103,8 @@ def plot_bf_dist(bf_filename, settings_filename, output_dir,
 
 
 def plot_event(event_name, pickle_dir, settings_filename,
-               output_dir):
+               output_dir,
+               no_posteriors=False):
     """
     Visualize read densities across the exons and junctions
     of a given MISO alternative RNA processing event.
@@ -128,8 +129,12 @@ def plot_event(event_name, pickle_dir, settings_filename,
     
     pickle_filename = event_to_filenames[event_name]
 
+    if no_posteriors:
+        print "Asked to not plot MISO posteriors."
+
     plot_density_from_file(settings_filename, pickle_filename, event_name,
-                           output_dir)
+                           output_dir,
+                           no_posteriors=no_posteriors)
 
 
 def plot_insert_len(insert_len_filename,
@@ -243,6 +248,8 @@ def main():
                       "annotation file, (2) directory where MISO output is for that event type (e.g. if event is a "
                       "skipped exon, provide the directory where the output for all SE events are), "
                       "(3) path to plotting settings file.")
+    parser.add_option("--no-posteriors", dest="no_posteriors", default=False, action="store_true",
+                      help="If given this argument, MISO posterior estimates are not plotted.")
     parser.add_option("--output-dir", dest="output_dir", nargs=1, default=None,
                       help="Output directory.")
     (options, args) = parser.parse_args()
@@ -255,6 +262,8 @@ def main():
 
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
+
+    no_posteriors = options.no_posteriors
 
     if options.plot_insert_len != None:
         insert_len_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len[0]))
@@ -275,7 +284,9 @@ def main():
         event_name = options.plot_event[0]
         pickle_dir = os.path.abspath(os.path.expanduser(options.plot_event[1]))
         settings_filename = os.path.abspath(os.path.expanduser(options.plot_event[2]))
-        plot_event(event_name, pickle_dir, settings_filename, output_dir)
+        plot_event(event_name, pickle_dir, settings_filename, output_dir,
+                   no_posteriors=no_posteriors)
+
         
 
 if __name__ == '__main__':
