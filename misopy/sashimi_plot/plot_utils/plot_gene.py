@@ -177,6 +177,8 @@ def plot_density(sashimi_obj, pickle_filename, event):
     nxticks = settings["nxticks"]
     show_ylabel = settings["show_ylabel"]
     show_xlabel = settings["show_xlabel"]
+    print "Using intron scale ", intron_scale
+    print "Using exon scale ", exon_scale
 
     # Always show y-axis for read densities for now
     showYaxis = True
@@ -269,6 +271,8 @@ def plot_density(sashimi_obj, pickle_filename, event):
     fake_ymin = -0.5 * max_used_yval
     universal_yticks = linspace(0, max_used_yval,
                                 nyticks + 1)
+    # Round up yticks
+    universal_ticks = map(math.ceil, universal_yticks)
     for sample_num, curr_ax in enumerate(plotted_axes):
         if showYaxis:
             curr_ax.set_ybound(lower=fake_ymin, upper=max_used_yval)
