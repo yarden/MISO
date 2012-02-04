@@ -873,6 +873,9 @@ def load_genes_from_gff(gff_filename):
         gene_obj = make_gene_from_gff_records(gene_label,
                                               gene_hierarchy[gene_label],
                                               gene_records)
+        if gene_obj == None:
+            print "Cannot make gene out of %s" %(gene_label)
+            continue
         gff_genes[gene.get_id()] = {'gene_object': gene_obj,
                                     'hierarchy': gene_hierarchy}
 
@@ -910,6 +913,8 @@ def make_gene_from_gff_records(gene_label,
         raise Exception, "Error: %s has no transcripts..." \
               %(gene_label)
 
+    num_transcripts_with_exons = 0
+
     for transcript_id in transcript_ids:
         transcript_info = mRNAs[transcript_id]
         transcript_rec = transcript_info['record']
@@ -918,6 +923,14 @@ def make_gene_from_gff_records(gene_label,
         strand = transcript_rec.strand
         transcript_exons = transcript_info['exons']
         exons = []
+
+        if len(transcript_exons) == 0:
+            print "%s has no exons" %(transcript_id)
+            continue
+
+        # Record how many transcripts we have with exons children
+        # (i.e., usable transcripts)
+        num_transcripts_with_exons += 1
 
         for exon_id, exon_info in transcript_exons.iteritems():
             exon_rec = exon_info['record']
@@ -948,6 +961,11 @@ def make_gene_from_gff_records(gene_label,
             
         #desc = iso_delim.join(exon_labels)
         isoform_desc.append(exon_labels)
+
+    if num_transcripts_with_exons < 2:
+        print "WARNING: %s does not have at least two mRNA/transcript entries " \
+              "with exons. Skipping over..." %(gene_label)
+        return None
 
     # Compile all exons used in all transcripts
     all_exons = []
