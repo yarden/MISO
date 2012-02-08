@@ -127,6 +127,8 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                                                                  time_str))
                 redirected_output = " >> %s;\n" %(batch_logfile)
                 cmd_to_run = redirected_output.join(batch)
+                # Redirect last command too
+                cmd_to_run += " >> %s;\n" %(batch_logfile)
 
                 # Run on cluster
                 job_name = "gene_psi_batch_%d" %(batch_num)
