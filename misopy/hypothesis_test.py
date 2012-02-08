@@ -263,8 +263,7 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
 
     # Compute the Bayes factors for each file
     for sample1_filename in sample1_filenames:
-        split_id = ".miso"
-	sample1_event_name = os.path.basename(sample1_filename).split(split_id)[0]
+        sample1_event_name = get_event_name(sample1_filename)
 
         # Parameters from raw MISO samples file
         params = parse_sampler_params(sample1_filename)
@@ -273,7 +272,7 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
         
 	# Find corresponding event filename in sample 2
         sample2_filename = filter(lambda filename:
-                                  os.path.basename(filename).split(split_id)[0] == sample1_event_name,
+                                  get_event_name(filename) == sample1_event_name,
                                   sample2_filenames)
 
 	if len(sample2_filename) == 0:

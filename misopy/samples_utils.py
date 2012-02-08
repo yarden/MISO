@@ -119,6 +119,18 @@ def get_gene_info_from_params(params):
     return gene_info
     
 
+def get_event_name(miso_filename):
+    """
+    Get event name from MISO filename.
+    """
+    basename = os.path.abspath(os.path.basename(miso_filename))
+    if not basename.endswith(".miso"):
+        # Not a MISO filename
+        return None
+    event_name = basename.split(".miso")[0]
+    return event_name
+    
+    
 def summarize_sampler_results(samples_dir, summary_filename):
     """
     Given a set of samples from MISO, output a summary file.
@@ -142,8 +154,10 @@ def summarize_sampler_results(samples_dir, summary_filename):
         # Parse sampler parameters
         params = parse_sampler_params(samples_filename)
 
-        basename = os.path.basename(samples_filename)
-    	event_name = basename.split('.')[0]
+        event_name = get_event_name(samples_filename)
+        if event_name == None:
+            print "Skipping %s" %(samples_filename)
+            continue
 
         # Load samples and header information
 	samples_results = load_samples(samples_filename)
