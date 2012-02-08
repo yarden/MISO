@@ -123,7 +123,7 @@ def get_event_name(miso_filename):
     """
     Get event name from MISO filename.
     """
-    basename = os.path.abspath(os.path.basename(miso_filename))
+    basename = os.path.basename(miso_filename)
     if not basename.endswith(".miso"):
         # Not a MISO filename
         return None

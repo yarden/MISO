@@ -379,7 +379,8 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
         file_num += 1
 
         # File name for delta posterior file
-        dp_filename = os.path.join(curr_dp_dir, sample1_event_name + '.miso_dp')
+        dp_filename = os.path.join(curr_dp_dir,
+                                   sample1_event_name + '.miso_dp')
 
         # Output the raw delta posteriors
 	dp_file = open(dp_filename, 'w')
