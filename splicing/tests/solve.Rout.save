@@ -105,4 +105,18 @@ Running gene # 10, gene-100
 [1,] 0.1968205 0.2537739 0.2159679 0.1464798 0.1677108
 [2,] 0.8031795 0.7462261 0.7840321 0.8535202 0.8322892
 > 
+> out <- tempfile()
+> dir.create(out)
+> res <- runLinear(genes, readsfile=paste(bamfile2, sep="", ".bam"),
++                  results="files", resultDir=out)
+Running gene # 1, gene-10
+Running gene # 2, gene-20
+Running gene # 3, gene-30
+Running gene # 4, gene-40
+Running gene # 5, gene-50
+Running gene # 6, gene-60
+Running gene # 7, gene-70
+Running gene # 8, gene-80
+Running gene # 9, gene-90
+Running gene # 10, gene-100
 > 

@@ -350,6 +350,7 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 			const splicing_vector_int_t *position, 
 			const char **cigarstr,
 			splicing_matrix_t *match_matrix,
+			splicing_vector_t *nomatch,
 			splicing_matrix_t *assignment_matrix, 
 			splicing_vector_t *expression,
 			splicing_vector_t *residuals, int scale);

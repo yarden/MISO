@@ -64,4 +64,4 @@ S3method("confint", "MISOresult")
 
 export(geneComplexity, assignmentMatrix)
 
-export(matchIso, solveIso, runLinear)
+export(matchIso, solveIso, runLinear, writeLinear)

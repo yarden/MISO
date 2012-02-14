@@ -38,28 +38,38 @@ solveIso <- function(geneStructure, gene=1L, reads,
   if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
 
   if (!paired) { 
-    .Call("R_splicing_solve_gene", geneStructure, as.integer(gene),
-          as.integer(readLength), as.integer(reads$position),
-          as.character(reads$cigar), as.integer(overHang), as.logical(scale),
-          PACKAGE="splicing")
+    res <- .Call("R_splicing_solve_gene", geneStructure, as.integer(gene),
+                 as.integer(readLength), as.integer(reads$position),
+                 as.character(reads$cigar), as.integer(overHang),
+                 as.logical(scale), PACKAGE="splicing")
   } else {
-    .Call("R_splicing_solve_gene_paired", geneStructure, as.integer(gene),
-          as.integer(readLength), as.integer(overHang), as.logical(scale),
-          as.integer(reads$position), as.character(reads$cigar), fragmentProb,
-          as.integer(fragmentStart), as.double(normalMean),
-          as.double(normalVar), as.double(numDevs),
-          PACKAGE="splicing")
+    res <- .Call("R_splicing_solve_gene_paired", geneStructure,
+                 as.integer(gene), as.integer(readLength),
+                 as.integer(overHang), as.logical(scale),
+                 as.integer(reads$position), as.character(reads$cigar),
+                 fragmentProb, as.integer(fragmentStart),
+                 as.double(normalMean), as.double(normalVar),
+                 as.double(numDevs), PACKAGE="splicing")
   }
+
+  res$geneStructure <- selectGenes(geneStructure, gene)
+  res$classTemplates <- ifelse(res$assignment > 0, 1, 0)
+  res  
 }
 
-## TODO: writeFunction
+writeLinear <- function(linResult, file) {
+  .Call("R_splicing_writelinear", linResult, as.character(file),
+        PACKAGE="splicing")
+  invisible(NULL)
+}
 
 runLinear <- function(geneStructure, readsfile,
                       results=c("return", "files", "Rfiles"),
                       resultDir=".", overWrite=FALSE, readLength=NULL,
                       verbose=TRUE, snowCluster=NULL, seed=NULL, ...) {
 
-  run(runFunction=solveIso, writeFunction=NULL, geneStructure=geneStructure,
+  run(runFunction=solveIso, writeFunction=writeLinear,
+      geneStructure=geneStructure,
       readsfile=readsfile, results=results, resultDir=resultDir,
       overWrite=overWrite, readLength=readLength, verbose=verbose,
       snowCluster=snowCluster, seed=seed, ...)

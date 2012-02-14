@@ -67,3 +67,7 @@ res <- runLinear(genes, readsfile=paste(bamfile2, sep="", ".bam"),
                  results="return")
 sapply(res, "[[", "expression")
 
+out <- tempfile()
+dir.create(out)
+res <- runLinear(genes, readsfile=paste(bamfile2, sep="", ".bam"),
+                 results="files", resultDir=out)

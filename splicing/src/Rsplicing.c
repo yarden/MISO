@@ -1658,7 +1658,7 @@ SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength,
   int scale=LOGICAL(pscale)[0];
   int i, noReads=GET_LENGTH(pcigar);
   splicing_matrix_t match_matrix, assignment_matrix;
-  splicing_vector_t expression, residuals;
+  splicing_vector_t nomatch, expression, residuals;
   double rnorm;
   SEXP result, names;
   
@@ -1668,6 +1668,7 @@ SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength,
   R_splicing_SEXP_to_vector_int(pposition, &position);
   splicing_matrix_init(&match_matrix, 0, 0);
   splicing_matrix_init(&assignment_matrix, 0, 0);
+  splicing_vector_init(&nomatch, 0);
   splicing_vector_init(&expression, 0);
   splicing_vector_init(&residuals, 0);
   cigarstr = (const char**) R_alloc(noReads, sizeof(char*));
@@ -1676,24 +1677,27 @@ SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength,
   }
   
   splicing_solve_gene(&gff, gene, readLength, overhang, &position, cigarstr, 
-		      &match_matrix, &assignment_matrix, &expression, 
-		      &residuals, scale);
+		      &match_matrix, &nomatch, &assignment_matrix, 
+		      &expression, &residuals, scale);
   
-  PROTECT(result=NEW_LIST(4));
+  PROTECT(result=NEW_LIST(5));
   SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&match_matrix));
   splicing_matrix_destroy(&match_matrix);
-  SET_VECTOR_ELT(result, 1, R_splicing_matrix_to_SEXP(&assignment_matrix));
+  SET_VECTOR_ELT(result, 1, R_splicing_vector_to_SEXP(&nomatch));
+  splicing_vector_destroy(&nomatch);
+  SET_VECTOR_ELT(result, 2, R_splicing_matrix_to_SEXP(&assignment_matrix));
   splicing_matrix_destroy(&assignment_matrix);
-  SET_VECTOR_ELT(result, 2, R_splicing_vector_to_SEXP(&expression));
+  SET_VECTOR_ELT(result, 3, R_splicing_vector_to_SEXP(&expression));
   splicing_vector_destroy(&expression);
-  SET_VECTOR_ELT(result, 3, R_splicing_vector_to_SEXP(&residuals));
+  SET_VECTOR_ELT(result, 4, R_splicing_vector_to_SEXP(&residuals));
   splicing_vector_destroy(&residuals);
   
-  PROTECT(names=NEW_CHARACTER(4));
+  PROTECT(names=NEW_CHARACTER(5));
   SET_STRING_ELT(names, 0, mkChar("match"));
-  SET_STRING_ELT(names, 1, mkChar("assignment"));
-  SET_STRING_ELT(names, 2, mkChar("expression"));
-  SET_STRING_ELT(names, 3, mkChar("residuals"));
+  SET_STRING_ELT(names, 1, mkChar("nomatch"));
+  SET_STRING_ELT(names, 2, mkChar("assignment"));
+  SET_STRING_ELT(names, 3, mkChar("expression"));
+  SET_STRING_ELT(names, 4, mkChar("residuals"));
   SET_NAMES(result, names); 
   
   R_splicing_end();
@@ -2312,6 +2316,7 @@ SEXP R_splicing_writemiso(SEXP pmisoresult, SEXP pfile) {
   R_splicing_SEXP_to_gff(pgeneStructure, &gff);
   
   fputs("[runData]\n", file);
+  fprintf(file, "noReads: %i\n", noReads);
   fprintf(file, "noIso: %i\n", noIso);
   fprintf(file, "noIters: %i\n", noIters);
   fprintf(file, "noBurnIn: %i\n", noBurnIn);
@@ -2360,6 +2365,78 @@ SEXP R_splicing_writemiso(SEXP pmisoresult, SEXP pfile) {
 
   fclose(file);
   R_splicing_end();  
+  return R_NilValue;
+}
+
+SEXP R_splicing_writelinear(SEXP plinresult, SEXP pfile) {
+  SEXP pmatch=R_splicing_getListElement(plinresult, "match");
+  SEXP pnomatch=R_splicing_getListElement(plinresult, "nomatch");
+  SEXP passignment=R_splicing_getListElement(plinresult, "assignment");
+  SEXP pexpression=R_splicing_getListElement(plinresult, "expression");
+  SEXP presiduals=R_splicing_getListElement(plinresult, "residuals");
+  SEXP pgeneStructure=R_splicing_getListElement(plinresult, "geneStructure");
+  
+  int noClasses=INTEGER(GET_DIM(passignment))[1];
+  int noReads=INTEGER(GET_DIM(pmatch))[1];
+  int noIso=INTEGER(GET_DIM(pmatch))[0];
+
+  double *matchMatrix=REAL(pmatch);
+  double *nomatch=REAL(pnomatch);
+  double *assignment=REAL(passignment);
+  double *expression=REAL(pexpression);
+  double *residuals=REAL(presiduals);
+
+  splicing_gff_t gff;
+
+  const char *filename=CHAR(STRING_ELT(pfile, 0));
+  FILE *file=fopen(filename, "w");
+  int i, j, idx;
+  
+  R_splicing_begin();
+
+  R_splicing_SEXP_to_gff(pgeneStructure, &gff);
+
+  fputs("[runData]\n", file);
+  fprintf(file, "noReads: %i\n", noReads);
+  fprintf(file, "noIso: %i\n", noIso);
+
+  fputs("\n[expression]\n", file);
+  for (i=0; i<noIso-1; i++) {
+    fprintf(file, "%g ", expression[i]);
+  } 
+  fprintf(file, "%g\n", expression[i]);
+
+  fputs("\n[residuals]\n", file);
+  for (i=0; i<noIso-1; i++) {
+    fprintf(file, "%g ", residuals[i]);
+  } 
+  fprintf(file, "%g\n", residuals[i]);
+
+  fputs("\n[geneStructure]\n", file);
+  splicing_gff_write(file, &gff);
+  
+  fputs("\n[classTemplates]\n", file);
+  for (i=0, idx=0; i<noClasses; i++) {
+    for (j=0; j<noIso-1; j++) {
+      fprintf(file, "%i ", assignment[idx++] > 0 ? 1 : 0);
+    }
+    fprintf(file, "%i\n", assignment[idx++] > 0 ? 1 : 0);
+  }
+
+  fputs("\n[classCounts]\n", file);
+  for (i=0, idx=0; i<noClasses; i++) {
+    fprintf(file, "%g\n", nomatch[idx++]);
+  }
+
+  fputs("\n[matchMatrix]\n", file);
+  for (i=0, idx=0; i<noReads; i++) { 
+    for (j=0; j<noIso-1; j++) {
+      fprintf(file, "%g ", matchMatrix[idx++]);
+    }
+    fprintf(file, "%g\n", matchMatrix[idx++]);
+  }  
+  
+  R_splicing_end();
   return R_NilValue;
 }
 

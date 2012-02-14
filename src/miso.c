@@ -388,7 +388,7 @@ int splicing_drift_proposal_init(int noiso, int noChains,
       if (!paired) { 
 	SPLICING_CHECK(splicing_solve_gene(gff, gene, readLength, 
 				       overHang, position, cigarstr,
-				       /*match_matrix=*/ 0, 
+				       /*match_matrix=*/ 0, /*nomatch=*/ 0,
 				       /*assignment_matrix=*/ 0,
 				       &tmp, /*residuals=*/ 0,
 				       /*scale=*/ 1));
