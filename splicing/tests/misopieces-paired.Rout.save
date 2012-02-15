@@ -1,5 +1,5 @@
 
-R version 2.13.1 (2011-07-08)
+R version 2.14.0 (2011-10-31)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
@@ -105,7 +105,7 @@ Type 'q()' to quit R.
 > 
 > .Call("R_splicing_score_iso_paired", psi, 3L, assignment, isolen,
 +       assscores, PACKAGE="splicing")
-[1] -865.16
+[1] -866.7283
 > 
 > psi2 <- cbind(c(5/10, 3/10, 2/10))
 > assignment <- .Call("R_splicing_reassign_samples_paired",
@@ -114,7 +114,7 @@ Type 'q()' to quit R.
 > 
 > .Call("R_splicing_score_iso_paired", psi, 3L, assignment, isolen,
 +       assscores, PACKAGE="splicing")
-[1] -1144.163
+[1] -1144.744
 > 
 > ## SCORE_JOINT_PAIRED
 > 
@@ -161,7 +161,7 @@ Type 'q()' to quit R.
 +       as.integer(noPairs(reads)), 1L, psi, hyper,
 +       isolen, isoscores, assscores, fragmentLength,
 +       dist$fragmentStart, PACKAGE="splicing")
-[1] -5897.871
+[1] -5898.809
 > 
 > psi2 <- cbind(c(5/10, 3/10, 2/10))
 > assignment <- .Call("R_splicing_reassign_samples_paired",
@@ -172,7 +172,7 @@ Type 'q()' to quit R.
 +       as.integer(noPairs(reads)), 1L, psi, hyper,
 +       isolen, isoscores, assscores, fragmentLength,
 +       dist$fragmentStart, PACKAGE="splicing")
-[1] -6086.493
+[1] -6086.352
 > 
 > ## METROPOLIS_HASTINGS_RATIO_PAIRED
 > 
@@ -223,13 +223,13 @@ Type 'q()' to quit R.
 +       isoscores, assscores, matches[[2]], dist$fragmentStart, 1L,
 +       PACKAGE="splicing")
 $acceptP
-[1] 6.215784e-124
+[1] 1.553946e-123
 
 $pcJS
-[1] -5897.871
+[1] -5898.809
 
 $ppJS
-[1] -6155.368
+[1] -6155.39
 
 > 
 > .Call("R_splicing_metropolis_hastings_ratio_paired", assignment,
@@ -238,13 +238,13 @@ $ppJS
 +       isoscores, assscores, matches[[2]], dist$fragmentStart, 1L,
 +       PACKAGE="splicing")
 $acceptP
-[1] 1.608808e+123
+[1] 6.43523e+122
 
 $pcJS
-[1] -6155.368
+[1] -6155.39
 
 $ppJS
-[1] -5897.871
+[1] -5898.809
 
 > 
 > 
