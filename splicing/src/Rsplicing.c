@@ -1727,7 +1727,7 @@ SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength,
   double normalVar=REAL(pnormalVar)[0];
   double numDevs=REAL(pnumDevs)[0];
   splicing_matrix_t match_matrix, assignment_matrix;
-  splicing_vector_t expression, residuals;
+  splicing_vector_t expression, residuals, nomatch;
   double rnorm;
   SEXP result, names;
   
@@ -1740,6 +1740,7 @@ SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength,
   }
   splicing_matrix_init(&match_matrix, 0, 0);
   splicing_matrix_init(&assignment_matrix, 0, 0);
+  splicing_vector_init(&nomatch, 0);
   splicing_vector_init(&expression, 0);
   splicing_vector_init(&residuals, 0);
   cigarstr = (const char**) R_alloc(noReads, sizeof(char*));
@@ -1751,24 +1752,27 @@ SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength,
 			     cigarstr, 
 			     isNull(pfragmentprob) ? 0 : &fragmentprob, 
 			     fragmentstart, normalMean, normalVar, numDevs,
-			     &match_matrix, &assignment_matrix, &expression, 
-			     &residuals, scale);
+			     &match_matrix, &nomatch, &assignment_matrix, 
+			     &expression, &residuals, scale);
   
-  PROTECT(result=NEW_LIST(4));
+  PROTECT(result=NEW_LIST(5));
   SET_VECTOR_ELT(result, 0, R_splicing_matrix_to_SEXP(&match_matrix));
   splicing_matrix_destroy(&match_matrix);
-  SET_VECTOR_ELT(result, 1, R_splicing_matrix_to_SEXP(&assignment_matrix));
+  SET_VECTOR_ELT(result, 1, R_splicing_vector_to_SEXP(&nomatch));
+  splicing_vector_destroy(&nomatch);
+  SET_VECTOR_ELT(result, 2, R_splicing_matrix_to_SEXP(&assignment_matrix));
   splicing_matrix_destroy(&assignment_matrix);
-  SET_VECTOR_ELT(result, 2, R_splicing_vector_to_SEXP(&expression));
+  SET_VECTOR_ELT(result, 3, R_splicing_vector_to_SEXP(&expression));
   splicing_vector_destroy(&expression);
-  SET_VECTOR_ELT(result, 3, R_splicing_vector_to_SEXP(&residuals));
+  SET_VECTOR_ELT(result, 4, R_splicing_vector_to_SEXP(&residuals));
   splicing_vector_destroy(&residuals);
   
-  PROTECT(names=NEW_CHARACTER(4));
+  PROTECT(names=NEW_CHARACTER(5));
   SET_STRING_ELT(names, 0, mkChar("match"));
-  SET_STRING_ELT(names, 1, mkChar("assignment"));
-  SET_STRING_ELT(names, 2, mkChar("expression"));
-  SET_STRING_ELT(names, 3, mkChar("residuals"));
+  SET_STRING_ELT(names, 1, mkChar("nomatch"));
+  SET_STRING_ELT(names, 2, mkChar("assignment"));
+  SET_STRING_ELT(names, 3, mkChar("expression"));
+  SET_STRING_ELT(names, 4, mkChar("residuals"));
   SET_NAMES(result, names); 
   
   R_splicing_end();

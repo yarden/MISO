@@ -397,7 +397,7 @@ int splicing_drift_proposal_init(int noiso, int noChains,
 				       overHang, position,
 				       cigarstr, fragmentProb, fragmentStart,
 				       normalMean, normalVar, numDevs,
-				       /*match_matrix=*/ 0,
+				       /*match_matrix=*/ 0, /*nomatch=*/ 0,
 				       /*assignment_matrix=*/ 0, &tmp,
 				       /*residuals=*/ 0, /*scale*/ 1));
       }

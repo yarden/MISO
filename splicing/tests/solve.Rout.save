@@ -120,3 +120,58 @@ Running gene # 8, gene-80
 Running gene # 9, gene-90
 Running gene # 10, gene-100
 > 
+> ##########
+> 
+> readlist2 <- lapply(seq_along(genelist), function(x)
++                     simulateReads(geneStructure=genes, gene=x,
++                                   qname=sprintf("read-%i-%%i", x),
++                                   expression=c(2/10, 8/10),
++                                   noReads=1000L, readLength=35, paired=TRUE,
++                                   normalMean=90, normalVar=50, numDevs=4))
+> 
+> reads2 <- do.call(mergeReads, readlist2)
+> 
+> samfile <- paste(tempfile(), sep="", ".sam")
+> bamfile <- paste(tempfile(), sep="", ".bam")
+> bamfile2 <- tempfile()
+> writeSAM(reads2, samfile)
+> SAMFile2BAMFile(samfile, bamfile)
+> sortBAMFile(bamfile, bamfile2)
+> indexBAMFile(paste(bamfile2, sep="", ".bam"))
+> 
+> res <- runLinear(genes, readsfile=paste(bamfile2, sep="", ".bam"),
++                  results="return", normalMean=90, normalVar=50, numDevs=4)
+Running gene # 1, gene-10
+Running gene # 2, gene-20
+Running gene # 3, gene-30
+Running gene # 4, gene-40
+Running gene # 5, gene-50
+Running gene # 6, gene-60
+Running gene # 7, gene-70
+Running gene # 8, gene-80
+Running gene # 9, gene-90
+Running gene # 10, gene-100
+> sapply(res, "[[", "expression")
+     gene-10   gene-20 gene-30   gene-40   gene-50
+[1,]       1 0.3381714       0 0.1035586 0.2385076
+[2,]       0 0.6618286       1 0.8964414 0.7614924
+       gene-60   gene-70   gene-80    gene-90  gene-100
+[1,] 0.1145723 0.1308477 0.1172599 0.05067211 0.1564116
+[2,] 0.8854277 0.8691523 0.8827401 0.94932789 0.8435884
+> 
+> out <- tempfile()
+> dir.create(out)
+> res <- runLinear(genes, readsfile=paste(bamfile2, sep="", ".bam"),
++                  results="files", resultDir=out, normalMean=90,
++                  normalVar=50, numDevs=4)
+Running gene # 1, gene-10
+Running gene # 2, gene-20
+Running gene # 3, gene-30
+Running gene # 4, gene-40
+Running gene # 5, gene-50
+Running gene # 6, gene-60
+Running gene # 7, gene-70
+Running gene # 8, gene-80
+Running gene # 9, gene-90
+Running gene # 10, gene-100
+> 

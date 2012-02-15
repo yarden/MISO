@@ -71,3 +71,32 @@ out <- tempfile()
 dir.create(out)
 res <- runLinear(genes, readsfile=paste(bamfile2, sep="", ".bam"),
                  results="files", resultDir=out)
+
+##########
+
+readlist2 <- lapply(seq_along(genelist), function(x)
+                    simulateReads(geneStructure=genes, gene=x,
+                                  qname=sprintf("read-%i-%%i", x),
+                                  expression=c(2/10, 8/10),
+                                  noReads=1000L, readLength=35, paired=TRUE,
+                                  normalMean=90, normalVar=50, numDevs=4))
+
+reads2 <- do.call(mergeReads, readlist2)
+
+samfile <- paste(tempfile(), sep="", ".sam")
+bamfile <- paste(tempfile(), sep="", ".bam")
+bamfile2 <- tempfile()
+writeSAM(reads2, samfile)
+SAMFile2BAMFile(samfile, bamfile)
+sortBAMFile(bamfile, bamfile2)
+indexBAMFile(paste(bamfile2, sep="", ".bam"))
+
+res <- runLinear(genes, readsfile=paste(bamfile2, sep="", ".bam"),
+                 results="return", normalMean=90, normalVar=50, numDevs=4)
+sapply(res, "[[", "expression")
+
+out <- tempfile()
+dir.create(out)
+res <- runLinear(genes, readsfile=paste(bamfile2, sep="", ".bam"),
+                 results="files", resultDir=out, normalMean=90,
+                 normalVar=50, numDevs=4)

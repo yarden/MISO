@@ -395,12 +395,13 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       int fragmentStart, double normalMean,
 			       double normalVar, double numDevs,
 			       splicing_matrix_t *match_matrix,
+			       splicing_vector_t *nomatch,
 			       splicing_matrix_t *assignment_matrix,
 			       splicing_vector_t *expression, 
 			       splicing_vector_t *residuals, int scale) {
   
   splicing_matrix_t A;
-  splicing_vector_t match, omatch;
+  splicing_vector_t match, *mynomatch=nomatch, vnomatch;
   splicing_vector_long_t index;
   size_t no_classes;
   size_t no_reads=splicing_vector_int_size(position);
@@ -411,6 +412,12 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 
   splicing_matrix_t *mymatch_matrix=match_matrix, vmatch_matrix;
   splicing_matrix_t *myass_matrix=assignment_matrix, vass_matrix;
+
+  if (!nomatch) {
+    mynomatch=&vnomatch;
+    SPLICING_CHECK(splicing_vector_init(mynomatch, 0));
+    SPLICING_FINALLY(splicing_vector_destroy, mynomatch);
+  }
 
   if (!match_matrix) {
     mymatch_matrix=&vmatch_matrix;
@@ -465,9 +472,7 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_matrix_transpose(&A));
   SPLICING_CHECK(splicing_vector_long_init(&index, 0));
   SPLICING_FINALLY(splicing_vector_long_destroy, &index);
-  SPLICING_CHECK(splicing_vector_init(&omatch, no_classes));
-  SPLICING_FINALLY(splicing_vector_destroy, &omatch);
-  splicing_vector_update(&omatch, &match);
+  splicing_vector_update(mynomatch, &match);
   
   SPLICING_CHECK(splicing_nnls(&A, &match, expression, &rnorm, &index,
 			       &nsetp));
@@ -478,7 +483,7 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 		   expression, /*beta=*/ 0.0, &match);
     SPLICING_CHECK(splicing_vector_resize(residuals, no_classes));
     for (i=0; i<n; i++) {
-      VECTOR(*residuals)[i] = VECTOR(omatch)[i] - VECTOR(match)[i];
+      VECTOR(*residuals)[i] = VECTOR(*mynomatch)[i] - VECTOR(match)[i];
     }
   }
 
@@ -490,12 +495,15 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
     splicing_matrix_destroy(mymatch_matrix);
     SPLICING_FINALLY_CLEAN(1);
   }  
+  if (!nomatch) { 
+    splicing_vector_destroy(mynomatch);
+    SPLICING_FINALLY_CLEAN(1);
+  }
 
-  splicing_vector_destroy(&omatch);
   splicing_vector_long_destroy(&index);
   splicing_matrix_destroy(&A);
   splicing_vector_destroy(&match);
-  SPLICING_FINALLY_CLEAN(4);
+  SPLICING_FINALLY_CLEAN(3);
 
   if (scale) {
     double fac=1.0/splicing_vector_sum(expression);

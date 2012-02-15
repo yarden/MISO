@@ -363,6 +363,7 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       int fragmentStart, double normalMean,
 			       double normalVar, double numDevs,
 			       splicing_matrix_t *match_matrix,
+			       splicing_vector_t *nomatch,
 			       splicing_matrix_t *assignment_matrix,
 			       splicing_vector_t *expression, 
 			       splicing_vector_t *residuals, int scale);
