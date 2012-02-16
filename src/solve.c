@@ -131,7 +131,7 @@ int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
     SPLICING_CHECK(splicing_vector_init(&vfragmentProb, 0));
     SPLICING_FINALLY(splicing_vector_destroy, &vfragmentProb);
     SPLICING_CHECK(splicing_normal_fragment(normalMean, normalVar, numDevs, 
-					    2*readLength, myfragmentProb,
+					    readLength, myfragmentProb,
 					    &fragmentStart));
     splicing_vector_scale(myfragmentProb, 
 			  1.0/splicing_vector_sum(myfragmentProb));
