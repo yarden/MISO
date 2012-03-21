@@ -98,7 +98,7 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
     if settings != None:
         load_settings(settings)
         cmd_name = Settings.get_cluster_command()
-	prflight_cmd = Settings.get_cluster_preflight()
+	preflight_cmd = Settings.get_cluster_preflight()
 
     if queue_type == "long":
         queue_name = Settings.get_long_queue_name()
