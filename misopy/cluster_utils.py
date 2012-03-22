@@ -61,7 +61,7 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
                          chunk=2500,
                          settings=None,
                          cmd_name="qsub",
-                         job_name="miso_job"):
+                         job_name="miso_job", preflight=None):
     """
     Run MISO jobs on cluster using SGE.
 
@@ -98,6 +98,7 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
     if settings != None:
         load_settings(settings)
         cmd_name = Settings.get_cluster_command()
+	preflight_cmd = Settings.get_cluster_preflight()
 
     if queue_type == "long":
         queue_name = Settings.get_long_queue_name()
@@ -127,6 +128,8 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
     cs.write("#$ -V\n") 
     if queue_name:
         cs.write("#$ -l %s\n" %(queue_name))
+    if preflight_cmd:
+	cs.write(preflight_cmd + "\n")
     cs.write("echo \"hostname is:\"\n")
     cs.write("hostname\n")
     cs.write("ARGFILE=%s\n" %argfile)
@@ -146,6 +149,7 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
     cs.write("done\n")
     cs.close()
 
+    os.system('chmod +x \"%s\"' %(cluster_script))
     qsub_cmd = cmd_name + ' \"%s\"' %(cluster_script)
 
     os.system(qsub_cmd)

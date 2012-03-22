@@ -80,6 +80,17 @@ class Settings(object):
             return None
 
     @classmethod
+    def get_cluster_preflight(cls):
+        """
+        Return a command script to use to set up the cluster environment
+	before running MISO, e.g. altering PATH
+        """
+        if 'cluster_preflight' in cls.global_settings:
+            return cls.global_settings['cluster_preflight']
+        else:
+            return None
+
+    @classmethod
     def get_long_queue_name(cls):
         """
         Return the name of the long queue (for long jobs.)
