@@ -61,7 +61,7 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
                          chunk=2500,
                          settings=None,
                          cmd_name="qsub",
-                         job_name="miso_job", preflight=None):
+                         job_name="miso_job"):
     """
     Run MISO jobs on cluster using SGE.
 
