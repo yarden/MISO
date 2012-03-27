@@ -4,6 +4,7 @@
 import os
 
 import matplotlib
+matplotlib.use("PDF")
 import matplotlib.pyplot as plt
 from matplotlib import rc
 
@@ -20,8 +21,10 @@ class Sashimi:
         """
         Initialize image settings.
         """
+        plt.switch_backend("PDF")
         self.output_ext = ".pdf"
         if png:
+            plt.switch_backend("Agg")
             self.output_ext = ".png"
         
         # Plot label, will be used in creating the plot
