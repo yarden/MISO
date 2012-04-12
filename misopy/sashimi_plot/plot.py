@@ -186,7 +186,8 @@ def plot_insert_len(insert_len_filename,
     sashimi_obj.save_plot()
         
 
-def plot_posterior(miso_filename, settings_filename, output_dir):
+def plot_posterior(miso_filename, settings_filename, output_dir,
+                   with_intervals=90):
     """
     Plot posterior distribution.
     """
