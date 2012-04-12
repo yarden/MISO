@@ -187,7 +187,8 @@ def plot_insert_len(insert_len_filename,
         
 
 def plot_posterior(miso_filename, settings_filename, output_dir,
-                   with_intervals=90):
+                   with_intervals=90,
+                   plot_mean=False):
     """
     Plot posterior distribution.
     """
