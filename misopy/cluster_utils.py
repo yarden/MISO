@@ -146,6 +146,8 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
     cs.write("done\n")
     cs.close()
 
+    # Make script executable
+    os.system('chmod +x \"%s\"' %(cluster_script))
     qsub_cmd = cmd_name + ' \"%s\"' %(cluster_script)
 
     os.system(qsub_cmd)
