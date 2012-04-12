@@ -187,8 +187,7 @@ def plot_insert_len(insert_len_filename,
         
 
 def plot_posterior(miso_filename, settings_filename, output_dir,
-                   with_intervals=90,
-                   plot_mean=False):
+                   plot_mean=False, with_intervals=95):
     """
     Plot posterior distribution.
     """
@@ -196,6 +195,17 @@ def plot_posterior(miso_filename, settings_filename, output_dir,
     samples, h, log_scores, sampled_map,\
              sampled_map_log_score, counts_info = load_samples(miso_filename)
     params = parse_sampler_params(miso_filename)
+
+    plot_name = os.path.basename(miso_filename).replace(".miso", "")
+
+    sashimi_obj = Sashimi(plot_name, output_dir,
+                          settings_filename=settings_filename)
+    settings = sashimi_obj.settings
+    # Setup the figure
+    sashimi_obj.setup_figure()
+
+    dimensions = (settings["fig_width"],
+                  settings["fig_height"])
     
     sp = SamplesPlotter(samples, params)
     
@@ -211,9 +221,10 @@ def plot_posterior(miso_filename, settings_filename, output_dir,
     print "Plotting posterior distribution..."
     print "  - MISO event file: %s" %(miso_filename)
     print "  - Output dir: %s" %(output_dir)
-    
+    sashimi_obj.setup_figure()
     sp.plot(plot_intervals=with_intervals, fig_dims=dimensions,
             plot_mean=plot_mean)
+    sashimi_obj.save_plot()
 
     # Determine output format type
     # if not png:
