@@ -195,7 +195,7 @@ def plot_density(sashimi_obj, pickle_filename, event):
     nfiles = len(bam_files)
     suptitle(event, fontsize=10)
     plotted_axes = []
-
+    
     for i in range(nfiles):
         if colors is not None:
             color = colors[i]
@@ -211,7 +211,6 @@ def plot_density(sashimi_obj, pickle_filename, event):
             showXaxis = True 
 
         bam_file = os.path.expanduser(bam_files[i])
-        miso_file = os.path.expanduser(miso_files[i])
         ax1 = subplot2grid((nfiles + 3, gene_posterior_ratio), (i, 0),
                            colspan=gene_posterior_ratio - 1)
         
@@ -234,6 +233,7 @@ def plot_density(sashimi_obj, pickle_filename, event):
         plotted_axes.append(plotted_ax)
 
         if show_posteriors:
+            miso_file = os.path.expanduser(miso_files[i])
             try:
                 ax2 = subplot2grid((nfiles + 3, gene_posterior_ratio),\
                     (i, gene_posterior_ratio - 1))
@@ -391,6 +391,7 @@ def readsToWiggle_pysam(reads, tx_start, tx_end):
         aligned_positions = read.positions
         for i, pos in enumerate(aligned_positions):
             if pos < tx_start or pos > tx_end:
+                print "=>",pos
                 continue
             wig_index = pos-tx_start
             wiggle[wig_index] += 1./read.qlen
