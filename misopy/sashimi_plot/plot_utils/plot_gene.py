@@ -319,7 +319,6 @@ def plot_density(sashimi_obj, pickle_filename, event):
         else:
             label_ypos = universal_yticks[-1]
         curr_label = settings["sample_labels"][sample_num]
-        print "Curr label: %s" %(curr_label)
         curr_ax.text(max(graphcoords), label_ypos,
                      curr_label,
                      fontsize=font_size,
@@ -391,7 +390,7 @@ def readsToWiggle_pysam(reads, tx_start, tx_end):
         aligned_positions = read.positions
         for i, pos in enumerate(aligned_positions):
             if pos < tx_start or pos > tx_end:
-                print "=>",pos
+#                print "=>",pos
                 continue
             wig_index = pos-tx_start
             wiggle[wig_index] += 1./read.qlen
