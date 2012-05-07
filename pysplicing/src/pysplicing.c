@@ -424,8 +424,10 @@ static PyObject* pysplicing_solve_gene(PyObject *self, PyObject *args) {
   SPLICING_PYCHECK(splicing_solve_gene(mygff, gene, readLength, overhang,
 				       &myposition, 
 				       (const char **) myreadcigar.table,
-				       &match_matrix, &assignment_matrix,
-				       &expression));
+				       &match_matrix, /*nomatch=*/ 0, 
+				       &assignment_matrix,
+				       &expression, /*residuals=*/ 0, 
+				       /*scale=*/ 0));
   
   r1=pysplicing_from_matrix(&match_matrix);
   r2=pysplicing_from_matrix(&assignment_matrix);
