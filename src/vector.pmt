@@ -498,6 +498,26 @@ int FUNCTION(splicing_vector,push_back) (TYPE(splicing_vector)* v, BASE e) {
 	return 0;
 }
 
+int FUNCTION(splicing_vector,push_back2)(TYPE(splicing_vector)* v, BASE e1, 
+					 BASE e2) {
+  assert(v != NULL);
+  assert(v->stor_begin != NULL);
+	
+  /* full, allocate more storage */
+  if (v->stor_end == v->end || v->stor_end == v->end+1) {
+    long int size=FUNCTION(splicing_vector,size)(v);
+    long int new_size = size==0 ? 2 : (size==1 ? 4 : size*2);
+    SPLICING_CHECK(FUNCTION(splicing_vector,reserve)(v, new_size));
+  }
+  
+  *(v->end) = e1;
+  v->end += 1;
+  *(v->end) = e2;
+  v->end += 1;
+  
+  return 0;
+}
+
 /**
  * \ingroup vector
  * \function splicing_vector_insert

@@ -141,15 +141,15 @@ typedef struct splicing_miso_rundata_t {
 } splicing_miso_rundata_t;
 
 typedef enum splicing_miso_start_t {
-  SPLICING_MISO_START_AUTO,
-  SPLICING_MISO_START_UNIFORM,
-  SPLICING_MISO_START_RANDOM,
-  SPLICING_MISO_START_GIVEN,
-  SPLICING_MISO_START_LINEAR } splicing_miso_start_t;
+  SPLICING_MISO_START_AUTO=0,
+  SPLICING_MISO_START_UNIFORM=1,
+  SPLICING_MISO_START_RANDOM=2,
+  SPLICING_MISO_START_GIVEN=3,
+  SPLICING_MISO_START_LINEAR=4 } splicing_miso_start_t;
 
 typedef enum splicing_miso_stop_t {
-  SPLICING_MISO_STOP_FIXEDNO,
-  SPLICING_MISO_STOP_CONVERGENT_MEAN,
+  SPLICING_MISO_STOP_FIXEDNO=0,
+  SPLICING_MISO_STOP_CONVERGENT_MEAN=1,
 } splicing_miso_stop_t;
 
 int splicing_matchIso(const splicing_gff_t *gff, int gene, 
@@ -350,19 +350,23 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 			const splicing_vector_int_t *position, 
 			const char **cigarstr,
 			splicing_matrix_t *match_matrix,
+			splicing_vector_t *nomatch,
 			splicing_matrix_t *assignment_matrix, 
-			splicing_vector_t *expression);
+			splicing_vector_t *expression,
+			splicing_vector_t *residuals, int scale);
 
 int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
-			       int readLength, int overHang,
+			       int readLength, int overHang, 
 			       const splicing_vector_int_t *position,
 			       const char **cigarstr,
 			       const splicing_vector_t *fragmentProb,
 			       int fragmentStart, double normalMean,
 			       double normalVar, double numDevs,
 			       splicing_matrix_t *match_matrix,
+			       splicing_vector_t *nomatch,
 			       splicing_matrix_t *assignment_matrix,
-			       splicing_vector_t *expression);
+			       splicing_vector_t *expression, 
+			       splicing_vector_t *residuals, int scale);
 
 typedef struct splicing_gff_converter_t {
   size_t noiso;
@@ -460,6 +464,10 @@ int splicing_metropolis_hastings_ratio_paired(
 			      splicing_vector_t *pcJS, 
 			      splicing_vector_t *ppJS);
 
+int splicing_dgemv(int transpose, double alpha,
+		   const splicing_matrix_t* a, const splicing_vector_t* x,
+		   double beta, splicing_vector_t* y);
+
 int splicing_dgesdd(const splicing_matrix_t *matrix, 
 		    splicing_vector_t *values);
 
@@ -482,5 +490,26 @@ int splicing_gene_complexity(const splicing_gff_t *gff, size_t gene,
 int splicing_rng_get_dirichlet(splicing_rng_t *rng, 
 			       const splicing_vector_t *alpha, 
 			       splicing_vector_t *result);
+
+typedef enum {
+  SPLICING_CONSTITUTIVE_FULL=0,
+  SPLICING_CONSTITUTIVE_ALL=1 } splicing_constitutive_mode_t;
+
+typedef struct {
+  splicing_strvector_t seqids;
+  splicing_vector_int_t seqid;
+  splicing_vector_int_t start;
+  splicing_vector_int_t end;
+} splicing_exonset_t;
+
+int splicing_exonset_init(splicing_exonset_t *ex, size_t size);
+void splicing_exonset_destroy(splicing_exonset_t *ex);
+int splicing_exonset_append(splicing_exonset_t *ex, const char *seqid, 
+			    int start, int end);
+
+int splicing_gff_constitutive_exons(const splicing_gff_t *gff,
+				    splicing_exonset_t *exons,
+				    int min_length, 
+				    splicing_constitutive_mode_t mode);
 
 #endif

@@ -2,15 +2,15 @@
 #ifdef EXTERNAL_LAPACK
 #define splicingdcopy_ dcopy_
 #define splicinglsame_ lsame_
-#define splicingdrot _ drot _
-#define splicingdgemm _ dgemm _
+#define splicingdrot_ drot_
+#define splicingdgemm_ dgemm_
 #define splicingdnrm2_ dnrm2_
-#define splicingdscal _ dscal _
+#define splicingdscal_ dscal_
 #define splicingdswap_ dswap_
 #define splicingddot_ ddot_
-#define splicingdgemv _ dgemv _
-#define splicingdger _ dger _
-#define splicingdtrmm _ dtrmm _
+#define splicingdgemv_ dgemv_
+#define splicingdger_ dger_
+#define splicingdtrmm_ dtrmm_
 #define splicingdtrmv_ dtrmv_
 #define splicingdgesdd_ dgesdd_
 #define splicingdbdsdc_ dbdsdc_

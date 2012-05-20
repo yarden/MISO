@@ -178,7 +178,9 @@ class MISOSampler:
 
     def run_sampler(self, num_iters, reads, gene, hyperparameters, params,
                     output_file, burn_in=1000, lag=2,
-                    prior_params=None):
+                    prior_params=None, no_chains=2, 
+                    start_cond=pysplicing.MISO_START_AUTO,
+                    stop_cond=pysplicing.MISO_STOP_CONVERGENT_MEAN):
         """
         Fast version of MISO MCMC sampler.
 
@@ -263,7 +265,10 @@ class MISOSampler:
                                                  long(num_iters),
                                                  long(burn_in),
                                                  long(lag),
-                                                 prior_params)
+                                                 prior_params, 
+                                                 long(self.overhang_len),
+                                                 long(no_chains),
+                                                 start_cond, stop_cond)
         else:
             # Run single-end
             miso_results = pysplicing.MISO(c_gene, 0L,
@@ -273,7 +278,10 @@ class MISOSampler:
                                            long(num_iters),
                                            long(burn_in),
                                            long(lag),
-                                           prior_params)
+                                           prior_params, 
+                                           long(self.overhang_len),
+                                           long(no_chains),
+                                           start_cond, stop_cond)
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0]))

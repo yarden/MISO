@@ -781,7 +781,7 @@ int splicing_gff_exon_start_end(const splicing_gff_t *gff,
 int splicing_gff_write(FILE *output, const splicing_gff_t *gff) {
 
   size_t i, n=gff->n;
-  size_t gene=-1;
+  int gene=-1;
   const char *types[] = { "gene", "mRNA", "exon", "CDS", "start_codon",
 			  "stop_codon" };
   const char *strands[] = { "+", "-", "." };
@@ -789,7 +789,7 @@ int splicing_gff_write(FILE *output, const splicing_gff_t *gff) {
   for (i=0; i<n; i++) {
 
     if (VECTOR(gff->type)[i] == SPLICING_TYPE_GENE) { gene++; }
-
+    
     fprintf(output, "%s\t%s\t%s\t%li\t%li\t", 
 	    splicing_strvector_get(&gff->seqids, VECTOR(gff->seqid)[gene]),
 	    splicing_strvector_get(&gff->sources, VECTOR(gff->source)[gene]),
@@ -1216,4 +1216,200 @@ int splicing_gff_fprint(const splicing_gff_t *gff,
 
 int splicing_gff_print(const splicing_gff_t *gff) {
   return splicing_gff_fprint(gff, stdout);
+}
+
+/* size is ignored now */
+
+int splicing_exonset_init(splicing_exonset_t *ex, size_t size) {
+  SPLICING_CHECK(splicing_strvector_init(&ex->seqids, 0));
+  SPLICING_FINALLY(splicing_strvector_destroy, &ex->seqids);
+  SPLICING_CHECK(splicing_vector_int_init(&ex->seqid, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &ex->seqid);
+  SPLICING_CHECK(splicing_vector_int_init(&ex->start, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &ex->start);
+  SPLICING_CHECK(splicing_vector_int_init(&ex->end, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &ex->end);
+  SPLICING_FINALLY_CLEAN(4);
+  return 0;
+}
+
+void splicing_exonset_destroy(splicing_exonset_t *ex) {
+  splicing_strvector_destroy(&ex->seqids);
+  splicing_vector_int_destroy(&ex->seqid);
+  splicing_vector_int_destroy(&ex->start);
+  splicing_vector_int_destroy(&ex->end);
+}
+
+int splicing_exonset_append(splicing_exonset_t *ex, const char *seqid, 
+			    int start, int end) {
+  
+  size_t idx;
+  int seen=splicing_strvector_search(&ex->seqids, seqid, &idx);
+  if (seen) { 
+    SPLICING_CHECK(splicing_vector_int_push_back(&ex->seqid, idx));
+  } else {
+    size_t size=splicing_strvector_size(&ex->seqids);
+    SPLICING_CHECK(splicing_strvector_append(&ex->seqids, seqid));
+    SPLICING_CHECK(splicing_vector_int_push_back(&ex->seqid, size));
+  }
+  SPLICING_CHECK(splicing_vector_int_push_back(&ex->start, start));
+  SPLICING_CHECK(splicing_vector_int_push_back(&ex->end, end));
+
+  return 0;
+}
+
+int splicing_i_const_cmp(const void *a, const void *b) {
+  int *aa=(int*) a, *bb=(int*) b;
+  int aaa = *aa < 0 ? -*aa : *aa;
+  int bbb = *bb < 0 ? -*bb : *bb;
+  return aaa - bbb;
+}
+
+/* Extract the long constitutive exons from a set of genes.
+   For each gene we keep only a single transctipt, that 
+   includes all long constitutive exons.
+ */
+
+int splicing_i_gff_constitutive_exons_all(const splicing_gff_t *gff,
+					  splicing_exonset_t *exons,
+					  int min_length) {
+
+  size_t g, nogenes;
+  splicing_vector_int_t events;
+
+  SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
+
+  SPLICING_CHECK(splicing_exonset_init(exons, 0));
+  SPLICING_FINALLY(splicing_exonset_destroy, exons);
+  SPLICING_CHECK(splicing_vector_int_init(&events, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &events);
+  
+  for (g=0; g<nogenes; g++) {
+    const char *seqid=
+      splicing_strvector_get(&gff->seqids, VECTOR(gff->seqid)[g]);
+    int noex, idx, noEvents, i;
+    size_t noiso;
+    int start=VECTOR(gff->genes)[g];
+    int end= g+1 < nogenes ? VECTOR(gff->genes)[g+1] : gff->n;
+    splicing_gff_noiso_one(gff, g, &noiso);
+    
+    /* Collect and sort all events */
+    splicing_vector_int_clear(&events);
+    for (idx=start+1; idx<end; idx++) {
+      if (VECTOR(gff->type)[idx] == SPLICING_TYPE_EXON) {
+	SPLICING_CHECK(splicing_vector_int_push_back2
+		       (&events, VECTOR(gff->start)[idx],
+			-VECTOR(gff->end)[idx]));
+      }
+    }
+    noEvents=splicing_vector_int_size(&events);
+    splicing_qsort(VECTOR(events), noEvents, sizeof(int),
+		   splicing_i_const_cmp);
+
+    /* Now go over the sorted events and extract the constitutive exons */
+    for (noex=0, i=0; i<noEvents; i++) {
+      int ev=VECTOR(events)[i];
+      if (ev > 0) { noex++; } 
+      if (ev < 0) { 
+	int prev=VECTOR(events)[i-1];
+	if (noex == noiso && (-ev)-prev+1 >= min_length) {
+	  /* constitutive exon */
+	  SPLICING_CHECK(splicing_exonset_append(exons, seqid, prev, -ev));
+	}
+	noex--;
+      }
+    }
+  }
+
+  splicing_vector_int_destroy(&events);
+  SPLICING_FINALLY_CLEAN(2);	/* + exons */
+
+  return 0;
+}
+
+int splicing_i_const_cmp2(const void *a, const void *b) {
+  int *aa=(int*) a, *bb=(int*) b;
+  int aaa1 = *aa, aaa2 = *(aa+1);
+  int bbb1 = *bb, bbb2 = *(bb+1);
+  if (aaa1 < bbb1) { 
+    return -1; 
+  } else if (aaa1 > bbb1) { 
+    return 1;
+  } else {
+    return aaa2 - bbb2;
+  }
+}
+
+int splicing_i_gff_constitutive_exons_full(const splicing_gff_t *gff,
+					   splicing_exonset_t *exons,
+					   int min_length) {
+  size_t g, nogenes;
+  splicing_vector_int_t events;
+
+  SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
+  
+  SPLICING_CHECK(splicing_exonset_init(exons, 1));
+  SPLICING_FINALLY(splicing_exonset_destroy, exons);
+  SPLICING_CHECK(splicing_vector_int_init(&events, 0));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &events);
+  
+  for (g=0; g<nogenes; g++) {
+    const char *seqid=
+      splicing_strvector_get(&gff->seqids, VECTOR(gff->seqid)[g]);
+    int i, idx, noExons, noSame;
+    size_t noiso;
+    int start=VECTOR(gff->genes)[g];
+    int end= g+1 < nogenes ? VECTOR(gff->genes)[g+1] : gff->n;
+    splicing_gff_noiso_one(gff, g, &noiso);
+    
+    /* Collect and sort all events */
+    splicing_vector_int_clear(&events);
+    for (idx=start+1; idx<end; idx++) {
+      if (VECTOR(gff->type)[idx] == SPLICING_TYPE_EXON) {
+	SPLICING_CHECK(splicing_vector_int_push_back2
+		       (&events, VECTOR(gff->start)[idx],
+			VECTOR(gff->end)[idx]));
+      }
+    }
+    noExons=splicing_vector_int_size(&events)/2;
+    splicing_qsort(VECTOR(events), noExons, sizeof(int)*2,
+		   splicing_i_const_cmp2);
+    
+    /* Now go over them and check how many times each exon appears */
+    for (noSame=1, i=2; i<noExons*2; i+=2) { 
+      int start=VECTOR(events)[i];
+      int end=VECTOR(events)[i+1];
+      if (start == VECTOR(events)[i-2] && VECTOR(events)[i-1] == end) {
+	noSame++;
+      } else {
+	noSame=1;
+      }
+      if (noSame == noiso) {
+	SPLICING_CHECK(splicing_exonset_append(exons, seqid, start, end));
+      }
+    }
+  }
+  
+  splicing_vector_int_destroy(&events);
+  SPLICING_FINALLY_CLEAN(2);	/* + exons */
+
+  return 0;
+}
+
+int splicing_gff_constitutive_exons(const splicing_gff_t *gff,
+				    splicing_exonset_t *exons,
+				    int min_length, 
+				    splicing_constitutive_mode_t mode) {
+
+  switch (mode) {
+  case SPLICING_CONSTITUTIVE_ALL:
+    return splicing_i_gff_constitutive_exons_all(gff, exons, min_length);
+    break;
+  case SPLICING_CONSTITUTIVE_FULL:
+    return splicing_i_gff_constitutive_exons_full(gff, exons, min_length);
+    break;
+  default:
+    SPLICING_ERROR("Unknown `mode' argument for constitutive exon finding",
+		   SPLICING_EINVAL);
+  }
 }

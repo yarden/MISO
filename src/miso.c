@@ -388,16 +388,18 @@ int splicing_drift_proposal_init(int noiso, int noChains,
       if (!paired) { 
 	SPLICING_CHECK(splicing_solve_gene(gff, gene, readLength, 
 				       overHang, position, cigarstr,
-				       /*match_matrix=*/ 0, 
+				       /*match_matrix=*/ 0, /*nomatch=*/ 0,
 				       /*assignment_matrix=*/ 0,
-				       &tmp));
+				       &tmp, /*residuals=*/ 0,
+				       /*scale=*/ 1));
       } else {
 	SPLICING_CHECK(splicing_solve_gene_paired(gff, gene, readLength,
 				       overHang, position,
 				       cigarstr, fragmentProb, fragmentStart,
 				       normalMean, normalVar, numDevs,
-				       /*match_matrix=*/ 0,
-				       /*assignment_matrix=*/ 0, &tmp));
+				       /*match_matrix=*/ 0, /*nomatch=*/ 0,
+				       /*assignment_matrix=*/ 0, &tmp,
+				       /*residuals=*/ 0, /*scale*/ 1));
       }
       
       for (j=0; j<noChains; j++) {
@@ -834,8 +836,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
     noS=0;
     noIterations = 3*noIterations - 2*noBurnIn;
     noBurnIn = m;
-    rundata->noSamples = noSamples = 
-      noChains * (noIterations - noBurnIn) / noLag;
+    noSamples = noChains * (noIterations - noBurnIn) / noLag;
     lagCounter = 0;
 
     SPLICING_CHECK(splicing_matrix_resize(samples, noiso, noSamples));
@@ -870,6 +871,14 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   splicing_vector_destroy(&pJS);
   splicing_vector_destroy(&acceptP);
   SPLICING_FINALLY_CLEAN(8);
+
+  /* We always return the same number of samples. */
+
+  if (rundata->noSamples != noSamples) {
+    splicing_vector_remove_section(logLik, 0, noSamples-rundata->noSamples);
+    splicing_matrix_remove_cols_section(samples, 0,
+					noSamples-rundata->noSamples);
+  }
   
   return 0;
 }
