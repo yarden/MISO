@@ -178,7 +178,7 @@ class MISOSampler:
 
     def run_sampler(self, num_iters, reads, gene, hyperparameters, params,
                     output_file, burn_in=1000, lag=2,
-                    prior_params=None, no_chains=2, 
+                    prior_params=None, no_chains=10, 
                     start_cond=pysplicing.MISO_START_AUTO,
                     stop_cond=pysplicing.MISO_STOP_CONVERGENT_MEAN):
         """
