@@ -43,7 +43,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   int gene, readLength, noIterations=5000, maxIterations=100000, 
     noBurnIn=500, noLag=10;
   int overhang=1;
-  int no_chains=2;
+  int no_chains=6;
   splicing_miso_start_t start=SPLICING_MISO_START_AUTO;
   splicing_miso_stop_t stop=SPLICING_MISO_STOP_CONVERGENT_MEAN;
   splicing_gff_t *mygff;
