@@ -281,6 +281,9 @@ def main():
     if options.plot_insert_len != None:
         insert_len_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len[0]))
         settings_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len[1]))
+        if not os.path.isfile(settings_filename):
+            print "Error: settings file %s not found." %(settings_filename)
+            sys.exit(1)
         plot_insert_len(insert_len_filename, settings_filename, output_dir)
 
     if options.plot_posterior != None:
