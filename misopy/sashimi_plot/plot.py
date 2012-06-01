@@ -111,6 +111,10 @@ def plot_event(event_name, pickle_dir, settings_filename,
 
     Also plots MISO estimates and Psi values.
     """
+    if not os.path.isfile(settings_filename):
+        print "Error: settings filename %s not found." %(settings_filename)
+        sys.exit(1)
+        
     # Retrieve the full pickle filename
     genes_filename = os.path.join(pickle_dir,
                                   "genes_to_filenames.shelve")
@@ -143,8 +147,10 @@ def plot_insert_len(insert_len_filename,
     """
     Plot insert length distribution.
     """
+    if not os.path.isfile(settings_filename):
+        print "Error: settings filename %s not found." %(settings_filename)
+        sys.exit(1)
     plot_name = os.path.basename(insert_len_filename)
-    
     sashimi_obj = Sashimi(plot_name, output_dir,
                           settings_filename=settings_filename)
     settings = sashimi_obj.settings
@@ -191,6 +197,9 @@ def plot_posterior(miso_filename, settings_filename, output_dir,
     """
     Plot posterior distribution.
     """
+    if not os.path.isfile(settings_filename):
+        print "Error: settings filename %s not found." %(settings_filename)
+        sys.exit(1)
 #    samples, log_scores, params, gene = load_samples(miso_filename)
     samples, h, log_scores, sampled_map,\
              sampled_map_log_score, counts_info = load_samples(miso_filename)
@@ -281,9 +290,6 @@ def main():
     if options.plot_insert_len != None:
         insert_len_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len[0]))
         settings_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len[1]))
-        if not os.path.isfile(settings_filename):
-            print "Error: settings file %s not found." %(settings_filename)
-            sys.exit(1)
         plot_insert_len(insert_len_filename, settings_filename, output_dir)
 
     if options.plot_posterior != None:
