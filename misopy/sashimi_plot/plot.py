@@ -114,6 +114,10 @@ def plot_event(event_name, pickle_dir, settings_filename,
     if not os.path.isfile(settings_filename):
         print "Error: settings filename %s not found." %(settings_filename)
         sys.exit(1)
+
+    if not os.path.isdir(pickle_dir):
+        print "Error: event pickle directory %s not found." %(pickle_dir)
+        sys.exit(1)
         
     # Retrieve the full pickle filename
     genes_filename = os.path.join(pickle_dir,

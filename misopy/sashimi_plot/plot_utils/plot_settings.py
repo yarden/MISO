@@ -104,9 +104,9 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
     if "sample_labels" not in settings:
         settings["sample_labels"] = [os.path.basename(bfile) \
                                      for bfile in settings["bam_files"]]
-    if len(settings["sample_labels"]) != \
-       len(settings["bam_files"]):
-        print "Error: Must provide sample label for each entry in bam_files!"
+    if not (len(settings["sample_labels"]) == len(settings["bam_files"]) \
+            == len(settings["colors"])):
+        print "Error: Must provide sample label and color for each entry in bam_files!"
         sys.exit(1)
 
     if no_posteriors:
@@ -127,5 +127,9 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
     else:
         coverages = [1 for x in settings["bam_files"]]
     settings["coverages"] = coverages
+
+    if len(settings["coverages"]) != len(settings["sample_labels"]):
+        print "Error: Must provide a coverage value for each sample or leave coverages unset."
+        sys.exit(1)
     
     return settings
