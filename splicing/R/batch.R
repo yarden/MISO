@@ -3,7 +3,7 @@ run <- function(runFunction, writeFunction, geneStructure, readsfile,
                 results = c("return", "files", "Rfiles"),
                 resultDir = ".", overWrite = FALSE, readLength = NULL,
                 verbose = TRUE, snowCluster = NULL,
-                seed = NULL, ...) {
+                seed = NULL, dropBadCigar=FALSE, ...) {
 
   results <- match.arg(results)
 
@@ -63,6 +63,10 @@ run <- function(runFunction, writeFunction, geneStructure, readsfile,
     
     region <- get.region(x)
     reads <- readSAM(readsfile, region=region)
+    if (dropBadCigar) {
+      reads <- selectReads(reads, grep("[^MNSHDI\\=X0-9]", reads$cigar,
+                                       invert=TRUE))
+    }
     rl <- if (is.null(readLength)) {
       getReadLength(reads)
     } else {

@@ -66,11 +66,12 @@ writeLinear <- function(linResult, file) {
 runLinear <- function(geneStructure, readsfile,
                       results=c("return", "files", "Rfiles"),
                       resultDir=".", overWrite=FALSE, readLength=NULL,
-                      verbose=TRUE, snowCluster=NULL, seed=NULL, ...) {
+                      verbose=TRUE, snowCluster=NULL, seed=NULL,
+                      dropBadCigar=FALSE, ...) {
 
   run(runFunction=solveIso, writeFunction=writeLinear,
       geneStructure=geneStructure,
       readsfile=readsfile, results=results, resultDir=resultDir,
       overWrite=overWrite, readLength=readLength, verbose=verbose,
-      snowCluster=snowCluster, seed=seed, ...)
+      snowCluster=snowCluster, seed=seed, dropBadCigar=dropBadCigar, ...)
 }
