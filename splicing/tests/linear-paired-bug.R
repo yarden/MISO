@@ -26,6 +26,18 @@ ass <- assignmentMatrix(mymm, gene=5, paired=TRUE, readLength=33,
 
 ass
 
+## fast assignment matrix calculation
+
+fass <- assignmentMatrix(mymm, gene=5, paired=TRUE, fast=TRUE, readLength=33,
+                        normalMean=250+33+33, normalVar=250+33+33,
+                        numDevs=4)
+
+all(colnames(fass) %in% colnames(ass))
+
+setdiff(colnames(ass), colnames(fass))
+
+fass
+
 # sol1 <- solveIso(mymm, gene=5, reads=reads, paired=TRUE,
 #                  normalMean=250+33+33, normalVar=250+33+33, numDevs=4)
 

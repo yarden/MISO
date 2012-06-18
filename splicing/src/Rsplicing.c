@@ -1708,7 +1708,7 @@ SEXP R_splicing_solve_gene(SEXP pgff, SEXP pgene, SEXP preadLength,
 
 SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength, 
 				  SEXP poverhang, SEXP pscale, 
-				  SEXP pposition, SEXP pcigar,
+				  SEXP pposition, SEXP pcigar, SEXP pfast,
 				  SEXP pfragmentprob, SEXP pfragmentstart, 
 				  SEXP pnormalMean, SEXP pnormalVar, 
 				  SEXP pnumDevs) {
@@ -1720,6 +1720,7 @@ SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength,
   int scale=LOGICAL(pscale)[0];
   splicing_vector_int_t position;
   const char **cigarstr;
+  int fast=LOGICAL(pfast)[0];
   int i, noReads=GET_LENGTH(pcigar);
   splicing_vector_t fragmentprob;
   int fragmentstart=INTEGER(pfragmentstart)[0];
@@ -1749,7 +1750,7 @@ SEXP R_splicing_solve_gene_paired(SEXP pgff, SEXP pgene, SEXP preadLength,
   }
   
   splicing_solve_gene_paired(&gff, gene, readLength, overhang, &position,
-			     cigarstr, 
+			     cigarstr, fast,
 			     isNull(pfragmentprob) ? 0 : &fragmentprob, 
 			     fragmentstart, normalMean, normalVar, numDevs,
 			     &match_matrix, &nomatch, &assignment_matrix, 
@@ -1892,6 +1893,7 @@ SEXP R_splicing_matchIso_paired(SEXP pgff, SEXP pgene, SEXP pposition,
 
 SEXP R_splicing_paired_assignment_matrix(SEXP pgff, SEXP pgene, 
 					 SEXP preadlength, SEXP poverhang,
+					 SEXP pfast,
 					 SEXP pfragmentprob,
 					 SEXP pfragmentstart, 
 					 SEXP pnormalMean, SEXP pnormalVar,
@@ -1905,6 +1907,7 @@ SEXP R_splicing_paired_assignment_matrix(SEXP pgff, SEXP pgene,
   double normalVar=REAL(pnormalVar)[0];
   double numDevs=REAL(pnumDevs)[0];  
   int fragmentstart=INTEGER(pfragmentstart)[0];
+  int fast=LOGICAL(pfast)[0];
   splicing_matrix_t matrix;
   SEXP result;
 
@@ -1915,11 +1918,18 @@ SEXP R_splicing_paired_assignment_matrix(SEXP pgff, SEXP pgene,
     R_splicing_SEXP_to_vector(pfragmentprob, &fragmentprob);
   }
   splicing_matrix_init(&matrix, 0, 0);
-  
-  splicing_paired_assignment_matrix(&gff, gene, readlength, overhang, 
-				    isNull(pfragmentprob) ? 0 : &fragmentprob,
-				    fragmentstart, normalMean, normalVar,
-				    numDevs, &matrix);
+
+  if (!fast) {
+    splicing_paired_assignment_matrix(&gff, gene, readlength, overhang, 
+			      isNull(pfragmentprob) ? 0 : &fragmentprob,
+			      fragmentstart, normalMean, normalVar,
+			      numDevs, &matrix);
+  } else {
+    splicing_paired_assignment_matrix_old(&gff, gene, readlength, overhang, 
+			      isNull(pfragmentprob) ? 0 : &fragmentprob,
+			      fragmentstart, normalMean, normalVar,
+			      numDevs, &matrix);
+  }
   
   PROTECT(result=R_splicing_matrix_to_SEXP(&matrix));
   
@@ -1965,9 +1975,10 @@ SEXP R_splicing_normal_fragment(SEXP pnormalMean, SEXP pnormalVar,
 SEXP R_splicing_gene_complexity(SEXP pgff, SEXP pgene, 
 				SEXP preadlength, 
 				SEXP poverhang, SEXP ptype, 
-				SEXP pnorm, SEXP ppaired, SEXP pfragmentprob,
-				SEXP pfragmentstart, SEXP pnormalmean,
-				SEXP pnormalvar, SEXP pnumdevs) {
+				SEXP pnorm, SEXP ppaired, SEXP pfast, 
+				SEXP pfragmentprob, SEXP pfragmentstart, 
+				SEXP pnormalmean, SEXP pnormalvar, 
+				SEXP pnumdevs) {
   SEXP result;
   splicing_gff_t gff;
   int gene=INTEGER(pgene)[0]-1;
@@ -1976,6 +1987,7 @@ SEXP R_splicing_gene_complexity(SEXP pgff, SEXP pgene,
   splicing_complexity_t type=INTEGER(ptype)[0];
   splicing_norm_t norm=INTEGER(pnorm)[0];
   int paired=LOGICAL(ppaired)[0];
+  int fast=LOGICAL(pfast)[0];
   splicing_vector_t fragmentprob;
   int fragmentstart=INTEGER(pfragmentstart)[0];
   double normalmean=REAL(pnormalmean)[0];
@@ -1991,7 +2003,8 @@ SEXP R_splicing_gene_complexity(SEXP pgff, SEXP pgene,
   }
   
   splicing_gene_complexity(&gff, gene, readlength, overhang, type, norm, 
-			   paired, isNull(pfragmentprob) ? 0 : &fragmentprob,
+			   paired, fast, 
+			   isNull(pfragmentprob) ? 0 : &fragmentprob,
 			   fragmentstart, normalmean, normalvar, numdevs,
 			   &complexity);
   

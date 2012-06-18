@@ -391,6 +391,7 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       int readLength, int overHang,
 			       const splicing_vector_int_t *position,
 			       const char **cigarstr,
+			       int fast_assignment_matrix,
 			       const splicing_vector_t *fragmentProb,
 			       int fragmentStart, double normalMean,
 			       double normalVar, double numDevs,
@@ -431,12 +432,23 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
     SPLICING_FINALLY(splicing_matrix_destroy, myass_matrix);
   }
 
-  SPLICING_CHECK(splicing_paired_assignment_matrix(gff, gene, readLength, 
-						   overHang, fragmentProb,
-						   fragmentStart,
-						   normalMean, normalVar,
-						   numDevs,
-						   myass_matrix));
+  if (!fast_assignment_matrix) {
+    SPLICING_CHECK(splicing_paired_assignment_matrix(gff, gene, readLength, 
+						     overHang, fragmentProb,
+						     fragmentStart,
+						     normalMean, normalVar,
+						     numDevs,
+						     myass_matrix));
+  } else {
+    SPLICING_CHECK(splicing_paired_assignment_matrix_old(gff, gene,
+							 readLength, overHang,
+							 fragmentProb,
+							 fragmentStart,
+							 normalMean, 
+							 normalVar, numDevs,
+							 myass_matrix));
+  }
+  
   no_classes=splicing_matrix_ncol(myass_matrix);
   noiso=splicing_matrix_nrow(myass_matrix);
 
