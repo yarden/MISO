@@ -415,6 +415,49 @@ constitutiveExons.gff3 <- function(gff3, min.length, mode=c("full", "all")) {
         as.integer(mode), PACKAGE="splicing")
 }
 
+getExonStart <- function(gff3, gene) {
+  mygff <- selectGenes(gff3, gene[1])
+  mr <- mygff$tid+1
+  ex <- which(mygff$type==SPLICING_EXON)
+  res <- tapply(ex, cut(ex, breaks=c(mr, length(mygff$start)+1)),
+                function(x) mygff$start[x], simplify=FALSE)
+  names(res) <- getIso(mygff)[[1]]
+  res
+}
+
+## TODO: make it faster
+
+getExonEnd <- function(gff3, gene) {
+  mygff <- selectGenes(gff3, gene[1])
+  mr <- mygff$tid
+  ex <- which(mygff$type==SPLICING_EXON)
+  res <- tapply(ex, cut(ex, breaks=c(mr, length(mygff$start)+1)),
+                function(x) mygff$end[x], simplify=FALSE)
+  names(res) <- getIso(mygff)[[1]]
+  res
+}
+
+## TODO: make it faster
+
+getExonLength <- function(gff3, gene) {
+  mygff <- selectGenes(gff3, gene[1])
+  mr <- gff3$tid+1
+  ex <- which(mygff$type==SPLICING_EXON)
+  res <- tapply(ex, cut(ex, breaks=c(mr, length(mygff$start)+1)),
+                function(x) mygff$end[x]-mygff$start[x]+1, simplify=FALSE)
+  names(res) <- getIso(mygff)[[1]]
+  res
+}
+
+getExonSig <- function(gff3, gene)
+  UseMethod("getExonSig")
+
+getExonSig.gff3 <- function(gff3, gene) {
+  st <- getExonStart(gff3, gene)
+  en <- getExonEnd(gff3, gene)
+  mapply(st, en, FUN=function(a,b) paste(a, b, sep=":", collapse=";"))
+}
+
 print.gff3 <- function(x, verbose=TRUE, ...) {
   gff3 <- x
   nog <- noGenes(gff3)
