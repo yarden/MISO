@@ -1,8 +1,8 @@
 
 matchIso <- function(geneStructure, gene=1, reads, overHang=1L,
                      readLength=0L, paired=isPaired(reads),
-                     fragmentProb=NULL, fragmentStart=0L, normalMean,
-                     normalVar, numDevs) {
+                     fragmentProb=NULL, fragmentStart=0L, normalMean=NA,
+                     normalVar=NA, numDevs=4) {
 
   if (paired) {
     getreadlength <- function(cig) {
@@ -29,7 +29,8 @@ solveIso <- function(geneStructure, gene=1L, reads,
                      readLength=getReadLength(reads),
                      overHang=1L, scale=TRUE,
                      paired=isPaired(reads), fast=FALSE, fragmentProb=NULL,
-                     fragmentStart=0L, normalMean, normalVar, numDevs) {
+                     fragmentStart=0L, normalMean=NA, normalVar=NA,
+                     numDevs=4) {
 
   if (length(readLength) != 1) {
     stop("Variable read length is currently not supported")

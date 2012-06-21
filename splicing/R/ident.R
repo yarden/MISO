@@ -2,7 +2,7 @@
 assignmentMatrix <- function(geneStructure, gene=1L, readLength,
                              overHang=1L, paired=FALSE, fast=FALSE,
                              fragmentProb=NULL, fragmentStart=0L,
-                             normalMean, normalVar, numDevs) {
+                             normalMean=NA, normalVar=NA, numDevs=4) {
 
   if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
   
@@ -29,15 +29,12 @@ assignmentMatrix <- function(geneStructure, gene=1L, readLength,
 geneComplexity <- function(geneStructure, gene=1, readLength, overHang=1L,
                            type=c("relative", "absolute"),
                            norm=c("2","1","inf"), paired=FALSE, fast=FALSE,
-                           fragmentProb=NULL, fragmentStart=0L, normalMean,
-                           normalVar, numDevs) {
+                           fragmentProb=NULL, fragmentStart=0L, normalMean=NA,
+                           normalVar=NA, numDevs=4) {
 
   type <- switch(match.arg(type), "relative"=0, "absolute"=1)
   norm <- switch(match.arg(norm), "2"=0, "1"=1, "inf"=2)
   if (!is.null(fragmentProb)) { fragmentProb <- as.numeric(fragmentProb) }
-  if (missing(normalMean)) { normalMean <- 0 }
-  if (missing(normalVar)) { normalVar <- 0 }
-  if (missing(numDevs)) { numDevs <- 0 }
 
   .Call("R_splicing_gene_complexity", geneStructure, as.integer(gene),
         as.integer(readLength), as.integer(overHang), as.integer(type),

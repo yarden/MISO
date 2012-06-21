@@ -8,7 +8,7 @@ MISO <- function(geneStructure, gene=1L, reads,
                  stopCond=c("convMean", "fixedno"),
                  hyperparameters=rep(1, noIso(geneStructure)[gene]),
                  paired=isPaired(reads), fragmentProb=NULL, fragmentStart=0L,
-                 normalMean, normalVar, numDevs) {
+                 normalMean=NA, normalVar=NA, numDevs=4) {
 
   if (length(readLength) != 1) {
     stop("Variable read length is currently not supported")

@@ -21,7 +21,7 @@ simulateReads <- function(geneStructure, gene=1, expression,
                           chrlen=geneLength(geneStructure)[gene],
                           qname="read-%s",
                           fragmentProb=NULL, fragmentStart=0L,
-                          normalMean, normalVar, numDevs) {
+                          normalMean=NA, normalVar=NA, numDevs=4) {
 
   if (!paired) {
     res <- .Call("R_splicing_simulate_reads", geneStructure,
