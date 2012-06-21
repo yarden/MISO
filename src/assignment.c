@@ -106,6 +106,12 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   }
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
+  SPLICING_CHECK(splicing_matrix_resize(matrix, noiso, 0));
+
+  /* Isoform is too short for this read length */
+  if (geneend-genestart+1 < readLength) {
+    return 0;
+  }
 
   SPLICING_CHECK(splicing_vector_int_init(&cigar, 0));
   SPLICING_FINALLY(splicing_vector_int_destroy, &cigar);
@@ -139,8 +145,6 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   SPLICING_FINALLY(splicing_vector_int_destroy, &isoseq);
   SPLICING_CHECK(splicing_vector_int_init(&isomatch, noiso));
   SPLICING_FINALLY(splicing_vector_int_destroy, &isomatch);
-
-  SPLICING_CHECK(splicing_matrix_resize(matrix, noiso, 0));
 
   while (p <= lastp) {
     size_t pos=0, nextp, tmppos, ipos, l;
