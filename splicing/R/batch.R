@@ -20,14 +20,6 @@ run <- function(runFunction, writeFunction, geneStructure, readsfile,
 
   ids <- geneIds(geneStructure)
   
-  get.region <- function(gene) {
-    start <- geneStructure$start[geneStructure$gid[gene]+1]
-    end <- geneStructure$end[geneStructure$gid[gene]+1]
-    seqid <- geneStructure$seqid[gene]
-    seqid_str <- geneStructure$seqid_str[seqid+1]
-    paste(sep="", seqid_str, ":", start, "-", end)
-  }
-  
   myclusterExport <- function(cl, list) {
     for (name in list) {
       clusterCall(cl, assign, name, get(name))
@@ -39,7 +31,7 @@ run <- function(runFunction, writeFunction, geneStructure, readsfile,
     if (!is.null(seed)) {
       clusterCall(snowCluster, set.seed, seed)
     }
-    myclusterExport(snowCluster, c("get.region", "readsfile",
+    myclusterExport(snowCluster, c("readsfile",
                                    "readLength", "verbose", "ids",
                                    "geneStructure", "results", "overWrite"))
     myapply <- function(...) parLapply(cl=snowCluster, ...)
@@ -61,7 +53,7 @@ run <- function(runFunction, writeFunction, geneStructure, readsfile,
       return(fname)
     }
     
-    region <- get.region(x)
+    region <- getRegion(geneStructure, gene)
     reads <- readSAM(readsfile, region=region)
     if (dropBadCigar) {
       reads <- selectReads(reads, grep("[^MNSHDI\\=X0-9]", reads$cigar,

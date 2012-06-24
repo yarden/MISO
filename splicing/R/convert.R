@@ -458,6 +458,20 @@ getExonSig.gff3 <- function(gff3, gene) {
   mapply(st, en, FUN=function(a,b) paste(a, b, sep=":", collapse=";"))
 }
 
+getRegion <- function(gff3, gene)
+  UseMethod("getRegion")
+
+getRegion.gff3 <- function(gff3, gene=1) {
+  if (length(gene) != 1) {
+    stop("`gene' must be a scalar")
+  }
+  start <- gff3$start[gff3$gid[gene]+1]
+  end <- gff3$end[gff3$gid[gene]+1]
+  seqid <- gff3$seqid[gene]
+  seqid_str <- gff3$seqid_str[seqid+1]
+  paste(sep="", seqid_str, ":", start, "-", end)  
+}
+
 print.gff3 <- function(x, verbose=TRUE, ...) {
   gff3 <- x
   nog <- noGenes(gff3)
