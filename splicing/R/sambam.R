@@ -1,9 +1,16 @@
 
-readSAM <- function(filename, region=NULL) {
-  if (is.null(region)) {
+readSAM <- function(filename, region=NULL, geneStructure=NULL, gene=1) {
+  if (!is.null(region) && !is.null(geneStructure)) {
+    stop("At most one of `region' and `geneStructure' can be given")
+  }
+  if (is.null(region) && is.null(geneStructure)) {
     .Call("R_splicing_read_sambam", as.character(filename),
           PACKAGE="splicing")
+  } else if (!is.null(region)) {
+    .Call("R_splicing_read_sambam_region", as.character(filename),
+          as.character(region), PACKAGE="splicing")
   } else {
+    region <- getRegion(geneStructure, gene)
     .Call("R_splicing_read_sambam_region", as.character(filename),
           as.character(region), PACKAGE="splicing")
   }
