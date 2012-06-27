@@ -3,10 +3,10 @@
 ## Interface for running MISO locally or on cluster
 ##
 
-import glob
-import time
 import os
 import sys
+import time
+import glob
 
 import misopy
 from misopy.settings import Settings

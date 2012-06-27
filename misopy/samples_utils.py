@@ -8,6 +8,7 @@ from numpy import *
 from collections import defaultdict
 
 import os
+import sys
 import glob
 import misopy
 
@@ -173,15 +174,17 @@ def summarize_sampler_results(samples_dir, summary_filename,
     all_filenames = get_samples_dir_filenames(samples_dir)
     num_events = 0
 
+    compressed_ids_to_genes = {}
     if use_compressed is not None:
+        print "  - Loading compressed IDs mapping from: %s" %(use_compressed)
         # Load mapping from gene IDs to their hashes
         compressed_ids_to_genes = index_gff.load_compressed_ids_to_genes(use_compressed)
     
     for samples_filename in all_filenames:
         # Parse sampler parameters
         params = parse_sampler_params(samples_filename)
-
         event_name = get_event_name(samples_filename)
+        
         if event_name == None:
             print "Skipping %s" %(samples_filename)
             continue

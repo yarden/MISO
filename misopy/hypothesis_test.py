@@ -264,6 +264,7 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
 
     compressed_ids_to_genes = {}
     if use_compressed is not None:
+        print "  - Loading compressed IDs mapping from: %s" %(use_compressed)        
         compressed_ids_to_genes = index_gff.load_compressed_ids_to_genes(use_compressed)
 
     # Compute the Bayes factors for each file

@@ -27,7 +27,7 @@ def load_compressed_ids_to_genes(compressed_filename):
         sys.exit(1)
     compressed_ids_to_genes = {}
     # Load mapping from gene IDs to their hashes
-    compressed_ids_to_genes = pickle_utils.load_pickled_file(use_compressed)
+    compressed_ids_to_genes = shelve.open(compressed_filename)
     return compressed_ids_to_genes
 
 
@@ -124,7 +124,7 @@ def serialize_genes(gff_genes, output_dir,
     # Shelve the mapping from compressed gene ids to gene ids
     shelved_filename = os.path.join(output_dir, "compressed_ids_to_genes.shelve")
     shelved_data = shelve.open(shelved_filename)
-    for k, v in gene_id_to_filename.iteritems():
+    for k, v in compressed_id_to_gene_id.iteritems():
         shelved_data[k] = v
     shelved_data.close()
     
