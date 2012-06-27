@@ -14,6 +14,8 @@ import misopy
 from misopy.parse_csv import *
 from misopy.credible_intervals import *
 
+import misopy.index_gff as index_gff
+
 def maxi(l):
     m = max(l)
     for i, v in enumerate(l):
@@ -119,19 +121,40 @@ def get_gene_info_from_params(params):
     return gene_info
     
 
-def get_event_name(miso_filename):
+def get_event_name(miso_filename,
+                   use_compressed_map=None):
     """
     Get event name from MISO filename.
+
+    Now supports compressed event names.
     """
     basename = os.path.basename(miso_filename)
     if not basename.endswith(".miso"):
         # Not a MISO filename
         return None
     event_name = basename.split(".miso")[0]
+    if use_compressed_map is not None:
+        if event_name not in use_compressed_map:
+            print "WARNING: Cannot find compressed id %s in given mapping." \
+                %(event_name)
+        else:
+            event_name = use_compressed_map[event_name]
     return event_name
+
+# def get_event_name(miso_filename):
+#     """
+#     Get event name from MISO filename.
+#     """
+#     basename = os.path.basename(miso_filename)
+#     if not basename.endswith(".miso"):
+#         # Not a MISO filename
+#         return None
+#     event_name = basename.split(".miso")[0]
+#     return event_name
     
     
-def summarize_sampler_results(samples_dir, summary_filename):
+def summarize_sampler_results(samples_dir, summary_filename,
+                              use_compressed=None):
     """
     Given a set of samples from MISO, output a summary file.
     """
@@ -149,6 +172,10 @@ def summarize_sampler_results(samples_dir, summary_filename):
     print "Writing summary to: %s" %(summary_filename)
     all_filenames = get_samples_dir_filenames(samples_dir)
     num_events = 0
+
+    if use_compressed is not None:
+        # Load mapping from gene IDs to their hashes
+        compressed_ids_to_genes = index_gff.load_compressed_ids_to_genes(use_compressed)
     
     for samples_filename in all_filenames:
         # Parse sampler parameters
@@ -158,7 +185,21 @@ def summarize_sampler_results(samples_dir, summary_filename):
         if event_name == None:
             print "Skipping %s" %(samples_filename)
             continue
-
+        # If using compressed event IDs, convert event
+        # to its real event ID
+        if use_compressed is not None:
+            if event_name not in compressed_ids_to_genes:
+                print "Error: Compressed id %s does not map to any event name." \
+                    %(event_name)
+                sys.exit(1)
+            event_name = compressed_ids_to_genes[event_name]
+        else:
+            # If we're not given a mapping to compressed IDs, check
+            # that the event IDs do not look compressed
+            if index_gff.is_compressed_name(event_name):
+                print "WARNING: %s looks like a compressed id, but no mapping file " \
+                    "from compressed IDs to event IDs was given! Try: --use-compressed" %(event_name)
+            
         # Load samples and header information
 	samples_results = load_samples(samples_filename)
 	samples = samples_results[0]

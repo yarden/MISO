@@ -183,7 +183,8 @@ def compute_delta_densities(samples1_filename, samples2_filename, diff_range,
 
 def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
                               alpha=.95,
-                              sample_labels=None):
+                              sample_labels=None,
+                              use_compressed=None):
     """
     Compute the bayes factors, posterior means, and other statistics
     between the two samples and output them to a directory.
@@ -261,9 +262,14 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
     file_num = 0
     curr_batch = file_num
 
+    compressed_ids_to_genes = {}
+    if use_compressed is not None:
+        compressed_ids_to_genes = index_gff.load_compressed_ids_to_genes(use_compressed)
+
     # Compute the Bayes factors for each file
     for sample1_filename in sample1_filenames:
-        sample1_event_name = get_event_name(sample1_filename)
+        sample1_event_name = get_event_name(sample1_filename,
+                                            use_compressed_map=compressed_ids_to_genes)
 
         # Parameters from raw MISO samples file
         params = parse_sampler_params(sample1_filename)
@@ -272,12 +278,11 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
         
 	# Find corresponding event filename in sample 2
         sample2_filename = filter(lambda filename:
-                                  get_event_name(filename) == sample1_event_name,
+                                  get_event_name(filename,
+                                                 use_compressed_map=compressed_ids_to_genes) == sample1_event_name,
                                   sample2_filenames)
-
 	if len(sample2_filename) == 0:
             continue
-
         sample2_filename = sample2_filename[0]
         
         num_events_compared += 1

@@ -15,11 +15,15 @@ import misopy.hypothesis_test as ht
 import misopy.as_events as as_events
 import misopy.cluster_utils as cluster_utils
 import misopy.sam_utils as sam_utils
-from misopy.parse_csv import *
-from misopy.json_utils import *
 import misopy.miso_sampler as miso
 import misopy.Gene as gene_utils
 import misopy.gff_utils as gff_utils
+
+import misopy.index_gff as index_gff
+from index_gff import is_compressed_index
+
+from misopy.parse_csv import *
+from misopy.json_utils import *
 from misopy.samples_utils import *
 
 import numpy as np
@@ -93,38 +97,7 @@ def run_two_iso_event(event_name, event_type, miso_events, output_dir, read_len,
     samples, cred_interval = miso.run_sampler_on_event(gene, ni, ne, nb,
                                                        read_len, overhang_len,
                                                        num_sampler_iters, output_dir)
-    
 
-# def run_multi_iso_event(isoforms_filename, reads_filename, event_type, output_dir,
-#                         read_len, overhang_len, num_sampler_iters=5000, burn_in=500,
-#                         lag=10):
-#     gene = gene_utils.load_multi_isoform_gene(isoforms_filename)
-#     reads = gene_utils.load_multi_isoform_reads(reads_filename)
-    
-#     num_isoforms = len(gene.isoforms)
-#     hyperparameters = ones(num_isoforms)
-#     proposal_diag = 0.05
-#     sigma = miso.set_diag(zeros([num_isoforms-1, num_isoforms-1]),
-#                           proposal_diag)
-#     params = {'read_len': read_len,
-#               'overhang_len': overhang_len,
-#               'uniform_proposal': False,
-#               'sigma_proposal': sigma}
-    
-#     sampler = miso.MISOSampler(params)
-    
-#     if not os.path.isdir(output_dir):
-#         os.makedirs(output_dir)
-#     output_filename = os.path.join(output_dir, os.path.basename(isoforms_filename).split(".")[0])
-#     sampler_results = sampler.run_sampler(num_sampler_iters, reads, gene, hyperparameters,
-#                                           params, output_filename, burn_in=burn_in, lag=lag)
-#     if sampler_results != None:
-#         percent_acceptance, sampled_psi, total_log_scores, kept_log_scores = sampler_results
-#         cred_intervals = ht.compute_multi_iso_credible_intervals(sampled_psi)
-#         return sampled_psi, cred_intervals
-    
-#     return None
-    
     
 def run_two_iso_on_cluster(miso_path, events_filename, event_type, psi_outdir,
                            read_len, overhang_len, chunk_jobs=False):
@@ -216,6 +189,7 @@ def strip_option(cmd, option):
     """
     return "".join(cmd.split(option))
 
+
 def get_bayes_factor_filenames(comparison_dir):
     """
     Given a comparison directory, return a list of all the filenames
@@ -228,6 +202,7 @@ def get_bayes_factor_filenames(comparison_dir):
     comparison_filenames = glob.glob(bf_files_matcher)
     return comparison_filenames
 
+
 def get_psi_info_by_sample(event_comparison_data, sample1_or_sample2):
     psi_info = {}
     
@@ -235,7 +210,6 @@ def get_psi_info_by_sample(event_comparison_data, sample1_or_sample2):
         if old_key.startswith(sample1_or_sample2):
             new_key = old_key.split("%s_" %(sample1_or_sample2))[1]
             psi_info[new_key] = event_comparison_data[old_key]
-
     return psi_info
 
 
@@ -310,16 +284,24 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
         filter_reads = settings["filter_reads"]
         
     # Load the BAM file upfront
-    bamfile = sam_utils.load_bam_reads(bam_filename, template=template)
-        
+    bamfile = sam_utils.load_bam_reads(bam_filename,
+                                       template=template)
+    # Check if we're in compressed mode
+    compressed_mode = is_compressed_index(gff_index_filename)
+    
     for gene_id, gene_info in gff_genes.iteritems():
-        if gene_id not in gene_ids:
-            # Skip genes that we were not asked to run on
+        # If we're in compressed mode, check the compressed ID
+        # to look up if this is a gene we're supposed to run on
+        if compressed_mode:
+            lookup_id = gene_info['compressed_id']
+        else:
+            lookup_id = gene_id
+        # Skip genes that we were not asked to run on
+        if lookup_id not in gene_ids:
             continue
-
         gene_obj = gene_info['gene_object']
         gene_hierarchy = gene_info['hierarchy']
-
+        
         # Find the most inclusive transcription start and end sites for each gene
         tx_start, tx_end = gff_utils.get_inclusive_txn_bounds(gene_info['hierarchy'][gene_id])
 
@@ -376,9 +358,16 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
             chrom_dir = os.path.join(output_dir, gene_obj.chrom)
         if not os.path.isdir(chrom_dir):
             os.makedirs(chrom_dir)
-            
-        output_filename = os.path.join(chrom_dir, gene_obj.label)
 
+#        output_filename = os.path.join(chrom_dir, gene_obj.label)
+        # Pick .miso output filename based on the pickle filename
+        miso_basename = os.path.basename(gff_index_filename)
+        if not miso_basename.endswith(".pickle"):
+            print "Error: Invalid index file %s" %(gff_index_filename)
+            sys.exit(1)
+        miso_basename = miso_basename.replace(".pickle", "")
+        output_filename = os.path.join(chrom_dir, "%s" %(miso_basename))
+        
         sampler.run_sampler(num_iters, reads, gene_obj, hyperparameters,
                             sampler_params, output_filename, burn_in=burn_in,
                             lag=lag)
@@ -450,7 +439,9 @@ def main():
     parser.add_option("--overhang-len", dest="overhang_len", type="int", default=None)
     parser.add_option("--event-type", dest="event_type", default=None,
 		      help="Event type of two-isoform events (e.g. 'SE', 'RI', 'A3SS', ...)")
-
+    parser.add_option("--use-compressed", dest="use_compressed", nargs=1, default=None,
+                      help="Use compressed event IDs. Takes as input a genes_to_filenames.shelve file "
+                      "produced by the index_gff.py script.")
     ##
     ## Gene utilities
     ##
@@ -464,6 +455,14 @@ def main():
     ##
     Settings.load(os.path.expanduser(options.settings_filename))
 
+    use_compressed = None
+    if options.use_compressed is not None:
+        use_compressed = os.path.abspath(os.path.expanduser(options.use_compressed))
+        if not os.path.exists(use_compressed):
+            print "Error: mapping filename from event IDs to compressed IDs %s is not "\
+                "found." %(use_compressed)
+            sys.exit(1)
+            
     if options.samples_to_compare:
 	sample1_dirname = os.path.abspath(options.samples_to_compare[0])
 	sample2_dirname = os.path.abspath(options.samples_to_compare[1])
@@ -473,7 +472,8 @@ def main():
 	    os.makedirs(output_dirname)
 	ht.output_samples_comparison(sample1_dirname, sample2_dirname,
                                      output_dirname,
-                                     sample_labels=options.comparison_labels)
+                                     sample_labels=options.comparison_labels,
+                                     use_compressed=use_compressed)
 	
     if options.run_two_iso_event:
 	if options.read_len == None or options.overhang_len == None:
@@ -575,7 +575,8 @@ def main():
 	    
 	summary_filename = os.path.join(summary_output_dir,
 					'%s.miso_summary' %(samples_label))
-	summarize_sampler_results(samples_dir, summary_filename)
+	summarize_sampler_results(samples_dir, summary_filename,
+                                  use_compressed=use_compressed)
 
     if options.view_gene != None:
         indexed_gene_filename = os.path.abspath(os.path.expanduser(options.view_gene))

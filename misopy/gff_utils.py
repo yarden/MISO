@@ -126,7 +126,8 @@ class GFFDatabase:
     """
     A set of GFF entries from a GFF file.
     """
-    def __init__(self, from_filename=None):
+    def __init__(self, from_filename=None,
+                 reverse_recs=False):
 	self.genes = []
 	self.mRNAs = []
 	self.exons = []
@@ -141,15 +142,17 @@ class GFFDatabase:
 
 	if from_filename:
 	    # load GFF from given filename
-	    self.from_file(from_filename)
+	    self.from_file(from_filename,
+                           reverse_recs=reverse_recs)
 	    self.from_filename = from_filename
     def __len(self):
         return len(self.__entries)
 
-    def from_file(self, filename, version="3"):
+    def from_file(self, filename, version="3",
+                  reverse_recs=False):
         FILE = open(filename, "r")
         reader = Reader(FILE, version)
-        for record in reader.read_recs():
+        for record in reader.read_recs(reverse_recs=reverse_recs):
 	    if record.type == "gene":
 		self.genes.append(record)
             # Allow "transcript" 
@@ -520,9 +523,12 @@ class Reader:
         except StopIteration:
             return None
 
-    def read_recs(self):
+    def read_recs(self, reverse_recs=False):
         """Returns a list of all records that have not yet been read."""
-        return [rec for rec in self]
+        recs = [rec for rec in self]
+        if reverse_recs:
+            recs.reverse()
+        return recs
 
     def __iter__(self):
         return self

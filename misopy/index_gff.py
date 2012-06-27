@@ -4,6 +4,7 @@
 ## retrieval of genes
 ##
 import os
+import sys
 import time
 import glob
 import shelve
@@ -15,9 +16,49 @@ import misopy.gff_utils as gff_utils
 import misopy.pickle_utils as pickle_utils
 import misopy.Gene as gene_utils
 
-def serialize_genes(gff_genes, output_dir):
+COMPRESS_PREFIX = "misocomp"
+
+def load_compressed_ids_to_genes(compressed_filename):
+    """
+    Load mapping from compressed IDs to genes.
+    """
+    if not os.path.exists(compressed_filename):
+        print "Error: %s does not exist." %(compressed_filename)
+        sys.exit(1)
+    compressed_ids_to_genes = {}
+    # Load mapping from gene IDs to their hashes
+    compressed_ids_to_genes = pickle_utils.load_pickled_file(use_compressed)
+    return compressed_ids_to_genes
+
+
+def compress_event_name(event_name,
+                        prefix=COMPRESS_PREFIX):
+    event_hash = hash(event_name)
+    compressed_event_name = "%s_%s" %(prefix, event_hash)
+    return compressed_event_name
+
+
+def is_compressed_name(event_name):
+    return event_name.startswith(COMPRESS_PREFIX)
+
+
+def is_compressed_index(index_filename):
+    """
+    Check if the given index filename uses a compressed (hash)
+    ID or not.
+    """
+    basename = os.path.basename(index_filename)
+    if is_compressed_name(basename):
+        return True
+    return False
+
+    
+def serialize_genes(gff_genes, output_dir,
+                    compress_id=False):
     """
     Output genes into pickle files by chromosome, by gene.
+
+    If asked, use compressed IDs (hashes) of the 'ID=' field in the GFF.
     """
     genes_by_chrom = defaultdict(dict)
 
@@ -27,9 +68,15 @@ def serialize_genes(gff_genes, output_dir):
         gene_hierarchy = gene_info["hierarchy"]
         genes_by_chrom[gene_obj.chrom][gene_id] = {'gene_object': gene_obj,
                                                    'hierarchy': gene_hierarchy}
+        if compress_id:
+            gene_compressed_id = compress_event_name(gene_id)
+            # Store compressed ID
+            genes_by_chrom[gene_obj.chrom][gene_id]['compressed_id'] = gene_compressed_id
 
     # Mapping from gene IDs to pickled filename
     gene_id_to_filename = {}
+    # Mapping from compressed IDs (hashes) to gene IDs
+    compressed_id_to_gene_id = {}
                                                    
     # Serialize all the genes in each chromosome into their
     # own directory
@@ -50,32 +97,47 @@ def serialize_genes(gff_genes, output_dir):
         num_genes = len(genes_by_chrom[chrom])
         
         for gene_id, gene_info in genes_by_chrom[chrom].iteritems():
-            gene_filename = os.path.abspath(os.path.join(chrom_dir,
-                                                         "%s.pickle" %(gene_id)))
+            gene_compressed_id = None
+            if compress_id:
+                gene_compressed_id = genes_by_chrom[chrom][gene_id]['compressed_id']
+                gene_filename = os.path.abspath(os.path.join(chrom_dir,
+                                                             "%s.pickle" %(gene_compressed_id)))
+            # Write each gene/event's pickle file
             pickle_utils.write_pickled_file({gene_id: genes_by_chrom[chrom][gene_id]},
                                             gene_filename)
             # Record what filename was associated with this gene ID
             gene_id_to_filename[gene_id] = gene_filename
-            
+            # Record compressed ID (hash) to gene ID
+            if gene_compressed_id is not None:
+                compressed_id_to_gene_id[gene_compressed_id] = gene_id
+ 
         t2 = time.time()
         print "  - Chromosome serialization took %.2f seconds" %(t2 - t1)
 
     # Shelve the mapping from gene ids to filenames
     shelved_filename = os.path.join(output_dir, "genes_to_filenames.shelve")
     shelved_data = shelve.open(shelved_filename)
-    
+    for k, v in gene_id_to_filename.iteritems():
+        shelved_data[k] = v
+    shelved_data.close()
+
+    # Shelve the mapping from compressed gene ids to gene ids
+    shelved_filename = os.path.join(output_dir, "compressed_ids_to_genes.shelve")
+    shelved_data = shelve.open(shelved_filename)
     for k, v in gene_id_to_filename.iteritems():
         shelved_data[k] = v
     shelved_data.close()
     
         
-def index_gff(gff_filename, output_dir):
+def index_gff(gff_filename, output_dir,
+              compress_id=False):
     """
     Index the given GFF and placed the indexed representation
     in the output directory.
     """
     print "Indexing GFF..."
-
+    if compress_id:
+        print "  - Using compressed IDs to create indexed filenames."
     # First check that the GFF is not already indexed
     indexed_files = glob.glob(os.path.join(output_dir, "chr*"))
     if len(indexed_files) >= 1:
@@ -91,10 +153,8 @@ def index_gff(gff_filename, output_dir):
     print "  - Loading of genes from GFF took %.2f seconds" %(t2 - t1)
 
     t1 = time.time()
-#    pickle_filename = os.path.join(output_dir,
-#                                   "%s.pickle" %(os.path.basename(os.path.abspath(gff_filename))))
-#    pickle_utils.write_pickled_file(gff_genes, pickle_filename)
-    serialize_genes(gff_genes, output_dir)
+    serialize_genes(gff_genes, output_dir,
+                    compress_id=compress_id)
     t2 = time.time()
     print "  - Serialization of genes from GFF took %.2f seconds" %(t2 - t1)
     overall_t2 = time.time()
@@ -107,6 +167,9 @@ def main():
     parser.add_option("--index", dest="index_gff", nargs=2, default=None,
                       help="Index the given GFF. Takes as arguments as GFF filename "
                       "and an output directory.")
+    parser.add_option("--compress-id", dest="compress_id", default=False, action="store_true",
+                      help="Use the compressed version of the GFF \'ID=\' field rather than the ID itself "
+                      "when creating .miso output filenames.")
     (options, args) = parser.parse_args()
 
     if options.index_gff != None:
@@ -116,7 +179,8 @@ def main():
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
 
-        index_gff(gff_filename, output_dir)
+        index_gff(gff_filename, output_dir,
+                  compress_id=options.compress_id)
 
 
 if __name__ == '__main__':
