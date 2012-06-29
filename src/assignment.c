@@ -87,9 +87,9 @@ int splicing_i_assignmat_simplify(splicing_matrix_t *mat) {
   return 0;
 }
 
-int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
-			       int readLength, int overHang, 
-			       splicing_matrix_t *matrix) {
+int splicing_assignment_matrix_bias(const splicing_gff_t *gff, size_t gene,
+				    int readLength, int overHang, int bias,
+				    splicing_matrix_t *matrix) {
   size_t noiso;
   splicing_vector_int_t exstart, exend, exidx;
   size_t genestart=VECTOR(gff->start)[ VECTOR(gff->genes)[gene] ];
@@ -97,12 +97,16 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   size_t i, elen;
   size_t p=0, lastp=geneend - genestart - readLength + 1;
   splicing_vector_int_t cigar, mp, mppos;
-  splicing_vector_int_t isoseq, isomatch;
+  splicing_vector_int_t isoseq, isomatch, isop;
   splicing_i_assignmat_data_t mpdata = { &mp, &mppos };
 
   if (overHang > 1) { 
     SPLICING_ERROR("Overhang is not implemented in assignment matrix yet.",
 		   SPLICING_UNIMPLEMENTED);
+  }
+
+  if (bias < 0 || bias > 2) { 
+    SPLICING_ERROR("Unsupported fragmentation bias", SPLICING_EINVAL);
   }
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
@@ -145,6 +149,8 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   SPLICING_FINALLY(splicing_vector_int_destroy, &isoseq);
   SPLICING_CHECK(splicing_vector_int_init(&isomatch, noiso));
   SPLICING_FINALLY(splicing_vector_int_destroy, &isomatch);
+  SPLICING_CHECK(splicing_vector_int_init(&isop, noiso));
+  SPLICING_FINALLY(splicing_vector_int_destroy, &isop);
 
   while (p <= lastp) {
     size_t pos=0, nextp, tmppos, ipos, l;
@@ -234,9 +240,24 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
       SPLICING_CHECK(splicing_matrix_add_cols(matrix, 1));
       col=splicing_matrix_ncol(matrix)-1;
       for (j=0; j<noiso; j++) { 
-	MATRIX(*matrix, j, col) = VECTOR(isomatch)[j] * nextp;
+	double val;
+	if (!VECTOR(isomatch)[j]) { 
+	  val = 0;
+	} else if (bias == 0) {
+	  val = nextp;
+	} else { 
+	  double l1=VECTOR(isop)[j];
+	  double l2p1=l1+nextp;
+	  if (bias==1) { 
+	    val = l2p1 * l2p1 - l1 * l1;
+	  } else if (bias==2) {
+	    val = l2p1 * l2p1 * l2p1 - l1 * l1 * l1;
+	  }
+	}
+	if (VECTOR(isomatch)[j]) { VECTOR(isop)[j] += nextp; }
+	MATRIX(*matrix, j, col) = val;
       }
-    }
+    } /* i<noiso */
 
     /* Update the CIGAR strings */
     tmppos=0, ipos=0;
@@ -255,8 +276,9 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 	tmppos++;
 	ipos++;
       }      
-    }
+    } /* i<noiso */
     VECTOR(cigar)[ipos] = 0;
+
     
     p = p + nextp;
 
@@ -274,6 +296,14 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   
   return 0;
 }
+
+int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
+			       int readLength, int overHang, 
+			       splicing_matrix_t *matrix) {
+  return splicing_assignment_matrix_bias(gff, gene, readLength, overHang,
+					 /*bias=*/ 0, matrix);
+}
+
 
 /* Calculate the CIGAR strings for the isoforms in 'subset', 
    from 'sp1' first, and then from 'sp2'. Concatenate everything 

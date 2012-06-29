@@ -1463,6 +1463,35 @@ SEXP R_splicing_assignment_matrix(SEXP pgff, SEXP pgene, SEXP preadlength,
   return result;
 }
 
+SEXP R_splicing_assignment_matrix_bias(SEXP pgff, SEXP pgene, 
+				       SEXP preadlength, SEXP poverhang, 
+				       SEXP pbias) {
+  SEXP result;
+  splicing_matrix_t matrix;
+  splicing_gff_t gff;
+  int gene=INTEGER(pgene)[0]-1;
+  int readlength=INTEGER(preadlength)[0];
+  int overhang=INTEGER(poverhang)[0];
+  int bias=INTEGER(pbias)[0];
+  
+  R_splicing_begin();
+  
+  R_splicing_SEXP_to_gff(pgff, &gff);
+  splicing_matrix_init(&matrix, 0, 0);
+  
+  splicing_assignment_matrix_bias(&gff, gene, readlength, overhang, bias, 
+				  &matrix);
+  
+  PROTECT(result=R_splicing_matrix_to_SEXP(&matrix));
+  
+  splicing_matrix_destroy(&matrix);
+  
+  R_splicing_end();
+  
+  UNPROTECT(1);
+  return result;
+}
+
 SEXP R_splicing_create_gene(SEXP pexons, SEXP pisoforms, SEXP pid, 
 			    SEXP pseqid, SEXP psource, SEXP pstrand) {
   SEXP result;

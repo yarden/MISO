@@ -1,15 +1,15 @@
 
 assignmentMatrix <- function(geneStructure, gene=1L, readLength,
-                             overHang=1L, paired=FALSE, fast=FALSE,
+                             overHang=1L, bias=0, paired=FALSE, fast=FALSE,
                              fragmentProb=NULL, fragmentStart=0L,
                              normalMean=NA, normalVar=NA, numDevs=4) {
 
   if (!is.null(fragmentProb)) { fragmentProb <- as.double(fragmentProb) }
   
   if (!paired) { 
-    res <- .Call("R_splicing_assignment_matrix", geneStructure,
+    res <- .Call("R_splicing_assignment_matrix_bias", geneStructure,
                  as.integer(gene), as.integer(readLength),
-                 as.integer(overHang),
+                 as.integer(overHang), as.integer(bias),
                  PACKAGE="splicing")
   } else {
     res <- .Call("R_splicing_paired_assignment_matrix", geneStructure,
