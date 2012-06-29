@@ -152,3 +152,103 @@ solveIsoLinBias <- function(geneStructure, gene=1L, reads,
   list(a=optsol$minimum, expression=n(finsol$x),
        residuals=finsol$residuals, finsol=finsol)  
 }
+
+# Quadratic bias, to be rewritten
+
+solveIsoQuadBias <- function(geneStructure, gene=1L, reads,
+                             readLength=getReadLength(reads), overHang=1L,
+                             scale=TRUE, paired=isPaired(reads),
+                             fast=FALSE, fragmentProb=NULL,
+                             fragmentStart=0L, normalMean=NA,
+                             normalVar=NA, numDevs=4,
+                             lower=-Inf, upper=Inf, ...) {
+
+  require(nnls)
+
+  if (length(readLength) != 1) {
+    stop("Variable read length is currently not supported")
+  }
+  if (!is.null(fragmentProb)) {
+    fragmentProb <- as.double(fragmentProb)
+  }
+
+  ## Assignment matrix one
+  am0 <- assignmentMatrix(geneStructure=geneStructure, gene=gene,
+                          readLength=readLength, overHang=overHang,
+                          bias=0, paired=paired, fast=fast,
+                          fragmentProb=fragmentProb,
+                          fragmentStart=fragmentStart,
+                          normalMean=normalMean, normalVar=normalVar,
+                          numDevs=numDevs)
+
+  ## Assignment matrix two
+  am1 <- assignmentMatrix(geneStructure=geneStructure, gene=gene,
+                          readLength=readLength, overHang=overHang,
+                          bias=1, paired=paired, fast=fast,
+                          fragmentProb=fragmentProb,
+                          fragmentStart=fragmentStart,
+                          normalMean=normalMean, normalVar=normalVar,
+                          numDevs=numDevs)
+
+  ## Assignment matrix three
+  am2 <- assignmentMatrix(geneStructure=geneStructure, gene=gene,
+                          readLength=readLength, overHang=overHang,
+                          bias=2, paired=paired, fast=fast,
+                          fragmentProb=fragmentProb,
+                          fragmentStart=fragmentStart,
+                          normalMean=normalMean, normalVar=normalVar,
+                          numDevs=numDevs)
+
+  ## This shouldn't happen, but check anyway
+  if (!all(colnames(am0)==colnames(am1)) ||
+      !all(colnames(am0)==colnames(am2))) {
+    stop("Assignment matrix columns do not match")
+  }
+
+  ## Match the reads
+  mat <- matchIso(geneStructure=geneStructure, gene=gene, reads=reads,
+                  overHang=overHang, readLength=readLength,
+                  paired=paired, fragmentProb=fragmentProb,
+                  fragmentStart=fragmentStart, normalMean=normalMean,
+                  normalVar=normalVar, numDevs=numDevs)
+  if (paired) { mat <- mat[[1]] }    
+  matvec <- table(apply((mat!=0)+0L, 2, paste,
+                        collapse=""))[colnames(am0)]
+  is.na(matvec) <- 0
+
+  ## Test identifyability. Fix 'a' to two selected values and
+  ## then check the residuals. If they are the same for both
+  ## fixed 'a' values, then the model is not idendifyable
+  f <- function(x, param) {
+    am <- x * param$am2 + param$b * param$am1 + param$am0
+    sol <- nnls(t(am), cbind(param$matvec))
+    res <- sum(sol$residuals^2)
+    res
+  }
+  sol0 <- optimize(f=f, c(-100,100), tol=.Machine$double.eps,
+                   param=list(am0=am0, am1=am1, am2=am2, b=0, matvec=matvec))
+  sol1 <- optimize(f=f, c(-100,100), tol=.Machine$double.eps,
+                   param=list(am0=am0, am1=am1, am2=am2, b=1, matvec=matvec))
+  if (abs(sol0$objective - sol1$objective) < 1e-5) {
+    stop("Quadratic bias parameters are not identifyable")
+  }
+
+  ## OK, ready to optimize quadratic parameters
+  fn <- function(x) {
+    am <- x[1] * am2 + x[2] * am1 + am0
+    sol <- nnls(t(am), cbind(matvec))
+    res <- sum(sol$residuals^2)
+    res
+  }
+
+  optsol <- optim(c(0,0), fn, lower=lower, upper=upper, ...)
+
+  ## Final solution
+  n <- function(x) x/sum(x)
+  am <- optsol$par[1] * am2 + optsol$par[2] * am1 + am0
+  finsol <- nnls(t(am), cbind(matvec))
+  list(a=optsol$par[1], b=optsol$par[2], expression=n(finsol$x),
+       residuals=finsol$residuals, finsol=finsol)
+}
+                             
+                             
