@@ -21,8 +21,7 @@ miso_path = os.path.dirname(os.path.abspath(__file__))
 def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           use_cluster=False, SGEarray=False, chunk_jobs=200,
                           overhang_len=1, paired_end=None,
-                          settings=None, job_name="misojob",
-                          use_compressed=None):
+                          settings=None, job_name="misojob"):
     """
     Compute Psi values for genes using a GFF and a BAM filename.
 
@@ -47,13 +46,6 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     # All commands to run
     all_miso_cmds = []
 
-    if use_compressed is not None:
-        use_compressed = os.path.abspath(os.path.expanduser(use_compressed))
-        if not os.path.exists(use_compressed):
-            print "Error: mapping filename from event IDs to compressed IDs %s is not "\
-                "found." %(use_compressed)
-            sys.exit(1)
-
     for gene_id, gff_index_filename in gene_ids_to_gff_index.iteritems():
         miso_cmd = "python %s --compute-gene-psi \"%s\" \"%s\" %s %s --read-len %d " \
                    %(miso_run, gene_id, gff_index_filename, bam_filename, output_dir,
@@ -69,10 +61,6 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
         # Add settings filename if given
         if settings != None:
             miso_cmd += " --settings-filename %s" %(settings)
-
-        if use_compressed != None:
-            print "Using compression with mapping: %s" %(use_compressed)
-            miso_cmd += " --use-compressed %s" %(use_compressed)
 
         if use_cluster:
             # If asked to use cluster, accumulate the MISO commands
@@ -262,9 +250,6 @@ def main():
     parser.add_option("--SGEarray", dest="SGEarray", action="store_true", default=False,
                       help="Use MISO on cluster with Sun Grid Engine. To be used in "
                       "conjunction with --use-cluster option.")
-    parser.add_option("--use-compressed", dest="use_compressed", nargs=1, default=None,
-                      help="Use compressed event IDs. Takes as input a genes_to_filenames.shelve file "
-                      "produced by the index_gff.py script.")
     (options, args) = parser.parse_args()
 
     ##
@@ -380,8 +365,7 @@ def main():
                               job_name=options.job_name,
                               chunk_jobs=options.chunk_jobs,
                               paired_end=options.paired_end,
-                              settings=settings_filename,
-                              use_compressed=options.use_compressed)
+                              settings=settings_filename)
             
 		    
 if __name__ == '__main__':
