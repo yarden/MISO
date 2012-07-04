@@ -290,12 +290,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
     compressed_mode = is_compressed_index(gff_index_filename)
     
     for gene_id, gene_info in gff_genes.iteritems():
-        # If we're in compressed mode, check the compressed ID
-        # to look up if this is a gene we're supposed to run on
-        if compressed_mode:
-            lookup_id = gene_info['compressed_id']
-        else:
-            lookup_id = gene_id
+        lookup_id = gene_id
         # Skip genes that we were not asked to run on
         if lookup_id not in gene_ids:
             continue
@@ -462,6 +457,8 @@ def main():
             print "Error: mapping filename from event IDs to compressed IDs %s is not "\
                 "found." %(use_compressed)
             sys.exit(1)
+        else:
+            print "Compression being used."
             
     if options.samples_to_compare:
 	sample1_dirname = os.path.abspath(options.samples_to_compare[0])
