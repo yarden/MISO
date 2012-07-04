@@ -236,6 +236,25 @@ def summarize_sampler_results(samples_dir, summary_filename,
     summary_file.close()
 
     
+def is_miso_chrom_dir(dirname):
+    """
+    Return True if a directory contains *.miso files.
+    """
+    if not os.path.isdir(dirname):
+        return False
+    basename = os.path.basename(dirname)
+    # If the directory is named like a chromosome directory,
+    # keep it
+    if basename.startswith("chr") or basename.isdigit() or \
+        basename == "X" or basename == "Y":
+        return True
+    # If naming is unclear, check that it contains *.miso files
+    fnames = glob.glob(os.path.join(dirname, "*.miso"))
+    if len(fnames) >= 1:
+        return True
+    return False
+    
+    
 def get_samples_dir_filenames(samples_dir):
     """
     Get all the filenames associated with a samples directory.
@@ -251,12 +270,7 @@ def get_samples_dir_filenames(samples_dir):
     Also collect files in samples_dir for backwards compatibility.
     """
     directories = glob.glob(os.path.join(samples_dir, "*"))
-    # Keep only numeric directories or directories beginning with "chr"
-    directories = filter(lambda d: os.path.basename(d).startswith("chr") or \
-                         os.path.basename(d).isdigit() or \
-                         os.path.basename(d) == "X" or \
-                         os.path.basename(d) == "Y",
-                         directories)
+    directories = filter(is_miso_chrom_dir, directories)
     
     # Filenames indexed by chromosomes
     filenames = []
