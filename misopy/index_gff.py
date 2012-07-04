@@ -102,6 +102,9 @@ def serialize_genes(gff_genes, output_dir,
                 gene_compressed_id = genes_by_chrom[chrom][gene_id]['compressed_id']
                 gene_filename = os.path.abspath(os.path.join(chrom_dir,
                                                              "%s.pickle" %(gene_compressed_id)))
+            else:
+                gene_filename = os.path.abspath(os.path.join(chrom_dir,
+                                                             "%s.pickle" %(gene_id)))
             # Write each gene/event's pickle file
             pickle_utils.write_pickled_file({gene_id: genes_by_chrom[chrom][gene_id]},
                                             gene_filename)
