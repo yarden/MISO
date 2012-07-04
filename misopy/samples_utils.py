@@ -253,7 +253,9 @@ def get_samples_dir_filenames(samples_dir):
     directories = glob.glob(os.path.join(samples_dir, "*"))
     # Keep only numeric directories or directories beginning with "chr"
     directories = filter(lambda d: os.path.basename(d).startswith("chr") or \
-                         os.path.basename(d).isdigit(),
+                         os.path.basename(d).isdigit() or \
+                         os.path.basename(d) == "X" or \
+                         os.path.basename(d) == "Y",
                          directories)
     
     # Filenames indexed by chromosomes

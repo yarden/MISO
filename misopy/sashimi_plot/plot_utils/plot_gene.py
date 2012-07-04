@@ -187,6 +187,9 @@ def plot_density(sashimi_obj, pickle_filename, event):
     tx_start, tx_end, exon_starts, exon_ends, gene_obj, mRNAs, strand, chrom = \
         parseGene(pickle_filename, event)
 
+    print "exon starts: ", exon_starts
+    print "exon ends: ", exon_ends
+
     # Get the right scalings
     graphcoords, graphToGene = getScaling(tx_start, tx_end, strand,
                                           exon_starts, exon_ends, intron_scale,
