@@ -616,7 +616,6 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  splicing_vector_t *class_counts,
 		  splicing_vector_int_t *assignment,
 		  splicing_miso_rundata_t *rundata) {
-
   splicing_vector_t acceptP, cJS, pJS;
   double sigma;
   int noReads = splicing_vector_int_size(position);
@@ -759,6 +758,8 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 						 alpha, sigma, psi, alpha));
   
   /* Initialize assignments of reads */  
+  printf("no chains: %d\n", noChains);
+
   
   SPLICING_CHECK(splicing_reassign_samples(mymatch_matrix, &match_order,
 					   psi, noiso, noChains, &vass));

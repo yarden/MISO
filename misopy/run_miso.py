@@ -217,7 +217,8 @@ def get_psi_info_by_sample(event_comparison_data, sample1_or_sample2):
 ## Multi-isoform interface
 ##
 def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
-                     read_len, overhang_len, paired_end=None, event_type=None):
+                     read_len, overhang_len, paired_end=None, event_type=None,
+                     verbose=True):
     """
     Run Psi at the Gene-level (for multi-isoform inference.)
 
@@ -254,6 +255,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
     burn_in = settings_params["burn_in"]
     lag = settings_params["lag"]
     num_iters = settings_params["num_iters"]
+    num_chains = settings_params["num_chains"]
 
     min_event_reads = Settings.get_min_event_reads()
 
@@ -266,11 +268,14 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
 
 
     # Load the genes from the GFF
-#    print "Loading genes from indexed GFF..."
-#    t1 = time.time()
+    t1, t2 = 0, 0
+    if verbose:
+        t1 = time.time()
+        print "Loading genes from indexed GFF..."
     gff_genes = gff_utils.load_indexed_gff_file(gff_index_filename)
-#    t2 = time.time()
-#    print "  - Loading took: %.2f seconds" %(t2 - t1)
+    if verbose:
+        t2 = time.time()
+        print "  - Loading took: %.2f seconds" %(t2 - t1)
 
     # If given a template for the SAM file, use it
     template = None
@@ -318,6 +323,8 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
                 print "Only %d reads in gene, skipping (needed >= %d reads)" \
                       %(num_raw_reads, min_event_reads)
                 continue
+            else:
+                print "%d raw reads in event" %(num_raw_reads)
 
         num_isoforms = len(gene_obj.isoforms)
         hyperparameters = ones(num_isoforms)
@@ -334,7 +341,8 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
                                                                 frag_variance,
                                                                 read_len,
                                                                 overhang_len=overhang_len)
-            sampler = miso.MISOSampler(sampler_params, paired_end=True,
+            sampler = miso.MISOSampler(sampler_params,
+                                       paired_end=True,
                                        log_dir=output_dir)
 
         else:
@@ -342,7 +350,8 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
             sampler_params = miso.get_single_end_sampler_params(num_isoforms,
                                                                 read_len,
                                                                 overhang_len)
-            sampler = miso.MISOSampler(sampler_params, paired_end=False,
+            sampler = miso.MISOSampler(sampler_params,
+                                       paired_end=False,
                                        log_dir=output_dir)
 
         # Make directory for chromosome -- if given an event type, put
@@ -364,7 +373,9 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
         output_filename = os.path.join(chrom_dir, "%s" %(miso_basename))
         
         sampler.run_sampler(num_iters, reads, gene_obj, hyperparameters,
-                            sampler_params, output_filename, burn_in=burn_in,
+                            sampler_params, output_filename,
+                            num_chains=num_chains,
+                            burn_in=burn_in,
                             lag=lag)
         
 	    

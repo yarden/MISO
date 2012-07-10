@@ -55,8 +55,10 @@ class Settings(object):
         Return sampler parameters.
         """
         param_names = ['burn_in', 'lag', 'num_iters']
+        opt_param_names = ['num_chains']
 
-        sampler_params = {}
+        # Default number of chains is 6
+        sampler_params = {'num_chains': 6}
 
         for name in param_names:
             if name not in cls.global_settings:
@@ -64,7 +66,10 @@ class Settings(object):
                 raise Exception, "Error: need %s parameter to be set in settings file." \
                       %(name)
             sampler_params[name] = cls.global_settings[name]
-
+        # Record optional parameters
+        for name in opt_param_names:
+            if name in cls.global_settings:
+                sampler_params[name] = cls.global_settings[name]
         return sampler_params
     
 

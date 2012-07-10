@@ -125,7 +125,8 @@ def get_single_end_sampler_params(num_isoforms,
 
 
 class MISOSampler:
-    def __init__(self, params, paired_end=False,
+    def __init__(self, params,
+                 paired_end=False,
                  log_dir=None):
 	"""
 	Make a sampler with the given parameters.
@@ -177,10 +178,14 @@ class MISOSampler:
 
 
     def run_sampler(self, num_iters, reads, gene, hyperparameters, params,
-                    output_file, burn_in=1000, lag=2,
-                    prior_params=None, no_chains=10, 
+                    output_file,
+                    num_chains=6,                    
+                    burn_in=1000,
+                    lag=2,
+                    prior_params=None, 
                     start_cond=pysplicing.MISO_START_AUTO,
-                    stop_cond=pysplicing.MISO_STOP_CONVERGENT_MEAN):
+                    stop_cond=pysplicing.MISO_STOP_CONVERGENT_MEAN,
+                    verbose=True):
         """
         Fast version of MISO MCMC sampler.
 
@@ -213,6 +218,11 @@ class MISOSampler:
         # Define local variables related to reads and overhang
         self.overhang_len = self.params['overhang_len']
         self.read_len = self.params['read_len']
+
+        t1 = 0
+        t2 = 0
+        if verbose:
+            t1 = time.time()
         
 	self.miso_logger.info("Running sampler...")
         self.miso_logger.info("  - num_iters: " + str(num_iters))
@@ -267,7 +277,7 @@ class MISOSampler:
                                                  long(lag),
                                                  prior_params, 
                                                  long(self.overhang_len),
-                                                 long(no_chains),
+                                                 long(num_chains),
                                                  start_cond, stop_cond)
         else:
             # Run single-end
@@ -280,7 +290,7 @@ class MISOSampler:
                                            long(lag),
                                            prior_params, 
                                            long(self.overhang_len),
-                                           long(no_chains),
+                                           long(num_chains),
                                            start_cond, stop_cond)
 
         # Psi samples
@@ -328,6 +338,9 @@ class MISOSampler:
         self.output_miso_results(output_file, gene, reads_data, assignments, psi_vectors,
                                  kept_log_scores, num_iters, burn_in,
                                  lag, percent_acceptance, proposal_type)
+        if verbose:
+            t2 = time.time()
+            print "Event took %.2f seconds" %(t2 - t1)
         
 
     def output_miso_results(self, output_file, gene, reads_data, assignments,
@@ -420,6 +433,7 @@ class MISOSampler:
             output_line = "%s\t%.4f\n" %(psi_sample_str, curr_log_score)
             output.write(output_line)
         output.close()
+        print "Completed outputting."
 #        return [percent_acceptance, array(psi_vectors), array(kept_log_scores)]
 
 def run_sampler_on_event(gene, ni, ne, nb, read_len, overhang_len, num_iters,

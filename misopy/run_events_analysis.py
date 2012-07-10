@@ -113,7 +113,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                                                              batch_size)
 
                 if batch_size >= long_thresh:
-                    queue_type = "long"
+                   queue_type = "long"
                 else:
                     queue_type = "short"
 

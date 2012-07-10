@@ -148,8 +148,12 @@ typedef enum splicing_miso_start_t {
   SPLICING_MISO_START_LINEAR=4 } splicing_miso_start_t;
 
 typedef enum splicing_miso_stop_t {
+  /*
   SPLICING_MISO_STOP_FIXEDNO=0,
-  SPLICING_MISO_STOP_CONVERGENT_MEAN=1,
+  SPLICING_MISO_STOP_CONVERGENT_MEAN=1,*/
+  /* Turn off convergent mean; take fixed no. iterations */
+  SPLICING_MISO_STOP_FIXEDNO=1,
+  SPLICING_MISO_STOP_CONVERGENT_MEAN=0
 } splicing_miso_stop_t;
 
 int splicing_matchIso(const splicing_gff_t *gff, int gene, 
