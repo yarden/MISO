@@ -1,0 +1,44 @@
+#!/bin/bash
+function usage() {
+    echo "Usage: $(basename $0) command args..."
+    echo ""
+    echo "Valid commands: exon_utils"
+    echo "                filter_events"
+    echo "                index_gff"
+    echo "                module_availability"
+    echo "                pe_utils"
+    echo "                plot"
+    echo "                run_events_analysis"
+    echo "                run"
+    echo "                sam_to_bam"
+    exit 1
+}
+DIR=$(dirname $0)
+. $DIR/env/bin/activate
+
+
+if [ ! "$1" ]; then
+    usage
+fi
+
+cmd="$1"
+shift
+
+if [ "$cmd" == "run" ]; then
+    python $DIR/env/bin/run_miso.py "$@"
+elif [ -e $DIR/env/bin/$cmd.py ]; then
+    python $DIR/env/bin/$cmd.py "$@"
+else
+    usage
+fi
+
+
+#exon_utils.py
+#filter_events.py
+#index_gff.py
+#module_availability.py
+#pe_utils.py
+#plot.py
+#run_events_analysis.py
+#run_miso.py
+#sam_to_bam.py
