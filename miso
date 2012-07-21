@@ -13,7 +13,8 @@ function usage() {
     echo "                sam_to_bam"
     exit 1
 }
-DIR=$(dirname $0)
+REAL=`python -c 'import os,sys;print os.path.realpath(sys.argv[1])' "$0"`
+DIR=`dirname "$REAL"`
 . $DIR/env/bin/activate
 
 
