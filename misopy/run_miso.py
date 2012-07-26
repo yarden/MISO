@@ -471,7 +471,7 @@ def main():
         else:
             print "Compression being used."
             
-    if options.samples_to_compare:
+    if options.samples_to_compare is not None:
 	sample1_dirname = os.path.abspath(options.samples_to_compare[0])
 	sample2_dirname = os.path.abspath(options.samples_to_compare[1])
 	output_dirname = os.path.abspath(options.samples_to_compare[2])
