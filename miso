@@ -29,6 +29,8 @@ if [ "$cmd" == "run" ]; then
     python $DIR/env/bin/run_miso.py "$@"
 elif [ -e $DIR/env/bin/$cmd.py ]; then
     python $DIR/env/bin/$cmd.py "$@"
+elif [ -e $DIR/env/bin/$cmd ]; then
+    python $DIR/env/bin/$cmd "$@"
 else
     usage
 fi
