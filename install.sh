@@ -19,3 +19,7 @@ fi
 python setup.py install --prefix env
 pip install numpy
 pip install -r requirements.txt
+
+#
+# If you're on a Mac, and matplotlib won't install, try this:
+# LDFLAGS="-L/usr/X11/lib" CFLAGS="-I/usr/X11/include -I/usr/X11/include/freetype2 -I/usr/X11/include/libpng15" pip install matplotlib
