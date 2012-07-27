@@ -10,7 +10,7 @@ class TestMISO(unittest.TestCase):
         # Find out the current directory
         self.miso_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
         self.tests_data_dir = os.path.join(self.miso_path, "test-data")
-        self.events_analysis_cmd = "python %s " %(os.path.join(self.miso_path,
+        self.events_analysis_cmd = "miso %s " %(os.path.join(self.miso_path,
                                                                "run_events_analysis.py"))
         self.tests_output_dir = os.path.join(self.miso_path, "test-output")
         self.test_sam_filename = os.path.join(self.tests_data_dir,
@@ -29,7 +29,7 @@ class TestMISO(unittest.TestCase):
 
         print "Testing conversion of SAM to BAM..."
         output_dir = os.path.join(self.tests_output_dir, "sam-output")
-        sam_to_bam_cmd = "python %s --convert %s %s" %(self.sam_to_bam_script,
+        sam_to_bam_cmd = "miso %s --convert %s %s" %(self.sam_to_bam_script,
                                                        self.test_sam_filename,
                                                        output_dir)
         print "Executing: %s" %(sam_to_bam_cmd)
