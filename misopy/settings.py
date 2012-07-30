@@ -1,10 +1,12 @@
 ##
 ## Settings with relevant directories
 ##
+
 import misopy
 from misopy.parse_csv import *
 import ConfigParser
 import os
+import sys
 
 miso_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
 
@@ -146,7 +148,7 @@ class Settings(object):
     def get_miso_exec(cls):
         if 'MISO_SHELL_EXEC' in os.environ:
             return os.environ['MISO_SHELL_EXEC']
-        return 'python'
+        return sys.executable
     
 
 def load_settings(settings_filename):
