@@ -1,5 +1,7 @@
 
 all: Pythonpackage
+
+virtualenv: Pythonpackage
 	./install.sh
 
 ########################################################
