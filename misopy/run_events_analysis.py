@@ -47,8 +47,8 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     all_miso_cmds = []
 
     for gene_id, gff_index_filename in gene_ids_to_gff_index.iteritems():
-        miso_cmd = "miso %s --compute-gene-psi \"%s\" \"%s\" %s %s --read-len %d " \
-                   %(miso_run, gene_id, gff_index_filename, bam_filename, output_dir,
+        miso_cmd = "%s %s --compute-gene-psi \"%s\" \"%s\" %s %s --read-len %d " \
+                   %(Settings.get_miso_exec(), miso_run, gene_id, gff_index_filename, bam_filename, output_dir,
                      read_len)
         if paired_end != None:
             # Run in paired-end mode
@@ -183,8 +183,9 @@ def compute_psi(sample_filenames, output_dir, event_type, read_len, overhang_len
 	events_filename = events.output_file(results_output_dir, sample_label)
 	
 	# Run MISO on them
-	miso_cmd = 'miso %s --compute-two-iso-psi %s %s --event-type %s --read-len %d --overhang-len %d ' \
-                   %(os.path.join(miso_path, 'run_miso.py'),
+	miso_cmd = '%s %s --compute-two-iso-psi %s %s --event-type %s --read-len %d --overhang-len %d ' \
+                   %(Settings.get_miso_exec(), 
+                     os.path.join(miso_path, 'run_miso.py'),
                      events_filename,
                      results_output_dir,
                      event_type,

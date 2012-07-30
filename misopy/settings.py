@@ -141,6 +141,12 @@ class Settings(object):
     @classmethod
     def get(cls):
         return cls.global_settings
+
+    @classmethod
+    def get_miso_exec(cls):
+        if 'MISO_SHELL_EXEC' in os.environ:
+            return os.environ['MISO_SHELL_EXEC']
+        return 'python'
     
 
 def load_settings(settings_filename):
