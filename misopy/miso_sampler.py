@@ -184,7 +184,7 @@ class MISOSampler:
                     lag=2,
                     prior_params=None, 
                     start_cond=pysplicing.MISO_START_AUTO,
-                    stop_cond=pysplicing.MISO_STOP_CONVERGENT_MEAN,
+                    stop_cond=pysplicing.MISO_STOP_FIXEDNO,
                     verbose=True):
         """
         Fast version of MISO MCMC sampler.

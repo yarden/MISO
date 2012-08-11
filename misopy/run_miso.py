@@ -250,8 +250,9 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
         print "  - Paired-end mode: ", paired_end
 
     settings = Settings.get()
+    print "SETTINGS: ", settings
     settings_params = Settings.get_sampler_params()
-    
+    print "SETTINGS PARAMS:", settings_params
     burn_in = settings_params["burn_in"]
     lag = settings_params["lag"]
     num_iters = settings_params["num_iters"]

@@ -125,8 +125,12 @@ class Gene:
 
     which creates two isoforms, composed of the 'A' and 'B' parts.
     """    
-    def __init__(self, isoform_desc, parts, chrom=None, exons_seq=None,
-                 label="", strand="NA"):
+    def __init__(self, isoform_desc, parts,
+                 chrom=None,
+                 exons_seq=None,
+                 label="",
+                 strand="NA",
+                 transcript_ids=None):
 	self.isoform_desc = isoform_desc
 	self.iso_lens = []
 	if label == "":
@@ -138,9 +142,13 @@ class Gene:
 	self.num_parts = len(self.parts)
 	self.chrom = chrom
         self.strand = strand
+        self.transcript_ids = transcript_ids
         
 	# create a set of isoforms
 	self.create_isoforms()
+
+        # Use transcript ids if given
+        self.assign_transcript_ids()
         
 	# The number of exons in each isoform
 	self.num_parts_per_isoform = array([iso.num_parts for iso in self.isoforms])
@@ -319,6 +327,17 @@ class Gene:
 	    self.iso_lens.append(isoform.len)
         self.iso_lens = array(self.iso_lens)
 
+    def assign_transcript_ids(self):
+        """
+        Assign transcript IDs to isoforms.
+        """
+        if self.transcript_ids != None:
+            if len(self.transcript_ids) != len(self.isoforms):
+                raise Exception, "Transcript IDs do not match number of isoforms."
+            for iso_num, iso in enumerate(self.isoforms):
+                curr_iso = self.isoforms[iso_num]
+                curr_iso.label = self.transcript_ids[iso_num]
+        
     def set_sequence(self, exon_id, seq):
         """
         Set the sequence of the passed in exons to be the given sequence.
@@ -678,7 +697,9 @@ class Gene:
         return self.__str__()  
 
 class Isoform:
-    def __init__(self, gene, parts, seq=None):
+    def __init__(self, gene, parts,
+                 seq=None,
+                 label=None):
 	"""
 	Builds an isoform given an isoform description.
 	"""
@@ -688,6 +709,7 @@ class Isoform:
 	self.num_parts = len(parts)
 	self.len = sum([part.len for part in parts])
 	self.seq = seq
+        self.label = label
 	# the genomic coordinates of the isoform are defined as the start coordinate
 	# of the first part and the last coordinate of the last part
 	first_part = self.parts[0]
@@ -832,6 +854,7 @@ def pretty(d, indent=0):
          pretty(value, indent+1)
       else:
          print '  ' * (indent+1) + str(value)
+        
 
 def printTree(tree, depth = 0):
     if tree == None or not type(tree) == dict:
@@ -840,6 +863,7 @@ def printTree(tree, depth = 0):
         for key, val in tree.items():
             print "\t" * depth, key
             printTree(val, depth+1)
+            
 
 def print_gene_hierarchy(gene_hierarchy):
     pretty(gene_hierarchy)
@@ -915,6 +939,8 @@ def make_gene_from_gff_records(gene_label,
 
     num_transcripts_with_exons = 0
 
+    used_transcript_ids = []
+
     for transcript_id in transcript_ids:
         transcript_info = mRNAs[transcript_id]
         transcript_rec = transcript_info['record']
@@ -961,6 +987,8 @@ def make_gene_from_gff_records(gene_label,
             
         #desc = iso_delim.join(exon_labels)
         isoform_desc.append(exon_labels)
+        # Record transcript ids that are not skipped
+        used_transcript_ids.append(transcript_id)
 
     if num_transcripts_with_exons < 2:
         print "WARNING: %s does not have at least two mRNA/transcript entries " \
@@ -978,7 +1006,8 @@ def make_gene_from_gff_records(gene_label,
     gene = Gene(isoform_desc, all_exons,
                 label=gene_label,
                 chrom=chrom,
-                strand=strand)
+                strand=strand,
+                transcript_ids=used_transcript_ids)
 
     return gene
                         
