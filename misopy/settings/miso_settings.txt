@@ -11,6 +11,7 @@ short_queue_name = quick
 burn_in = 500
 lag = 10
 num_iters = 5000
+num_chains = 6
 
 # For single event analysis
 #se_filter = [10, 0, 1]
