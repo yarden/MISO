@@ -53,7 +53,7 @@ run <- function(runFunction, writeFunction, geneStructure, readsfile,
       return(fname)
     }
     
-    region <- getRegion(geneStructure, gene)
+    region <- getRegion(geneStructure, x)
     reads <- readSAM(readsfile, region=region)
     if (dropBadCigar) {
       reads <- selectReads(reads, grep("[^MNSHDI\\=X0-9]", reads$cigar,
