@@ -126,7 +126,8 @@ solveIsoLinBias <- function(geneStructure, gene=1L, reads,
   if (paired) { mat <- mat[[1]] }    
   matvec <- table(apply((mat!=0)+0L, 2, paste,
                         collapse=""))[colnames(am0)]
-  is.na(matvec) <- 0
+  matvec[is.na(matvec)] <- 0
+  names(matvec) <- colnames(am0)
 
   ## Test identifyability
   sol0 <- nnls(t(0*am1 + am0), cbind(matvec))
