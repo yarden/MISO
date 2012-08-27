@@ -680,6 +680,9 @@ int splicing_paired_assignment_matrix_old(const splicing_gff_t *gff, size_t gene
     int myrl=i + fragmentStart;
     double fact=VECTOR(*myfragmentProb)[i];
 
+    /* Essentially zero probablity for this fragment length*/
+    if (fact < 1e-15) { continue; }
+
     SPLICING_CHECK(splicing_assignment_matrix(gff, gene, myrl, overHang, 
 					      &tmpmat));
     tmpncol=splicing_matrix_ncol(&tmpmat);
