@@ -291,7 +291,8 @@ class MISOSampler:
                                            prior_params, 
                                            long(self.overhang_len),
                                            long(num_chains),
-                                           start_cond, stop_cond)
+                                           start_cond,
+                                           stop_cond)
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0]))
