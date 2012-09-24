@@ -145,8 +145,11 @@ class MISOSampler:
         self.log_dir = os.path.abspath(os.path.expanduser(log_dir))
         if log_dir != None:
             self.log_dir = os.path.join(log_dir, 'logs')
-            if not os.path.isdir(self.log_dir):
+            # Avoid race-conditions
+            try:
                 os.makedirs(self.log_dir)
+            except OSError:
+                pass
 
         ch_file = None
         

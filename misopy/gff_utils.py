@@ -657,7 +657,10 @@ class Reader:
     def _parse_record_v3(self, line):
         self._references_resolved = False
 
-        fields = line[:-1].split('\t')
+        # Strip line
+        line = line.strip()
+        # Get fields
+        fields = line.split('\t')
 
         if len(fields) != 9:
             raise FormatError, "Invalid number of fields (should be 9):\n" + line
