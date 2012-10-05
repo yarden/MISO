@@ -115,8 +115,10 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
     if ("miso_prefix" in settings) and (event != None and chrom != None) \
         and settings["show_posteriors"]:
         miso_files = miso_utils.get_miso_output_files(event, chrom, settings)
-    else:
+    elif "miso_files" in settings:
         miso_files = settings["miso_files"]
+    else:
+        miso_files = []
     settings["miso_files"] = miso_files
     
     if "coverages" in settings:
