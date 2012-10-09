@@ -221,6 +221,7 @@ def plot_density(sashimi_obj, pickle_filename, event):
         sample_label = settings["sample_labels"][i]
 
         print "Reading sample label: %s" %(sample_label)
+        print "Processing BAM: %s" %(bam_file)
         
         plotted_ax = plot_density_single(settings, sample_label,
                                          tx_start, tx_end, gene_obj, mRNAs, strand,
