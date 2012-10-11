@@ -379,6 +379,9 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
         
 	    
 def main():
+    print "MISO (Mixture of Isoforms model)"
+    print "Probabilistic analysis of RNA-Seq data to detect differential isoforms"
+    print "Use --help argument to view options.\n"
     from optparse import OptionParser
     parser = OptionParser()
     ##

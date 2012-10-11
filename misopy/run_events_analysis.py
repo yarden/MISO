@@ -202,6 +202,9 @@ def compute_psi(sample_filenames, output_dir, event_type, read_len, overhang_len
 
 
 def main():
+    print "MISO (Mixture of Isoforms model)"
+    print "Probabilistic analysis of RNA-Seq data to detect differential isoforms"
+    print "Use --help argument to view options.\n"
     from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("--compute-events-psi", dest="compute_events_psi", nargs=2, default=None,
