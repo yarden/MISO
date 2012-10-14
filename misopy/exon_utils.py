@@ -39,11 +39,13 @@ def is_exon_in_mRNA(gff_in, exon, mRNA):
 
 def get_const_exons_from_mRNA(gff_in, mRNAs,
                               min_size=0,
-                              all_constitutive=False):
+                              all_constitutive=False,
+                              cds_only=False):
     """
     optional:
 
     - all_constitutive: flag to treat all exons as constitutive
+    - cds_only: flag to only use exons that fall in the CDS
     """
     const_exons = []
     # Get first mRNA's exons
@@ -190,6 +192,7 @@ def map_bam2gff(bam_filename, gff_filename,
     
 
 def get_const_exons_by_gene(gff_filename, output_dir,
+                            output_filename=None,
                             all_constitutive=False,
                             min_size=0,
                             output_format='gff'):
@@ -235,16 +238,14 @@ def get_const_exons_by_gene(gff_filename, output_dir,
         num_exons += len(curr_const_exons)
 
     t2 = time.time()
-    output_filename = None
-
-    if not all_constitutive:
-        # If we were not given a constitutive exons GFF file, output
-        # a separate file containing the constitutive exons
+    if output_filename is None:
+        # Create default output filename if not
+        # given one as argument
         output_filename = os.path.join(output_dir,
                                        "%s.min_%d.const_exons.gff" \
                                        %(os.path.basename(gff_filename).replace(".gff", ""),
                                          min_size))
-
+    if not all_constitutive:
         print "Constitutive exon retrieval took %.2f seconds (%d exons)." \
               %((t2 - t1), num_exons)
 
