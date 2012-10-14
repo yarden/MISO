@@ -5,6 +5,7 @@
 ##
 
 import os
+import sys
 import glob
 import time
 import pysam
@@ -450,6 +451,13 @@ def summarize_insert_len_dist(interval_to_paired_dists,
     filtered_interval_to_dist = filter_insert_len(interval_to_paired_dists,
                                                   sd_max)
     filtered_insert_dist = get_insert_dist_array(filtered_interval_to_dist)
+
+    if len(filtered_insert_dist) == 0:
+        print "Error: Could not find any properly mated pairs to " \
+              "compute insert length with. Are you sure your BAM reads " \
+              "are properly paired and map the chromosome headers in the " \
+              "constitutive exon file?"
+        sys.exit(1)
 
     mu, sdev, dispersion, num_pairs = \
         compute_insert_len_stats(filtered_insert_dist)

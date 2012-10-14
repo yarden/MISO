@@ -232,7 +232,23 @@ def flag_to_strand(flag):
     if flag == 0 or not (int(bin(flag)[-5]) & 1):
         return "+"
     return "-"
+    
 
+def strip_mate_id(read_name):
+    """
+    Strip canonical mate IDs for paired end reads, e.g.
+    
+    #1, #2
+
+    or:
+
+    /1, /2
+    """
+    if read_name.endswith("/1") or read_name.endswith("/2") or \
+       read_name.endswith("#1") or read_name.endswith("#2"):
+        read_name = read_name[0:-3]
+    return read_name
+    
 
 def pair_sam_reads(samfile, filter_reads=True,
                    return_unpaired=False):
@@ -244,6 +260,9 @@ def pair_sam_reads(samfile, filter_reads=True,
 
     for read in samfile:
         curr_name = read.qname
+
+        # Strip canonical mate IDs 
+        curr_name = strip_mate_id(curr_name)
         
         if filter_reads:
             # Skip reads that failed QC or are unmapped
