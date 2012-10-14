@@ -2,3 +2,6 @@
 *.pyc
 splicing_0.1.tar.gz
 pysplicing-0.1.tar.gz
+env/*
+build/*
+misopy/test-output/*

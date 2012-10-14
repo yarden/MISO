@@ -1,6 +1,9 @@
 
 all: Pythonpackage
 
+virtualenv: Pythonpackage
+	./install.sh
+
 ########################################################
 
 RSRC=$(wildcard src/*.c) $(wildcard src/*.h) $(wildcard src/*.pmt)

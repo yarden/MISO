@@ -1,0 +1,44 @@
+#!/bin/bash
+function usage() {
+    echo "Usage: $(basename $0) command args..."
+    echo ""
+    echo "Valid commands: exon_utils"
+    echo "                filter_events"
+    echo "                index_gff"
+    echo "                module_availability"
+    echo "                pe_utils"
+    echo "                plot"
+    echo "                run_events_analysis"
+    echo "                run"
+    echo "                sam_to_bam"
+    echo ""
+    exit 1
+}
+REAL=`python -c 'import os,sys;print os.path.realpath(sys.argv[1])' "$0"`
+DIR=`dirname "$REAL"`
+. $DIR/env/bin/activate
+
+
+if [ ! "$1" ]; then
+    usage
+fi
+
+cmd="$1"
+shift
+
+export MISO_SHELL_EXEC="$0"
+
+if [ "$cmd" == "run" ]; then
+    python $DIR/env/bin/run_miso.py "$@"
+elif [ -e "$DIR/env/bin/$cmd.py" ]; then
+    python "$DIR/env/bin/$cmd.py" "$@"
+elif [ -e "$DIR/env/bin/$cmd" ]; then
+    python "$DIR/env/bin/$cmd" "$@"
+elif [ -e "$cmd" ]; then
+    # this is for hard-coded commands, such as used in the cluster code
+    # or to run test-scripts
+    python "$cmd" "$@"
+else
+    echo "Unknown command: $cmd"
+    usage
+fi

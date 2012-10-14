@@ -148,8 +148,9 @@ def run_two_iso_on_cluster(miso_path, events_filename, event_type, psi_outdir,
 	num_jobs_per_batch = len(event_batch)
 	print "Processing a batch of size %d events" %(num_jobs_per_batch)
 	for event_name in event_batch:
-	    miso_event_cmd = 'python %s --run-two-iso-event \"%s\" %s %s --event-type %s --read-len %d --overhang-len %d' \
-			     %(os.path.join(miso_path, 'run_miso.py'),
+	    miso_event_cmd = '%s %s --run-two-iso-event \"%s\" %s %s --event-type %s --read-len %d --overhang-len %d' \
+			     %(Settings.get_miso_exec(),
+                   os.path.join(miso_path, 'run_miso.py'),
 			       event_name,
 			       events_filename,
 			       psi_outdir,
@@ -181,7 +182,7 @@ def get_curr_script_cmd():
     Get the invocation of the current script (with its command line arguments) as a
     full command for use in a script.
     """
-    return 'python ' + get_current_args()
+    return '%s %s' % (Settings.get_miso_exec(), get_current_args())
 
 def strip_option(cmd, option):
     """

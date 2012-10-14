@@ -4,6 +4,7 @@
 ##
 import unittest
 import os
+from misopy.settings import Settings
 
 class TestCluster(unittest.TestCase):
     """
@@ -13,8 +14,8 @@ class TestCluster(unittest.TestCase):
         # Find out the current directory
         self.miso_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
         self.tests_data_dir = os.path.join(self.miso_path, "test-data")
-        self.events_analysis_cmd = "python %s " %(os.path.join(self.miso_path,
-                                                               "run_events_analysis.py"))
+        self.events_analysis_cmd = "%s %s " % (Settings.get_miso_exec(),
+                                              os.path.join(self.miso_path, "run_events_analysis.py"))
         self.tests_output_dir = os.path.join(self.miso_path, "test-output")
         self.test_sam_filename = os.path.join(self.tests_data_dir,
                                               "sam-data",
@@ -69,7 +70,7 @@ class TestCluster(unittest.TestCase):
         # First index the GFF of interest
         gff_filename = os.path.join(self.gff_events_dir, "mm9", "genes", "Atp2b1.mm9.gff")
         gff_index_dir = os.path.join(self.gff_events_dir, "mm9", "indexed")
-        index_cmd = "python %s --index %s %s" %(self.index_gff_script,
+        index_cmd = "%s %s --index %s %s" %(Settings.get_miso_exec(), self.index_gff_script,
                                                 gff_filename,
                                                 gff_index_dir)
 
@@ -92,4 +93,5 @@ class TestCluster(unittest.TestCase):
 
         
 if __name__ == '__main__':
+    Settings.load()
     unittest.main()
