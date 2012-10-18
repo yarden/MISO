@@ -104,9 +104,13 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
     if "sample_labels" not in settings:
         settings["sample_labels"] = [os.path.basename(bfile) \
                                      for bfile in settings["bam_files"]]
-    if not (len(settings["sample_labels"]) == len(settings["bam_files"]) \
-            == len(settings["colors"])):
+    num_labels = len(settings["sample_labels"])
+    num_bams = len(settings["bam_files"])
+    num_colors = len(settings["colors"])
+    if not (num_labels == num_bams == num_colors):
         print "Error: Must provide sample label and color for each entry in bam_files!"
+        print "  - Provided %d labels, %d BAMs, %d colors" \
+            %(num_labels, num_bams, num_colors)
         sys.exit(1)
 
     if no_posteriors:

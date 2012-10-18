@@ -39,13 +39,11 @@ def is_exon_in_mRNA(gff_in, exon, mRNA):
 
 def get_const_exons_from_mRNA(gff_in, mRNAs,
                               min_size=0,
-                              all_constitutive=False,
-                              cds_only=False):
+                              all_constitutive=False):
     """
     optional:
 
     - all_constitutive: flag to treat all exons as constitutive
-    - cds_only: flag to only use exons that fall in the CDS
     """
     const_exons = []
     # Get first mRNA's exons
