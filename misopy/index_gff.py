@@ -185,7 +185,7 @@ def main():
         index_gff(gff_filename, output_dir,
                   compress_id=options.compress_id)
     else:
-        print "Need to pass --index, for example: "
+        print "Need to pass --index, for example:\n"
         print "index_gff.py --index annotation.gff indexed_annotation/"
 
 
