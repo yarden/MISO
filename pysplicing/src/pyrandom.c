@@ -155,8 +155,7 @@ splicing_rng_type_t splicing_rngtype_Python = {
   /* get= */       splicing_rng_Python_get,
   /* get_real */   splicing_rng_Python_get_real,
   /* get_norm= */  splicing_rng_Python_get_norm,
-  /* get_geom= */  0,
-  /* get_binom= */ 0
+  /* get_gamma= */ 0
 };
 
 void pysplicing_init_rng(PyObject* splicing_module) {
