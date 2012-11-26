@@ -172,6 +172,8 @@ splicing_rng_t splicing_rng_default = {
 double  unif_rand(void);
 double  norm_rand(void);
 double  Rf_rgamma(double, double);
+double  Rf_rgeom(double);
+double  Rf_rbinom(double, double);
 
 
 int splicing_rng_R_init(void **state) {
@@ -768,7 +770,7 @@ double splicing_rbinom(splicing_rng_t *rng, long int nin, double pp) {
 }
 
 double splicing_rgamma(splicing_rng_t *rng, double a) {
-  return Rf_rgamma(a);
+  return Rf_rgamma(a, 1.0);
 }
 
 #else
