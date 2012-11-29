@@ -1,159 +1,50 @@
 
-plotIso <- function(geneStructure, gene=1, xlab="", ylab="", ...) {
+plotIso <- function(geneStructure, gene=1, xlab="", ylab="",
+                    col=rainbow_hcl(noIso(geneStructure)[gene]),
+                    mar=c(0,0,2,0)+.1, axes=FALSE, ...) {
 
-  geneStructure <- selectGenes(geneStructure, gene)
-
-  ## The empty plot
-  plot(NA, type="n", xlim=c(0,1), ylim=c(0,1), axes=FALSE, frame=FALSE,
-       xlab=xlab, ylab=ylab, ...)
-
-  ## How many isoforms, how long the gene
-  lines <- noIso(geneStructure)[1]
-  len <- geneLength(geneStructure)[1]
+  require(colorspace)
   
-  ## Labels
-  tid <- getIso(geneStructure)[[1]]
-  labwidth <- max(strwidth(paste(tid, " ")))
-  text(x=0, y=seq(1,by=2,length=lines)/2/lines,
-       adj=c(0,1/2), rev(tid))
+  noIso <- noIso(geneStructure)[gene]  
+  col <- rep(col, length.out=noIso)
 
-  mr <- which(geneStructure$type==SPLICING_MRNA)
-  ex <- which(geneStructure$type==SPLICING_EXON)
-  st <- which(geneStructure$type==SPLICING_START_CODON)
-  en <- which(geneStructure$type==SPLICING_STOP_CODON)
-
-  wex <- tapply(ex, cut(ex, breaks=c(mr, length(geneStructure$start)+1)), c)
-  wst <- tapply(st, cut(st, breaks=c(mr, length(geneStructure$start)+1)), c)
-  wen <- tapply(en, cut(en, breaks=c(mr, length(geneStructure$start)+1)), c)
-
-  .scale <- function(val, fx1, fx2, tx1, tx2) {
-    (val-fx1) / (fx2-fx1) * (tx2-tx1) + tx1
-  }
-
-  .droplast <- function(x) x[-length(x)]
+  start <- getExonStart(geneStructure, gene)
+  end <- getExonEnd(geneStructure, gene)
+  xlim <- range(unlist(start), unlist(end))
   
-  .plot <- function(lowerleft, upperright, exons, startcodon, stopcodon,
-                    startpos, endpos, strand) {
+  ylimgene <- c(0.5, noIso+.5)
+  par(mar=mar)
+  plot(NA, type="n", xlim=xlim, ylim=ylimgene, xlab=xlab,
+       ylab=ylab, axes=axes, ...)
 
-    xsize <- upperright[1]-lowerleft[1]
-    ysize <- upperright[2]-lowerleft[2]
-
-    exons <- exons[ order(geneStructure$start[exons]) ]
-    
-    estart <- geneStructure$start[exons]
-    eend <- geneStructure$end[exons]
-    
-    start <- end <- 0
-    if (length(startcodon)>0 && length(stopcodon)>0 &&
-        !is.na(startcodon[1]) && !is.na(stopcodon[1])) {
-      if (strand==SPLICING_STRAND_MINUS) {
-        start <- geneStructure$start[stopcodon[1]]
-        end <- geneStructure$end[startcodon[1]]
-      } else {
-        start <- geneStructure$start[startcodon[1]]
-        end <- geneStructure$end[stopcodon[1]]
-      }
+  for (i in seq_along(start)) {
+    segments(xlim[1], length(start)-i+1, xlim[2], length(start)-i+1,
+             lty=1, lwd=.4)
+    ax <- seq(xlim[1], xlim[2], length.out=40)[2:39]
+    for (j in seq_along(ax)) {
+      tinc <- (xlim[2]-xlim[1])/100
+      xspline(c(ax[j]-tinc, ax[j], ax[j]-tinc),
+              (length(start)-i+1) + c(-.1, 0, .1), shape=c(0,1,0), lwd=.4)
     }
-    
-    ## Plot exons first
-    x <- .scale((eend+estart)/2, startpos, endpos,
-                lowerleft[1], upperright[1])
-    rw <- (eend-estart) / (endpos-startpos) * xsize
-    rh <- ysize/4
-    symbols(inches=FALSE, add=TRUE,
-            x=x, y=rep((upperright[2]+lowerleft[2])/2, length(x)),
-            rectangles=cbind(rw,rh), fg="black", bg="black")
-
-    ## Transcribed exons
-    for (e in seq_along(exons)) {
-      if (start <= estart[e] && eend[e] <= end) {
-        ## whole exon
-        rw <- (eend[e]-estart[e]) / (endpos-startpos) * xsize
-        rh <- ysize/2
-        symbols(inches=FALSE, add=TRUE,
-                x=.scale((eend[e]+estart[e])/2, startpos, endpos,
-                  lowerleft[1], upperright[1]),
-                y=(upperright[2]+lowerleft[2])/2,
-                rectangles=cbind(rw, rh), fg="black", bg="lightgrey")
-      } else if (estart[e] <= start && start <= eend[e] && eend[e] <= end) {
-        ## end of exon
-        rw <- (eend[e]-start) / (endpos-startpos) * xsize
-        rh <- ysize/2
-        symbols(inches=FALSE, add=TRUE,
-                x=.scale((eend[e]+start)/2, startpos, endpos,
-                  lowerleft[1], upperright[1]),
-                y=(upperright[2]+lowerleft[2])/2,
-                rectangles=cbind(rw, rh), fg="black", bg="lightgrey")
-      } else if (start <= estart[e] && estart[e] <= end && end <= eend[e]) {
-        ## start of exon
-        rw <- (end-estart[e]) / (endpos-startpos) * xsize
-        rh <- ysize/2
-        symbols(inches=FALSE, add=TRUE,
-                x=.scale((end+estart[e])/2, startpos, endpos,
-                  lowerleft[1], upperright[1]),
-                y=(upperright[2]+lowerleft[2])/2,
-                rectangles=cbind(rw, rh), fg="black", bg="lightgrey")        
-      } else if (estart[e] <= start && end <= eend[e]) {
-        ## middle of exon
-        rw <- (end-start) / (endpos-startpos) * xsize
-        rh <- ysize/2
-        symbols(inches=FALSE, add=TRUE,
-                x=.scale((end+start)/2, startpos, endpos,
-                  lowerleft[1], upperright[1]),
-                y=(upperright[2]+lowerleft[2])/2,
-                rectangles=cbind(rw, rh), fg="black", bg="lightgrey")        
-      }
-    }
-    
-    ## Connecting lines
-    if (length(exons) > 1) {
-      x0 <- .scale(eend[-length(exons)],
-                   startpos, endpos, lowerleft[1], upperright[1])
-      y0 <- ifelse(eend > start & eend <= end, 6/8, 5/8) * ysize +
-        lowerleft[2]
-      y02 <- ifelse(estart >= start & estart < end, 6/8, 5/8) * ysize +
-        lowerleft[2]
-      x1 <- .scale(geneStructure$start[exons][-1],
-                   startpos, endpos, lowerleft[1], upperright[1])
-      y1 <- rep(lowerleft[2]+ysize*7/8)
-      segments(x0=x0, y0=.droplast(y0), x1=(x0+x1)/2, y1=y1)
-      segments(x0=(x0+x1)/2, y0=y1, x1=x1, y1=y02[-1])
-    }
+    rect(xleft=start[[i]], xright=end[[i]], ybottom=length(start)-i+1-.25,
+         ytop=length(start)-i+1+.25, col=col[i], border=NA)
+    text(xlim[1], length(start)-i+1+.35, adj=c(0,0),
+         getIso(geneStructure)[[gene]][i],
+         xpd=NA, col=col[i])
   }
-  
-  for (i in 1:lines) {
-    .plot(lowerleft=c(labwidth, (i-1)/lines),
-          upperright=c(1, i/lines),
-          exons=wex[[lines-i+1]], startcodon=wst[[lines-i+1]],
-          stopcodon=wen[[lines-i+1]],
-          startpos=geneStructure$start[1], endpos=geneStructure$end[1],
-          strand=geneStructure$strand[1])
-  }
-
-  invisible(geneStructure)
 }
 
 plotIsoSize <- function(geneStructure, gene=1,
-                        labels=NULL, stripwidth=5, stripheight=1/5) {
-
-  geneStructure <- selectGenes(geneStructure, gene)
-
-  no <- noIso(geneStructure)[1]
-  if (is.null(labels)) {
-    labels <- getIso(geneStructure)[[1]]
-  }
-  labwidth <- max(strwidth(paste(labels, " "), units="inches"))
-  width <- labwidth + stripwidth
-  height <- stripheight * no
-  c(width, height)
+                        geneBaseHeight=0.5, geneIsoHeight=0.5) {
+  c(width=5,
+    height=noIso(geneStructure)[gene] * geneIsoHeight + geneBaseHeight)
 }
 
-plotIsoPDF <- function(geneStructure, file, gene=1,
-                       labelwidth=NULL, mar=c(0,0,2,0), ...) {
+plotIsoPDF <- function(geneStructure, file, gene=1, mar=c(0,0,2,0), ...) {
 
   pdf(tmp <- tempfile())
   plot.new()
-  size <- plotIsoSize(geneStructure, gene, labels=labelwidth)
+  size <- plotIsoSize(geneStructure, gene)
   dev.off()
   unlink(tmp)
   
@@ -162,6 +53,66 @@ plotIsoPDF <- function(geneStructure, file, gene=1,
   plotIso(geneStructure, gene, ...)
   dev.off()
 }
+
+plotMISO <- function(misoResult,
+                     col=rainbow_hcl(noIso(misoResult$geneStructure)),
+                     legend=c("topright", "topleft", "rightmargin", "none"),
+                     xlab="Isoform ratio", ylab="Relative frequency",
+                     frame=FALSE, axes=TRUE, cex.axis=0.8, lwd.axis=0.4,
+                     las=1, ...) {
+
+  require(colorspace)
+
+  legend <- match.arg(legend)
+  
+  col <- rep(col, length.out=noIso(misoResult$geneStructure))
+  colTrans <- paste(col, sep="", "66")
+  
+  breaks <- seq(0, 1, length=41)
+
+  hi <- lapply(1:noIso(gene), function(j) {
+    hist(misoResult$samples[j,], breaks=breaks, plot=FALSE)
+  })
+  ylim <- c(0, max(sapply(hi, function(x) x$counts/sum(x$counts))) * 1.3)
+  plot(NA, type="n", xlim=0:1, ylim=ylim, frame=frame, axes=FALSE,
+       xlab=xlab, ylab=ylab, ...)
+  if (axes) {
+    axis(2, las=las, cex.axis=cex.axis, lwd=lwd.axis)
+    axis(1, las=las, lwd=lwd.axis, cex.axis=cex.axis)
+  }
+  sapply(seq_along(hi), function(h) {
+    rect(hi[[h]]$mids-.01, 0, hi[[h]]$mids+.01,
+         hi[[h]]$counts/sum(hi[[h]]$counts),
+         col=colTrans[h], border=NA)
+  })
+  abline(v=rowMeans(misoResult$samples), col=col)
+  tl <- (par("usr")[4]-par("usr")[3])/20
+  ## TODO: triangles
+  segments(x0=postMean(misoResult), y0=par("usr")[3],
+           y1=par("usr")[3]-tl, col=colTrans, lwd=3, xpd=NA,
+           lend=2)
+
+  if (legend != "none") {
+    annt <- apply(confint(misoResult), 2,
+                  function(x) { paste(round(x,2), collapse="-")})
+    if (legend == "topright") {
+      xx <- 1
+      yy <- ylim[2]-(1:noIso(gene)-1)*strheight("[")*1.2
+      adj <- c(1,1)
+    } else if (legend == "topleft") {
+      xx <- 0
+      yy <- ylim[2]-(1:noIso(gene)-1)*strheight("[")*1.2
+      adj <- c(0,1)
+    } else if (legend == "rightmargin") {
+      xx <- 1
+      yy <- ylim[2]-(1:noIso(gene)-1)*strheight("[")*1.2
+      adj <- c(0,1)
+    }
+    text(xx, yy, adj=adj, xpd=NA, cex=.8,
+         paste(round(rowMeans(misoResult$samples), 2),
+               " [", annt, "]", sep=""), col=col)
+  }
+}  
 
 ## TODO:
 ##  - stacked area charts
@@ -366,60 +317,19 @@ plotReads <- function(gene, reads, misoResult=NULL,
   print("Axis:"); print(par("fin"))
   
   ## Plot the isoforms
-  isoformColorsTrans <- paste(isoformColors, sep="", "66")
-  ylimgene <- c(0.5, noIso(gene)+.5)
-  par(mar=c(1,5,5,1)+.1)
-  plot(NA, type="n", xlim=xlim, ylim=ylimgene, xlab="", ylab="", axes=FALSE)
-  print("Gene structure:") ; print(par("fin"))
-  for (i in seq_along(start)) {
-    segments(xlim[1], length(start)-i+1, xlim[2], length(start)-i+1,
-             lty=1, lwd=.4)
-    ax <- seq(xlim[1], xlim[2], length.out=40)[2:39]
-    for (j in seq_along(ax)) {
-      tinc <- (xlim[2]-xlim[1])/100
-      xspline(c(ax[j]-tinc, ax[j], ax[j]-tinc),
-              (length(start)-i+1) + c(-.1, 0, .1), shape=c(0,1,0), lwd=.4)
-    }
-    rect(xleft=start[[i]], xright=end[[i]], ybottom=length(start)-i+1-.25,
-         ytop=length(start)-i+1+.25, col=isoformColors[i], border=NA)
-    text(xlim[1], length(start)-i+1+.35, adj=c(0,0), getIso(gene)[[1]][i],
-         xpd=NA, col=isoformColors[i])
-  }
-
+  plotIso(gene, mar=c(1,5,5,1)+.1, col=isoformColors)
+  
   if (!is.null(misoResult)) {
-    breaks <- seq(0, 1, length=41)
-    for (i in seq_along(misoResult)) {
-      hi <- lapply(1:noIso(gene), function(j) {
-        hist(misoResult[[i]]$samples[j,], breaks=breaks, plot=FALSE)
-      })
-      ylim <- c(0, max(sapply(hi, "[[", "counts")) * 1.3)
+    lapply(misoResult, function(ms) {
       par(mar=c(0,1,1,5)+.1)
-      plot(NA, type="n", xlim=0:1, ylim=ylim, axes=FALSE)
-      print("MISO:") ; print(par("fin"))
-      sapply(seq_along(hi), function(h) {
-        rect(hi[[h]]$mids-.01, 0, hi[[h]]$mids+.01, hi[[h]]$counts,
-             col=isoformColorsTrans[h], border=NA)
-      })
-      abline(v=rowMeans(misoResult[[i]]$samples), col=isoformColors)
-      axis(2, las=1, cex.axis=.8, lwd=.4)
-      axis(1, at=pretty(0:1,n=4), labels=rep("", length(pretty(0:1,n=4))),
-           lwd=.4)
-      tl <- (par("usr")[4]-par("usr")[3])/20
-      ## TODO: triangles
-      segments(x0=postMean(misoResult[[i]]), y0=par("usr")[3],
-               y1=par("usr")[3]-tl, col=isoformColorsTrans, lwd=3, xpd=NA,
-               lend=2)
-      annt <- apply(confint(misoResult[[i]]), 2,
-                    function(x) { paste(round(x,2), collapse="-")})
-      text(1, ylim[2]-(1:noIso(gene)-1)*strheight("I")*1.1,
-           adj=c(0,1), xpd=NA, cex=.8,
-           paste(round(rowMeans(misoResult[[i]]$samples), 2),
-                 " [", annt, "]", sep=""), col=isoformColors)
-    }
+      plotMISO(ms, col=isoformColors, legend="rightmargin", axes=FALSE)
+      axis(2, lwd=0.4, cex.axis=0.8, las=1)
+      axis(1, lwd=0.4, cex.axis=0.8, las=1,
+           at=pretty(0:1), labels=rep("", length(pretty(0:1))))
+    })
     par(mar=c(0,1,0,5)+.1)
     plot(NA, type="n", xlim=0:1, ylim=0:1, xlab="", ylab="", axes=FALSE)
     title(xlab="MISO estimates", xpd=NA)
     axis(1, cex.axis=0.8, lwd=.4)
-  }
-  
+  }  
 }

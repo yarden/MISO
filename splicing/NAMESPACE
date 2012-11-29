@@ -54,7 +54,7 @@ S3method("listAttributes", "splicingSAM")
 S3method("getAttribute", "splicingSAM")
 S3method("getIsoform", "splicingSAM")
 
-export(plotIso, plotIsoSize, plotIsoPDF, plotReadsSize, plotReads)
+export(plotIso, plotIsoSize, plotIsoPDF, plotReadsSize, plotReads, plotMISO)
 
 export(MISO, runMISO, writeMISO, readMISO, postMean, runData)
 
