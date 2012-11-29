@@ -284,7 +284,7 @@ plotReads <- function(gene, reads, misoResult=NULL,
       if (pos==1) {
         jfromy <- rhist[[i]][jfromx-xlim[1]+1]
         jtoy <- rhist[[i]][jtox-xlim[1]+1]
-        midy <- max(jfromy, jtoy) * 1.5
+        midy <- max(rhist[[i]][jfromx:jtox-xlim[1]+1]) * 1.5
         inc <- (ylim[2] - ylim[1]) / 100 * 5
       } else {
         jfromy <- 0
