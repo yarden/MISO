@@ -1,4 +1,8 @@
 
+isReads <- function(reads) {
+  inherits(reads, "splicingSAM")
+}
+
 readSAM <- function(filename, region=NULL, geneStructure=NULL, gene=1) {
   if (!is.null(region) && !is.null(geneStructure)) {
     stop("At most one of `region' and `geneStructure' can be given")
