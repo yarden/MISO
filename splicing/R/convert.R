@@ -415,7 +415,7 @@ constitutiveExons.gff3 <- function(gff3, min.length, mode=c("full", "all")) {
         as.integer(mode), PACKAGE="splicing")
 }
 
-getExonStart <- function(gff3, gene) {
+getExonStart <- function(gff3, gene=1) {
   mygff <- selectGenes(gff3, gene[1])
   mr <- mygff$tid+1
   ex <- which(mygff$type==SPLICING_EXON)
@@ -427,7 +427,7 @@ getExonStart <- function(gff3, gene) {
 
 ## TODO: make it faster
 
-getExonEnd <- function(gff3, gene) {
+getExonEnd <- function(gff3, gene=1) {
   mygff <- selectGenes(gff3, gene[1])
   mr <- mygff$tid
   ex <- which(mygff$type==SPLICING_EXON)
@@ -439,7 +439,7 @@ getExonEnd <- function(gff3, gene) {
 
 ## TODO: make it faster
 
-getExonLength <- function(gff3, gene) {
+getExonLength <- function(gff3, gene=1) {
   mygff <- selectGenes(gff3, gene[1])
   mr <- gff3$tid+1
   ex <- which(mygff$type==SPLICING_EXON)
@@ -449,16 +449,16 @@ getExonLength <- function(gff3, gene) {
   res
 }
 
-getExonSig <- function(gff3, gene)
+getExonSig <- function(gff3, gene=1)
   UseMethod("getExonSig")
 
-getExonSig.gff3 <- function(gff3, gene) {
+getExonSig.gff3 <- function(gff3, gene=1) {
   st <- getExonStart(gff3, gene)
   en <- getExonEnd(gff3, gene)
   mapply(st, en, FUN=function(a,b) paste(a, b, sep=":", collapse=";"))
 }
 
-getRegion <- function(gff3, gene)
+getRegion <- function(gff3, gene=1)
   UseMethod("getRegion")
 
 getRegion.gff3 <- function(gff3, gene=1) {
