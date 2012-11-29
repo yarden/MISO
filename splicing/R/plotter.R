@@ -277,6 +277,7 @@ plotReads <- function(gene, reads, misoResult=NULL,
     allj <- unique(junc[[i]])
     jc <- table(match(paste(junc[[i]][,1], sep=":", junc[[i]][,2]),
                       paste(allj[,1], sep=":", allj[,2])))
+    lwd <- log(jc)/3+.4 ; lwd[lwd > 10] <- 10
     for (j in seq_len(nrow(allj))) {
       pos <- jpos[[i]][j]
       jfromx <- allj[j,1]
@@ -295,7 +296,7 @@ plotReads <- function(gene, reads, misoResult=NULL,
       spl <- xspline(c(jfromx, jfromx, (jfromx+jtox)/2, jtox, jtox),
                      c(jfromy+inc, jfromy+2*inc, midy, jtoy+2*inc, jtoy+inc),
                      shape=c(0,1,1,1,0), draw=FALSE)
-      lines(spl$x, spl$y, col=sampleColors[i], xpd=NA, lwd=.5)
+      lines(spl$x, spl$y, col=sampleColors[i], xpd=NA, lwd=lwd[j])
       wid <- strwidth(jc[j])
       hei <- strheight(jc[j])
       tpos <- if (pos==1) max(spl$y) else min(spl$y)
