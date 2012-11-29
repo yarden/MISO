@@ -322,7 +322,8 @@ plotReads <- function(gene, reads, misoResult=NULL,
   if (!is.null(misoResult)) {
     lapply(misoResult, function(ms) {
       par(mar=c(0,1,1,5)+.1)
-      plotMISO(ms, col=isoformColors, legend="rightmargin", axes=FALSE)
+      plotMISO(ms, col=isoformColors, legend="rightmargin", axes=FALSE,
+               xlab="", ylab="")
       axis(2, lwd=0.4, cex.axis=0.8, las=1)
       axis(1, lwd=0.4, cex.axis=0.8, las=1,
            at=pretty(0:1), labels=rep("", length(pretty(0:1))))
