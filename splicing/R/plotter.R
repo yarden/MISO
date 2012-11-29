@@ -214,7 +214,7 @@ plotReads <- function(gene, reads, misoResult=NULL,
           no[idx2] <- no[idx2] + 1
           idx <- idx + len[j]
         } else if (typ[j]=="N") {
-          junc <- rbind(junc, c(idx-1, idx+len[j]))
+          junc <- rbind(junc, c(idx-1, idx+len[j])+xlim[1]-1)
           idx <- idx + len[j]
         } else {
           stop("Unknown CIGAR string character")
