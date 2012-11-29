@@ -411,9 +411,10 @@ plotReads <- function(gene, reads, misoResult=NULL,
                lend=2)
       annt <- apply(confint(misoResult[[i]]), 2,
                     function(x) { paste(round(x,2), collapse="-")})
-      text(1, ylim[2], adj=c(0,1), xpd=NA, cex=.8,
+      text(1, ylim[2]-(1:noIso(gene)-1)*strheight("I")*1.1,
+           adj=c(0,1), xpd=NA, cex=.8,
            paste(round(rowMeans(misoResult[[i]]$samples), 2),
-                 " [", annt, "]", sep="", collapse="\n"), col=1)
+                 " [", annt, "]", sep=""), col=isoformColors)
     }
     par(mar=c(0,1,0,5)+.1)
     plot(NA, type="n", xlim=0:1, ylim=0:1, xlab="", ylab="", axes=FALSE)
