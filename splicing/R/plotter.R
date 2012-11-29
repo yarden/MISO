@@ -354,7 +354,7 @@ plotReads <- function(gene, reads, misoResult=NULL,
       text((jfromx+jtox)/2, tpos, jc[j], xpd=NA)
     }
     segments(xlim[1], 0, xlim[2], 0, lty=1, lwd=.1, col=sampleColors[i])
-    text(xlim[2], ylim[2], adj=c(1,0), names(reads)[i],
+    text(xlim[1], ylim[2], adj=c(0,0), names(reads)[i],
          xpd=NA, col=sampleColors[i])
   }
 
