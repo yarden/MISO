@@ -1,4 +1,29 @@
 
+## Omit the zero values, plot it as several separate polygons
+mypolygon <- function(x, y, ...) {
+  idx <- 1
+  for (i in seq_along(x)) {
+    if ((y[i] == 0 || i==length(x)) && i > 1  && y[i-1] != 0) {
+      polygon(c(x[idx], x[idx:i], x[i]), c(0, y[idx:i], 0), ...)
+      idx <- i
+    } else if (y[i]==0 && i<length(x) && y[i+1] != 0) {
+      idx <- i+1
+    }
+  }
+}
+
+mylines <- function(x, y, ...) {
+  idx <- 1
+  for (i in seq_along(x)) {
+    if ((y[i] == 0 || i==length(x)) && i > 1  && y[i-1] != 0) {
+      lines(c(x[idx], x[idx:i], x[i]), c(0, y[idx:i], 0), ...)
+      idx <- i
+    } else if (y[i]==0 && i<length(x) && y[i+1] != 0) {
+      idx <- i+1
+    }
+  }
+}  
+
 plotIso <- function(geneStructure, gene=1, xlab="", ylab="",
                     col=rainbow_hcl(noIso(geneStructure)[gene]),
                     mar=c(0,0,2,0)+.1, axes=FALSE, ...) {
@@ -54,7 +79,7 @@ plotIsoPDF <- function(geneStructure, file, gene=1, mar=c(0,0,2,0), ...) {
   dev.off()
 }
 
-plotMISO <- function(misoResult,
+plotMISO <- function(misoResult, type=c("area", "bars"),
                      col=rainbow_hcl(noIso(misoResult$geneStructure)),
                      legend=c("topright", "topleft", "rightmargin", "none"),
                      xlab="Isoform ratio", ylab="Relative frequency",
@@ -63,6 +88,7 @@ plotMISO <- function(misoResult,
 
   require(colorspace)
 
+  type <- match.arg(type)
   legend <- match.arg(legend)
   
   col <- rep(col, length.out=noIso(misoResult$geneStructure))
@@ -81,9 +107,16 @@ plotMISO <- function(misoResult,
     axis(1, las=las, lwd=lwd.axis, cex.axis=cex.axis)
   }
   sapply(seq_along(hi), function(h) {
-    rect(hi[[h]]$mids-.01, 0, hi[[h]]$mids+.01,
-         hi[[h]]$counts/sum(hi[[h]]$counts),
-         col=colTrans[h], border=NA)
+    if (type=="bars") {
+      rect(hi[[h]]$mids-.01, 0, hi[[h]]$mids+.01,
+           hi[[h]]$counts/sum(hi[[h]]$counts),
+           col=colTrans[h], border=NA)
+    } else if (type=="area") {
+      mypolygon(hi[[h]]$mids, hi[[h]]$counts/sum(hi[[h]]$counts),
+                col=colTrans[h], border=NA)
+      mylines(hi[[h]]$mids, hi[[h]]$counts/sum(hi[[h]]$counts),
+              col=col[h], lwd=2)
+    }
   })
   abline(v=rowMeans(misoResult$samples), col=col)
   tl <- (par("usr")[4]-par("usr")[3])/20
@@ -110,9 +143,9 @@ plotMISO <- function(misoResult,
     }
     text(xx, yy, adj=adj, xpd=NA, cex=.8,
          paste(round(rowMeans(misoResult$samples), 2),
-               " [", annt, "]", sep=""), col=col)
+               " [", annt, "]", sep=""), col=col, font=2)
   }
-}  
+}
 
 ## TODO:
 ##  - stacked area charts
@@ -124,6 +157,7 @@ plotReadsSize <- function(gene, reads, misoResult=NULL) {
 }
 
 plotReads <- function(gene, reads, misoResult=NULL,
+                      misoType=c("area", "bars"),
                       ## Colors
                       sampleColors="#e78800ff",
                       isoformColors=rainbow_hcl(noIso(gene)),
@@ -226,19 +260,6 @@ plotReads <- function(gene, reads, misoResult=NULL,
 
   junc <- lapply(rhist, "[[", "junc")
   rhist <-lapply(rhist, "[[", "no")
-
-  ## Omit the zero values, plot it as several separate polygons
-  mypolygon <- function(x, y, ...) {
-    idx <- 1
-    for (i in seq_along(x)) {
-      if ((y[i] == 0 || i==length(x)) && i > 1  && y[i-1] != 0) {
-        polygon(c(x[idx], x[idx:i], x[i]), c(0, y[idx:i], 0), ...)
-        idx <- i
-      } else if (y[i]==0 && i<length(x) && y[i+1] != 0) {
-        idx <- i+1
-      }
-    }
-  }
 
   ## Where to put the junctions
   jpos <- lapply(junc, function(jj) {
