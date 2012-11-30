@@ -79,7 +79,7 @@ plotIsoPDF <- function(geneStructure, file, gene=1, mar=c(0,0,2,0), ...) {
   dev.off()
 }
 
-plotMISO <- function(misoResult, type=c("area", "bars"),
+plotMISO <- function(misoResult, type=c("area", "bars"), meanBars=FALSE,
                      col=rainbow_hcl(noIso(misoResult$geneStructure)),
                      legend=c("topright", "topleft", "rightmargin", "none"),
                      xlab="Isoform ratio", ylab="Relative frequency",
@@ -93,6 +93,7 @@ plotMISO <- function(misoResult, type=c("area", "bars"),
   
   col <- rep(col, length.out=noIso(misoResult$geneStructure))
   colTrans <- paste(col, sep="", "66")
+  colTrans2 <- paste(col, sep="", "a0")
   
   breaks <- seq(0, 1, length=41)
 
@@ -113,12 +114,10 @@ plotMISO <- function(misoResult, type=c("area", "bars"),
            col=colTrans[h], border=NA)
     } else if (type=="area") {
       mypolygon(hi[[h]]$mids, hi[[h]]$counts/sum(hi[[h]]$counts),
-                col=colTrans[h], border=NA)
-      mylines(hi[[h]]$mids, hi[[h]]$counts/sum(hi[[h]]$counts),
-              col=col[h], lwd=2)
+                col=colTrans[h], border=colTrans2[h])
     }
   })
-  abline(v=rowMeans(misoResult$samples), col=col)
+  if (meanBars) { abline(v=rowMeans(misoResult$samples), col=col) }
   tl <- (par("usr")[4]-par("usr")[3])/20
   ## TODO: triangles
   segments(x0=postMean(misoResult), y0=par("usr")[3],
@@ -157,7 +156,7 @@ plotReadsSize <- function(gene, reads, misoResult=NULL) {
 }
 
 plotReads <- function(gene, reads, misoResult=NULL,
-                      misoType=c("area", "bars"),
+                      misoType=c("area", "bars"), misoMeanBars=FALSE,
                       ## Colors
                       sampleColors="#e78800ff",
                       isoformColors=rainbow_hcl(noIso(gene)),
@@ -345,7 +344,7 @@ plotReads <- function(gene, reads, misoResult=NULL,
     lapply(misoResult, function(ms) {
       par(mar=c(0,1,1,5)+.1)
       plotMISO(ms, col=isoformColors, legend="rightmargin", axes=FALSE,
-               xlab="", ylab="")
+               xlab="", ylab="", meanBars=misoMeanBars)
       axis(2, lwd=0.4, cex.axis=0.8, las=1)
       axis(1, lwd=0.4, cex.axis=0.8, las=1,
            at=pretty(0:1), labels=rep("", length(pretty(0:1))))
