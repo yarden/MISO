@@ -268,7 +268,7 @@ plotReads <- function(gene, reads, misoResult=NULL,
     if (nrow(uj)==1) { return(1) }
     for (i in 1:(nrow(uj)-1)) {
       for (j in (i+1):nrow(uj)) {
-        if ( ! (uj[i,1] > uj[j,2] || uj[j,1] > uj[i,2]) ) {
+        if ( (uj[i,1] == uj[j,1] || uj[i,2] == uj[j,2]) ) {
           el <- c(el, i, j)
         }
       }
@@ -281,7 +281,11 @@ plotReads <- function(gene, reads, misoResult=NULL,
     } else {
       jp <- as.numeric(bm$type)
     }
-    if (sum(jp==0) > sum(jp==1)) { jp <- 1-jp }
+    if (sum(jp==1) < sum(jp==0) ||
+        (sum(jp==1) == sum(jp==0) &&
+         mean((uj[,2]-uj[,1])[jp==1]) > mean((uj[,2]-uj[,1])[jp==0]))) {
+      jp <- 1 - jp
+    }
     jp
   })
   
