@@ -79,7 +79,24 @@ plotIsoPDF <- function(geneStructure, file, gene=1, mar=c(0,0,2,0), ...) {
   dev.off()
 }
 
+addBottomTri <- function(pos, col=1, border=NA, xpd=NA, cex=1, ...) {
+  col <- rep(col, length=length(pos))
+  border <- rep(border, length=length(border))
+  cex <- 1 * cex
+  xfac <- strwidth("o")
+  yfac <- strheight("o")
+  for (i in seq_along(pos)) {
+    yc <- par("usr")[3]
+    yo <- cex*yfac*sqrt(3)/2
+    if (i > 1) { yc <- yc - yo*2/3 *
+                   sum(abs(pos[1:(i-1)] - pos[i]) < cex*yfac/4) }
+    polygon(c(pos[i], pos[i]+cex/2*xfac, pos[i]-cex/2*xfac),
+            c(yc, yc-yo, yc-yo), xpd=xpd, col=col[i], border=border[i], ...)
+  }
+} 
+
 plotMISO <- function(misoResult, type=c("area", "bars"), meanBars=FALSE,
+                     meanTriangles=TRUE, meanTrianglesCex=1,
                      col=rainbow_hcl(noIso(misoResult$geneStructure)),
                      legend=c("topright", "topleft", "rightmargin", "none"),
                      xlab="Isoform ratio", ylab="Relative frequency",
@@ -118,11 +135,10 @@ plotMISO <- function(misoResult, type=c("area", "bars"), meanBars=FALSE,
     }
   })
   if (meanBars) { abline(v=rowMeans(misoResult$samples), col=col) }
-  tl <- (par("usr")[4]-par("usr")[3])/20
-  ## TODO: triangles
-  segments(x0=postMean(misoResult), y0=par("usr")[3],
-           y1=par("usr")[3]-tl, col=colTrans, lwd=3, xpd=NA,
-           lend=2)
+
+  if (meanTriangles) {
+    addBottomTri(pos=postMean(misoResult), col=col, cex=meanTrianglesCex)
+  }
 
   if (legend != "none") {
     annt <- apply(confint(misoResult), 2,
