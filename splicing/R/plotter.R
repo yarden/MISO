@@ -222,7 +222,6 @@ plotReads <- function(gene, reads, misoResult=NULL,
   plot.new()
   text(sum(par("usr")[1:2])/2, sum(par("usr")[3:4])/2, cex=1, geneIds(gene),
        adj=c(1/2,1), xpd=NA)
-  print("title:"); print(par("fin"))
   
   ## Common parameters
   start <- getExonStart(gene)
@@ -339,7 +338,6 @@ plotReads <- function(gene, reads, misoResult=NULL,
   plot(NA, type="n", xlim=xlim, ylim=ylim, ylab="", axes=FALSE,
        xlab="Genomic coordinate", xpd=NA)
   axis(1, cex.axis=.8, lwd=.4)
-  print("Axis:"); print(par("fin"))
   
   ## Plot the isoforms
   plotIso(gene, mar=c(1,5,5,1)+.1, col=isoformColors)
