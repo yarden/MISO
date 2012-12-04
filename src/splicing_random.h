@@ -53,7 +53,6 @@ long int splicing_rng_get_integer(splicing_rng_t *rng,
 				long int l, long int h);
 double splicing_rng_get_normal(splicing_rng_t *rng, 
 				    double m, double s);
-double splicing_rng_get_gamma(splicing_rng_t *rng, double a);
 double splicing_rng_get_unif(splicing_rng_t *rng, 
 				  double l, double h);
 double splicing_rng_get_unif01(splicing_rng_t *rng);
@@ -91,7 +90,7 @@ void PutRNGstate(void);
 #define RNG_NORMAL(m,s)  (splicing_rng_get_normal(&splicing_rng_default,(m),(s)))
 #define RNG_UNIF(l,h)    (splicing_rng_get_unif(&splicing_rng_default,(l),(h)))
 #define RNG_UNIF01()     (splicing_rng_get_unif01(&splicing_rng_default))
-#define RNG_GAMMA(a)     (splicing_rng_get_gamma(&splicing_rng_default,(a)))
+#define RNG_GAMMA(a)     (splicing_rng_get_gamma(&splicing_rng_default,(a))
 #define RNG_INT31()      (splicing_rng_get_int31(&splicing_rng_default))
 
 

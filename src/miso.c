@@ -286,7 +286,7 @@ int splicing_rng_get_dirichlet(splicing_rng_t *rng,
   
   SPLICING_CHECK(splicing_vector_resize(result, l));
   for (i=0; i<l; i++) { 
-    VECTOR(*result)[i] = RNG_GAMMA(VECTOR(*alpha)[i]);
+    VECTOR(*result)[i] = RNG_GAMMA(VECTOR(*alpha)[i], 1.0);
     sum += VECTOR(*result)[i];
   }
   for (i=0; i<l; i++) {
