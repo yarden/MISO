@@ -177,28 +177,7 @@ def load_bam_reads(bam_filename,
     print "Loading took %.2f seconds" %(t2 - t1)
     return bamfile
 
-def fetch_bam_reads_in_region(bamfile, chrom, start, end, gene=None):
-    """
-    Align BAM reads to the gene model.
-    """
-    gene_reads = []
 
-    if chrom in bamfile.references:
-        pass
-    else:
-        chrom = chrom.split("chr")[1]
-        
-    try:
-        gene_reads = bamfile.fetch(chrom, start, end)
-    except ValueError:
-        print "Cannot fetch reads in region: %s:%d-%d" %(chrom,
-                                                         start,
-                                                         end)
-    print "never got here?"
-
-    return gene_reads
-
-    
 def fetch_bam_reads_in_gene(bamfile, chrom, start, end, gene=None):
     """
     Align BAM reads to the gene model.
@@ -208,8 +187,12 @@ def fetch_bam_reads_in_gene(bamfile, chrom, start, end, gene=None):
     if chrom in bamfile.references:
         pass
     else:
-        chrom = chrom.split("chr")[1]
-        
+        chrom_parts = chrom.split("chr")
+        if len(chrom_parts) <= 1:
+            print "Error: chromosome %s must mismatch bamfile %s" \
+                %(chrom, bamfile)
+        chrom = chrom_parts[1]
+
     try:
         gene_reads = bamfile.fetch(chrom, start, end)
     except ValueError:

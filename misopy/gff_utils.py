@@ -120,7 +120,7 @@ def get_gene_ids_to_gff_index(indexed_gff_dir):
                 gene_ids_to_gff_index[gene_id] = chrom_indexed_filename
 
     return gene_ids_to_gff_index
-                
+
         
 class GFFDatabase:
     """
@@ -147,6 +147,7 @@ class GFFDatabase:
 	    self.from_filename = from_filename
     def __len(self):
         return len(self.__entries)
+
 
     def from_file(self, filename, version="3",
                   reverse_recs=False):

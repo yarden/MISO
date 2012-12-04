@@ -11,6 +11,9 @@ import sys
 import glob
 import matplotlib
 
+# Use PDF backend
+matplotlib.use("pdf")
+
 from scipy import *
 from numpy import *
 

@@ -118,7 +118,6 @@ def get_tagBam_cmd(bam_filename,
     tagBam_cmd = "%s -i %s -files %s -labels %s -intervals -f 1" \
                  %(tagBam, bam_filename, gff_filename,
                    interval_label)
-    
     if as_sam:
         tagBam_cmd += " | samtools view - -h"
 
