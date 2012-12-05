@@ -121,8 +121,10 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
         gene_obj = gene_info['gene_object']
         gene_hierarchy = gene_info['hierarchy']
         
-        # Find the most inclusive transcription start and end sites for each gene
-        tx_start, tx_end = gff_utils.get_inclusive_txn_bounds(gene_info['hierarchy'][gene_id])
+        # Find the most inclusive transcription start and end sites
+        # for each gene
+        tx_start, tx_end = \
+            gff_utils.get_inclusive_txn_bounds(gene_info['hierarchy'][gene_id])
 
         # Fetch reads aligning to the gene boundaries
         gene_reads = sam_utils.fetch_bam_reads_in_gene(bamfile, gene_obj.chrom,
@@ -155,11 +157,12 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
         # this is a paired-end or single-end data set.
         if paired_end:
             # Sampler parameters for paired-end mode
-            sampler_params = miso.get_paired_end_sampler_params(num_isoforms,
-                                                                mean_frag_len,
-                                                                frag_variance,
-                                                                read_len,
-                                                                overhang_len=overhang_len)
+            sampler_params = \
+                miso.get_paired_end_sampler_params(num_isoforms,
+                                                   mean_frag_len,
+                                                   frag_variance,
+                                                   read_len,
+                                                   overhang_len=overhang_len)
             sampler = miso.MISOSampler(sampler_params,
                                        paired_end=True,
                                        log_dir=output_dir)
@@ -200,7 +203,8 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
         
 def greeting(parser=None):
     print "MISO (Mixture of Isoforms model)"
-    print "Probabilistic analysis of RNA-Seq data to detect differential isoforms"
+    print "Probabilistic analysis of RNA-Seq data to detect " \
+          "differential isoforms"
     print "Use --help argument to view options.\n"
     if parser is not None:
         parser.print_help()
@@ -213,15 +217,20 @@ def main():
     ##
     ## Main options
     ##
-    parser.add_option("--compute-gene-psi", dest="compute_gene_psi", nargs=4, default=None,
-                      help="Compute Psi using for a given multi-isoform gene.  Expects four arguments: "
-                      "the first is a gene ID or set of comma-separated (no spaces) gene IDs, "
-                      "the second is a GFF indexed file with the gene information, the third is a sorted and "
-                      "indexed BAM file with reads aligned to the gene, and the fourth is an output directory.")
-    parser.add_option("--paired-end", dest="paired_end", nargs=2, default=None,
-                      help="Run in paired-end mode.  Takes a mean and standard deviation "
-                      "for the fragment length distribution (assumed to have discretized "
-                      "normal form.)")
+    parser.add_option("--compute-gene-psi", dest="compute_gene_psi",
+                      nargs=4, default=None,
+                      help="Compute Psi using for a given multi-isoform gene. "
+                      "Expects four arguments: the first is a gene ID or set "
+                      "of comma-separated (no spaces) gene IDs, "
+                      "the second is a GFF indexed file with the gene "
+                      "information, the third is a sorted and "
+                      "indexed BAM file with reads aligned to the gene, "
+                      "and the fourth is an output directory.")
+    parser.add_option("--paired-end", dest="paired_end",
+                      nargs=2, default=None,
+                      help="Run in paired-end mode.  Takes a mean and standard "
+                      "deviation for the fragment length distribution (assumed "
+                      "to have discretized normal form.)")
 
     ##
     ## Psi utilities
