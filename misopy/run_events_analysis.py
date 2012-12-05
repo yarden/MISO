@@ -164,14 +164,17 @@ def compute_psi(sample_filenames, output_dir, event_type, read_len, overhang_len
         os.makedirs(output_dir)
 
     for sample_label, sample_filename in sample_filenames.iteritems():
-	print "Processing sample: label=%s, filename=%s" %(sample_label, sample_filename)
+	print "Processing sample: label=%s, filename=%s" \
+            %(sample_label, sample_filename)
 	results_output_dir = os.path.join(output_dir, sample_label)
         if not os.path.isdir(results_output_dir):
             os.makedirs(results_output_dir)
 
 	# Load the set of counts and serialize them into JSON
-	events = as_events.load_event_counts(sample_filename, event_type,
-                                             events_info_filename=events_info_filename)
+	events = \
+            as_events.load_event_counts(sample_filename,
+                                        event_type,
+                                        events_info_filename=events_info_filename)
 
 	# Filter events
 	if filter_events:
@@ -180,10 +183,12 @@ def compute_psi(sample_filenames, output_dir, event_type, read_len, overhang_len
 
 	print "Running on a total of %d events." %(len(events.events))
 	    
-	events_filename = events.output_file(results_output_dir, sample_label)
+	events_filename = events.output_file(results_output_dir,
+                                             sample_label)
 	
 	# Run MISO on them
-	miso_cmd = 'python %s --compute-two-iso-psi %s %s --event-type %s --read-len %d --overhang-len %d ' \
+	miso_cmd = "python %s --compute-two-iso-psi %s %s --event-type %s " \
+                   "--read-len %d --overhang-len %d " \
                    %(os.path.join(miso_path, 'run_miso.py'),
                      events_filename,
                      results_output_dir,
