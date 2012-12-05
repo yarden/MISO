@@ -31,53 +31,8 @@ np.seterr(all='ignore')
 
 miso_path = os.path.dirname(os.path.abspath(__file__))
 
-def get_current_args():
-    """
-    Return the current arguments as a string.
-    """
-    return " ".join(sys.argv)
-
-
-def get_curr_script_cmd():
-    """
-    Get the invocation of the current script (with its command line arguments) as a
-    full command for use in a script.
-    """
-    return 'python ' + get_current_args()
-
-
-def strip_option(cmd, option):
-    """
-    Strip given option from the given command line argument.
-    """
-    return "".join(cmd.split(option))
-
-
-def get_bayes_factor_filenames(comparison_dir):
-    """
-    Given a comparison directory, return a list of all the filenames
-    that end in .miso_bf and are in a _vs_ comparison sub-directory.
-    """
-    bf_files_matcher = os.path.join(comparison_dir,
-                                    '*_vs_*',
-                                    'bayes-factors',
-                                    '*.miso_bf')
-    comparison_filenames = glob.glob(bf_files_matcher)
-    return comparison_filenames
-
-
-def get_psi_info_by_sample(event_comparison_data, sample1_or_sample2):
-    psi_info = {}
-    
-    for old_key in event_comparison_data.keys():
-        if old_key.startswith(sample1_or_sample2):
-            new_key = old_key.split("%s_" %(sample1_or_sample2))[1]
-            psi_info[new_key] = event_comparison_data[old_key]
-    return psi_info
-
-
 ##
-## Multi-isoform interface
+## General interface
 ##
 def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
                      output_dir, read_len, overhang_len,
@@ -100,7 +55,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
         os.makedirs(output_dir)
 
     if not os.path.exists(gff_index_filename):
-        print "Error: no such GFF file as %s" %(gff_index_filename)
+        print "Error: No GFF %s" %(gff_index_filename)
         return
 
     num_genes = len(gene_ids)
