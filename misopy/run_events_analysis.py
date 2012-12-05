@@ -138,9 +138,13 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
         
             
         
-def compute_psi(sample_filenames, output_dir, event_type, read_len, overhang_len,
-		use_cluster=False, chunk_jobs=False, filter_events=True,
-                events_info_filename=None, settings_filename=None):
+def compute_psi(sample_filenames, output_dir, event_type,
+                read_len, overhang_len,
+		use_cluster=False,
+                chunk_jobs=False,
+                filter_events=True,
+                events_info_filename=None,
+                settings_filename=None):
     """
     Compute Psi values for skipped exons.  Sample filenames is a mapping from
     sample label to sample.
