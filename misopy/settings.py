@@ -1,10 +1,12 @@
 ##
-## Settings with relevant directories
+## Parse MISO settings
 ##
+import os
+import sys
+
 import misopy
 from misopy.parse_csv import *
 import ConfigParser
-import os
 
 miso_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
 
@@ -27,6 +29,10 @@ class Settings(object):
                                              "miso_settings.txt")
 
         print "Loading settings from: %s" %(cls.settings_path)
+        if not os.path.isfile(cls.settings_path):
+            print "Error: Settings file %s does not exist." \
+                %(cls.settings_path)
+            sys.exit(1)
         cls.parsed_settings = config.read(cls.settings_path)
 
         cls.global_settings = {}
