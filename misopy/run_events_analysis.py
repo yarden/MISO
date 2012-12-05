@@ -201,39 +201,42 @@ def compute_psi(sample_filenames, output_dir, event_type, read_len, overhang_len
 	os.system(miso_cmd)
 
 
-def main():
+def greeting(parser=None):
     print "MISO (Mixture of Isoforms model)"
-    print "Probabilistic analysis of RNA-Seq data to detect differential isoforms"
+    print "Probabilistic analysis of RNA-Seq data to detect " \
+          "differential isoforms"
     print "Use --help argument to view options.\n"
+    if parser is not None:
+        parser.print_help()
+
+
+def main():
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--compute-events-psi", dest="compute_events_psi", nargs=2, default=None,
-		      help="Compute Psi values for all events. Expects two arguments: a "
-		      "set of labels and a set of filenames with associated "
-		      "read counts.")
-    parser.add_option("--compute-genes-psi", dest="compute_genes_psi", nargs=2, default=None,
-                      help="Compute Psi values for a given GFF annotation of either whole mRNA isoforms "
-                      "or isoforms produced by single alternative splicing events. "
-                      "Expects two arguments: an indexed GFF directory with genes to process, and a sorted, indexed "
-                      "BAM file (with headers) to run on.")
+    parser.add_option("--compute-genes-psi", dest="compute_genes_psi",
+                      nargs=2, default=None,
+                      help="Compute Psi values for a given GFF annotation "
+                      "of either whole mRNA isoforms or isoforms produced by "
+                      "single alternative splicing events. Expects two "
+                      "arguments: an indexed GFF directory with genes to "
+                      "process, and a sorted, indexed BAM file (with "
+                      "headers) to run on.")
     parser.add_option("--event-type", dest="event_type", nargs=1,
 		      help="Type of event (e.g. SE, RI, A3SS, ...)",
                       default=None)
-    parser.add_option("--events-file", dest="events_info_filename", nargs=1,
-		      help="Filename with all the events and their coordinates. This is used "
-		      "to compute the length of the alternative regions in each event.",
-		      default=None)
-    parser.add_option("--use-cluster", dest="use_cluster", action="store_true", default=False,
+    parser.add_option("--use-cluster", dest="use_cluster",
+                      action="store_true", default=False,
 		      help="Run events on cluster.")
-    parser.add_option("--chunk-jobs", dest="chunk_jobs", default=False, type="int",
-		      help="Size (in number of events) of each job to chunk events file into. "
-		      "Only applies when running on cluster.")
-    parser.add_option("--no-filter-events", dest="no_filter_events", action="store_true",
-		      default=False,
+    parser.add_option("--chunk-jobs", dest="chunk_jobs",
+                      default=False, type="int",
+		      help="Size (in number of events) of each job to chunk "
+                      "events file into. Only applies when running on cluster.")
+    parser.add_option("--no-filter-events", dest="no_filter_events",
+                      action="store_true", default=False,
 		      help="Do not filter events for computing Psi. "
-		      "By default, MISO computes Psi only for events that have a "
-		      "sufficient number of junction reads. The default filter "
-		      "varies by event type.")
+		      "By default, MISO computes Psi only for events that "
+                      "have a sufficient number of junction reads. "
+                      "The default filter varies by event type.")
     parser.add_option("--settings-filename", dest="settings_filename",
                       default=os.path.join(miso_settings_path,
                                            "settings", "miso_settings.txt"),                    
@@ -241,19 +244,28 @@ def main():
     parser.add_option("--read-len", dest="read_len", default=None, type="int",
 		      help="Length of sequenced reads.")
     parser.add_option("--paired-end", dest="paired_end", nargs=2, default=None, 
-		      help="Run in paired-end mode. Takes mean and standard deviation "
-                      "of insert length distribution.")
-    parser.add_option("--overhang-len", dest="overhang_len", default=None, type="int",
-		      help="Length of overhang constraints imposed on junctions.")
+		      help="Run in paired-end mode. Takes mean and "
+                      "standard deviation of insert length distribution.")
+    parser.add_option("--overhang-len", dest="overhang_len",
+                      default=None, type="int",
+		      help="Length of overhang constraints "
+                      "imposed on junctions.")
     parser.add_option("--output-dir", dest="output_dir", default=None,
 		      help="Directory for MISO output.")
     parser.add_option("--job-name", dest="job_name", nargs=1,
                       help="Name for jobs submitted to queue for SGE jobs. " \
                       "Default is misojob", default="misojob")
-    parser.add_option("--SGEarray", dest="SGEarray", action="store_true", default=False,
-                      help="Use MISO on cluster with Sun Grid Engine. To be used in "
-                      "conjunction with --use-cluster option.")
+    parser.add_option("--SGEarray", dest="SGEarray",
+                      action="store_true", default=False,
+                      help="Use MISO on cluster with Sun Grid Engine. "
+                      "To be used in conjunction with --use-cluster option.")
     (options, args) = parser.parse_args()
+
+    if len(args) == 0:
+        greeting(parser=parser)
+        sys.exit(0)
+    else:
+        greeting()
 
     ##
     ## Load the settings file 
@@ -277,69 +289,18 @@ def main():
         print "Error: SGEarray implies that you are using an SGE cluster," \
               "please run again with --use-cluster option enabled."
         sys.exit(1)
-    
-    ##
-    ## Event types that require additional event files
-    ##
-    event_types_requiring_files = ['AFE', 'ALE']
-
-    if options.compute_events_psi:
-        print "Computing Psi for events..."
-	# Error check arguments
-	if not options.event_type:
-	    print "Error: Need event type (e.g. SE, TandemUTR, ...) to run MISO."
-            sys.exit(1)
-
-	if (options.event_type in event_types_requiring_files) and \
-	   options.events_info_filename == None:
-	    print "Error: Need for event information filename for events of type %s" \
-		  %(options.event_type)
-            sys.exit(1)
-	
-	if not (options.read_len != None and options.overhang_len != None):
-	    print "Error: Need read length and overhang length to run MISO."
-            sys.exit(1)
-
-	if options.output_dir == None:
-	    print "Error: Need output directory to run MISO."
-            sys.exit(1)
-
-
-	labels = options.compute_events_psi[0].split(',')
-	filenames = options.compute_events_psi[1].split(',')
-	assert(len(labels) == len(filenames))
-	
-	sample_filenames = {}
-	for label, filename in zip(labels, filenames):
-	    sample_filenames[label] = os.path.normpath(os.path.expanduser(filename))
-
-	filter_events = not options.no_filter_events
-
-        print "Filter events? "
-        if filter_events:
-            print "  - yes"
-        else:
-            print "  - no"
-
-        events_info_filename = None
-        if options.events_info_filename != None:
-            events_info_filename = os.path.expanduser(options.events_info_filename)
-
-	compute_psi(sample_filenames, os.path.expanduser(options.output_dir), options.event_type,
-                    options.read_len, options.overhang_len, use_cluster=options.use_cluster,
-                    filter_events=filter_events, chunk_jobs=options.chunk_jobs,
-                    events_info_filename=events_info_filename,
-                    settings_filename=settings_filename)
 
     ##
-    ## Gene-level isoform quantitation using BAM
+    ## Quantitation using BAM for all genes
     ##
     if options.compute_genes_psi != None:
         # GFF filename with genes to process
-        gff_filename = os.path.abspath(os.path.expanduser(options.compute_genes_psi[0]))
+        gff_filename = \
+            os.path.abspath(os.path.expanduser(options.compute_genes_psi[0]))
 
         # BAM filename with reads
-        bam_filename = os.path.abspath(os.path.expanduser(options.compute_genes_psi[1]))
+        bam_filename = \
+            os.path.abspath(os.path.expanduser(options.compute_genes_psi[1]))
 
         if options.output_dir == None:
             print "Error: need --output-dir to compute gene-level Psi."
@@ -361,7 +322,8 @@ def main():
         if options.overhang_len != None:
             overhang_len = options.overhang_len
         
-        compute_all_genes_psi(gff_filename, bam_filename, options.read_len, output_dir,
+        compute_all_genes_psi(gff_filename, bam_filename,
+                              options.read_len, output_dir,
                               overhang_len=overhang_len,
                               use_cluster=options.use_cluster,
                               SGEarray=options.SGEarray,

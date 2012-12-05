@@ -69,12 +69,28 @@ if sys.version_info > (3, 0):
 from distutils.command.install import INSTALL_SCHEMES
 for scheme in INSTALL_SCHEMES.values():
         scheme['data'] = scheme['purelib']
-        
+
+##
+## Definition of the current version
+##
+MISO_VERSION = "0.4.6"
+
+##
+## Generate a __version__.py attribute
+## for the module
+##
+with open("./misopy/__init__.py", "w") as version_out:
+      version_out.write("__version__ = \"%s\"\n" %(MISO_VERSION))
+
 setup(name = 'misopy',
-      version = '0.4.6',
-      description = 'Mixture of Isoforms model (MISO) for isoform quantitation using RNA-Seq',
+      ##
+      ## CRITICAL: When changing version, remember
+      ## to change version in __version__.py
+      ##
+      version = MISO_VERSION,
+      description = "Mixture of Isoforms model (MISO) " \
+                    "for isoform quantitation using RNA-Seq",
       long_description = long_description,
-#      license = 'MIT License',
       author = 'Yarden Katz,Gabor Csardi',
       author_email = 'yarden@mit.edu,gcsardi@stat.harvard.edu',
       # Py version issues should go to Yarden, R version to Gabor
@@ -85,7 +101,8 @@ setup(name = 'misopy',
       ext_modules = [splicing_extension],
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
-      packages = ['misopy', 'misopy.sashimi_plot',
+      packages = ['misopy',
+                  'misopy.sashimi_plot',
                   'misopy.sashimi_plot.plot_utils',
                   'pysplicing'],
       # distutils always uses forward slashes
@@ -130,7 +147,8 @@ setup(name = 'misopy',
           ],
       platforms = 'ALL',
       keywords = ['bioinformatics', 'sequence analysis',
-                  'alternative splicing', 'RNA-Seq'],
+                  'alternative splicing', 'RNA-Seq',
+                  'probabilistic models', 'bayesian'],
       classifiers = [
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',

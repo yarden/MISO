@@ -216,8 +216,10 @@ def get_psi_info_by_sample(event_comparison_data, sample1_or_sample2):
 ##
 ## Multi-isoform interface
 ##
-def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
-                     read_len, overhang_len, paired_end=None, event_type=None,
+def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
+                     output_dir, read_len, overhang_len,
+                     paired_end=None,
+                     event_type=None,
                      verbose=True):
     """
     Run Psi at the Gene-level (for multi-isoform inference.)
@@ -376,30 +378,23 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename, output_dir,
                             num_chains=num_chains,
                             burn_in=burn_in,
                             lag=lag)
+
         
-	    
-def main():
+def greeting(parser=None):
     print "MISO (Mixture of Isoforms model)"
     print "Probabilistic analysis of RNA-Seq data to detect differential isoforms"
     print "Use --help argument to view options.\n"
+    if parser is not None:
+        parser.print_help()
+    
+    
+def main():
     from optparse import OptionParser
     parser = OptionParser()
-    ##
-    ## Two isoform Psi
-    ##
-    parser.add_option("--compute-two-iso-psi", dest="two_iso_psi_files", nargs=2, default=None,
-		       help="Compute Psi using MISO for a given set of two-isoform events. "
-                       "Expects two arguments: the first is the set of events (in JSON/Pickle format), "
-                       "the second is an output directory where estimated Psi values will "
-		       "be outputted.")
 
     ##
-    ## Multiple isoform Psi
+    ## Main options
     ##
-    # parser.add_option("--compute-multi-iso-psi", dest="multi_iso_psi_files", nargs=3, default=None,
-    #                   help="Compute Psi using for a given multi-isoform gene.  Expects three arguments: "
-    #                   "the first is a file with the isoform lengths. The second is a file with the reads " 
-    #                   "aligned to the isoform. The third is an output directory.")
     parser.add_option("--compute-gene-psi", dest="compute_gene_psi", nargs=4, default=None,
                       help="Compute Psi using for a given multi-isoform gene.  Expects four arguments: "
                       "the first is a gene ID or set of comma-separated (no spaces) gene IDs, "
@@ -413,50 +408,74 @@ def main():
     ##
     ## Psi utilities
     ##
-    parser.add_option("--compare-samples", dest="samples_to_compare", nargs=3, default=None,
-		      help="Compute comparison statistics between the two given samples. "
-                      "Expects three directories: the first is sample1's MISO output, "
-                      "the second is sample2's MISO output, and the third is the directory where "
+    parser.add_option("--compare-samples", dest="samples_to_compare",
+                      nargs=3, default=None,
+		      help="Compute comparison statistics between the two "
+                      "given samples. Expects three directories: the first is "
+                      "sample1's MISO output, the second is sample2's MISO "
+                      "output, and the third is the directory where "
 		      "results of the sample comparison will be outputted.")
-    parser.add_option("--comparison-labels", dest="comparison_labels", nargs=2, default=None,
-                      help="Use these labels for the sample comparison made by --compare-samples. "
-                      "Takes two arguments: the label for sample 1 and the label for sample 2, "
-                      "where sample 1 and sample 2 correspond to the order of samples given "
+    parser.add_option("--comparison-labels", dest="comparison_labels",
+                      nargs=2, default=None,
+                      help="Use these labels for the sample comparison "
+                      "made by --compare-samples. "
+                      "Takes two arguments: the label for sample 1 "
+                      "and the label for sample 2, where sample 1 and "
+                      "sample 2 correspond to the order of samples given "
                       "to --compare-samples.")
-    parser.add_option("--run-two-iso-event", dest="run_two_iso_event", nargs=3, default=None,
-		      help="Run MISO on two isoform event, given an event name, an events file "
-                      "(in JSON/Pickle format) and an output directory.")
-    parser.add_option("--summarize-samples", dest="summarize_samples", nargs=2, default=None,
-		      help="Compute summary statistics of the given set of samples. "
-                      "Expects a directory with MISO output and a directory to output "
-                      "summary file to.")
-    parser.add_option("--summary-label", dest="summary_label", nargs=1, default=None,
-                      help="Label for MISO summary file. If not given, uses basename of MISO output "
-                      "directory.")
-    parser.add_option("--summarize-multi-iso-samples", dest="summarize_samples", nargs=2, default=None,
-		      help="Compute summary statistics of the given set of samples from multi-isoform runs. "
-                      "Expects a directory with MISO output and a directory to output summary file to.")
-    parser.add_option("--use-cluster", action="store_true", dest="use_cluster", default=False)
-    parser.add_option("--chunk-jobs", dest="chunk_jobs", default=False, type="int",
-		      help="Size (in number of events) of each job to chunk events file into. "
-                      "Only applies when running on cluster.")
+    parser.add_option("--summarize-samples", dest="summarize_samples",
+                      nargs=2, default=None,
+		      help="Compute summary statistics of the given set "
+                      "of samples. Expects a directory with MISO output "
+                      "and a directory to output summary file to.")
+    parser.add_option("--summary-label", dest="summary_label",
+                      nargs=1, default=None,
+                      help="Label for MISO summary file. If not given, "
+                      "uses basename of MISO output directory.")
+    parser.add_option("--summarize-multi-iso-samples", dest="summarize_samples",
+                      nargs=2, default=None,
+		      help="Compute summary statistics of the given set of "
+                      "samples from multi-isoform runs. Expects a directory with "
+                      "MISO output and a directory to output summary file to.")
+    parser.add_option("--use-cluster", action="store_true",
+                      dest="use_cluster", default=False)
+    parser.add_option("--chunk-jobs", dest="chunk_jobs",
+                      default=False, type="int",
+		      help="Size (in number of events) of each job to "
+                      "chunk events file into. Only applies when "
+                      "running on cluster.")
     parser.add_option("--settings-filename", dest="settings_filename",
-                      default=os.path.join(miso_settings_path, "settings", "miso_settings.txt"),
+                      default=os.path.join(miso_settings_path,
+                                           "settings",
+                                           "miso_settings.txt"),
                       help="Filename specifying MISO settings.")
-    parser.add_option("--read-len", dest="read_len", type="int", default=None)
-    parser.add_option("--overhang-len", dest="overhang_len", type="int", default=None)
+    parser.add_option("--read-len", dest="read_len", type="int",
+                      default=None)
+    parser.add_option("--overhang-len", dest="overhang_len", type="int",
+                      default=None)
     parser.add_option("--event-type", dest="event_type", default=None,
-		      help="Event type of two-isoform events (e.g. 'SE', 'RI', 'A3SS', ...)")
-    parser.add_option("--use-compressed", dest="use_compressed", nargs=1, default=None,
-                      help="Use compressed event IDs. Takes as input a genes_to_filenames.shelve file "
-                      "produced by the index_gff.py script.")
+		      help="Event type of two-isoform "
+                      "events (e.g. 'SE', 'RI', 'A3SS', ...)")    
+    parser.add_option("--use-compressed", dest="use_compressed",
+                      nargs=1, default=None,
+                      help="Use compressed event IDs. Takes as input a "
+                      "genes_to_filenames.shelve file produced by the "
+                      "index_gff.py script.")
     ##
     ## Gene utilities
     ##
-    parser.add_option("--view-gene", dest="view_gene", nargs=1, default=None,
-                      help="View the contents of a gene/event that has been indexed. "\
-                      "Takes as input an indexed (.pickle) filename.")
+    parser.add_option("--view-gene", dest="view_gene",
+                      nargs=1, default=None,
+                      help="View the contents of a gene/event that has "
+                      "been indexed. Takes as input an "
+                      "indexed (.pickle) filename.")
     (options, args) = parser.parse_args()
+
+    if len(args) == 0:
+        greeting(parser=parser)
+        sys.exit(0)
+    else:
+        greeting()
 
     ##
     ## Load the settings file 
@@ -474,7 +493,7 @@ def main():
             print "Compression being used."
             
     if options.samples_to_compare is not None:
-	sample1_dirname = os.path.abspath(options.samples_to_compare[0])
+        sample1_dirname = os.path.abspath(options.samples_to_compare[0])
 	sample2_dirname = os.path.abspath(options.samples_to_compare[1])
 	output_dirname = os.path.abspath(options.samples_to_compare[2])
 	if not os.path.isdir(output_dirname):
@@ -485,52 +504,11 @@ def main():
                                      sample_labels=options.comparison_labels,
                                      use_compressed=use_compressed)
 	
-    if options.run_two_iso_event:
-	if options.read_len == None or options.overhang_len == None:
-	    print "Error: must provide --read-len and --overhang-len to run."
-            sys.exit(1)
-            
-	if options.use_cluster:
-	    print "Use cluster option not supported for running on a single event."
-            sys.exit(1)
-            
-	# convert paths to absolute path names
-	event_name = options.run_two_iso_event[0]
-	events_filename = os.path.abspath(options.run_two_iso_event[1]) 
-	psi_outdir = os.path.abspath(os.path.expanduser(options.run_two_iso_event[2])) + '/'
-        
-	miso_events = as_events.MISOEvents(2, options.event_type,
-                                           from_file=events_filename)
-        
-	run_two_iso_event(event_name, options.event_type, miso_events, psi_outdir,
-			  options.read_len, options.overhang_len)
-
     # if options.inspect_events:
     #     print "Loading events from: %s" %(options.inspect_events)
     #     miso_events = as_events.MISOEvents(2, options.event_type, from_file=options.inspect_events)
     #     print "  - Total of %d events." %(len(miso_events.events))
 	
-    if options.two_iso_psi_files:
-	if options.read_len == None or options.overhang_len == None:
-	    print "Error: must provide --read-len and --overhang-len to run."
-            sys.exit(1)
-
-	# convert paths to absolute path names
-	events_filename = os.path.abspath(options.two_iso_psi_files[0]) 
-	psi_outdir = os.path.abspath(options.two_iso_psi_files[1]) + '/'
-	if options.use_cluster:
-	    run_two_iso_on_cluster(miso_path, events_filename, options.event_type, psi_outdir,
-                                   options.read_len, options.overhang_len,
-                                   chunk_jobs=options.chunk_jobs)
-	else:
-	    if options.chunk_jobs:
-		print "Error: Chunking jobs only applies when using the --use-cluster option " \
-                      "to run MISO on cluster."
-                sys.exit(1)
-                
-	    compute_two_iso_psi(events_filename, options.event_type, psi_outdir,
-				options.read_len, options.overhang_len)
-
     ##
     ## Multiple isoforms interface based on SAM files
     ##
@@ -576,10 +554,12 @@ def main():
             samples_label = options.summary_label
             print "Using summary label: %s" %(samples_label)
         else:
-            samples_label = os.path.basename(os.path.expanduser(samples_dir))
+            samples_label = \
+                os.path.basename(os.path.expanduser(samples_dir))
 	assert(len(samples_label) >= 1)
-	summary_output_dir = os.path.abspath(os.path.join(os.path.expanduser(options.summarize_samples[1]),
-							  'summary'))
+	summary_output_dir = \
+            os.path.abspath(os.path.join(os.path.expanduser(options.summarize_samples[1]),
+                                         'summary'))
 	if not os.path.isdir(summary_output_dir):
 	    os.makedirs(summary_output_dir)
 	    
