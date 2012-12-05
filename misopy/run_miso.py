@@ -298,11 +298,7 @@ def main():
                       "indexed (.pickle) filename.")
     (options, args) = parser.parse_args()
 
-    if len(args) == 0:
-        greeting(parser=parser)
-        sys.exit(0)
-    else:
-        greeting()
+    greeting()
 
     ##
     ## Load the settings file 

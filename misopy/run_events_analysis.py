@@ -270,11 +270,7 @@ def main():
                       "To be used in conjunction with --use-cluster option.")
     (options, args) = parser.parse_args()
 
-    if len(args) == 0:
-        greeting(parser=parser)
-        sys.exit(0)
-    else:
-        greeting()
+    greeting()
 
     ##
     ## Load the settings file 
