@@ -45,7 +45,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   int overhang=1;
   int no_chains=6;
   splicing_miso_start_t start=SPLICING_MISO_START_AUTO;
-  splicing_miso_stop_t stop=SPLICING_MISO_STOP_CONVERGENT_MEAN;
+  splicing_miso_stop_t stop=SPLICING_MISO_STOP_FIXEDNO;
   splicing_gff_t *mygff;
   splicing_strvector_t myreadcigar;
   splicing_vector_int_t myreadpos;
@@ -154,7 +154,7 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   int overhang=1;
   int no_chains=6;
   splicing_miso_start_t start=SPLICING_MISO_START_AUTO;
-  splicing_miso_stop_t stop=SPLICING_MISO_STOP_CONVERGENT_MEAN;
+  splicing_miso_stop_t stop=SPLICING_MISO_STOP_FIXEDNO;
   double normalMean, normalVar, numDevs;
   splicing_gff_t *mygff;
   splicing_strvector_t myreadcigar;

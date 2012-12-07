@@ -281,10 +281,12 @@ class MISOSampler:
                                                  prior_params, 
                                                  long(self.overhang_len),
                                                  long(num_chains),
-                                                 start_cond, stop_cond)
+                                                 start_cond,
+                                                 stop_cond)
         else:
             # Run single-end
-            miso_results = pysplicing.MISO(c_gene, 0L,
+            miso_results = pysplicing.MISO(c_gene,
+                                           0L,
                                            read_positions,
                                            read_cigars,
                                            long(self.read_len),
