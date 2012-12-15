@@ -30,10 +30,10 @@
 .. raw:: html
 
    <a href="http://www.linkedin.com/shareArticle?mini=true&url=http://genes.mit.edu/burgelab/miso/docs/&title=MISO: Analysis of isoform expression using RNA-Seq&summary=&source=MIT" target="_new">
-   <img src="_images/linkedin.png" alt="linkedin share button" title="linkedin share button" />
+   <img src="images/linkedin.png" alt="linkedin share button" title="linkedin share button" />
    </a>
    <a target="_blank" href="http://twitter.com/share?text=Currently reading MISO documentation (http%3A%2F%2Fgenes.mit.edu%2Fburgelab%2Fmiso%2Fdocs%2F)" title="Click to share this post on Twitter">
-   <img src="_images/twitter.png" alt="twitter share button" title="twitter share button" />
+   <img src="images/twitter.png" alt="twitter share button" title="twitter share button" />
    </a>
 
 We recently released a version of MISO written in the C language (called ``fastmiso``) which is **60-100x faster** than the original Python-only version! See :ref:`installing-fastmiso` section for more information.
