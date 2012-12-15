@@ -119,7 +119,9 @@ def get_tagBam_cmd(bam_filename,
                  %(tagBam, bam_filename, gff_filename,
                    interval_label)
     if as_sam:
-        tagBam_cmd += " | samtools view - -h"
+        # The '-' argument must come last. Oddly this
+        # behavior seems vary from Macs to Unix machines
+        tagBam_cmd += " | samtools view -h -"
 
     if only_interval:
         assert(as_sam == True), \

@@ -185,7 +185,6 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
         if not os.path.isdir(chrom_dir):
             os.makedirs(chrom_dir)
 
-#        output_filename = os.path.join(chrom_dir, gene_obj.label)
         # Pick .miso output filename based on the pickle filename
         miso_basename = os.path.basename(gff_index_filename)
         if not miso_basename.endswith(".pickle"):
@@ -298,7 +297,8 @@ def main():
                       "indexed (.pickle) filename.")
     (options, args) = parser.parse_args()
 
-    greeting()
+    if options.compute_gene_psi is not None:
+        greeting()
 
     ##
     ## Load the settings file 

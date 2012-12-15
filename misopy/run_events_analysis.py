@@ -19,9 +19,13 @@ import misopy.cluster_utils as cluster_utils
 miso_path = os.path.dirname(os.path.abspath(__file__))
 
 def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
-                          use_cluster=False, SGEarray=False, chunk_jobs=200,
-                          overhang_len=1, paired_end=None,
-                          settings=None, job_name="misojob"):
+                          use_cluster=False,
+                          SGEarray=False,
+                          chunk_jobs=200,
+                          overhang_len=1,
+                          paired_end=None,
+                          settings=None,
+                          job_name="misojob"):
     """
     Compute Psi values for genes using a GFF and a BAM filename.
 
@@ -48,7 +52,11 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
 
     for gene_id, gff_index_filename in gene_ids_to_gff_index.iteritems():
         miso_cmd = "python %s --compute-gene-psi \"%s\" \"%s\" %s %s --read-len %d " \
-                   %(miso_run, gene_id, gff_index_filename, bam_filename, output_dir,
+                   %(miso_run,
+                     gene_id,
+                     gff_index_filename,
+                     bam_filename,
+                     output_dir,
                      read_len)
         if paired_end != None:
             # Run in paired-end mode
