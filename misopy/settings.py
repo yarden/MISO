@@ -37,7 +37,6 @@ class Settings(object):
 
         cls.global_settings = {}
 
-        print "Settings: "
         for section in config.sections():
             for option in config.options(section):
                 # Load cluster options as strings, without attempting to evaluate them
@@ -46,7 +45,6 @@ class Settings(object):
                     cls.global_settings[option] = str(config.get(section, option))
                 else:
                     cls.global_settings[option] = tryEval(config.get(section, option))
-                print "  ", option, cls.global_settings[option]
 
         # Set directory paths specific to pipeline
         if 'pipeline_results_dir' in cls.global_settings:
@@ -68,7 +66,6 @@ class Settings(object):
 
         for name in param_names:
             if name not in cls.global_settings:
-                print "settings: ", cls.global_settings
                 raise Exception, "Error: need %s parameter to be set in settings file." \
                       %(name)
             sampler_params[name] = cls.global_settings[name]
@@ -95,7 +92,6 @@ class Settings(object):
         """
         Return the name of the long queue (for long jobs.)
         """
-        print "cls.global_settings: ", cls.global_settings
         if 'long_queue_name' in cls.global_settings:
             return cls.global_settings['long_queue_name']
         else:
