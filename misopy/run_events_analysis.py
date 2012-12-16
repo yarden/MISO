@@ -292,8 +292,6 @@ def main():
     settings_filename = os.path.abspath(os.path.expanduser(options.settings_filename))
     Settings.load(settings_filename)
     
-    print "Loading settings file from: %s" %(settings_filename)
-    
     if (not options.use_cluster) and options.chunk_jobs:
         print "Error: Chunking jobs only applies when using " \
               "the --use-cluster option to run MISO on cluster."
