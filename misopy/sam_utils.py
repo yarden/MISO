@@ -311,7 +311,6 @@ def sam_cigar_to_str(sam_cigar):
                          for c in sam_cigar])
     return cigar_str
 
-@profile    
 def sam_parse_reads(samfile, paired_end=False):
     read_positions = []
     read_cigars = []
