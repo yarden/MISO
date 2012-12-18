@@ -7,6 +7,7 @@ import time
 import os
 import errno
 import sys
+import re
 import pysam
 
 from collections import defaultdict
@@ -104,6 +105,7 @@ def output_exons_to_file(recs, output_filename,
         # Write file in BED format
         raise Exception, "BED format unsupported."
 
+
 def get_tagBam_cmd(bam_filename,
                    interval_label,
                    gff_filename,
@@ -168,7 +170,7 @@ def map_bam2gff(bam_filename, gff_filename,
     tagBam_cmd = get_tagBam_cmd(bam_filename, interval_label,
                                 gff_filename)
     # Write intervals as BAM
-    tagBam_cmd += " | samtools view - -Shb -o %s" \
+    tagBam_cmd += " | samtools view -Shb -o %s - " \
                   %(output_filename)
     print tagBam_cmd
     
@@ -188,7 +190,65 @@ def map_bam2gff(bam_filename, gff_filename,
     print "tagBam call took %.2f seconds." \
           %(t2 - t1)
     return output_filename
-    
+
+
+def get_bedtools_coverage_cmd(bam_filename, gff_filename,
+                              output_filename):
+    """
+    Get bedtools command for getting the number of reads
+    from the BAM filename that are strictly contained within
+    each interval of the GFF.
+    """
+    args = {"bam_filename": bam_filename,
+            "gff_filename": gff_filename}
+    intersect_cmd = "bedtools intersect -abam %(bam_filename)s " \
+        "-b %(gff_filename)s -f 1 -ubam -s" %(args)
+    coverage_cmd = "%s | bedtools coverage -abam - -b %s -s -counts > %s" \
+        %(intersect_cmd, gff_filename, output_filename)
+    return coverage_cmd
+
+
+def get_bam_gff_coverage(bam_filename, gff_filename, output_dir,
+                         gff_rec_type="gene"):
+    """
+    Compute the coverage (number of reads landing within each
+    interval of a GFF)
+    """
+    if not os.path.isfile(bam_filename):
+        print "Error: BAM file %s does not exist." %(bam_filename)
+    if not os.path.isfile(gff_filename):
+        print "Error: GFF file %s does not exist." %(gff_filename)
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
+    # Name the output bed after the bam basename, but remove
+    # the .bam extension (case-insensitive)
+    bam_ext = re.compile("\.bam", re.IGNORECASE)
+    output_basename = bam_ext.sub("", os.path.basename(bam_filename))
+    output_filename = "%s.bed" %(os.path.join(output_dir, output_basename))
+    # Generate a genes-only GFF filename
+    gff_basename = os.path.basename(gff_filename)
+    genes_gff_fname = os.path.join(output_dir,
+                                   "genes_%s" %(gff_basename))
+    genes_only_cmd = "cat %s | awk \'$3 == \"%s\"\' > %s" \
+        %(gff_filename,
+          gff_rec_type,
+          genes_gff_fname)
+    print "Generating coverage file..."
+    print "  - BAM file: %s" %(bam_filename)
+    print "  - GFF file: %s" %(bam_filename)
+    print "  - Output file: %s" %(output_filename)
+    print "Fetching only genes from GFF..."
+    os.system(genes_only_cmd)
+    coverage_cmd = get_bedtools_coverage_cmd(bam_filename,
+                                             genes_gff_fname,
+                                             output_filename)
+    print "Executing: %s" %(coverage_cmd)
+    status = os.system(coverage_cmd)
+    if status != 0:
+        print "Error computing coverage using bedtools."
+        sys.exit(1)
+    return output_filename
+
 
 def get_const_exons_by_gene(gff_filename, output_dir,
                             output_filename=None,
