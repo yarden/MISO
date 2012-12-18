@@ -170,11 +170,8 @@ def load_bam_reads(bam_filename,
     """
     print "Loading BAM filename from: %s" %(bam_filename)
     bam_filename = os.path.abspath(os.path.expanduser(bam_filename))
-    t1 = time.time()
     bamfile = pysam.Samfile(bam_filename, "rb",
                             template=template)
-    t2 = time.time()
-    print "Loading took %.2f seconds" %(t2 - t1)
     return bamfile
 
 
@@ -215,7 +212,7 @@ def flag_to_strand(flag):
     if flag == 0 or not (int(bin(flag)[-5]) & 1):
         return "+"
     return "-"
-    
+
 
 def strip_mate_id(read_name):
     """
@@ -231,8 +228,8 @@ def strip_mate_id(read_name):
        read_name.endswith("#1") or read_name.endswith("#2"):
         read_name = read_name[0:-3]
     return read_name
-    
 
+    
 def pair_sam_reads(samfile, filter_reads=True,
                    return_unpaired=False):
     """
@@ -288,8 +285,10 @@ def pair_sam_reads(samfile, filter_reads=True,
     for del_key in to_delete:
         del paired_reads[del_key]
 
-    print "Filtered out %d read pairs that were on same strand." %(len(to_delete))
-    print "Filtered out %d reads that had no paired mate." %(num_unpaired)
+    print "Filtered out %d read pairs that were on same strand." \
+        %(len(to_delete))
+    print "Filtered out %d reads that had no paired mate." \
+        %(num_unpaired)
     print "  - Total read pairs: %d" %(num_total)
 
     if not return_unpaired:
@@ -311,7 +310,8 @@ def sam_cigar_to_str(sam_cigar):
     cigar_str = "".join(["%d%s" %(c[1], CIGAR_TYPES[c[0]]) \
                          for c in sam_cigar])
     return cigar_str
-    
+
+@profile    
 def sam_parse_reads(samfile, paired_end=False):
     read_positions = []
     read_cigars = []
