@@ -530,8 +530,7 @@ These annotations include GFF files (``.gff3`` extension) that can be used with 
 Expanded alternative cleavage and polyadenylation annotation for mouse
 ----------------------------------------------------------------------
 
-A recent paper from Bin Tian's group, `Analysis of alternative cleavage and polyadenylation by 3′\
- region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_ annotated alternative cleavage and polyadenylation events in mouse tissues using the *3′READS* method. The
+A recent paper from Bin Tian's group, `Analysis of alternative cleavage and polyadenylation by 3′ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_ annotated alternative cleavage and polyadenylation events in mouse tissues using the *3′READS* method. The
 annotated events (TandemUTR and ALE) are available in GFF format here, courtesy of the Tian group:
 
 * `3′READS annotations for (mm9) mouse genome (.zip)`_
