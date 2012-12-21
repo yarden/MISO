@@ -525,10 +525,10 @@ Human/mouse/fly alternative event annotations files
 
 These annotations include GFF files (``.gff3`` extension) that can be used with MISO. The annotations for human and mouse were compiled as described in Wang et. al. (2008). Briefly, each splicing event was considered alternative if it was supported by several ESTs, and alternative tandem 3' UTRs (TandemUTR events) were derived from `PolyA DB`_.
 
+.. _tian-apa:
+
 Expanded alternative cleavage and polyadenylation annotation for mouse
 ----------------------------------------------------------------------
-
-.. _tian-apa:
 
 A recent paper from Bin Tian's group, `Analysis of alternative cleavage and polyadenylation by 3′\
  region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_ annotated alternative cleavage and polyadenylation events in mouse tissues using the *3′READS* method. The
