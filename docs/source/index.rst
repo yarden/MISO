@@ -106,6 +106,8 @@ Updates
 
 **2012**
 
+* **Thursday, Dec 20**: Posted new mouse genome annotation for alternative cleavage and polyadenylation events (TandemUTR) and alternative last exon events (ALE) from `Analysis of alternative cleavage and polyadenylation by 3′ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_ (Nature Methods, Dec. 2012), see :ref:`tian-apa`. Thanks to Wencheng Li and Bin Tian for creating this annotation!
+
 * **Tuesday, Dec 4**: Posted mappings from alternative events to genes (see :ref:`events-to-genes`) and GFF annotations for isoform-centric inference (see :ref:`iso-centric`).
 
 * **Thursday, Sept 27**: Released ``misopy-0.4.6``. This release fixes a packaging error with ``sashimi_plot`` (test case files were omitted.) No changes were made to MISO. Thanks to Schragi Schwartz and Rahul Satija.
@@ -523,10 +525,20 @@ Human/mouse/fly alternative event annotations files
 
 These annotations include GFF files (``.gff3`` extension) that can be used with MISO. The annotations for human and mouse were compiled as described in Wang et. al. (2008). Briefly, each splicing event was considered alternative if it was supported by several ESTs, and alternative tandem 3' UTRs (TandemUTR events) were derived from `PolyA DB`_.
 
-.. Some of the event annotations for the mm9 and hg18 genome come in several varieties. The generic annotations were compiled by considering all ESTs and exons from a wide range of databases (including UCSC, Ensembl, AceView as well as exons predicted by GENSCAN). For event of types A3SS, A5SS, MXE and SE, we also provide two variants of the annotation:
+Expanded alternative cleavage and polyadenylation annotation for mouse
+----------------------------------------------------------------------
 
-.. 1. Variant of the annotation that 
-.. 2. For SEs only, we provide a variant of the annotation that 
+.. _tian-apa:
+
+A recent paper from Bin Tian's group, `Analysis of alternative cleavage and polyadenylation by 3′\
+ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_ annotated alternative cleavage and polyadenylation events in mouse tissues using the *3′READS* method. The
+annotated events (TandemUTR and ALE) are available in GFF format here, courtesy of the Tian group:
+
+* `3′READS annotations for (mm9) mouse genome (.zip)`_
+
+  - Contains TandemUTR/ALE annotations and a mapping from events to gene IDs
+
+Thanks to Wencheng Li and Bin Tian for making these annotations available.
 
 .. _gff-event-annotation:
 
@@ -1578,6 +1590,7 @@ General reading on probabilistic modeling and inference
 .. _Mouse genome (mm9) alternative events: http://genes.mit.edu/burgelab/miso/annotations/mm9_alt_events.zip
 .. _Human genome (hg18) alternative events: http://genes.mit.edu/burgelab/miso/annotations/hg18_alt_events.zip
 .. _Human genome (hg19) alternative events: http://genes.mit.edu/burgelab/miso/annotations/hg19_alt_events.zip
+.. _3′READS annotations for (mm9) mouse genome (.zip): http://genes.mit.edu/burgelab/miso/annotations/tian_apa_events.zip
 .. _Mus_musculus.NCBIM37.65.gff: http://genes.mit.edu/burgelab/miso/annotations/gene-models/Mus_musculus.NCBIM37.65.gff.zip
 .. _Mus_musculus.NCBIM37.65.with_chr.gff: http://genes.mit.edu/burgelab/miso/annotations/gene-models/Mus_musculus.NCBIM37.65.with_chr.gff.zip
 .. _Homo_sapiens.GRCh37.65.gff: http://genes.mit.edu/burgelab/miso/annotations/gene-models/Homo_sapiens.GRCh37.65.gff.zip
