@@ -106,13 +106,13 @@ Updates
 
 **2012**
 
-* **Thursday, Dec 20**: Posted new mouse genome annotation for alternative cleavage and polyadenylation events (TandemUTR) and alternative last exon events (ALE) from `Analysis of alternative cleavage and polyadenylation by 3′ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_ (Nature Methods, Dec. 2012), see :ref:`tian-apa`. Thanks to Wencheng Li and Bin Tian for creating this annotation!
+* **Thu, Dec 20**: Posted new mouse genome annotation for alternative cleavage and polyadenylation events (TandemUTR) and alternative last exon events (ALE) from `Analysis of alternative cleavage and polyadenylation by 3′ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_ (Nature Methods, Dec. 2012), see :ref:`tian-apa`. Thanks to Wencheng Li and Bin Tian for creating this annotation!
 
-* **Tuesday, Dec 4**: Posted mappings from alternative events to genes (see :ref:`events-to-genes`) and GFF annotations for isoform-centric inference (see :ref:`iso-centric`).
+* **Tue, Dec 4**: Posted mappings from alternative events to genes (see :ref:`events-to-genes`) and GFF annotations for isoform-centric inference (see :ref:`iso-centric`).
 
-* **Thursday, Sept 27**: Released ``misopy-0.4.6``. This release fixes a packaging error with ``sashimi_plot`` (test case files were omitted.) No changes were made to MISO. Thanks to Schragi Schwartz and Rahul Satija.
+* **Thu, Sept 27**: Released ``misopy-0.4.6``. This release fixes a packaging error with ``sashimi_plot`` (test case files were omitted.) No changes were made to MISO. Thanks to Schragi Schwartz and Rahul Satija.
 
-* **Tuesday, Sept 4**: Released ``misopy-0.4.5``. Fixed error in parsing of settings file.
+* **Tue, Sept 4**: Released ``misopy-0.4.5``. Fixed error in parsing of settings file.
 
 * **Thur, Jul 26**: Released ``misopy-0.4.4``. Turned off autoconvergence features of sampler that caused delayed run times on certain events. (Also introduced a parameter ``num_chains`` in MISO settings file to control the number of independent MCMC chains used by the sampler.)
 
@@ -530,7 +530,7 @@ These annotations include GFF files (``.gff3`` extension) that can be used with 
 Expanded alternative cleavage and polyadenylation annotation for mouse
 ----------------------------------------------------------------------
 
-A recent paper from Bin Tian's group, `Analysis of alternative cleavage and polyadenylation by 3′ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_ annotated alternative cleavage and polyadenylation events in mouse tissues using the *3′READS* method. The
+A recent paper from Bin Tian's group, `Analysis of alternative cleavage and polyadenylation by 3′ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_, annotated alternative cleavage and polyadenylation events in mouse tissues using the *3′READS* method. The
 annotated events (TandemUTR and ALE) are available in GFF format here, courtesy of the Tian group:
 
 * `3′READS annotations for (mm9) mouse genome (.zip)`_
