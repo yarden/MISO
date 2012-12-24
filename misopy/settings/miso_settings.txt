@@ -13,6 +13,3 @@ lag = 10
 num_iters = 5000
 num_chains = 6
 
-# For single event analysis
-#se_filter = [10, 0, 1]
-#utr_filter = [20, 0, 0]

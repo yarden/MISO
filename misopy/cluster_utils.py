@@ -35,7 +35,8 @@ def make_bash_script(filename, cmd, crate_dir=None):
     """
 #    os.system('ls %s' %(filename))
     if crate_dir == None:
-        crate_dir = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
+        crate_dir = \
+            os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
     f = open(filename, 'w')
     f.write("#!/bin/bash\n")
     f.write("export PATH=$PATH:%s\n" %(crate_dir))
@@ -54,6 +55,7 @@ def valid_qsub_name(name):
     """
     name = name.replace(';', '_')
     return name
+
 
 def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
                          queue_type="long",
@@ -93,7 +95,7 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
                                 string.join([job_name, "err"], "."))
     script_out = os.path.join(scripts_output_dir,
                               string.join([job_name, "out"], "."))
-    cluster_script = os.path.join(cluster_scripts_dir, "run_miso.sh");
+    cluster_script = os.path.join(cluster_scripts_dir, "run_miso.sh")
 
     if settings != None:
         load_settings(settings)
@@ -153,8 +155,11 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
     os.system(qsub_cmd)
 
 
-def run_on_cluster(cmd, job_name, cluster_output_dir, cluster_scripts_dir=None,
-                   queue_type=None, cmd_name="qsub", settings=None):
+def run_on_cluster(cmd, job_name, cluster_output_dir,
+                   cluster_scripts_dir=None,
+                   queue_type=None,
+                   cmd_name="qsub",
+                   settings=None):
     print "Submitting job: %s" %(job_name)
     queue_name = None
 
@@ -180,24 +185,28 @@ def run_on_cluster(cmd, job_name, cluster_output_dir, cluster_scripts_dir=None,
 
     #print "  - cmd: %s" %(cmd)
     if cluster_scripts_dir == None:
-	cluster_scripts_dir = os.path.join(cluster_output_dir, 'cluster_scripts')
+	cluster_scripts_dir = os.path.join(cluster_output_dir,
+                                           'cluster_scripts')
 	if not os.path.isdir(cluster_scripts_dir):
 	    os.mkdir(cluster_scripts_dir)
-    scripts_output_dir = os.path.join(cluster_output_dir, 'scripts_output')
+    scripts_output_dir = os.path.join(cluster_output_dir,
+                                      'scripts_output')
     if not os.path.isdir(scripts_output_dir):
 	os.mkdir(scripts_output_dir)
     scripts_output_dir = os.path.abspath(scripts_output_dir)
-    #qsub_call = 'qsub -V -q \"%s\" -o \"%s\" -e \"%s\"' %(queue_type, scripts_output_dir, scripts_output_dir)
-    qsub_call = '%s -o \"%s\" -e \"%s\"' %(cmd_name, scripts_output_dir,
+    qsub_call = '%s -o \"%s\" -e \"%s\"' %(cmd_name,
+                                           scripts_output_dir,
                                            scripts_output_dir)
 
     # Add queue type if given one
     if queue_name != None:
         qsub_call += ' -q \"%s\"' %(queue_name)
         
-    script_name = valid_qsub_name(os.path.join(cluster_scripts_dir,
-                                               '%s_time_%s.sh' %(job_name,
-                                                                 time.strftime("%m-%d-%y_%H:%M:%S"))))
+    script_name = \
+        valid_qsub_name(os.path.join(cluster_scripts_dir,
+                                     '%s_time_%s.sh' \
+                                     %(job_name,
+                                       time.strftime("%m-%d-%y_%H:%M:%S"))))
     make_bash_script(script_name, cmd)
     qsub_cmd = qsub_call + ' \"%s\"' %(script_name)
     os.system(qsub_cmd)

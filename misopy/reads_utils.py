@@ -45,27 +45,3 @@ def count_isoform_assignments(assignments):
               for iso_num in range(num_isoforms + 1)]
 
     return counts
-
-    
-
-# def count_isoform_assignments(assignments, num_isoforms):
-#     """
-#     Count how many reads were assigned to each isoform.
-#     """
-#     isoform_nums = range(0, num_isoforms)
-#     counts_dict = {}
-
-#     # Initialize all isoform counts to zero
-#     for iso_num in isoform_nums:
-#         counts_dict[iso_num] = 0
-
-#     for assignment in assignments:
-#         counts_dict[assignment] += 1
-
-#     # Sort by isoform number
-#     keys = counts_dict.keys()
-#     keys.sort()
-
-#     counts = [(k, counts_dict[k]) for k in keys]
-
-#     return counts

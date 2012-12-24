@@ -1,3 +1,6 @@
+##
+## Revamped GFF utils
+##
 # Copyright (c) 2007
 # Colin Dewey (University of Wisconsin-Madison)
 # cdewey@biostat.wisc.edu
@@ -121,6 +124,14 @@ def get_gene_ids_to_gff_index(indexed_gff_dir):
 
     return gene_ids_to_gff_index
 
+
+def parse_gff_attribs(attrib_str):
+    attribs = {}
+    for pair in attrib_str.split(";"):
+        key, val = pair.split("=")
+        attribs[key] = val
+    return attribs
+                
         
 class GFFDatabase:
     """
@@ -145,6 +156,7 @@ class GFFDatabase:
 	    self.from_file(from_filename,
                            reverse_recs=reverse_recs)
 	    self.from_filename = from_filename
+            
     def __len(self):
         return len(self.__entries)
 

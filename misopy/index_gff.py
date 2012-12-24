@@ -53,7 +53,9 @@ def is_compressed_index(index_filename):
     return False
 
     
-def serialize_genes(gff_genes, output_dir,
+def serialize_genes(gff_genes,
+                    gff_filename,
+                    output_dir,
                     compress_id=False):
     """
     Output genes into pickle files by chromosome, by gene.
@@ -66,12 +68,14 @@ def serialize_genes(gff_genes, output_dir,
     for gene_id, gene_info in gff_genes.iteritems():
         gene_obj = gene_info["gene_object"]
         gene_hierarchy = gene_info["hierarchy"]
-        genes_by_chrom[gene_obj.chrom][gene_id] = {'gene_object': gene_obj,
-                                                   'hierarchy': gene_hierarchy}
+        genes_by_chrom[gene_obj.chrom][gene_id] = \
+            {'gene_object': gene_obj,
+             'hierarchy': gene_hierarchy}
         if compress_id:
             gene_compressed_id = compress_event_name(gene_id)
             # Store compressed ID
-            genes_by_chrom[gene_obj.chrom][gene_id]['compressed_id'] = gene_compressed_id
+            genes_by_chrom[gene_obj.chrom][gene_id]['compressed_id'] \
+                = gene_compressed_id
 
     # Mapping from gene IDs to pickled filename
     gene_id_to_filename = {}
@@ -100,11 +104,13 @@ def serialize_genes(gff_genes, output_dir,
             gene_compressed_id = None
             if compress_id:
                 gene_compressed_id = genes_by_chrom[chrom][gene_id]['compressed_id']
-                gene_filename = os.path.abspath(os.path.join(chrom_dir,
-                                                             "%s.pickle" %(gene_compressed_id)))
+                gene_filename = \
+                    os.path.abspath(os.path.join(chrom_dir,
+                                                 "%s.pickle" %(gene_compressed_id)))
             else:
-                gene_filename = os.path.abspath(os.path.join(chrom_dir,
-                                                             "%s.pickle" %(gene_id)))
+                gene_filename = \
+                    os.path.abspath(os.path.join(chrom_dir,
+                                                 "%s.pickle" %(gene_id)))
             # Write each gene/event's pickle file
             pickle_utils.write_pickled_file({gene_id: genes_by_chrom[chrom][gene_id]},
                                             gene_filename)
@@ -125,11 +131,23 @@ def serialize_genes(gff_genes, output_dir,
     shelved_data.close()
 
     # Shelve the mapping from compressed gene ids to gene ids
-    shelved_filename = os.path.join(output_dir, "compressed_ids_to_genes.shelve")
+    shelved_filename = os.path.join(output_dir,
+                                    "compressed_ids_to_genes.shelve")
     shelved_data = shelve.open(shelved_filename)
     for k, v in compressed_id_to_gene_id.iteritems():
         shelved_data[k] = v
     shelved_data.close()
+
+    # Output a list of genes in ordinary GFF format
+    genes_filename = os.path.join(output_dir, "genes.gff")
+    print "Outputting gene records in GFF format..."
+    print "  - Output file: %s" %(genes_filename)
+    with open(gff_filename) as gff_in:
+        with open(genes_filename, "w") as gff_out:
+            for line in gff_in:
+                record_type = line.strip().split("\t")[2]
+                if record_type == "gene":
+                    gff_out.write(line)
     
         
 def index_gff(gff_filename, output_dir,
@@ -144,7 +162,8 @@ def index_gff(gff_filename, output_dir,
     # First check that the GFF is not already indexed
     indexed_files = glob.glob(os.path.join(output_dir, "chr*"))
     if len(indexed_files) >= 1:
-        print "%s appears to already be indexed. Aborting." %(gff_filename)
+        print "%s appears to already be indexed. Aborting." \
+            %(gff_filename)
         return
     
     print "  - GFF: %s" %(gff_filename)
@@ -156,7 +175,9 @@ def index_gff(gff_filename, output_dir,
     print "  - Loading of genes from GFF took %.2f seconds" %(t2 - t1)
 
     t1 = time.time()
-    serialize_genes(gff_genes, output_dir,
+    serialize_genes(gff_genes,
+                    gff_filename,
+                    output_dir,
                     compress_id=compress_id)
     t2 = time.time()
     print "  - Serialization of genes from GFF took %.2f seconds" %(t2 - t1)

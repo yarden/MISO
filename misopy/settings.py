@@ -42,16 +42,20 @@ class Settings(object):
                 # Load cluster options as strings, without attempting to evaluate them
                 # Avoids misinterpretation of words like "long" as a data type
                 if section == "cluster":
-                    cls.global_settings[option] = str(config.get(section, option))
+                    cls.global_settings[option] = \
+                        str(config.get(section, option))
                 else:
-                    cls.global_settings[option] = tryEval(config.get(section, option))
+                    cls.global_settings[option] = \
+                        tryEval(config.get(section, option))
 
         # Set directory paths specific to pipeline
         if 'pipeline_results_dir' in cls.global_settings:
-            cls.global_settings['analysis_dir'] = os.path.join(cls.global_settings['pipeline_results_dir'],
-                                                               'analysis')
-            cls.global_settings['rna_events_dir'] = os.path.join(cls.global_settings['analysis_dir'],
-                                                                 'rna_events')
+            cls.global_settings['analysis_dir'] = \
+                os.path.join(cls.global_settings['pipeline_results_dir'],
+                             'analysis')
+            cls.global_settings['rna_events_dir'] = \
+                os.path.join(cls.global_settings['analysis_dir'],
+                             'rna_events')
 
     @classmethod
     def get_sampler_params(cls):
@@ -106,16 +110,37 @@ class Settings(object):
             return cls.global_settings['short_queue_name']
         else:
             return None
-
         
 
     @classmethod
-    def get_min_event_reads(cls):
+    def get_min_event_reads(cls,
+                            default_min_reads=20):
         """
         Return minimum number of reads an event should have.
         """
+        if "min_event_reads" not in cls.global_settings:
+            return default_min_reads
         min_event_reads = cls.global_settings["min_event_reads"]
         return min_event_reads
+
+
+    @classmethod
+    def get_strand_param(cls,
+                         default_strand_param="fr-unstranded"):
+        """
+        Get strand paramter. Default is unstranded.
+        Follows Tophat conventions for specifying strandedness.
+        """
+        strandedness = default_strand_param
+        if "strand" in cls.global_settings:
+            strandedness = cls.global_settings["strand"]
+            if not ((strandedness == "fr-unstranded") or \
+                    (strandedness == "fr-firststrand") or \
+                    (strandedness == "fr-secondstrand")):
+                print "Error: Invalid strand parameter %s" \
+                    %(strandedness)
+                sys.exit(1)
+        return strandedness 
         
         
     @classmethod

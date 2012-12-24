@@ -6,17 +6,259 @@
 import os
 import csv
 import sys
+import subprocess
 from collections import defaultdict
 
 import misopy.gff_utils as gff_utils
 import misopy.as_events as as_events
 import misopy.run_miso as run_miso
+import misopy.misc_utils as misc_utils
+import misopy.exon_utils as exon_utils
 from misopy.parse_csv import *
 from misopy.settings import Settings, load_settings
 from misopy.settings import miso_path as miso_settings_path
 import misopy.cluster_utils as cluster_utils
 
 miso_path = os.path.dirname(os.path.abspath(__file__))
+
+class GenesDispatcher:
+    """
+    Send MISO commands to cluster or locally
+    using multi-cores.
+    """
+    def __init__(self, gff_dir, bam_filename,
+                 output_dir, read_len, overhang_len,
+                 settings=None,
+                 paired_end=None,
+                 use_cluster=False,
+                 chunk_jobs=200,
+                 SGEarray=False,
+                 num_processors=4):
+        self.threads = {}
+        self.gff_dir = gff_dir
+        self.bam_filename = bam_filename
+        self.output_dir = output_dir
+        self.read_len = read_len
+        self.overhang_len = overhang_len
+        self.settings = settings
+        self.paired_end = paired_end
+        self.use_cluster = use_cluster
+        self.chunk_jobs = chunk_jobs
+        # if chunk_jobs not given (i.e. set to False),
+        # then set it to arbitrary value
+        if not self.chunk_jobs:
+            self.chunk_jobs = 200
+        self.SGEarray = SGEarray
+        self.num_processors = num_processors
+        self.long_thresh = 50
+        self.batch_logs_dir = \
+            os.path.join(output_dir, "batch-logs")
+        self.cluster_scripts_dir = \
+            os.path.join(output_dir, "cluster_scripts")
+        self.batch_genes_dir = \
+            os.path.join(output_dir, "batch-genes")
+        if not os.path.isdir(self.batch_logs_dir):
+            os.makedirs(self.batch_logs_dir)
+        if not os.path.isdir(self.cluster_scripts_dir):
+            os.makedirs(self.cluster_scripts_dir)
+        if not os.path.isdir(self.batch_genes_dir):
+            os.makedirs(self.batch_genes_dir)
+        # First compile a set of genes that should be run on
+        # and output them to file along with their indexed
+        # filenames
+        self.gene_ids_to_gff_index = \
+            gff_utils.get_gene_ids_to_gff_index(gff_dir)
+        self.batch_filenames = self.output_batch_files()
+
+
+    def output_batch_files(self):
+        """
+        Output a series of batch files containing
+        gene IDs and their indexed GFF filenames.
+
+        Return the batch filenames and their size.
+        """
+        batch_filenames = []
+        chunk_jobs = self.chunk_jobs
+        all_gene_ids = self.gene_ids_to_gff_index.keys()
+        num_genes = len(all_gene_ids)
+        num_chunks = max(1, int(round(num_genes / float(chunk_jobs))))
+        if not self.use_cluster:
+            # When not using cluster, use local multi-cores
+            # using default number of processors
+            num_chunks = self.num_processors
+        gene_ids_batches = cluster_utils.chunk_list(all_gene_ids,
+                                                    num_chunks)
+        for batch_num, gene_ids_batch in enumerate(gene_ids_batches):
+            batch_size = len(gene_ids_batch)
+            batch_fname = os.path.join(self.batch_genes_dir,
+                                       "batch-%d_genes.txt" %(batch_num))
+            with open(batch_fname, "w") as batch_out:
+                for gene_id in gene_ids_batch:
+                    index_fname = self.gene_ids_to_gff_index[gene_id]
+                    output_line = "%s\t%s\n" %(gene_id,
+                                               index_fname)
+                    batch_out.write(output_line)
+            batch_filenames.append((batch_fname, batch_size))
+
+        return batch_filenames
+
+
+    def run(self, delay_constant=0.9):
+        """
+        Run batches either locally on multi-cores
+        or using cluster.
+        """
+        batch_filenames = self.output_batch_files()
+        # All MISO commands, each correspond to a batch,
+        # and the number of jobs in each batch
+        all_miso_cmds = []
+        num_batches = len(batch_filenames)
+        ##
+        ## Prepare all the files necessary to run each batch
+        ##
+        print "Preparing to run %d batches of jobs..." %(num_batches)
+        miso_run = os.path.join(miso_path, "run_miso.py")
+        for batch_num, batch in enumerate(batch_filenames):
+            batch_filename, batch_size = batch
+            miso_cmd = \
+              "python %s --compute-genes-from-file \"%s\" %s %s --read-len %d " \
+                    %(miso_run,
+                      batch_filename,
+                      self.bam_filename,
+                      self.output_dir,
+                      self.read_len)
+            # Add paired-end parameters and read len/overhang len
+            if self.paired_end != None:
+                # Run in paired-end mode
+                frag_mean = float(self.paired_end[0])
+                frag_sd = float(self.paired_end[1])
+                miso_cmd += " --paired-end %.1f %.1f" %(frag_mean,
+                                                        frag_sd)
+            else:
+                # Overhang len only used in single-end mode
+                miso_cmd += " --overhang-len %d" %(self.overhang_len)
+            # Add settings filename if given
+            if self.settings != None:
+                miso_cmd += " --settings-filename %s" %(self.settings)
+            all_miso_cmds.append((miso_cmd, batch_size))
+        ##
+        ## Run all MISO commands for the batches
+        ## either locally using multi-cores or on cluster
+        ##
+        # First handle special case of SGE cluster submission
+        if self.use_cluster and self.SGEarray:
+            print "Using SGEarray..."
+            # Call SGE
+            batch_argfile = os.path.join(self.cluster_scripts_dir,
+                                         "run_args.txt")
+            cluster_utils.run_SGEarray_cluster(all_miso_cmds,
+                                               batch_argfile,
+                                               output_dir,
+                                               settings=settings,
+                                               job_name=job_name,
+                                               chunk=chunk_jobs)
+            # End SGE case
+            return
+        for batch_num, cmd_info in enumerate(all_miso_cmds):
+            miso_cmd, batch_size = cmd_info
+            print "Running batch of %d genes.." %(batch_size)
+            print "  - Executing: %s" %(miso_cmd)
+            # Make a log file for the batch, where all the output
+            # will be redirected
+            time_str = time.strftime("%m-%d-%y_%H:%M:%S")
+            batch_logfile = os.path.join(self.batch_logs_dir,
+                                         "batch-%d-%s.log" %(batch_num,
+                                                             time_str))
+            cmd_to_run = "%s >> %s;" %(miso_cmd, batch_logfile)
+            if not self.use_cluster:
+                # Run locally
+                p = subprocess.Popen(cmd_to_run, shell=True)
+                self.threads["batch-%d" %(batch_num)] = p
+            else:
+                # Run on cluster
+                if batch_size >= self.long_thresh:
+                    queue_type = "long"
+                else:
+                    queue_type = "short"
+                # Run on cluster
+                job_name = "gene_psi_batch_%d" %(batch_num)
+                cluster_utils.run_on_cluster(cmd_to_run, job_name, output_dir,
+                                             queue_type=queue_type,
+                                             settings=self.settings)
+                time.sleep(delay_constant)
+        # If ran jobs locally, wait on them to finish
+        self.wait_on_threads()
+
+
+    def wait_on_threads(self):
+        if self.use_cluster:
+            # If ran jobs on cluster, nothing to wait for
+            return
+        threads_completed = {}
+        num_threads = len(self.threads)
+        print "Waiting on %d threads..." %(num_threads)
+        t_start = time.time()
+        for thread_name in self.threads:
+            if thread_name in threads_completed:
+                continue
+            curr_thread = self.threads[thread_name]
+            curr_thread.wait()
+            threads_completed[thread_name] = True
+        t_end = time.time()
+        duration = ((t_end - t_start) / 60.) / 60.
+        print "  - Threads completed in %.2f hours." \
+            %(duration)
+            
+
+def get_ids_passing_filter(gff_index_dir,
+                           bam_filename,
+                           output_dir,
+                           settings,
+                           paired_end=None):
+    """
+    Apply filter to events using bedtools and return
+    only the events that meet the filter.
+    """
+    min_reads = 20
+    settings = Settings.get()
+    min_event_reads = Settings.get_min_event_reads()
+    
+    # Check that this was indexed with a version that outputs
+    # genes.gff file
+    genes_gff_fname = os.path.join(gff_index_dir,
+                                   "genes.gff")
+    if not os.path.isfile(genes_gff_fname):
+        print "WARNING: Could not find \'genes.gff\' in %s - " \
+              "skipping prefilter stage. Please reindex your " \
+              "GFF file with the latest version to enable " \
+              "prefiltering." %(gff_index_dir)
+        return None
+    print "Prefiltering reads..."
+    coverage_fname = exon_utils.get_bam_gff_coverage(bam_filename,
+                                                     genes_gff_fname,
+                                                     output_dir)
+    ids_passing_filter = []
+    with open(coverage_fname) as coverage_in:
+        for line in coverage_in:
+            # Skip comments
+            if line.startswith("#"):
+                continue
+            fields = line.strip().split("\t")
+            # Get the counts field and the event ID
+            # if it passes the filter
+            counts = int(fields[9])
+            if counts < min_event_reads:
+                continue
+            attribs = gff_utils.parse_gff_attribs(fields[8])
+            if "ID" not in attribs:
+                print "WARNING: No ID= found for line:\n%s\nSkipping..." \
+                    %(line)
+                continue
+            event_id = attribs["ID"]
+            ids_passing_filter.append(event_id)
+    return ids_passing_filter
+            
 
 def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           use_cluster=False,
@@ -25,126 +267,92 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           overhang_len=1,
                           paired_end=None,
                           settings=None,
-                          job_name="misojob"):
+                          job_name="misojob",
+                          prefilter=False):
     """
     Compute Psi values for genes using a GFF and a BAM filename.
 
     SGE functionality contributed by Michael Lovci.
+
+    Options:
+    - prefilter: if set to True, prefilter events by coverage.
+      Uses bedtools to determine coverage of each event and remove
+      events that do not meet the coverage criteria from the run.
     """
-    gene_ids_to_gff_index = gff_utils.get_gene_ids_to_gff_index(gff_dir)
-
-    num_genes = len(gene_ids_to_gff_index.keys())
-
-    miso_run = os.path.join(miso_path, "run_miso.py")
-
-    print "Computing gene-level Psi for %d genes..." \
-          %(num_genes)
+    print "Computing gene-level Psi for genes..." 
     print "  - GFF index: %s" %(gff_dir)
     print "  - BAM: %s" %(bam_filename)
     print "  - Read length: %d" %(read_len)
     print "  - Output directory: %s" %(output_dir)
-
+    
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     
-    # All commands to run
-    all_miso_cmds = []
+    # Prefilter events that do not meet the coverage criteria
+    # If filtering is on, only run on events that meet
+    # the filter.
+    if prefilter:
+        print "  - Prefiltering on"
+        if misc_utils.which("bedtools") is None:
+            print "Error: Cannot use bedtools. Bedtools is " \
+                  "required for --prefilter option"
+            sys.exit(1)
+        filtered_gene_ids = get_ids_passing_filter(gff_dir,
+                                                   bam_filename,
+                                                   output_dir,
+                                                   settings,
+                                                   paired_end=paired_end)
+        # Prefiltering succeeded, so process only gene ids that
+        # pass the filter
+        if filtered_gene_ids != None:
+            num_pass = len(filtered_gene_ids)
+            all_gene_ids = filtered_gene_ids
+            # If none of the events meet the read coverage filter
+            # something must have gone wrong, e.g. mismatch
+            # in chromosome headers between BAM and GFF
+            if num_pass == 0:
+                print "Error: None of the events in %s appear to meet the " \
+                      "read coverage filter. Check that your BAM headers " \
+                      "in %s match the GFF headers of indexed events." \
+                      %(gff_dir,
+                        bam_filename)
+                sys.exit(1)
+            print "  - Total of %d events pass coverage filter." \
+                %(num_pass)
 
-    for gene_id, gff_index_filename in gene_ids_to_gff_index.iteritems():
-        miso_cmd = "python %s --compute-gene-psi \"%s\" \"%s\" %s %s --read-len %d " \
-                   %(miso_run,
-                     gene_id,
-                     gff_index_filename,
-                     bam_filename,
-                     output_dir,
-                     read_len)
-        if paired_end != None:
-            # Run in paired-end mode
-            frag_mean = float(paired_end[0])
-            frag_sd = float(paired_end[1])
-            miso_cmd += " --paired-end %.1f %.1f" %(frag_mean, frag_sd)
-        else:
-            miso_cmd += " --overhang-len %d" %(overhang_len)
-
-        # Add settings filename if given
-        if settings != None:
-            miso_cmd += " --settings-filename %s" %(settings)
-
-        if use_cluster:
-            # If asked to use cluster, accumulate the MISO commands
-            # but do not run them
-            all_miso_cmds.append(miso_cmd)
-        else:
-            print "  - Executing: %s" %(miso_cmd)
-            os.system(miso_cmd)
-
-    if use_cluster:
-        if SGEarray:
-            if not chunk_jobs:
-                chunk_jobs = 2500
-                print "  - Using default chunk jobs = %d" %(chunk_jobs)
-            cluster_output_dir = os.path.join(output_dir, "cluster_scripts")
-            if not os.path.isdir(cluster_output_dir):
-                os.makedirs(cluster_output_dir)
-            batch_argfile = os.path.join(cluster_output_dir, "run_args.txt")
-            # Call SGE if asked
-            cluster_utils.run_SGEarray_cluster(all_miso_cmds, batch_argfile,
-                                               output_dir,
-                                               settings=settings,
-                                               job_name=job_name,
-                                               chunk=chunk_jobs)
-        else:
-            # Threshold for putting jobs in the long queue
-            long_thresh = 50
+    ##
+    ## Submit jobs either using cluster or locally
+    ## using multi-cores.
+    ##
+    dispatcher = GenesDispatcher(gff_dir,
+                                 bam_filename,
+                                 output_dir,
+                                 read_len,
+                                 overhang_len,
+                                 settings=settings,
+                                 paired_end=paired_end,
+                                 use_cluster=use_cluster,
+                                 chunk_jobs=chunk_jobs,
+                                 SGEarray=SGEarray)
+    dispatcher.run()
             
-            # Delay between jobs
-            delay_constant = 0.9
+def output_gene_ids_in_batches(gene_ids_to_gff_index,
+                               output_dir,
+                               chunk_jobs):
+    """
+    Takes mapping from gene IDs to their GFF index
+    and splits them into 1 or more files (batches),
+    each file containing the gene ID and its associated
+    indexed GFF path.  These files are then taken as input
+    by MISO and run either on a cluster or locally using
+    multi-cores.
+    """
+    for gene_id in gene_ids_to_gff_index:
+        indeed_filename = gene_ids_to_gff_index[gene_id]
         
-            # Invoke the commands using the cluster
-            print "Sending %d genes to be run on cluster in chunks of %d..." \
-                %(num_genes, chunk_jobs)
+    pass
 
-            if not chunk_jobs:
-                print "  - Using default chunk jobs = %d" %(200)
-                chunk_jobs = 200
-
-            chunk_jobs = max(1, int(round(num_genes / float(chunk_jobs))))
-
-            # Split the gene records into batches
-            cmd_batches = cluster_utils.chunk_list(all_miso_cmds, chunk_jobs)
-
-            time_str = time.strftime("%m-%d-%y_%H:%M:%S")
-
-            for batch_num, batch in enumerate(cmd_batches):
-                batch_size = len(batch)
-                print "Running batch %d (batch size = %d)" %(batch_num,
-                                                             batch_size)
-
-                if batch_size >= long_thresh:
-                   queue_type = "long"
-                else:
-                    queue_type = "short"
-
-                # Pool all the MISO commands belonging to this batch
-                batch_logs_dir = os.path.join(output_dir, "batch-logs")
-                if not os.path.isdir(batch_logs_dir):
-                    os.makedirs(batch_logs_dir)
-                batch_logfile = os.path.join(batch_logs_dir,
-                                             "batch-%d-%s.log" %(batch_num,
-                                                                 time_str))
-                redirected_output = " >> %s;\n" %(batch_logfile)
-                cmd_to_run = redirected_output.join(batch)
-                # Redirect last command too
-                cmd_to_run += " >> %s;\n" %(batch_logfile)
-
-                # Run on cluster
-                job_name = "gene_psi_batch_%d" %(batch_num)
-                cluster_utils.run_on_cluster(cmd_to_run, job_name, output_dir,
-                                             queue_type=queue_type,
-                                             settings=settings)
-                time.sleep(delay_constant)
-        
-            
+    
         
 def compute_psi(sample_filenames, output_dir, event_type,
                 read_len, overhang_len,
@@ -256,7 +464,8 @@ def main():
                       "The default filter varies by event type.")
     parser.add_option("--settings-filename", dest="settings_filename",
                       default=os.path.join(miso_settings_path,
-                                           "settings", "miso_settings.txt"),                    
+                                           "settings",
+                                           "miso_settings.txt"),                    
                       help="Filename specifying MISO settings.")
     parser.add_option("--read-len", dest="read_len", default=None, type="int",
 		      help="Length of sequenced reads.")
@@ -276,6 +485,19 @@ def main():
                       action="store_true", default=False,
                       help="Use MISO on cluster with Sun Grid Engine. "
                       "To be used in conjunction with --use-cluster option.")
+    parser.add_option("--prefilter", dest="prefilter", default=False,
+                      action="store_true",
+                      help="Prefilter events based on coverage. If given as " 
+                      "argument, run will begin by mapping BAM reads to event "
+                      "regions (using bedtools), and omit events that do not "
+                      "meet coverage criteria from the run. By default, turned "
+                      "off. Note that events that do not meet the coverage criteria "
+                      "will not be processed regardless, but --prefilter simply "
+                      "does this filtering step at the start of the run, potentially "
+                      "saving computation time so that low coverage events will not "
+                      "be processed or distributed to jobs if MISO is run on a "
+                      "cluster. This options requires bedtools to be installed and "
+                      "available on path.")
     (options, args) = parser.parse_args()
 
     greeting()
@@ -289,7 +511,8 @@ def main():
               "using --settings-filename."
         return
     
-    settings_filename = os.path.abspath(os.path.expanduser(options.settings_filename))
+    settings_filename = \
+        os.path.abspath(os.path.expanduser(options.settings_filename))
     Settings.load(settings_filename)
     
     if (not options.use_cluster) and options.chunk_jobs:
@@ -327,8 +550,8 @@ def main():
         overhang_len = 1
 
         if options.paired_end != None and options.overhang_len != None:
-            print "Error: cannot use --overhang-len in paired-end mode."
-            sys.exit(1)
+            print "WARNING: cannot use --overhang-len in paired-end mode."
+            print "Using overhang = 1"
 
         if options.overhang_len != None:
             overhang_len = options.overhang_len
@@ -341,7 +564,9 @@ def main():
                               job_name=options.job_name,
                               chunk_jobs=options.chunk_jobs,
                               paired_end=options.paired_end,
-                              settings=settings_filename)
+                              settings=settings_filename,
+                              prefilter=options.prefilter)
+
             
 		    
 if __name__ == '__main__':

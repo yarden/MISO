@@ -279,7 +279,6 @@ def pair_sam_reads(samfile, filter_reads=True,
             print "WARNING: %s left mate starts later than right "\
                   "mate" %(left_read.qname)
         num_total += 1
-#            raise Exception, (left_read.qname, left_read.pos, right_read.pos)
 
     # Delete reads that are on the same strand
     for del_key in to_delete:
@@ -307,40 +306,138 @@ def sam_cigar_to_str(sam_cigar):
     # First element in sam CIGAR list is the CIGAR type
     # (e.g. match or insertion) and the second is
     # the number of nucleotides
-    cigar_str = "".join(["%d%s" %(c[1], CIGAR_TYPES[c[0]]) \
-                         for c in sam_cigar])
+    #cigar_str = "".join(["%d%s" %(c[1], CIGAR_TYPES[c[0]]) \
+    #                     for c in sam_cigar])
+    #### OPTIMIZED VERSION
+    cigar_str = ""
+    for c in sam_cigar:
+        cigar_str += "%d%s" %(c[1], CIGAR_TYPES[c[0]])
     return cigar_str
 
-def sam_parse_reads(samfile, paired_end=False):
+
+def read_matches_strand(read,
+                        target_strand,
+                        strand_rule,
+                        paired_end=None):
+    """
+    Check if a read matches strand.
+
+    - target_strand: the annotation strand ('+' or '-')
+    - strand_rule: the strand rule, i.e.
+      ('fr-unstranded', 'fr-firststrand', or 'fr-secondstrand')
+    """
+    if strand_rule == "fr-unstranded":
+        return True
+    matches = False
+    if paired_end is not None:
+        # Paired-end reads
+        read1, read2 = read
+        if strand_rule == "fr-firststrand":
+            # fr-firststrand: means that the *second* of the mates
+            # must match the strand
+            matches = (flag_to_strand(read2.flag) == target_strand)
+        elif strand_rule == "fr-secondstrand":
+            # fr-secondstrand: means that the *first* of the mates
+            # must match the strand
+            matches = (flag_to_strand(read1.flag) == target_strand)
+        else:
+            raise Exception, "Unknown strandedness rule."
+    else:
+        # Single-end reads
+        if strand_rule == "fr-firststrand":
+            # fr-firststrand: We sequence the first read only, so it must
+            # *NOT* match the target strand
+            matches = (flag_to_strand(read.flag) != target_strand)
+        elif strand_rule == "fr-secondstrand":
+            # fr-secondstrand: We only sequence the first read, which 
+            # is supposed to match the target strand
+            matches = (flag_to_strand(read.flag) == target_strand)
+        else:
+            raise Exception, "Unknown strandedness rule."
+    return matches 
+
+
+def sam_parse_reads(samfile,
+                    paired_end=False,
+                    strand_rule=None,
+                    target_strand=None):
+    """
+    Parse the SAM reads. If paired-end, pair up the mates
+    together.
+
+    Also forces the strandedness convention, discarding
+    reads that do not match the correct strand.
+
+    - strand_rule: specifies the strandedness convention. Can be
+      'fr-unstranded', 'fr-firststrand' or 'fr-secondstrand'.
+    - target_strand: specifies the strand to match, i.e. the
+      annotation strand. Can be '+' or '-'.
+    """
     read_positions = []
     read_cigars = []
     num_reads = 0
-    
+
+    check_strand = True
+    # Determine if we need to check strandedness of reads.
+    # If we're given an unstranded convention, or if we're
+    # not given a target strand, then assume that there's
+    # no need to check strandedness.
+    if (strand_rule is None) or \
+       (strand_rule is "fr-unstranded") or \
+       (target_strand is None):
+        # No need to check strand
+        check_strand = False
+
+    # Track number of reads discarded due to strand
+    # violations, if strand-specific
+    num_strand_discarded = 0
     if paired_end:
         # Pair up the reads 
         paired_reads = pair_sam_reads(samfile)
 
-        # Process them into format required by fastmiso
+        # Process reads into format required by fastmiso
         # MISO C engine requires pairs to follow each other in order.
         # Unpaired reads are not supported.
         for read_id, read_info in paired_reads.iteritems():
+            if check_strand:
+                # Check strand
+                if not read_matches_strand(read_info,
+                                           target_strand,
+                                           strand_rule,
+                                           paired_end=paired_end):
+                    # Skip reads that don't match strand
+                    num_strand_discarded += 1
+                    continue
             read1, read2 = read_info
-            read_positions.extend([int(read1.pos), int(read2.pos)])
-            read_cigars.extend([sam_cigar_to_str(read1.cigar),
-                                sam_cigar_to_str(read2.cigar)])
+            # Read positions and cigar strings are collected
+            read_positions.append(int(read1.pos))
+            read_positions.append(int(read2.pos))
+            read_cigars.append(sam_cigar_to_str(read1.cigar))
+            read_cigars.append(sam_cigar_to_str(read2.cigar))
             num_reads += 1
     else:
         # Single-end
         for read in samfile:
+            if check_strand:
+                if not read_matches_strand(read,
+                                           target_strand,
+                                           strand_rule,
+                                           paired_end=paired_end):
+                    # Skip reads that don't match strand
+                    num_strand_discarded += 1
+                    continue
             read_positions.append(int(read.pos))
             read_cigars.append(sam_cigar_to_str(read.cigar))
             num_reads += 1
+
+    if check_strand:
+        print "No. reads discarded due to strand violation: %d" \
+            %(num_strand_discarded)
 
     reads = (tuple(read_positions),
              tuple(read_cigars))
 
     return reads, num_reads
-
     
 
 def sam_pe_reads_to_isoforms(samfile, gene, read_len, overhang_len):

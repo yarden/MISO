@@ -173,7 +173,6 @@ def map_bam2gff(bam_filename, gff_filename,
     tagBam_cmd += " | samtools view -Shb -o %s - " \
                   %(output_filename)
     print tagBam_cmd
-    
     t1 = time.time()
     cmd_status = None
     try:
@@ -193,7 +192,8 @@ def map_bam2gff(bam_filename, gff_filename,
 
 
 def get_bedtools_coverage_cmd(bam_filename, gff_filename,
-                              output_filename):
+                              output_filename,
+                              require_paired=False):
     """
     Get bedtools command for getting the number of reads
     from the BAM filename that are strictly contained within
@@ -201,15 +201,16 @@ def get_bedtools_coverage_cmd(bam_filename, gff_filename,
     """
     args = {"bam_filename": bam_filename,
             "gff_filename": gff_filename}
+    # Do not include strandedness flag since that doesn't handle
+    # paired-end cases 
     intersect_cmd = "bedtools intersect -abam %(bam_filename)s " \
-        "-b %(gff_filename)s -f 1 -ubam -s" %(args)
-    coverage_cmd = "%s | bedtools coverage -abam - -b %s -s -counts > %s" \
+        "-b %(gff_filename)s -f 1 -ubam " %(args)
+    coverage_cmd = "%s | bedtools coverage -abam - -b %s -counts > %s" \
         %(intersect_cmd, gff_filename, output_filename)
     return coverage_cmd
 
 
-def get_bam_gff_coverage(bam_filename, gff_filename, output_dir,
-                         gff_rec_type="gene"):
+def get_bam_gff_coverage(bam_filename, gff_filename, output_dir):
     """
     Compute the coverage (number of reads landing within each
     interval of a GFF)
@@ -225,22 +226,15 @@ def get_bam_gff_coverage(bam_filename, gff_filename, output_dir,
     bam_ext = re.compile("\.bam", re.IGNORECASE)
     output_basename = bam_ext.sub("", os.path.basename(bam_filename))
     output_filename = "%s.bed" %(os.path.join(output_dir, output_basename))
-    # Generate a genes-only GFF filename
-    gff_basename = os.path.basename(gff_filename)
-    genes_gff_fname = os.path.join(output_dir,
-                                   "genes_%s" %(gff_basename))
-    genes_only_cmd = "cat %s | awk \'$3 == \"%s\"\' > %s" \
-        %(gff_filename,
-          gff_rec_type,
-          genes_gff_fname)
     print "Generating coverage file..."
     print "  - BAM file: %s" %(bam_filename)
-    print "  - GFF file: %s" %(bam_filename)
+    print "  - GFF file: %s" %(gff_filename)
     print "  - Output file: %s" %(output_filename)
-    print "Fetching only genes from GFF..."
-    os.system(genes_only_cmd)
+    if os.path.isfile(output_filename):
+        print "  - File exists. Skipping..."
+        return output_filename
     coverage_cmd = get_bedtools_coverage_cmd(bam_filename,
-                                             genes_gff_fname,
+                                             gff_filename,
                                              output_filename)
     print "Executing: %s" %(coverage_cmd)
     status = os.system(coverage_cmd)

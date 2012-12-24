@@ -8,9 +8,11 @@
 ##
 import scipy
 import misopy
-from misopy.reads_utils import count_aligned_reads, count_isoform_assignments
-from misopy.read_simulator import simulate_reads, print_reads_summary, read_counts_to_read_list, \
-     get_reads_summary
+from misopy.reads_utils import count_aligned_reads, \
+                               count_isoform_assignments
+from misopy.read_simulator import simulate_reads, print_reads_summary, \
+                                  read_counts_to_read_list, \
+                                  get_reads_summary
 import misopy.hypothesis_test as ht
 from misopy.Gene import Gene, Exon
 from misopy.py2c_gene import *
@@ -69,6 +71,7 @@ def vect_logsumexp(a, axis=None):
     s = log(exp(a - a_max.reshape(shp)).sum(axis=axis))
     lse  = a_max + s
     return lse
+
 
 def print_assignment_summary(assignments):
     counts = defaultdict(int)
@@ -135,7 +138,8 @@ class MISOSampler:
 	self.paired_end = paired_end
 	# set default fragment length distribution parameters
 	if self.paired_end:
-	    if ((not 'mean_frag_len' in self.params) or (not 'frag_variance' in self.params)):
+	    if ((not 'mean_frag_len' in self.params) or \
+                (not 'frag_variance' in self.params)):
 		raise Exception, "Must set mean_frag_len and frag_variance when " \
                       "running in sampler on paired-end data."
 	    self.mean_frag_len = self.params['mean_frag_len']
@@ -154,13 +158,15 @@ class MISOSampler:
         ch_file = None
         
 	# create formatter
-	formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+	formatter = \
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 	self.miso_logger = logging.getLogger('miso_logger')
 #	self.miso_logger.setLevel(logging.ERROR)
 
         if self.log_dir != None:
-            self.log_filename = os.path.join(self.log_dir, 'sampler_run.%s' \
-                                             %(time.strftime("%m-%d-%y_%H:%M:%S")))
+            self.log_filename = \
+                os.path.join(self.log_dir, 'sampler_run.%s' \
+                             %(time.strftime("%m-%d-%y_%H:%M:%S")))
             
             # Delay creation of the file until there's an error
 	    ch_file = logging.FileHandler(self.log_filename,
@@ -212,7 +218,8 @@ class MISOSampler:
         output_file = output_file + ".miso"
 	# If output filename exists, don't run sampler
 	if os.path.isfile(os.path.normpath(output_file)):
-	    print "Output filename %s exists, not running MISO." %(output_file)
+	    print "Output filename %s exists, not running MISO." \
+                %(output_file)
 	    return None
 	self.params['iters'] = num_iters
 	self.params['burn_in'] = burn_in
@@ -226,13 +233,12 @@ class MISOSampler:
         t2 = 0
         if verbose:
             t1 = time.time()
-        
-	self.miso_logger.info("Running sampler...")
-        self.miso_logger.info("  - num_iters: " + str(num_iters))
-        self.miso_logger.info("  - burn-in: " + str(burn_in))
-        self.miso_logger.info("  - lag: " + str(lag))
-	self.miso_logger.info("  - paired-end? " + str(self.paired_end))
-	self.miso_logger.info("  - gene: " + str(gene))
+	#self.miso_logger.info("Running sampler...")
+        #self.miso_logger.info("  - num_iters: " + str(num_iters))
+        #self.miso_logger.info("  - burn-in: " + str(burn_in))
+        #self.miso_logger.info("  - lag: " + str(lag))
+	#self.miso_logger.info("  - paired-end? " + str(self.paired_end))
+	#self.miso_logger.info("  - gene: " + str(gene))
         rejected_proposals = 0
         accepted_proposals = 0
         psi_vectors = []
@@ -335,23 +341,24 @@ class MISOSampler:
         
         percent_acceptance = (float(accepted_proposals)/(accepted_proposals + \
                                                          rejected_proposals)) * 100
-        self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
-        self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
+        #self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
+        #self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
         
         # Write MISO output to file
 	print "Outputting samples to: %s..." %(output_file)
         self.miso_logger.info("Outputting samples to: %s" %(output_file))
-        self.output_miso_results(output_file, gene, reads_data, assignments, psi_vectors,
-                                 kept_log_scores, num_iters, burn_in,
-                                 lag, percent_acceptance, proposal_type)
+        self.output_miso_results(output_file, gene, reads_data, assignments,
+                                 psi_vectors, kept_log_scores, num_iters,
+                                 burn_in, lag, percent_acceptance,
+                                 proposal_type)
         if verbose:
             t2 = time.time()
             print "Event took %.2f seconds" %(t2 - t1)
-        
 
+        
     def output_miso_results(self, output_file, gene, reads_data, assignments,
-                            psi_vectors, kept_log_scores, num_iters, burn_in, lag,
-                            percent_acceptance, proposal_type):
+                            psi_vectors, kept_log_scores, num_iters, burn_in,
+                            lag, percent_acceptance, proposal_type):
         """
         Output results of MISO to a file.
         """
@@ -436,7 +443,7 @@ class MISOSampler:
         output.write(results_header)
         for psi_sample, curr_log_score in zip(psi_vectors, kept_log_scores):
             psi_sample_str = ",".join(["%.4f" %(psi) for psi in psi_sample])
-            output_line = "%s\t%.4f\n" %(psi_sample_str, curr_log_score)
+            output_line = "%s\t%.2f\n" %(psi_sample_str, curr_log_score)
             output.write(output_line)
         output.close()
         print "Completed outputting."

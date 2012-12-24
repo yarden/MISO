@@ -188,7 +188,6 @@ def bayes_factor_pass(bayes_factor, bf_filter):
     Checks to see out of a list of bayes factors which ones
     pass the filter check. 1 if pass, 0 if no pass.
     """
-   
     if isinstance(bayes_factor, float):
         bayes_factor = [bayes_factor]
 

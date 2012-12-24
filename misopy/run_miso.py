@@ -53,11 +53,11 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
     """
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
-
+        
     if not os.path.exists(gff_index_filename):
         print "Error: No GFF %s" %(gff_index_filename)
         return
-
+    
     num_genes = len(gene_ids)
     
     print "Computing Psi for %d genes..." %(num_genes)
@@ -77,6 +77,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
     num_chains = settings_params["num_chains"]
 
     min_event_reads = Settings.get_min_event_reads()
+    strand_rule = Settings.get_strand_param()
 
     mean_frag_len = None
     frag_variance = None
@@ -85,17 +86,9 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
         mean_frag_len = int(paired_end[0])
         frag_variance = power(int(paired_end[1]), 2)
 
-
     # Load the genes from the GFF
-    t1, t2 = 0, 0
-    if verbose:
-        t1 = time.time()
-        print "Loading genes from indexed GFF..."
     gff_genes = gff_utils.load_indexed_gff_file(gff_index_filename)
-    if verbose:
-        t2 = time.time()
-        print "  - Loading took: %.2f seconds" %(t2 - t1)
-
+    
     # If given a template for the SAM file, use it
     template = None
 
@@ -127,22 +120,25 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
             gff_utils.get_inclusive_txn_bounds(gene_info['hierarchy'][gene_id])
 
         # Fetch reads aligning to the gene boundaries
-        gene_reads = sam_utils.fetch_bam_reads_in_gene(bamfile, gene_obj.chrom,
-                                                       tx_start, tx_end,
-                                                       gene_obj)
-
-        # Align the reads to the isoforms
-        #reads = sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj, read_len,
-        #                                        overhang_len,
-        #                                        paired_end=paired_end)
-        reads, num_raw_reads = sam_utils.sam_parse_reads(gene_reads,
-                                                         paired_end=paired_end)
-                                   
+        gene_reads = \
+            sam_utils.fetch_bam_reads_in_gene(bamfile,
+                                              gene_obj.chrom,
+                                              tx_start,
+                                              tx_end,
+                                              gene_obj)
+        # Parse reads: checking strandedness and pairing
+        # reads in case of paired-end data
+        reads, num_raw_reads = \
+            sam_utils.sam_parse_reads(gene_reads,
+                                      paired_end=paired_end,
+                                      strand_rule=strand_rule,
+                                      target_strand=gene_obj.strand)
         # Skip gene if none of the reads align to gene boundaries
         if filter_reads:
             if num_raw_reads < min_event_reads:
                 print "Only %d reads in gene, skipping (needed >= %d reads)" \
-                      %(num_raw_reads, min_event_reads)
+                      %(num_raw_reads,
+                        min_event_reads)
                 continue
             else:
                 print "%d raw reads in event" %(num_raw_reads)
@@ -192,12 +188,103 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
             sys.exit(1)
         miso_basename = miso_basename.replace(".pickle", "")
         output_filename = os.path.join(chrom_dir, "%s" %(miso_basename))
-        
         sampler.run_sampler(num_iters, reads, gene_obj, hyperparameters,
                             sampler_params, output_filename,
                             num_chains=num_chains,
                             burn_in=burn_in,
                             lag=lag)
+
+
+def run_compute_genes_from_file(options):
+    """
+    Run on a set of genes/events described a file.
+
+    File is two-column, tab-delimited where first column
+    is the name of the event/gene (ID= from GFF) and the
+    second column is the path to the indexed GFF event
+    corresponding to the event/gene.
+    """
+    if options.read_len == None:
+        print "Error: must provide --read-len."
+        sys.exit(1)
+
+    overhang_len = 1
+    if options.overhang_len != None:
+        overhang_len = options.overhang_len
+
+    paired_end = None
+    # Parse arguments from options
+    genes_filename = \
+        os.path.abspath(os.path.expanduser(options.compute_genes_from_file[0]))
+    bam_filename = \
+        os.path.abspath(os.path.expanduser(options.compute_genes_from_file[1]))
+    output_dir = \
+        os.path.abspath(os.path.expanduser(options.compute_genes_from_file[2]))
+    print "Computing Psi for genes from file..."
+    print "  - Input file: %s" %(genes_filename)
+    if options.paired_end != None:
+        paired_end = float(options.paired_end[0]), \
+                     float(options.paired_end[1])
+        print "  - Paired-end mode"
+    # Check that the events filename exists
+    if not os.path.isfile(genes_filename):
+        print "Error: %s filename does not exist." %(genes_filename)
+        sys.exit(1)
+    if not os.path.isfile(bam_filename):
+        print "Error: BAM filename %s does not exist." %(bam_filename)
+        sys.exit(1)
+    # Load the events and their indexed GFF paths
+    num_genes = 0
+    with open(genes_filename) as genes_in:
+        for line in genes_in:
+            gene_id, gff_filename = line.strip().split("\t")
+            if not os.path.isfile(gff_filename):
+                print "Error: %s does not exist."
+                sys.exit(1)
+            compute_gene_psi([gene_id], gff_filename, bam_filename, output_dir,
+                             options.read_len, overhang_len,
+                             paired_end=paired_end,
+                             event_type=options.event_type)
+            num_genes += 1
+    print "Processed %d genes" %(num_genes)
+            
+
+def run_compute_gene_psi(options):
+    """
+    Parse options and run compute_genes_psi.
+    """
+    if options.read_len == None:
+        print "Error: must provide --read-len."
+        sys.exit(1)
+
+    overhang_len = 1
+    if options.overhang_len != None:
+        overhang_len = options.overhang_len
+
+    paired_end = None
+    if options.paired_end != None:
+        paired_end = float(options.paired_end[0]), \
+                     float(options.paired_end[1])
+
+    # Genes to run on from GFF
+    gene_ids = options.compute_gene_psi[0].split(",")
+
+    # GFF filename describing genes
+    gff_filename = \
+        os.path.abspath(os.path.expanduser(options.compute_gene_psi[1]))
+
+    # BAM filename with reads
+    bam_filename = \
+        os.path.abspath(os.path.expanduser(options.compute_gene_psi[2]))
+
+    # Output directory
+    output_dir = \
+        os.path.abspath(os.path.expanduser(options.compute_gene_psi[3]))
+
+    compute_gene_psi(gene_ids, gff_filename, bam_filename, output_dir,
+                     options.read_len, overhang_len,
+                     paired_end=paired_end,
+                     event_type=options.event_type)
 
         
 def greeting(parser=None):
@@ -230,7 +317,16 @@ def main():
                       help="Run in paired-end mode.  Takes a mean and standard "
                       "deviation for the fragment length distribution (assumed "
                       "to have discretized normal form.)")
-
+    parser.add_option("--compute-genes-from-file", dest="compute_genes_from_file",
+                      nargs=3, default=None,
+                      help="Runs on a set of genes from a file. Takes as input: "
+                      "(1) a two-column tab-delimited file, where column 1 is the "
+                      "event ID (ID field from GFF) and the second column is "
+                      "the path to the indexed GFF file for that event. "
+                      "MISO will run on all the events described in the file, "
+                      "(2) a sorted, indexed BAM file to run on, and (3) a "
+                      "directory to output results to.")
+    
     ##
     ## Psi utilities
     ##
@@ -297,7 +393,7 @@ def main():
                       "indexed (.pickle) filename.")
     (options, args) = parser.parse_args()
 
-    if options.compute_gene_psi is not None:
+    if options.compute_gene_psi is None:
         greeting()
 
     ##
@@ -307,10 +403,11 @@ def main():
 
     use_compressed = None
     if options.use_compressed is not None:
-        use_compressed = os.path.abspath(os.path.expanduser(options.use_compressed))
+        use_compressed = \
+            os.path.abspath(os.path.expanduser(options.use_compressed))
         if not os.path.exists(use_compressed):
-            print "Error: mapping filename from event IDs to compressed IDs %s is not "\
-                "found." %(use_compressed)
+            print "Error: mapping filename from event IDs to compressed IDs %s " \
+                  "is not found." %(use_compressed)
             sys.exit(1)
         else:
             print "Compression being used."
@@ -322,57 +419,26 @@ def main():
 	if not os.path.isdir(output_dirname):
             print "Making comparisons directory: %s" %(output_dirname)
 	    os.makedirs(output_dirname)
-	ht.output_samples_comparison(sample1_dirname, sample2_dirname,
+	ht.output_samples_comparison(sample1_dirname,
+                                     sample2_dirname,
                                      output_dirname,
                                      sample_labels=options.comparison_labels,
                                      use_compressed=use_compressed)
-	
-    # if options.inspect_events:
-    #     print "Loading events from: %s" %(options.inspect_events)
-    #     miso_events = as_events.MISOEvents(2, options.event_type, from_file=options.inspect_events)
-    #     print "  - Total of %d events." %(len(miso_events.events))
-	
     ##
-    ## Multiple isoforms interface based on SAM files
+    ## Main interface based on SAM files
     ##
+    if options.compute_genes_from_file != None:
+        # Run on events given by file
+        run_compute_genes_from_file(options)
     if options.compute_gene_psi != None:
-        if options.read_len == None:
-            print "Error: must provide --read-len."
-            sys.exit(1)
-
-        paired_end = None
-
-        if options.paired_end != None:
-            paired_end = float(options.paired_end[0]), \
-                         float(options.paired_end[1])
-
-        overhang_len = 1
-
-        if options.overhang_len != None:
-            overhang_len = options.overhang_len
-
-        # Genes to run on from GFF
-        gene_ids = options.compute_gene_psi[0].split(",")
-
-        # GFF filename describing genes
-        gff_filename = os.path.abspath(os.path.expanduser(options.compute_gene_psi[1]))
-
-        # BAM filename with reads
-        bam_filename = os.path.abspath(os.path.expanduser(options.compute_gene_psi[2]))
-
-        # Output directory
-        output_dir = os.path.abspath(os.path.expanduser(options.compute_gene_psi[3]))
-
-        compute_gene_psi(gene_ids, gff_filename, bam_filename, output_dir,
-                         options.read_len, overhang_len, paired_end=paired_end,
-                         event_type=options.event_type)
-
-
+        run_compute_gene_psi(options)
+        
     ##
     ## Summarizing samples
     ##
     if options.summarize_samples:
-	samples_dir = os.path.abspath(os.path.expanduser(options.summarize_samples[0]))
+	samples_dir = \
+            os.path.abspath(os.path.expanduser(options.summarize_samples[0]))
         if options.summary_label != None:
             samples_label = options.summary_label
             print "Using summary label: %s" %(samples_label)
@@ -392,7 +458,8 @@ def main():
                                   use_compressed=use_compressed)
 
     if options.view_gene != None:
-        indexed_gene_filename = os.path.abspath(os.path.expanduser(options.view_gene))
+        indexed_gene_filename = \
+            os.path.abspath(os.path.expanduser(options.view_gene))
         print "Viewing genes in %s" %(indexed_gene_filename)
         gff_genes = gff_utils.load_indexed_gff_file(indexed_gene_filename)
 
