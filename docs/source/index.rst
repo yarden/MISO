@@ -480,18 +480,23 @@ alternative splice site. In isoform-centric analyses the expression level of who
 expression of each individual isoform of a gene is estimated). Both of these analysis modes have merits and disadvantages. Exon-centric analyses are typically easier to interpret and validate experimentally, but do not always capture the complexity of a set related splicing events within a gene. Isoform-centric analyses capture more of this complexity, but are limited by the typically short length of RNA-Seq reads, and inaccuracies or incompleteness in the annotation of the gene's isoforms. Estimates of isoform-level expression are also harder to validate in the lab using traditional techniques such as RT-PCR.
 
 To run MISO, an annotation of the alternative splicing events or isoforms must be provided and
-a set of reads. Single or paired-end reads can be provided in the `Spliced Alignment/Map (SAM)`_ format (in its binary form, BAM) and the annotation can be in the `GFF`_ (version 3) format. The GFF format can be used to specify either 
-whole mRNA isoforms of genes (which is the common use of the format) or to specify single alternative 
-splicing events, as described in :ref:`event-annotation`.
+a set of reads. Single or paired-end reads can be provided in the `Spliced Alignment/Map (SAM)`_ format (in its binary form, BAM) and the annotation can be in the `GFF`_ (version 3) format. The GFF format can be used to specify either whole mRNA isoforms of genes (which is the common use of the format) or to specify single alternative splicing events, as described in :ref:`event-annotation`.
+
+Using MISO in parallel on multiple cores 
+========================================
+
+When run locally and not on a cluster, MISO will use multiple cores on the machine
+on which it is running. The number of cores/processors to be used by MISO is set 
+through the settings file (see :ref:`config`). 
 
 
 Using MISO on a cluster
 =======================
 
-It is highly recommended to run MISO on a cluster. Since each
+It is highly recommended to run MISO on a cluster when possible. Since each
 gene/exon can be treated as an independent inference problem, MISO is
-highly parallelizable, and the use of multiple processors can cut run
-times from days to hours on most data sets.
+highly parallelizable, and the use of multiple computers can cut run times
+down by orders of magnitude.
 
 MISO comes with basic functionality for running on a cluster, assuming 
 that there's a shared filesystem between all the nodes. 
@@ -755,6 +760,7 @@ will not want to tweak these. The parameters are as follows:
 * ``burn_in``: the number of initial sampling iterations to be discarded before computing estimates.
 * ``lag``: the number of sampling iterations to skip when computing estimates. A lag of 10 would mean every 10th iteration is used.
 * ``num_iters``: the total number of sampling iterations to be computed per gene/event.
+* ``num_processors``: Number of processors to use when running locally using multiple cores. Set to 4 by default.
 
 The default settings of these sampling parameters was deliberately chosen to be conservative. 
 

@@ -28,28 +28,28 @@ class GenesDispatcher:
     """
     def __init__(self, gff_dir, bam_filename,
                  output_dir, read_len, overhang_len,
-                 settings=None,
+                 settings_fname=None,
                  paired_end=None,
                  use_cluster=False,
                  chunk_jobs=200,
-                 SGEarray=False,
-                 num_processors=4):
+                 SGEarray=False):
         self.threads = {}
         self.gff_dir = gff_dir
         self.bam_filename = bam_filename
         self.output_dir = output_dir
         self.read_len = read_len
         self.overhang_len = overhang_len
-        self.settings = settings
+        self.settings_fname = settings_fname
         self.paired_end = paired_end
         self.use_cluster = use_cluster
         self.chunk_jobs = chunk_jobs
+        self.settings = Settings.get()
         # if chunk_jobs not given (i.e. set to False),
         # then set it to arbitrary value
         if not self.chunk_jobs:
             self.chunk_jobs = 200
         self.SGEarray = SGEarray
-        self.num_processors = num_processors
+        self.num_processors = Settings.get_num_processors()
         self.long_thresh = 50
         self.batch_logs_dir = \
             os.path.join(output_dir, "batch-logs")
@@ -139,8 +139,9 @@ class GenesDispatcher:
                 # Overhang len only used in single-end mode
                 miso_cmd += " --overhang-len %d" %(self.overhang_len)
             # Add settings filename if given
-            if self.settings != None:
-                miso_cmd += " --settings-filename %s" %(self.settings)
+            if self.settings_fname != None:
+                miso_cmd += " --settings-filename %s" \
+                    %(self.settings_fname)
             all_miso_cmds.append((miso_cmd, batch_size))
         ##
         ## Run all MISO commands for the batches
@@ -155,7 +156,7 @@ class GenesDispatcher:
             cluster_utils.run_SGEarray_cluster(all_miso_cmds,
                                                batch_argfile,
                                                output_dir,
-                                               settings=settings,
+                                               settings=self.settings_fname,
                                                job_name=job_name,
                                                chunk=chunk_jobs)
             # End SGE case
@@ -174,7 +175,9 @@ class GenesDispatcher:
             if not self.use_cluster:
                 # Run locally
                 p = subprocess.Popen(cmd_to_run, shell=True)
-                self.threads["batch-%d" %(batch_num)] = p
+                thread_id = "batch-%d" %(batch_num)
+                print "  - Submitted thread %s" %(thread_id)
+                self.threads[thread_id] = p
             else:
                 # Run on cluster
                 if batch_size >= self.long_thresh:
@@ -185,7 +188,7 @@ class GenesDispatcher:
                 job_name = "gene_psi_batch_%d" %(batch_num)
                 cluster_utils.run_on_cluster(cmd_to_run, job_name, output_dir,
                                              queue_type=queue_type,
-                                             settings=self.settings)
+                                             settings_fname=self.settings_fname)
                 time.sleep(delay_constant)
         # If ran jobs locally, wait on them to finish
         self.wait_on_threads()
@@ -213,9 +216,7 @@ class GenesDispatcher:
 
 def get_ids_passing_filter(gff_index_dir,
                            bam_filename,
-                           output_dir,
-                           settings,
-                           paired_end=None):
+                           output_dir):
     """
     Apply filter to events using bedtools and return
     only the events that meet the filter.
@@ -266,7 +267,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           chunk_jobs=200,
                           overhang_len=1,
                           paired_end=None,
-                          settings=None,
+                          settings_fname=None,
                           job_name="misojob",
                           prefilter=False):
     """
@@ -299,9 +300,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
             sys.exit(1)
         filtered_gene_ids = get_ids_passing_filter(gff_dir,
                                                    bam_filename,
-                                                   output_dir,
-                                                   settings,
-                                                   paired_end=paired_end)
+                                                   output_dir)
         # Prefiltering succeeded, so process only gene ids that
         # pass the filter
         if filtered_gene_ids != None:
@@ -329,7 +328,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                                  output_dir,
                                  read_len,
                                  overhang_len,
-                                 settings=settings,
+                                 settings_fname=settings_fname,
                                  paired_end=paired_end,
                                  use_cluster=use_cluster,
                                  chunk_jobs=chunk_jobs,
@@ -564,7 +563,7 @@ def main():
                               job_name=options.job_name,
                               chunk_jobs=options.chunk_jobs,
                               paired_end=options.paired_end,
-                              settings=settings_filename,
+                              settings_fname=settings_filename,
                               prefilter=options.prefilter)
 
             

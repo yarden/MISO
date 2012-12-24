@@ -12,4 +12,4 @@ burn_in = 500
 lag = 10
 num_iters = 5000
 num_chains = 6
-
+num_processors = 4

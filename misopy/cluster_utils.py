@@ -159,13 +159,13 @@ def run_on_cluster(cmd, job_name, cluster_output_dir,
                    cluster_scripts_dir=None,
                    queue_type=None,
                    cmd_name="qsub",
-                   settings=None):
+                   settings_fname=None):
     print "Submitting job: %s" %(job_name)
     queue_name = None
 
     # Load command name from settings file
-    if settings != None:
-        load_settings(settings)
+    if settings_fname != None:
+        load_settings(settings_fname)
         cmd_name = Settings.get_cluster_command()
 
     if queue_type == "long":
@@ -176,7 +176,6 @@ def run_on_cluster(cmd, job_name, cluster_output_dir,
         print "Warning: Unknown queue type: %s" %(queue_type)
         queue_name = queue_type
     
-
     if queue_type == None:
         print "  - queue: unspecified"
     else:

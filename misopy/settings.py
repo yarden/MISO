@@ -140,7 +140,20 @@ class Settings(object):
                 print "Error: Invalid strand parameter %s" \
                     %(strandedness)
                 sys.exit(1)
-        return strandedness 
+        return strandedness
+
+
+    @classmethod
+    def get_num_processors(cls,
+                           default_num_processors=4):
+        """
+        Get number of processors to use when running
+        locally using multi-cores.
+        """
+        num_processors = default_num_processors
+        if "num_processors" in cls.global_settings:
+            num_processors = int(cls.global_settings["num_processors"])
+        return num_processors
         
         
     @classmethod
