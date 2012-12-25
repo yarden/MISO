@@ -241,8 +241,8 @@ def run_compute_genes_from_file(options):
             if not os.path.isfile(gff_filename):
                 print "Error: %s does not exist."
                 sys.exit(1)
-            compute_gene_psi([gene_id], gff_filename, bam_filename, output_dir,
-                             options.read_len, overhang_len,
+            compute_gene_psi([gene_id], gff_filename, bam_filename,
+                             output_dir, options.read_len, overhang_len,
                              paired_end=paired_end,
                              event_type=options.event_type)
             num_genes += 1
