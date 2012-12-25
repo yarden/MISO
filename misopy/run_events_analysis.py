@@ -199,11 +199,12 @@ class GenesDispatcher:
                     queue_type = "short"
                 # Run on cluster
                 job_name = "gene_psi_batch_%d" %(batch_num)
-                job_id = cluster_utils.run_on_cluster(cmd_to_run,
-                                                      job_name,
-                                                      self.output_dir,
-                                                      queue_type=queue_type,
-                                                      settings_fname=self.settings_fname)
+                job_id = \
+                    cluster_utils.run_on_cluster(cmd_to_run,
+                                                 job_name,
+                                                 self.output_dir,
+                                                 queue_type=queue_type,
+                                                 settings_fname=self.settings_fname)
                 if job_id is not None:
                     cluster_jobs.append(job_id)
                 time.sleep(delay_constant)
