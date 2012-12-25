@@ -217,8 +217,10 @@ def get_bam_gff_coverage(bam_filename, gff_filename, output_dir):
     """
     if not os.path.isfile(bam_filename):
         print "Error: BAM file %s does not exist." %(bam_filename)
+        sys.exit(1)
     if not os.path.isfile(gff_filename):
         print "Error: GFF file %s does not exist." %(gff_filename)
+        sys.exit(1)
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     # Name the output bed after the bam basename, but remove
