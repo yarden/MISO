@@ -37,6 +37,15 @@ class GenesDispatcher:
         self.threads = {}
         self.gff_dir = gff_dir
         self.bam_filename = bam_filename
+        # Check that the BAM filename exists and that it has an index
+        if not os.path.isfile(self.bam_filename):
+            print "Error: BAM file %s not found." %(self.bam_filename)
+            sys.exit(1)
+        self.bam_index_fname = "%s.bai" %(self.bam_filename)
+        if not os.path.isfile(self.bam_index_fname):
+            print "WARNING: Expected BAM index file %s not found." \
+                %(self.bam_index_fname)
+            print "Are you sure your BAM file is indexed?"
         self.output_dir = output_dir
         self.read_len = read_len
         self.overhang_len = overhang_len
