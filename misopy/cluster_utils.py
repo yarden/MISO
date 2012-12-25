@@ -78,7 +78,7 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
         njobs = 1+(nargs/chunk)
     
     for args in arg_list:
-        f.write(args + "\n")
+        f.write(args[0] + "\n")
     f.close()
         
     if cluster_scripts_dir == None:

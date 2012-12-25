@@ -32,7 +32,8 @@ class GenesDispatcher:
                  paired_end=None,
                  use_cluster=False,
                  chunk_jobs=200,
-                 SGEarray=False):
+                 SGEarray=False,
+                 sge_job_name="misojob"):
         self.threads = {}
         self.gff_dir = gff_dir
         self.bam_filename = bam_filename
@@ -44,6 +45,7 @@ class GenesDispatcher:
         self.use_cluster = use_cluster
         self.chunk_jobs = chunk_jobs
         self.settings = Settings.get()
+        self.sge_job_name = sge_job_name
         # if chunk_jobs not given (i.e. set to False),
         # then set it to arbitrary value
         if not self.chunk_jobs:
@@ -155,10 +157,10 @@ class GenesDispatcher:
                                          "run_args.txt")
             cluster_utils.run_SGEarray_cluster(all_miso_cmds,
                                                batch_argfile,
-                                               output_dir,
+                                               self.output_dir,
                                                settings=self.settings_fname,
-                                               job_name=job_name,
-                                               chunk=chunk_jobs)
+                                               job_name=self.sge_job_name,
+                                               chunk=self.chunk_jobs)
             # End SGE case
             return
         for batch_num, cmd_info in enumerate(all_miso_cmds):
@@ -186,7 +188,9 @@ class GenesDispatcher:
                     queue_type = "short"
                 # Run on cluster
                 job_name = "gene_psi_batch_%d" %(batch_num)
-                cluster_utils.run_on_cluster(cmd_to_run, job_name, output_dir,
+                cluster_utils.run_on_cluster(cmd_to_run,
+                                             job_name,
+                                             self.output_dir,
                                              queue_type=queue_type,
                                              settings_fname=self.settings_fname)
                 time.sleep(delay_constant)
@@ -332,6 +336,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                                  paired_end=paired_end,
                                  use_cluster=use_cluster,
                                  chunk_jobs=chunk_jobs,
+                                 sge_job_name=job_name,
                                  SGEarray=SGEarray)
     dispatcher.run()
             
