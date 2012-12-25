@@ -228,7 +228,8 @@ def launch_job(cluster_cmd, cmd_name):
     output = proc.communicate()
     job_id = None
     if cmd_name == "qsub":
-        job_id = int(output[0].split(".")[0])
+        if "." in output[0][:-1] and ">" not in output[0]:
+            job_id = int(output[0].split(".")[0])
     elif cmd_name == "bsub":
         if "is submitted to" in output[0]:
             job_id = int(output[0].strip().split()[1][1:-1])                
