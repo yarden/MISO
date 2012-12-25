@@ -54,6 +54,7 @@ class GenesDispatcher:
         self.use_cluster = use_cluster
         self.chunk_jobs = chunk_jobs
         self.settings = Settings.get()
+        self.cluster_cmd = Settings.get_cluster_command()
         self.sge_job_name = sge_job_name
         # if chunk_jobs not given (i.e. set to False),
         # then set it to arbitrary value
@@ -111,7 +112,6 @@ class GenesDispatcher:
                                                index_fname)
                     batch_out.write(output_line)
             batch_filenames.append((batch_fname, batch_size))
-
         return batch_filenames
 
 
@@ -172,6 +172,8 @@ class GenesDispatcher:
                                                chunk=self.chunk_jobs)
             # End SGE case
             return
+        # All cluster jobs 
+        cluster_jobs = []
         for batch_num, cmd_info in enumerate(all_miso_cmds):
             miso_cmd, batch_size = cmd_info
             print "Running batch of %d genes.." %(batch_size)
@@ -197,12 +199,17 @@ class GenesDispatcher:
                     queue_type = "short"
                 # Run on cluster
                 job_name = "gene_psi_batch_%d" %(batch_num)
-                cluster_utils.run_on_cluster(cmd_to_run,
-                                             job_name,
-                                             self.output_dir,
-                                             queue_type=queue_type,
-                                             settings_fname=self.settings_fname)
+                job_id = cluster_utils.run_on_cluster(cmd_to_run,
+                                                      job_name,
+                                                      self.output_dir,
+                                                      queue_type=queue_type,
+                                                      settings_fname=self.settings_fname)
+                if job_id is not None:
+                    cluster_jobs.append(job_id)
                 time.sleep(delay_constant)
+        # If ran jobs on cluster, wait for them if there are any
+        # to wait on.
+        cluster_utils.wait_on_jobs(cluster_jobs, self.cluster_cmd)
         # If ran jobs locally, wait on them to finish
         self.wait_on_threads()
 

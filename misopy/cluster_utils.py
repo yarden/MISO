@@ -4,6 +4,8 @@
 import os
 import time
 import string
+import subprocess
+
 import misopy
 import misopy.settings as settings
 from settings import Settings, load_settings
@@ -48,7 +50,7 @@ def make_bash_script(filename, cmd, crate_dir=None):
     os.system('chmod +x \"%s\"' %(filename))
 
     
-def valid_qsub_name(name):
+def valid_cluster_name(name):
     """
     Return valid qsub ID by removing semicolons, converting
     them into underscores.
@@ -193,19 +195,108 @@ def run_on_cluster(cmd, job_name, cluster_output_dir,
     if not os.path.isdir(scripts_output_dir):
 	os.makedirs(scripts_output_dir)
     scripts_output_dir = os.path.abspath(scripts_output_dir)
-    qsub_call = '%s -o \"%s\" -e \"%s\"' %(cmd_name,
-                                           scripts_output_dir,
-                                           scripts_output_dir)
+    cluster_call = '%s -o \"%s\" -e \"%s\"' %(cmd_name,
+                                              scripts_output_dir,
+                                              scripts_output_dir)
 
     # Add queue type if given one
     if queue_name != None:
-        qsub_call += ' -q \"%s\"' %(queue_name)
+        cluster_call += ' -q \"%s\"' %(queue_name)
         
     script_name = \
-        valid_qsub_name(os.path.join(cluster_scripts_dir,
+        valid_cluster_name(os.path.join(cluster_scripts_dir,
                                      '%s_time_%s.sh' \
                                      %(job_name,
                                        time.strftime("%m-%d-%y_%H:%M:%S"))))
     make_bash_script(script_name, cmd)
-    qsub_cmd = qsub_call + ' \"%s\"' %(script_name)
-    os.system(qsub_cmd)
+    cluster_cmd = cluster_call + ' \"%s\"' %(script_name)
+    job_id = launch_job(cluster_cmd, cmd_name)
+    return job_id
+
+
+def launch_job(cluster_cmd, cmd_name):
+    """
+    Execute cluster_cmd and return its job ID if
+    it can be fetched.
+    """
+    proc = subprocess.Popen(cluster_cmd, shell=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            stdin=subprocess.PIPE)
+    # Read the job ID if it's a known cluster
+    # submission system
+    output = proc.communicate()
+    job_id = None
+    if cmd_name == "qsub":
+        job_id = int(output[0].split(".")[0])
+    elif cmd_name == "bsub":
+        if "is submitted to" in output[0]:
+            job_id = int(output[0].strip().split()[1][1:-1])                
+    return job_id
+
+
+def wait_on_job(job_id, cluster_cmd,
+                delay=60):
+    """
+    Wait on a job given a job id.
+    """
+    if cluster_cmd == "qsub":
+        # Handle qsub
+        while True:
+            output = \
+                subprocess.Popen("qstat %i" %(job_id),
+                                 shell=True,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE).communicate()
+            if "Unknown Job" in output[1]:
+                break
+            time.sleep(delay)
+        time.sleep(delay)
+    elif cluster_cmd == "bsub":
+        # Handle bsub
+        while True:
+            output = subprocess.Popen("bjobs %i" %(job_id),
+                                      shell=True,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE).communicate()
+            if len(output[0]) > 0:
+                status = output[0].split()[10]
+                if status == "DONE":
+                    break
+            else:
+                # No jobs available
+                break
+            time.sleep(delay)
+        time.sleep(delay)
+        
+        
+def wait_on_jobs(job_ids, cluster_cmd,
+                 delay=120,
+                 supported_cmds=["qsub",
+                                 "bsub"]):
+    """
+    Wait on a set of job IDs.
+    """
+    if len(job_ids) == 0:
+        return
+    if cluster_cmd not in supported_cmds:
+        return 
+    num_jobs = len(job_ids)
+    print "Waiting on a set of %d jobs..." %(num_jobs)
+    curr_time = time.strftime("%x, %X")
+    t_start = time.time()
+    print "  - Starting to wait at %s" %(curr_time)
+    completed_jobs = {}
+    for job_id in job_ids:
+        if job_id in completed_jobs:
+            continue
+        wait_on_job(job_id, cluster_cmd)
+        print "  - Job ", job_id, " completed."
+        completed_jobs[job_id] = True
+    curr_time = time.strftime("%x, %X")
+    t_end = time.time()
+    print "Jobs completed at %s" %(curr_time)
+    duration = ((t_end - t_start) / 60.) / 60.
+    print "  - Took %.2f hours." %(duration)
+
+    
