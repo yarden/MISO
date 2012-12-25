@@ -106,6 +106,14 @@ Updates
 
 **2012**
 
+* **Tue, Dec 25:** Released version ``0.4.7``. Includes several new features, including:
+
+  * Support for strand-specific reads
+  
+  * Support for running MISO locally using multi-cores
+
+  * Prefilter feature: prefilter events with low coverage on long runs (requires Bedtools)
+
 * **Thu, Dec 20**: Posted new mouse genome annotation for alternative cleavage and polyadenylation events (TandemUTR) and alternative last exon events (ALE) from `Analysis of alternative cleavage and polyadenylation by 3′ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_ (Nature Methods, Dec. 2012), see :ref:`tian-apa`. Thanks to Wencheng Li and Bin Tian for creating this annotation!
 
 * **Tue, Dec 4**: Posted mappings from alternative events to genes (see :ref:`events-to-genes`) and GFF annotations for isoform-centric inference (see :ref:`iso-centric`).
@@ -728,6 +736,7 @@ The default file is: ::
   [data]
   filter_results = True
   min_event_reads = 20
+  strand = fr-unstranded
   
   [cluster]
   cluster_command = qsub
@@ -738,16 +747,18 @@ The default file is: ::
   burn_in = 500
   lag = 10
   num_iters = 5000
+  num_processors = 4
 
-The ``[data]`` section specifies whether or not events should be filtered for coverage 
-(``filter_results``) and what the minimum number of reads that a region must have for it to
-be quantitated (``min_event_reads``). The minimum number of reads is computed over the longest genomic 
-region of the gene or alternatively spliced event.
+The ``[data]`` section contains parameters related to the way reads should be handled. These are:
+
+* ``filter_results``:  Specifies whether or not events should be filtered for coverage (``True`` or ``False``)
+* ``min_event_reads``: What the minimum number of reads that a region must have for it to be quantitated. The minimum number of reads is computed over the longest genomic region of the gene or alternatively spliced event.
+* ``strand`` (optional): What the strand convention of the input BAM files is. Can be set to either ``fr-unstranded``, ``fr-firststrand``, or ``fr-secondstrand``. Set to ``fr-unstranded`` by default. See `Note on strand-specificity in RNA-Seq libraries <http://onetipperday.blogspot.com/2012/07/how-to-tell-which-library-type-to-use.html>`_ for an explanation of these strand conventions.
 
 The ``[cluster]`` section specifies parameters related to running MISO on a cluster of computers. 
 These are:
 
-* ``cluster_command``: the name of the program used to submit jobs to the cluster (e.g. ``qsub``, ``bsub``, etc.)
+* ``cluster_command``: the name of the program used to submit jobs to the cluster (e.g. ``qsub``, ``bsub``, etc.) MISO will use this command to launch jobs on the cluster system.
 * ``long_queue_name`` (optional): the name of the "long queue" (jobs that take longer to finish) of the cluster queueing system.
 * ``short_queue_name`` (optional): the name of the "short queue" (jobs that generally finish quicker and might get priority) of the cluster queueing system. The name of this queue is often ``short`` or ``quick`` depending on the way the cluster is configured. 
 
@@ -761,9 +772,9 @@ will not want to tweak these. The parameters are as follows:
 * ``burn_in``: the number of initial sampling iterations to be discarded before computing estimates.
 * ``lag``: the number of sampling iterations to skip when computing estimates. A lag of 10 would mean every 10th iteration is used.
 * ``num_iters``: the total number of sampling iterations to be computed per gene/event.
-* ``num_processors``: Number of processors to use when running locally using multiple cores. Set to 4 by default.
+* ``num_processors`` (optional): Number of processors to use when running locally using multiple cores. Set to 4 by default. Not used when running on a cluster.
 
-The default settings of these sampling parameters was deliberately chosen to be conservative. 
+The default settings of the sampling-related parameters in ``[sampler]`` was deliberately chosen to be conservative. 
 
 
 Computing expression estimates ("Psi" / |Psi| values)
