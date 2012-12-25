@@ -85,11 +85,11 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
 	cluster_scripts_dir = os.path.join(cluster_output_dir,
                                            'cluster_scripts')
     if not os.path.isdir(cluster_scripts_dir):
-	os.mkdir(cluster_scripts_dir)
+	os.makedirs(cluster_scripts_dir)
     scripts_output_dir = os.path.join(cluster_output_dir,
                                       'scripts_output')
     if not os.path.isdir(scripts_output_dir):
-	os.mkdir(scripts_output_dir)
+	os.makedirs(scripts_output_dir)
     scripts_output_dir = os.path.abspath(scripts_output_dir)
     script_error = os.path.join(scripts_output_dir,
                                 string.join([job_name, "err"], "."))
@@ -187,11 +187,11 @@ def run_on_cluster(cmd, job_name, cluster_output_dir,
 	cluster_scripts_dir = os.path.join(cluster_output_dir,
                                            'cluster_scripts')
 	if not os.path.isdir(cluster_scripts_dir):
-	    os.mkdir(cluster_scripts_dir)
+	    os.makedirs(cluster_scripts_dir)
     scripts_output_dir = os.path.join(cluster_output_dir,
                                       'scripts_output')
     if not os.path.isdir(scripts_output_dir):
-	os.mkdir(scripts_output_dir)
+	os.makedirs(scripts_output_dir)
     scripts_output_dir = os.path.abspath(scripts_output_dir)
     qsub_call = '%s -o \"%s\" -e \"%s\"' %(cmd_name,
                                            scripts_output_dir,
