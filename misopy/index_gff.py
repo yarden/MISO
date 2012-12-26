@@ -145,6 +145,7 @@ def serialize_genes(gff_genes,
     with open(gff_filename) as gff_in:
         with open(genes_filename, "w") as gff_out:
             for line in gff_in:
+                if line.startswith("#"): continue
                 record_type = line.strip().split("\t")[2]
                 if record_type == "gene":
                     gff_out.write(line)
