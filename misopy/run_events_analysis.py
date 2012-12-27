@@ -65,16 +65,16 @@ class GenesDispatcher:
         self.long_thresh = 50
         self.batch_logs_dir = \
             os.path.join(output_dir, "batch-logs")
-        self.cluster_scripts_dir = \
-            os.path.join(output_dir, "cluster_scripts")
         self.batch_genes_dir = \
             os.path.join(output_dir, "batch-genes")
-        if not os.path.isdir(self.batch_logs_dir):
-            os.makedirs(self.batch_logs_dir)
-        if not os.path.isdir(self.cluster_scripts_dir):
-            os.makedirs(self.cluster_scripts_dir)
-        if not os.path.isdir(self.batch_genes_dir):
-            os.makedirs(self.batch_genes_dir)
+        self.cluster_scripts_dir = \
+            os.path.join(output_dir, "cluster_scripts")
+        self.scripts_output_dir = \
+            os.path.join(output_dir, "scripts_output")
+        misc_utils.make_dir(self.batch_logs_dir)
+        misc_utils.make_dir(self.batch_genes_dir)
+        misc_utils.make_dir(self.cluster_scripts_dir)
+        misc_utils.make_dir(self.scripts_output_dir)
         # First compile a set of genes that should be run on
         # and output them to file along with their indexed
         # filenames
@@ -210,7 +210,8 @@ class GenesDispatcher:
                 time.sleep(delay_constant)
         # If ran jobs on cluster, wait for them if there are any
         # to wait on.
-        cluster_utils.wait_on_jobs(cluster_jobs, self.cluster_cmd)
+        cluster_utils.wait_on_jobs(cluster_jobs,
+                                   self.cluster_cmd)
         # If ran jobs locally, wait on them to finish
         self.wait_on_threads()
 
@@ -221,6 +222,8 @@ class GenesDispatcher:
             return
         threads_completed = {}
         num_threads = len(self.threads)
+        if num_threads == 0:
+            return
         print "Waiting on %d threads..." %(num_threads)
         t_start = time.time()
         for thread_name in self.threads:
@@ -228,6 +231,9 @@ class GenesDispatcher:
                 continue
             curr_thread = self.threads[thread_name]
             curr_thread.wait()
+            if curr_thread.returncode != 0:
+                print "WARNING: Thread %s might have failed..." \
+                    %(thread_name)
             threads_completed[thread_name] = True
         t_end = time.time()
         duration = ((t_end - t_start) / 60.) / 60.
@@ -285,7 +291,7 @@ def get_ids_passing_filter(gff_index_dir,
 def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           use_cluster=False,
                           SGEarray=False,
-                          chunk_jobs=200,
+                          chunk_jobs=800,
                           overhang_len=1,
                           paired_end=None,
                           settings_fname=None,
@@ -306,9 +312,8 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     print "  - BAM: %s" %(bam_filename)
     print "  - Read length: %d" %(read_len)
     print "  - Output directory: %s" %(output_dir)
-    
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
+
+    misc_utils.make_dir(output_dir)
     
     # Prefilter events that do not meet the coverage criteria
     # If filtering is on, only run on events that meet
@@ -391,25 +396,21 @@ def compute_psi(sample_filenames, output_dir, event_type,
       - output_dir: output directory
       - event_type: 'SE', 'RI', etc.
     """
-    if not os.path.isdir(output_dir):
-	os.makedirs(output_dir)
-	
+    misc_utils.make_dir(output_dir)
+    
     output_dir = os.path.join(output_dir, event_type)
     output_dir = os.path.abspath(output_dir)
-    if not os.path.isdir(output_dir):
-	os.makedirs(output_dir)
+
+    misc_utils.make_dir(output_dir)
 	
     print "Computing Psi for events of type %s" %(event_type)
     print "  - samples used: ", sample_filenames.keys()
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
 
     for sample_label, sample_filename in sample_filenames.iteritems():
 	print "Processing sample: label=%s, filename=%s" \
             %(sample_label, sample_filename)
 	results_output_dir = os.path.join(output_dir, sample_label)
-        if not os.path.isdir(results_output_dir):
-            os.makedirs(results_output_dir)
+        misc_utils.make_dir(results_output_dir)
 
 	# Load the set of counts and serialize them into JSON
 	events = \

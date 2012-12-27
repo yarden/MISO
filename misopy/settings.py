@@ -191,8 +191,6 @@ def load_settings(settings_filename):
 def main():
     settings_filename = 'settings/miso_settings.txt'
     Settings.load(settings_filename)
-    print Settings.get()
-    print Settings.get_counts_dir('TandemUTR')
 
 if __name__ == '__main__':
     main()

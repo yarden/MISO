@@ -8,6 +8,7 @@ import subprocess
 
 import misopy
 import misopy.settings as settings
+import misopy.misc_utils as misc_utils
 from settings import Settings, load_settings
 
 def write_cluster_preface(file_handle):
@@ -71,6 +72,7 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
 
     Function contributed by Michael Lovci, UCSD.
     """
+    misc_utils.make_dir(cluster_output_dir)
     # Create arguments file to pass on to job
     f = open(argfile, 'w')
     nargs = len(arg_list)
@@ -86,12 +88,10 @@ def run_SGEarray_cluster(arg_list, argfile, cluster_output_dir,
     if cluster_scripts_dir == None:
 	cluster_scripts_dir = os.path.join(cluster_output_dir,
                                            'cluster_scripts')
-    if not os.path.isdir(cluster_scripts_dir):
-	os.makedirs(cluster_scripts_dir)
+    misc_utils.make_dir(cluster_scripts_dir)
     scripts_output_dir = os.path.join(cluster_output_dir,
                                       'scripts_output')
-    if not os.path.isdir(scripts_output_dir):
-	os.makedirs(scripts_output_dir)
+    misc_utils.make_dir(scripts_output_dir)
     scripts_output_dir = os.path.abspath(scripts_output_dir)
     script_error = os.path.join(scripts_output_dir,
                                 string.join([job_name, "err"], "."))
@@ -185,20 +185,18 @@ def run_on_cluster(cmd, job_name, cluster_output_dir,
                                                      queue_name)
 
     #print "  - cmd: %s" %(cmd)
+    misc_utils.make_dir(cluster_output_dir)
     if cluster_scripts_dir == None:
 	cluster_scripts_dir = os.path.join(cluster_output_dir,
                                            'cluster_scripts')
-	if not os.path.isdir(cluster_scripts_dir):
-	    os.makedirs(cluster_scripts_dir)
+        misc_utils.make_dir(cluster_scripts_dir)
     scripts_output_dir = os.path.join(cluster_output_dir,
                                       'scripts_output')
-    if not os.path.isdir(scripts_output_dir):
-	os.makedirs(scripts_output_dir)
+    misc_utils.make_dir(scripts_output_dir)
     scripts_output_dir = os.path.abspath(scripts_output_dir)
     cluster_call = '%s -o \"%s\" -e \"%s\"' %(cmd_name,
                                               scripts_output_dir,
                                               scripts_output_dir)
-
     # Add queue type if given one
     if queue_name != None:
         cluster_call += ' -q \"%s\"' %(queue_name)
@@ -219,6 +217,7 @@ def launch_job(cluster_cmd, cmd_name):
     Execute cluster_cmd and return its job ID if
     it can be fetched.
     """
+    print "Executing: %s" %(cluster_cmd)
     proc = subprocess.Popen(cluster_cmd, shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
