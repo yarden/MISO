@@ -184,7 +184,7 @@ class GenesDispatcher:
             batch_logfile = os.path.join(self.batch_logs_dir,
                                          "batch-%d-%s.log" %(batch_num,
                                                              time_str))
-            cmd_to_run = "%s >> %s;" %(miso_cmd, batch_logfile)
+            cmd_to_run = "%s >> \"%s\";" %(miso_cmd, batch_logfile)
             if not self.use_cluster:
                 # Run locally
                 p = subprocess.Popen(cmd_to_run, shell=True)
@@ -199,6 +199,7 @@ class GenesDispatcher:
                     queue_type = "short"
                 # Run on cluster
                 job_name = "gene_psi_batch_%d" %(batch_num)
+                print "Submitting to cluster: %s" %(cmd_to_run)
                 job_id = \
                     cluster_utils.run_on_cluster(cmd_to_run,
                                                  job_name,
