@@ -104,15 +104,17 @@ Mailing list where users can ask technical questions is available at `miso-users
 Updates
 =======
 
-**2012**
+**2013**
 
-* **Tue, Dec 25:** Released version ``0.4.7``. Includes several new features, including:
+* **Tue, Jan 1:** Released version ``0.4.7``. Includes several new features, including:
 
   * Support for strand-specific reads
   
   * Support for running MISO locally using multi-cores
 
   * Prefilter feature: prefilter events with low coverage on long runs (requires Bedtools)
+
+**2012**
 
 * **Thu, Dec 20**: Posted new mouse genome annotation for alternative cleavage and polyadenylation events (TandemUTR) and alternative last exon events (ALE) from `Analysis of alternative cleavage and polyadenylation by 3′ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_ (Nature Methods, Dec. 2012), see :ref:`tian-apa`. Thanks to Wencheng Li and Bin Tian for creating this annotation!
 
