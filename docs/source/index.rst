@@ -1515,7 +1515,6 @@ for suggesting many improvements, or for creating useful software used by MISO:
 * Ross Lazarus (Harvard Medical School)
 * Isaac Berkowitz (Brown University)
 * Chia-Ho Lin (UCLA)
-* Schragi Schwartz (MIT)
 * Shaun Mahony (MIT)
 * Albert W. Cheng (MIT)
 * Rory Kirchner (MIT)
