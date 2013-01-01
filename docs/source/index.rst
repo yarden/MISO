@@ -901,7 +901,7 @@ To compute the insert length by simple pairing of read mates by their ID (assumi
 Prefiltering MISO events
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-To increase efficiency, a prefiltering option was added in release ``0.4.7``. When ``--prefilter`` is given to ``run_events_analysis.py``, MISO will calculate the number of reads in the input BAM mapping to each event in the input GFF. Events that do not meet the reads thresholds (as set in the configuration file) will be removed from the run. This feature requires the Bedtools utility ``tagBam`` to be installed and available on path. The call to ``tagBam`` introduces a startup cost for each BAM file, but could in many cases save computation time, since events low coverage events will not processed or distributed as jobs to nodes when running on the cluster. From ``run_events_analysis.py --help``: ::
+To increase efficiency, a prefiltering option was added in release ``0.4.7``. When ``--prefilter`` is given to ``run_events_analysis.py``, MISO will calculate the number of reads in the input BAM mapping to each event in the input GFF. Events that do not meet the read coverage thresholds (as set in the configuration file) will be removed from the run. This feature requires the Bedtools utility ``tagBam`` to be installed and available on path. The call to ``tagBam`` introduces a startup cost per BAM file, but could in many cases save computation time, since events low coverage events will not processed or distributed as jobs to nodes when running on the cluster. From ``run_events_analysis.py --help``: ::
 
   --prefilter           Prefilter events based on coverage. If given as
                         argument, run will begin by mapping BAM reads to event
