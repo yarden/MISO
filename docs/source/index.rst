@@ -779,7 +779,6 @@ will not want to tweak these. The parameters are as follows:
 
 The default settings of the sampling-related parameters in ``[sampler]`` was deliberately chosen to be conservative. 
 
-
 Computing expression estimates ("Psi" / |Psi| values)
 -----------------------------------------------------
 
@@ -898,6 +897,24 @@ To compute the insert length by simple pairing of read mates by their ID (assumi
 
   .. note::
      The option ``--compute-insert-len`` can take a comma-separated list of BAM filenames in case you want to compute the insert length for multiple samples in one command. The ``--compute-insert-len`` option of ``pe_utils`` by default uses only exons from the GFF file that are 500 bases or longer. This can be tweaked by passing ``pe_utils`` the optional ``--min-exon-size N`` argument, which will only use exons of size ``N`` or longer. In our example, we used a constitutive exons GFF file that contained only exons that are 100 bp or longer, so the default settings will consider all exons in that file.
+
+Prefiltering MISO events
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+To increase efficiency, a prefiltering option was added in release ``0.4.7``. When ``--prefilter`` is given to ``run_events_analysis.py``, MISO will calculate the number of reads in the input BAM mapping to each event in the input GFF. Events that do not meet the reads thresholds (as set in the configuration file) will be removed from the run. This feature requires the Bedtools utility ``tagBam`` to be installed and available on path. The call to ``tagBam`` introduces a startup cost for each BAM file, but could in many cases save computation time, since events low coverage events will not processed or distributed as jobs to nodes when running on the cluster. From ``run_events_analysis.py --help``: ::
+
+  --prefilter           Prefilter events based on coverage. If given as
+                        argument, run will begin by mapping BAM reads to event
+                        regions (using bedtools), and omit events that do not
+                        meet coverage criteria from the run. By default,
+                        turned off. Note that events that do not meet the
+                        coverage criteria will not be processed regardless,
+                        but --prefilter simply does this filtering step at the
+                        start of the run, potentially saving computation time
+                        so that low coverage events will not be processed or
+                        distributed to jobs if MISO is run on a cluster. This
+                        options requires bedtools to be installed and
+                        available on path.
 
 
 Distributing MISO jobs to a cluster
