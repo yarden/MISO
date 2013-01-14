@@ -73,16 +73,16 @@ def csv2array(filename,
     try:
         if missing:
             data = genfromtxt(filename, dtype=None, names=with_header,
-                              deletechars='', skiprows=skiprows,
+                              deletechars='', skip_header=skiprows,
                               missing=missing)
         else:
             if delimiter != '\t':
                 data = genfromtxt(filename, dtype=None, names=with_header,
                                   delimiter=delimiter,
-                                  deletechars='', skiprows=skiprows)
+                                  deletechars='', skip_header=skiprows)
             else:
                 data = genfromtxt(filename, dtype=None, names=with_header,
-                                  deletechars='', skiprows=skiprows)
+                                  deletechars='', skip_header=skiprows)
     except IOError as io_error:
         raise Exception, "IOError: %s. Filename: %s" %(io_error, filename)
     if data.ndim == 0:

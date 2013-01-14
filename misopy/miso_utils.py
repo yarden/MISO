@@ -29,7 +29,8 @@ def get_miso_output_files(event_name, chrom, settings):
     
     # Apply MISO prefix path if given
     if "miso_prefix" in settings:
-        miso_prefix = os.path.abspath(os.path.expanduser(settings["miso_prefix"]))
+        miso_prefix = \
+            os.path.abspath(os.path.expanduser(settings["miso_prefix"]))
     else:
         miso_prefix = ""
 
@@ -42,8 +43,9 @@ def get_miso_output_files(event_name, chrom, settings):
 
     miso_files = settings['miso_files']
 
-    miso_sample_paths = [os.path.abspath(os.path.expanduser(os.path.join(miso_prefix, f))) \
-                         for f in miso_files]
+    miso_sample_paths = \
+        [os.path.abspath(os.path.expanduser(os.path.join(miso_prefix, f))) \
+         for f in miso_files]
 
     event_with_miso_ext = "%s.miso" %(event_name)
 

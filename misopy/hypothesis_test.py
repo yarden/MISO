@@ -101,9 +101,10 @@ def compute_prior_proportion_diff(num_samples):
 def compute_delta_densities(samples1_filename, samples2_filename, diff_range,
                             smoothing_param=0.3):
     """
-    Compute the Gaussian kernel density fitted distributions over delta for
-    the two sets of posterior samples filenames given.  Returns the posterior density
-    and prior density as well, assuming a uniform prior over the Psi of the samples
+    Compute the Gaussian kernel density fitted distributions
+    over delta for the two sets of posterior samples filenames given.
+    Returns the posterior density and prior density as well, assuming
+    a uniform prior over the Psi of the samples
     in the two conditions.
     """
     densities = {}
