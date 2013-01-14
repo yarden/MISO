@@ -36,7 +36,8 @@ def dictlist2dict(dictlist, header_name):
 
 def dictlist2array(dictlist, header_fields):
     """
-    Convert a list of dictionaries into a numpy array, based on the given order of fields.
+    Convert a list of dictionaries into a numpy array,
+    based on the given order of fields.
     """
     data_array = []
     for data_elt in dictlist:
@@ -46,10 +47,18 @@ def dictlist2array(dictlist, header_fields):
 	data_array.append(data_row)
     return data_array
 
-def csv2array(filename, skiprows=0, delimiter='\t', raw_header=False, missing=None, with_header=True):
+
+def csv2array(filename,
+              skiprows=0,
+              delimiter='\t',
+              raw_header=False,
+              missing=None,
+              with_header=True):
     """
-    Parse a file name into an array. Return the array and additional header lines. By default,
-    parse the header lines into dictionaries, assuming the parameters are numeric,
+    Parse a file name into an array.
+    Return the array and additional header lines. By default,
+    parse the header lines into dictionaries,
+    assuming the parameters are numeric,
     using 'parse_header'.
     """
     f = open(filename, 'r')
@@ -64,10 +73,12 @@ def csv2array(filename, skiprows=0, delimiter='\t', raw_header=False, missing=No
     try:
         if missing:
             data = genfromtxt(filename, dtype=None, names=with_header,
-                              deletechars='', skiprows=skiprows, missing=missing)
+                              deletechars='', skiprows=skiprows,
+                              missing=missing)
         else:
             if delimiter != '\t':
-                data = genfromtxt(filename, dtype=None, names=with_header, delimiter=delimiter,
+                data = genfromtxt(filename, dtype=None, names=with_header,
+                                  delimiter=delimiter,
                                   deletechars='', skiprows=skiprows)
             else:
                 data = genfromtxt(filename, dtype=None, names=with_header,

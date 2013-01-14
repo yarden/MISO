@@ -28,23 +28,28 @@ def load_samples(samples_file):
     Load a file with samples.  Return the samples, header from the file, the sampled MAP estimate,
     and the sampled MAP's log score.
     """
-    data, h = csv2array(samples_file, skiprows=1, raw_header=True)
-    sampled_map_indx = maxi(data['sampled_psi'])
-    sampled_map = [float(v) for v in data['sampled_psi'][sampled_map_indx].split(',')]
-    sampled_map_log_score = data['log_score'][sampled_map_indx]
-#    print "  - Sampled MAP: %s" %(sampled_map)
-#    print "  - Sampled MAP log score: %.4f" %(sampled_map_log_score)
-    samples = []
-    for vals in data['sampled_psi']:
-        psi_vals = [float(v) for v in vals.split(',')]
-        samples.append(psi_vals)
-    samples = array(samples)
-    
-    # Extract counts from the file's header
-    counts_info = get_counts_from_header(h[0])
-    
-    return (samples, h, data['log_score'], sampled_map,
-            sampled_map_log_score, counts_info)
+    try:
+        data, h = csv2array(samples_file, skiprows=1, raw_header=True)
+        sampled_map_indx = maxi(data['sampled_psi'])
+        sampled_map = \
+            [float(v) for v in data['sampled_psi'][sampled_map_indx].split(',')]
+        sampled_map_log_score = data['log_score'][sampled_map_indx]
+        #    print "  - Sampled MAP: %s" %(sampled_map)
+        #    print "  - Sampled MAP log score: %.4f" %(sampled_map_log_score)
+        samples = []
+        for vals in data['sampled_psi']:
+            psi_vals = [float(v) for v in vals.split(',')]
+            samples.append(psi_vals)
+        samples = array(samples)
+
+        # Extract counts from the file's header
+        counts_info = get_counts_from_header(h[0])
+
+        return (samples, h, data['log_score'], sampled_map,
+                sampled_map_log_score, counts_info)
+    except ValueError:
+        print "WARNING: could not parse samples file %s" %(samples_file)
+        return None
 
 
 def parse_sampler_params(miso_filename):
@@ -201,17 +206,26 @@ def summarize_sampler_results(samples_dir, summary_filename,
             # that the event IDs do not look compressed
             if index_gff.is_compressed_name(event_name):
                 print "WARNING: %s looks like a compressed id, but no mapping file " \
-                    "from compressed IDs to event IDs was given! Try: --use-compressed" %(event_name)
+                    "from compressed IDs to event IDs was given! Try: --use-compressed" \
+                    %(event_name)
             
         # Load samples and header information
 	samples_results = load_samples(samples_filename)
+        if samples_results is None:
+            print "Skipping %s" %(samples_filename)
+            # Skip files that could not be parsed
+            continue
 	samples = samples_results[0]
         header = samples_results[1]
         header = header[0]
 
         # Get counts information from header
         counts_info = samples_results[5]
-        
+
+        shape_len = len(shape(samples))
+        if shape_len < 2:
+            print "Skipping %s" %(samples_filename)
+            continue
         num_samples, num_isoforms = shape(samples)
         output_fields = format_credible_intervals(event_name, samples)
             

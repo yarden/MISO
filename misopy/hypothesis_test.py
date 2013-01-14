@@ -98,7 +98,6 @@ def compute_prior_proportion_diff(num_samples):
     return array(samples)
 
 
-
 def compute_delta_densities(samples1_filename, samples2_filename, diff_range,
                             smoothing_param=0.3):
     """
