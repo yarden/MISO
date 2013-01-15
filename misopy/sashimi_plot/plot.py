@@ -39,8 +39,8 @@ def plot_bf_dist(bf_filename, settings_filename, output_dir,
     Plot a Bayes factor distribution from a .miso_bf file.
     """
     if not bf_filename.endswith(".miso_bf"):
-        print "WARNING: %s does not end in .miso_bf, are you sure it is the "
-        "output of a MISO samples comparison?" %(bf_filename)
+        print "WARNING: %s does not end in .miso_bf, are you sure it is the " \
+              "output of a MISO samples comparison?" %(bf_filename)
 
     # Load BF data
     data, h = csv2dictlist_raw(bf_filename)
@@ -60,7 +60,8 @@ def plot_bf_dist(bf_filename, settings_filename, output_dir,
         delta_psi = event['diff']
 
         if type(bf) == str and "," in bf:
-            print "WARNING: %s is a multi-isoform event, skipping..."
+            print "WARNING: %s is a multi-isoform event, skipping..." \
+                %(event)
             continue
         else:
             # Impose upper limit on Bayes factor

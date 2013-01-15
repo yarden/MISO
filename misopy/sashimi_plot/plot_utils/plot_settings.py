@@ -3,10 +3,7 @@
 ##
 import sys
 import os
-try:
-    import simplejson as json
-except:
-    import json
+import ast
 
 import ConfigParser
 
@@ -45,20 +42,36 @@ def get_default_settings():
 
 def parse_plot_settings(settings_filename, event=None, chrom=None,
                         # Float parameters
-                        FLOAT_PARAMS=["intron_scale", "exon_scale", "ymax",
-                                      "resolution", "fig_width", "fig_height",
-                                      "font_size", "junction_log_base"],
+                        FLOAT_PARAMS=["intron_scale",
+                                      "exon_scale",
+                                      "ymax",
+                                      "resolution",
+                                      "fig_width",
+                                      "fig_height",
+                                      "font_size",
+                                      "junction_log_base"],
                         # Integer parameters
-                        INT_PARAMS=["posterior_bins", "gene_posterior_ratio",
-                                    "insert_len_bins", "nyticks", "nxticks"],
+                        INT_PARAMS=["posterior_bins",
+                                    "gene_posterior_ratio",
+                                    "insert_len_bins",
+                                    "nyticks",
+                                    "nxticks"],
                         # Boolean parameters
-                        BOOL_PARAMS=["logged", "show_posteriors", "number_junctions",
-                                     "reverse_minus", "bar_posteriors", "show_ylabel",
-                                     "show_xlabel", "sans_serif"],
+                        BOOL_PARAMS=["logged",
+                                     "show_posteriors",
+                                     "number_junctions",
+                                     "reverse_minus",
+                                     "bar_posteriors",
+                                     "show_ylabel",
+                                     "show_xlabel",
+                                     "sans_serif"],
                         # Parameters to be interpreted as Python lists or
                         # data structures
-                        DATA_PARAMS=["miso_files", "bam_files", "bf_thresholds",
-                                     "bar_color", "sample_labels"],
+                        DATA_PARAMS=["miso_files",
+                                     "bam_files",
+                                     "bf_thresholds",
+                                     "bar_color",
+                                     "sample_labels"],
                         no_posteriors=False):
     """
     Populate a settings dictionary with the plotting parameters, parsed
@@ -73,6 +86,7 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
     
     for section in config.sections():
         for option in config.options(section):
+            print "Parsing %s:%s" %(section, option)
             if option in FLOAT_PARAMS:
                 settings[option] = config.getfloat(section, option)
             elif option in INT_PARAMS:
@@ -80,7 +94,8 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
             elif option in BOOL_PARAMS:
                 settings[option] = config.getboolean(section, option)
             elif option in DATA_PARAMS:
-                settings[option] = json.loads(config.get(section, option))
+                settings[option] = ast.literal_eval(config.get(section,
+                                                               option))
             else:
                 settings[option] = config.get(section, option)
 
@@ -88,7 +103,7 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
     settings["bf_thresholds"] = [int(t) for t in settings["bf_thresholds"]]
     
     if "colors" in settings:
-        colors = json.loads(settings["colors"])
+        colors = ast.literal_eval(settings["colors"])
     else:
         colors = [None for x in settings["bam_files"]]
     settings["colors"] = colors
@@ -126,7 +141,7 @@ def parse_plot_settings(settings_filename, event=None, chrom=None,
     settings["miso_files"] = miso_files
     
     if "coverages" in settings:
-        coverages = json.loads(settings["coverages"])
+        coverages = ast.literal_eval(settings["coverages"])
         coverages = map(float, coverages)
         # Normalize coverages per M
         coverages = [x / 1e6  for x in coverages]
