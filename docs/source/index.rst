@@ -1525,6 +1525,7 @@ for suggesting many improvements, or for creating useful software used by MISO:
 * Reut Shalgi (MIT)
 * Colin Dewey (University of Wisconsin-Madison)
 * Eric Suh (Princeton)
+* Warren Emmett (UCL)
 
 
 Authors
