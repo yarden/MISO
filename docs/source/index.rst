@@ -1272,7 +1272,21 @@ Answers
 
 .. _answer4:
 
-4. **When I run MISO on my BAM file, it finds that 0 reads align to all events!** This problem is most commonly caused by either passing MISO a BAM file that is not indexed, or a BAM file that was indexed but where the ``.bai`` file (which holds the index) is not present in the same directory as the ``.bam`` file passed to MISO. Indexing the file and ensuring that its corresponding index file is in the same directory will fix the problem. (`back <#faq>`_)
+4. **When I run MISO on my BAM file, it finds that 0 reads align to all events!** This problem is most commonly caused by one of the following issues: 
+
+ * MISO is passed a BAM file that is not sorted and indexed. BAM files must be sorted and indexed to allow MISO random access to regions in the BAM.
+
+ * The BAM file was indexed, but the ``.bai`` file (which holds the index) is not present in the same directory as the ``.bam`` file passed to MISO. Indexing the file and ensuring that its corresponding index file is in the same directory will fix the problem. Related issue: the BAM file and the BAM file index mismatch due to capitalization differences in the filenames. For example, your BAM file is ``reads.bam``, but the index is ``reads.BAM.BAI`` (note capitalization differences in extension). This will prevent MISO from pairing the index with the BAM file. The index for ``reads.bam`` must be instead named ``reads.bam.bai``
+
+ * The chromosome headers of the input BAM file and of your indexed annotation mismatch (e.g. annotation uses UCSC ``chr`` style headers, while BAM file uses Ensembl chromosome headers.) 
+
+ * MISO was passed the wrong read length: for example, the reads in your BAM file are of length 50 but you passed a different read length in the ``--read-len`` argument. MISO requires the correct read length to be passed.
+
+The ultimate way to test if your BAM file can be accessed by MISO is to pick a region from the GFF annotation that you're passing to MISO that you know should contain some reads, e.g. ``chr1:100-300`` and try to access this via ``samtools``: ::
+
+  samtools view reads.bam chr1:100-300
+
+If ``samtools`` cannot access the reads in that region, MISO will not be able to either. Failure to access reads in the region is typically caused by one of the above issues. (`back <#faq>`_)
 
 .. _answer5:
 
