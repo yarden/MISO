@@ -1328,7 +1328,7 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 
 .. _answer14:
 
-14. **Is there a mapping from events to genes for hg19?** Not at the moment. To generate one for your favorite gene models annotation, see `Question 9 <#answer9>`_ of FAQ. (`back <#faq>`_)
+14. **Is there a mapping from events to genes for hg19?** Yes, there is a mapping based on Ensembl, see :ref:`events-to-genes`. To generate your own mapping, see `Question 9 <#answer9>`_ of FAQ. (`back <#faq>`_)
 
 .. _answer15:
 
