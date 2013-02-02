@@ -16,6 +16,10 @@ def make_dir(dirpath):
         pass
 
 
+def pathify(f):
+    return os.path.abspath(os.path.expanduser(f))
+
+
 def which(program):
     """
     Check if program exists on path.

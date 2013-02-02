@@ -39,8 +39,9 @@ class Settings(object):
 
         for section in config.sections():
             for option in config.options(section):
-                # Load cluster options as strings, without attempting to evaluate them
-                # Avoids misinterpretation of words like "long" as a data type
+                # Load cluster options as strings, without attempting
+                # to evaluate them avoids misinterpretation of words
+                # like "long" as a data type
                 if section == "cluster":
                     cls.global_settings[option] = \
                         str(config.get(section, option))
@@ -181,6 +182,12 @@ class Settings(object):
     @classmethod
     def get(cls):
         return cls.global_settings
+
+    @classmethod
+    def get_miso_exec(cls):
+        if 'MISO_SHELL_EXEC' in os.environ:
+            return os.environ['MISO_SHELL_EXEC']
+        return sys.executable    
     
 
 def load_settings(settings_filename):

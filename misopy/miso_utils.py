@@ -4,6 +4,10 @@
 import os
 import glob
 
+import misopy
+import misopy.misc_utils as utils
+
+
 def get_miso_files_from_dir(dirname):
     """
     Return MISO output files from a directory.
@@ -17,6 +21,26 @@ def get_miso_files_from_dir(dirname):
     # return basenames
     miso_basename_files = [os.path.basename(f) for f in miso_files]
     return miso_basename_files
+
+
+def is_miso_rawdir(dirname):
+    """
+    Return true if the given directory is one which contains
+    raw MISO output (i.e. if it contains MISO chromosome directories.)
+    """
+    dirname = utils.pathify(dirname)
+    if not os.path.isdir(dirname):
+        return False
+    subdirs = [utils.pathify(os.pathjoin(dirname, d)) \
+               for d in os.listdir(dirname)]
+    # If any of the subdirectories of the current directory
+    # contain raw MISO (*.miso) files, consider it a raw MISO
+    # output directory.
+    for subdir_name in subdirs:
+        miso_files = glob.glob(os.path.join(subdir_name, "*.miso"))
+        if len(miso_files) > 0:
+            return True
+    return False
 
 
 def get_miso_output_files(event_name, chrom, settings):

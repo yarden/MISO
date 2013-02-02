@@ -775,7 +775,7 @@ will not want to tweak these. The parameters are as follows:
 * ``burn_in``: the number of initial sampling iterations to be discarded before computing estimates.
 * ``lag``: the number of sampling iterations to skip when computing estimates. A lag of 10 would mean every 10th iteration is used.
 * ``num_iters``: the total number of sampling iterations to be computed per gene/event.
-* ``num_processors`` (optional): Number of processors to use when running locally using multiple cores. Set to 4 by default. Not used when running on a cluster.
+* ``num_processors`` (optional): Number of processors to use when running locally using multiple cores. Set to 4 by default. Not used when running on a cluster. 
 
 The default settings of the sampling-related parameters in ``[sampler]`` was deliberately chosen to be conservative. 
 

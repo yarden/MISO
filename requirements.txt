@@ -1,0 +1,5 @@
+numpy
+scipy
+simplejson
+pysam
+matplotlib
