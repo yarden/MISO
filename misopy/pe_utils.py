@@ -106,8 +106,9 @@ def bedtools_map_bam_to_bed(bam_filename, gff_intervals_filename):
 
     if (not os.path.isfile(bam_filename)) or \
        (not os.path.isfile(gff_intervals_filename)):
-        raise Exception, "Error: %s or %s do not exist." %(bam_filename,
-                                                           gff_intervals_filename)
+        raise Exception, "Error: %s or %s do not exist." \
+            %(bam_filename,
+              gff_intervals_filename)
     bed_stream = os.popen(bedtools_cmd)
     return bed_stream
 
@@ -249,11 +250,12 @@ def compute_insert_len(bams_to_process,
 
     all_constitutive = True
 
-    const_exons, f = exon_utils.get_const_exons_by_gene(const_exons_gff_filename,
-                                                        output_dir,
-                                                        # Treat all exons as constitutive
-                                                        all_constitutive=True,
-                                                        min_size=min_exon_size)
+    const_exons, f = \
+        exon_utils.get_const_exons_by_gene(const_exons_gff_filename,
+                                           output_dir,
+                                           # Treat all exons as constitutive
+                                           all_constitutive=True,
+                                           min_size=min_exon_size)
     filter_reads = not no_bam_filter
 
     if filter_reads:
@@ -408,6 +410,7 @@ def output_insert_len_dist(interval_to_paired_dists,
         str_lens = ",".join([str(l) for l in insert_lens])
         output_line = "%s\t%s\n" %(region, str_lens)
         output_file.write(output_line)
+
 
 def compute_insert_len_stats(insert_dist):
     """

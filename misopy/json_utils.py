@@ -4,10 +4,12 @@ try:
 except:
     import json 
 
+
 def json_serialize(obj, filename):
     f = open(filename, 'w')
     json.dump(obj, f, indent=1)	
     f.close()
+
 
 def json_load_file(filename):
     if os.path.isdir(filename):
