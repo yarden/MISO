@@ -88,6 +88,8 @@ def serialize_genes(gff_genes,
         if chrom.startswith("chr"):
             chrom_dir_name = chrom
         else:
+            # Add chr-prefix for ease of finding directory
+            # in downstream steps.
             chrom_dir_name = "chr%s" %(str(chrom))
 
         # Make directory for chromosome if it doesn't already exist
@@ -103,16 +105,19 @@ def serialize_genes(gff_genes,
         for gene_id, gene_info in genes_by_chrom[chrom].iteritems():
             gene_compressed_id = None
             if compress_id:
-                gene_compressed_id = genes_by_chrom[chrom][gene_id]['compressed_id']
+                gene_compressed_id = \
+                    genes_by_chrom[chrom][gene_id]['compressed_id']
                 gene_filename = \
                     os.path.abspath(os.path.join(chrom_dir,
-                                                 "%s.pickle" %(gene_compressed_id)))
+                                                 "%s.pickle" \
+                                                 %(gene_compressed_id)))
             else:
                 gene_filename = \
                     os.path.abspath(os.path.join(chrom_dir,
                                                  "%s.pickle" %(gene_id)))
             # Write each gene/event's pickle file
-            pickle_utils.write_pickled_file({gene_id: genes_by_chrom[chrom][gene_id]},
+            pickle_utils.write_pickled_file({gene_id:
+                                             genes_by_chrom[chrom][gene_id]},
                                             gene_filename)
             # Record what filename was associated with this gene ID
             gene_id_to_filename[gene_id] = gene_filename
@@ -124,7 +129,8 @@ def serialize_genes(gff_genes,
         print "  - Chromosome serialization took %.2f seconds" %(t2 - t1)
 
     # Shelve the mapping from gene ids to filenames
-    shelved_filename = os.path.join(output_dir, "genes_to_filenames.shelve")
+    shelved_filename = os.path.join(output_dir,
+                                    "genes_to_filenames.shelve")
     shelved_data = shelve.open(shelved_filename)
     for k, v in gene_id_to_filename.iteritems():
         shelved_data[k] = v
@@ -192,14 +198,18 @@ def main():
     parser.add_option("--index", dest="index_gff", nargs=2, default=None,
                       help="Index the given GFF. Takes as arguments as GFF filename "
                       "and an output directory.")
-    parser.add_option("--compress-id", dest="compress_id", default=False, action="store_true",
-                      help="Use the compressed version of the GFF \'ID=\' field rather than the ID itself "
-                      "when creating .miso output filenames.")
+    parser.add_option("--compress-id", dest="compress_id", default=False,
+                      action="store_true",
+                      help="Use the compressed version of the GFF \'ID=\' "
+                      "field rather than the ID itself when creating "
+                      ".miso output filenames.")
     (options, args) = parser.parse_args()
 
     if options.index_gff != None:
-        gff_filename = os.path.abspath(os.path.expanduser(options.index_gff[0]))
-        output_dir = os.path.abspath(os.path.expanduser(options.index_gff[1]))
+        gff_filename = \
+            os.path.abspath(os.path.expanduser(options.index_gff[0]))
+        output_dir = \
+            os.path.abspath(os.path.expanduser(options.index_gff[1]))
 
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)

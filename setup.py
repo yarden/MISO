@@ -114,6 +114,7 @@ setup(name = 'misopy',
                  'misopy/exon_utils.py',
                  'misopy/pe_utils.py',
                  'misopy/filter_events.py',
+                 'misopy/miso_zip.py',
                  # sashimi_plot scripts
                  'misopy/sashimi_plot/plot.py'],
       data_files = [('misopy/settings',
