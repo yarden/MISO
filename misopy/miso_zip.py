@@ -45,6 +45,11 @@ class MISOCompressor:
         if os.path.isfile(output_filename):
             print "Error: %s already exists. Please delete to overwrite." \
                 %(output_filename)
+        output_dir = "%s.miso_db" %(output_filename)
+        if os.path.isdir(output_dir):
+            print "Error: Intermediate compressed directory %s " \
+                  "exists. Please delete to overwrite." %(output_dir)
+            sys.exit(1)
         for miso_dirname in miso_dirnames:
             print "Processing: %s" %(miso_dirname)
             if not os.path.isdir(miso_dirname):
@@ -54,11 +59,6 @@ class MISOCompressor:
                 print "Output file %s already exists, aborting. " \
                       "Please delete the file if you want " \
                       "compression to run."
-                sys.exit(1)
-            output_dir = "%s.miso_db" %(output_filename)
-            if os.path.isdir(output_dir):
-                print "Error: Intermediate compressed directory %s " \
-                      "exists. Please delete to overwrite." %(output_dir)
                 sys.exit(1)
             self.miso_dirs_to_compress = []
             shutil.copytree(miso_dirname, output_dir,
@@ -71,6 +71,13 @@ class MISOCompressor:
                 # Create the zip file
                 comp_path = "%s.miso_dir" %(comp_path)
                 self.compress_miso_dir(dir_to_compress, comp_path)
+        # Zip directory using conventional zip
+        print "Zipping compressed directory with standard zip..."
+        t1 = time.time()
+        zipper(output_dir, output_filename)
+        t2 = time.time()
+        print "  - Standard zipping took %.2f minutes." \
+              %((t2 - t1)/60.)
             
 
     def collect_miso_dirs(self, path, dirnames):
@@ -103,20 +110,25 @@ class MISOCompressor:
         c = conn.cursor()
         # Create table for the current directory to compress
         table_name = os.path.basename(dir_to_compress)
-        c.execute("CREATE TABLE %s " +
-                  "(event_name text, psi_vals text, log_scores text, header text)" \
-                  %(table_name))
+        sql_create = \
+            "CREATE TABLE %s " %(table_name) + \
+            "(event_name text, psi_vals_and_scores text, header text)"
+        c.execute(sql_create)
         for miso_fname in miso_filenames:
-            miso_file_fields = self.load_miso_file_as_str(miso_fname)
+            miso_file_fields = load_miso_file_as_str(miso_fname)
             if miso_file_fields is None:
                 print "Error: Cannot compress %s. Aborting." %(miso_fname)
                 sys.exit(1)
-            header, psi_vals, log_scores = miso_file_fields
-            ###### TODO
+            header, psi_vals_and_scores = miso_file_fields
+            ######
+            ###### TODO:
             ###### HANDLE COMPRESSED EVENT IDS HERE
-            event_name = os.path.basename(miso_fname)
-            c.execute("INSERT INTO %s ('%s', '%s', '%s')" \
-                      %(event_name, psi_vals, log_scores))
+            ######
+            event_name = strip_miso_ext(os.path.basename(miso_fname))
+            sql_insert = "INSERT INTO %s VALUES (?, ?, ?)" %(table_name)
+            c.execute(sql_insert, (event_name,
+                                   psi_vals_and_scores,
+                                   header))
         # Commit changes and close the database
         conn.commit()
         conn.close()
@@ -147,12 +159,16 @@ def load_miso_file_as_str(miso_filename):
     if not os.path.isfile(miso_filename):
         print "Error: Cannot find %s" %(miso_filename)
         return None
-    header = None
-    psi_vals = None
-    scores = None
+    header = ""
+    psi_vals_and_scores = ""
     with open(miso_filename) as miso_file:
-        # Read the header
-        
+        # Read the header, consisting of two lines
+        for n in range(2):
+            header += miso_file.readline()
+        for line in miso_file:
+            psi_vals_and_scores += line
+    return header, psi_vals_and_scores
+                
 
 def compress_miso(output_filename, input_dirs,
                   comp_ext=".misozip"):
@@ -182,11 +198,34 @@ def compress_miso(output_filename, input_dirs,
     print "Compression took %.2f minutes." %((t2 - t1)/60.)
 
 
+def strip_miso_ext(filename):
+    if filename.endswith(".miso"):
+        return filename[0:-5]
+    return filename
+    
+
 def uncompress_miso(compress_filename, output_dir):
     """
     Uncompress MISO directory.
     """
     pass
+
+
+def zipper(dir, zip_file):
+    """
+    by Corey Goldberg.
+    """
+    zip = zipfile.ZipFile(zip_file, 'w',
+                          compression=zipfile.ZIP_DEFLATED)
+    root_len = len(os.path.abspath(dir))
+    for root, dirs, files in os.walk(dir):
+        archive_root = os.path.abspath(root)[root_len:]
+        for f in files:
+            fullpath = os.path.join(root, f)
+            archive_name = os.path.join(archive_root, f)
+            zip.write(fullpath, archive_name, zipfile.ZIP_DEFLATED)
+    zip.close()
+    return zip_file
 
 
 def greeting():
@@ -196,7 +235,7 @@ def greeting():
     print "To uncompress back into a directory \'outputdir\', use: "
     print "   miso_zip --uncompress outputfile.misozip outputdir"
     print "\nNote: compressed filename must end in \'.misozip\'"
-
+    
 
 def main():
     from optparse import OptionParser
