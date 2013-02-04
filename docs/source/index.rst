@@ -306,15 +306,15 @@ Quickstart
 
 To quickly start using MISO, follow these steps (each of which is described in detail in the rest of the manual):
 
-1. Choose your annotation set in GFF (see :ref:`event-annotation` for our own annotations, available for human, mouse and fruit fly genomes.)
+1. **Choose your GFF annotation set** (see :ref:`event-annotation` for our own annotations, available for human, mouse and fruit fly genomes.)
 
-2. Index the annotation using ``index_gff.py``: ::
+2. **Index the annotation** using ``index_gff.py``: ::
 
       python index_gff.py --index SE.gff3 indexed_SE_events/
 
 where ``SE.gff3`` is a GFF file containing descriptions of isoforms/alternative splicing events to be quantitated (e.g. skipped exons).
 
-3. Run MISO:
+3. **Run MISO:**
 
  - Use ``run_events_analysis.py`` to get isoform expression estimates, optionally using a cluster to run jobs in parallel, e.g.: ::
 
@@ -323,16 +323,16 @@ where ``SE.gff3`` is a GFF file containing descriptions of isoforms/alternative 
 
   where ``indexed_SE_events`` is a directory containing the indexed skipped exon events.
 
- - Summarize MISO inferences using ``run_miso.py --summarize-samples``: ::
+ - **Summarize MISO inferences** using ``run_miso.py --summarize-samples``: ::
 
       python run_miso.py --summarize-samples my_output1/ summaries/
       python run_miso.py --summarize-samples my_output2/ summaries/
  
-4. Make pairwise comparisons between samples to detect differentially expressed isoforms/events with ``run_miso.py --compare-samples``: ::
+4. **Make pairwise comparisons** between samples to detect differentially expressed isoforms/events with ``run_miso.py --compare-samples``: ::
 
       python run_miso.py --compare-samples my_output1/ my_output2/
 
-5. Parse results, filtering significant events with high coverage.
+5. **Parse and filter** significant events with sufficient coverage.
 
 For a full example of running MISO, see :ref:`pipeline`. Also see the :ref:`faq` page.
 

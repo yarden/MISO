@@ -20,22 +20,15 @@ import misopy.misc_utils as utils
 import misopy.miso_utils as miso_utils
 
 
-def get_non_miso_files(filenames, miso_ext=".miso"):
-    non_miso_files = []
-    for fname in filenames:
-        if os.path.basename(fname).endswith(miso_ext):
-            non_miso_files.append(fname)
-    return non_miso_files
-
-
 class MISOCompressor:
     """
-    Compressor/uncompressor of MISO files.
+    Compressor/uncompressor of MISO output-containing directories.
     """
     def __init__(self):
         self.input_dir = None
         self.output_dir = None
-
+        self.comp_ext = ".misozip"
+        
 
     def compress(self, output_filename, miso_dirnames):
         """
@@ -44,12 +37,58 @@ class MISOCompressor:
         """
         if os.path.isfile(output_filename):
             print "Error: %s already exists. Please delete to overwrite." \
-                %(output_filename)
+                  %(output_filename)
         output_dir = "%s.miso_db" %(output_filename)
         if os.path.isdir(output_dir):
             print "Error: Intermediate compressed directory %s " \
                   "exists. Please delete to overwrite." %(output_dir)
             sys.exit(1)
+        for miso_dirname in miso_dirnames:
+            print "Processing: %s" %(miso_dirname)
+            if not os.path.isdir(miso_dirname):
+                print "Error: %s not a directory." %(miso_dirname)
+                sys.exit(1)
+            if os.path.isfile(output_filename):
+                print "Output file %s already exists, aborting. " \
+                      "Please delete the file if you want " \
+                      "compression to run."
+                sys.exit(1)
+            self.miso_dirs_to_compress = []
+            shutil.copytree(miso_dirname, output_dir,
+                            ignore=self.collect_miso_dirs)
+            for dir_to_compress in self.miso_dirs_to_compress:
+                rel_path = os.path.relpath(dir_to_compress, miso_dirname)
+                comp_path = os.path.join(output_dir, rel_path)
+                # Remove the place holder directory
+                os.rmdir(comp_path)
+                # Create the zip file
+                comp_path = "%s.miso_dir" %(comp_path)
+                self.compress_miso_dir(dir_to_compress, comp_path)
+        # Zip directory using conventional zip
+        print "Zipping compressed directory with standard zip..."
+        t1 = time.time()
+        zipper(output_dir, output_filename)
+        t2 = time.time()
+        print "  - Standard zipping took %.2f minutes." \
+              %((t2 - t1)/60.)
+        
+
+    def uncompress(self, compressed_filename, output_dir):
+        """
+        Takes a compressed MISO file 'compressed_filename' and
+        uncompresses it into 'output_dir'.
+        """
+        if not os.path.isfile(compressed_filename):
+            print "Error: Cannot find %s, aborting." 
+                  %(compressed_filename)
+        if not os.path.basename(compressed_filename).endswith(self.comp_ext):
+            print "Warning: %s does not end in %s. Are you sure it is " \
+                  "a file compressed by miso_zip.py?" \
+                  %(compressed_filename, self.comp_ext)
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+        # First unzip the file using conventional unzip
+        unzipper(compressed_filename, output_dir)
         for miso_dirname in miso_dirnames:
             print "Processing: %s" %(miso_dirname)
             if not os.path.isdir(miso_dirname):
@@ -103,7 +142,7 @@ class MISOCompressor:
         print "  - %d files to compress" %(num_files)
         # Initialize the SQLite database
         if os.path.isfile(output_filename):
-            print "Error: Compressed database %s already existsa, aborting." \
+            print "Error: Compressed database %s already exists, aborting." \
                   %(output_filename)
             return None
         conn = sqlite3.connect(output_filename)
@@ -142,13 +181,28 @@ class MISOCompressor:
         pass
             
         
-    def uncompress(self, input_filename):
+    def uncompress(self, input_filename, output_dir):
         """
         Uncompress a MISO input filename.
         """
         if not os.path.isfile(input_filename):
             print "Error: %s does not exist. Nothing to uncompress, quitting."
             sys.exit(1)
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+        print "Uncompressing %s into %s" %(input_filename, output_dir)
+        
+
+
+##
+## Misc. helper functions
+## 
+def get_non_miso_files(filenames, miso_ext=".miso"):
+    non_miso_files = []
+    for fname in filenames:
+        if os.path.basename(fname).endswith(miso_ext):
+            non_miso_files.append(fname)
+    return non_miso_files
 
 
 def load_miso_file_as_str(miso_filename):
@@ -196,23 +250,34 @@ def compress_miso(output_filename, input_dirs,
     miso_comp.compress(output_filename, input_dirs)
     t2 = time.time()
     print "Compression took %.2f minutes." %((t2 - t1)/60.)
+    
+
+def uncompress_miso(compressed_filename, output_dir):
+    """
+    Uncompress MISO directory.
+    """
+    if not os.path.isfile(compress_filename):
+        print "Error: Zip file %s is not found." \
+              %(compress_filename)
+        sys.exit(1)
+    t1 = time.time()
+    miso_comp = MISOCompressor()
+    miso_comp.uncompress(compress_filename, output_dir)
+    t2 = time.time()
+    print "Uncompression took %.2f minutes." %((t2 - t1)/60.)
 
 
 def strip_miso_ext(filename):
     if filename.endswith(".miso"):
         return filename[0:-5]
     return filename
-    
-
-def uncompress_miso(compress_filename, output_dir):
-    """
-    Uncompress MISO directory.
-    """
-    pass
 
 
 def zipper(dir, zip_file):
     """
+    Zip a directory 'dir' recursively, saving result in
+    'zip_file'.
+    
     by Corey Goldberg.
     """
     zip = zipfile.ZipFile(zip_file, 'w',
@@ -226,6 +291,14 @@ def zipper(dir, zip_file):
             zip.write(fullpath, archive_name, zipfile.ZIP_DEFLATED)
     zip.close()
     return zip_file
+
+
+def unzipper(zip_file, outdir):
+    """
+    Unzip a given 'zip_file' into the output directory 'outdir'.
+    """
+    zf = zipfile.ZipFile(zip_file, "r")
+    zf.extractall(outdir)
 
 
 def greeting():
