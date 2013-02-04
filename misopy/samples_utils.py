@@ -23,9 +23,13 @@ def maxi(l):
         if m == v:
             return i
 
+
+def load_samples_as_str():
+
 def load_samples(samples_file):
     """
-    Load a file with samples.  Return the samples, header from the file, the sampled MAP estimate,
+    Load a file with samples.
+    Return the samples, header from the file, the sampled MAP estimate,
     and the sampled MAP's log score.
     """
     try:

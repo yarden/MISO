@@ -287,14 +287,19 @@ Latest version from GitHub
 Installation requirements
 -------------------------
 
-MISO requires a small number of Python modules and the `samtools`_ program for accessing SAM/BAM file. The requirements are:
+MISO requires a small number of Python modules and commonly used software like `samtools` for accessing SAM/BAM files. The requirements are:
 
+**Required Python modules:**
 1. `Python 2.6`_ or higher
-2. `numpy`_ / `scipy`_. **Note**: MISO requires numpy version > 1.4!
-3. `matplotlib`_
-4. `samtools`_ for accessing SAM/BAM files
-5. `pysam`_, a Python library for working with SAM/BAM files through ``samtools`` (**Note**: MISO requires pysam version 0.6 or higher)
+2. `numpy`_ and `scipy`_. **Note**: MISO requires numpy version > 1.4!
+3. `pysam`_, a Python library for working with SAM/BAM files through ``samtools`` (**Note**: MISO requires pysam version 0.6 or higher)
+4. `matplotlib`_: Only required for use with ``sashimi_plot`` for plotting
 
+**Other required software:**
+1. `samtools`_ for accessing SAM/BAM files
+2. `bedtools`_: optional, used for computing overlaps and intersections BAM/GFF files by certain features of MISO (like prefiltering and paired-end insert length computation.)
+
+We strongly recommend that you install MISO using a Python package manager (see :ref:`installing-fastmiso`) so that the required Python modules are automatically installed and managed for you.
 
 Quickstart
 ----------
@@ -344,16 +349,16 @@ There are two options for installing MISO, using either a stable release or inst
 Installing using a stable release
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To install a stable release package of MISO using a Python package manager like ``easy_install``, simply type: ::
+It is highly recommended to install Python packages using a package manager such as the `distribute`_ ``easy_install`` utility (see `Python packaging tools tutorial <http://guide.python-distribute.org/installation.html>`_ for straightforward instructions on getting started.) Package managers will automatically download and install all necessary requirements for MISO and save headaches later on. 
+To install a stable release package of MISO using a Python package manager like distribute's ``easy_install``, simply type: ::
 
   easy_install misopy
 
-This will install MISO globally. For local installation, use: ::
+This will install MISO globally, fetching and installing all of its required Python modules. For local installation, use: ::
 
   easy_install --user -U misopy
 
-If ``easy_install`` is unavailable on your system, you can simply download a stable release package (available from :ref:`releases`) and install it 
-like ordinary Python modules. Unzip the package (e.g. for version "0.x"): ::
+If ``easy_install`` is unavailable on your system, you can simply download a stable release package (available from :ref:`releases`) and install it like ordinary Python modules. Unzip the package (e.g. for version "0.x"): ::
 
  tar -xzvf misopy-0.x.tar.gz
 
@@ -370,7 +375,9 @@ This will result in a local installation of the MISO Python package. To test the
  >> import misopy
  >> import pysplicing
 
-If you get no errors, the installation completed successfully.
+If you get no errors, the installation completed successfully. If you choose to install packages using ``--prefix=`` instead of a package manager, please consider that the Python packages you install have to be visible from your ``PYTHONPATH`` (see `Python packaging tools tutorial <http://guide.python-distribute.org/installation.html>`_ for information.)
+
+MISO needs to ``samtools`` to be installed and available on your path.
 
 
 Installing the latest version from GitHub repository
@@ -387,10 +394,13 @@ Once you've obtained the MISO repository, either through ``git`` or by downloadi
 
  make Pythonpackage
 
-Next, compile the code and install MISO using ``setup.py`` as described above: ::
+Next, compile the code and install MISO using the Python package manager (such as ``easy_install``) as described above, or using ``setup.py``. With the package manager, use: ::
+
+  easy_install --user -U .
+
+If a package manager is not available, resort to ``setup.py``: ::
 
  python setup.py install
-
 
 The ``--prefix=`` option can be used as usual to specify an alternative installation path. For example, to install MISO in your local directory ``/home/user/pylibs/``, you can use: ::
 
@@ -402,7 +412,9 @@ This will create a directory called ``lib`` inside that directory that contains 
 
 This will place the local ``site-packages`` ahead of the current setting of ``PYTHONPATH``, resulting in Python loading the version of the package installed there (if it is available) over versions existing in the system's global ``site-packages`` directory.
 
-Executable scripts that are part of MISO (like ``run_events_analysis.py``) get placed in a local ``bin`` directory (e.g. ``~/bin/``) directory. If you'd like these to get used from the shell in place of a globally installed version, make sure that ``~/bin`` is first in your ``PATH`` variable.
+Executable scripts that are part of MISO (like ``run_events_analysis.py``) get placed in a local ``bin`` directory (e.g. ``~/bin/``) directory. If you'd like these to get used from the shell in place of a globally installed version, make sure that ``~/bin`` is first in your ``PATH`` variable. 
+
+We strongly recommend that you manage Python packages using a package manager rather than manually installing packages and modifying your ``PYTHONPATH``, which is error prone and time consuming.
 
 .. _Testing the installation:
 
@@ -1223,7 +1235,6 @@ For example, to filter the file ``control.miso_bf`` to contain only events with:
 This will output a filtered Bayes factor file, ``filtered/control.miso_bf.filtered`` that contains only events meeting the above criteria. 
 
 
-
 .. _plotting: 
 
 Visualizing and plotting MISO output
@@ -1253,6 +1264,7 @@ Frequently Asked Questions (FAQ)
 #. **If I am running MISO with a GFF annotation containing multiple isoforms, how do I know which isoform each |Psi| value in the vector corresponds to?** (`answer <#answer15>`_)
 #. **When using** ``pe_utils`` **to compute the paired-end insert length distribution, I get the error** ``[main_samview] truncated file`` **and/or a segmentation fault.** (`answer <#answer16>`_)
 #. **When I try to index GFF files using** ``index_gff`` **I get a segmentation fault.** (`answer <#answer17>`_)
+#. **I am having trouble installing scipy/numpy/matplotlib. How can I install them?** (`answer <answer18>`_)
 
 
 Answers
@@ -1340,7 +1352,11 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 
 .. _answer17:
 
-17. **When I try to index GFF files using** ``index_gff`` **I get a segmentation fault.** The indexing step requires the ``shelve`` module from Python. On some systems and versions of Python, the ``shelve`` module can cause a segmentation fault. This is likely a Python installation problem that should be resolved locally. Any Python script that makes use of the ``shelve.open`` function will be affected.
+17. **When I try to index GFF files using** ``index_gff`` **I get a segmentation fault.** The indexing step requires the ``shelve`` module from Python. On some systems and versions of Python, the ``shelve`` module can cause a segmentation fault. This is likely a Python installation problem that should be resolved locally. Any Python script that makes use of the ``shelve.open`` function will be affected. (`back <#faq>`_)
+
+.. _answer18:
+
+18. **I am having trouble installing scipy/numpy/matplotlib. How can I install them?** The best way to install Python modules is using a package manager such as `distribute`_ ``easy_install`` or `pip`_. These package managers automatically detect all the dependencies required for a package (like MISO) and then download and install these dependencies for you. However, Scipy can still be challenging to compile and install because of its various Fortran library dependencies. Another alternative is to get a prepackaged version of all the relevant scientific computing Python modules, such as that offered by `Enthought Python Distribution`_ (EPD), which is free for academic use and supported on Linux, Mac and Windows. Mac users might also be interested in the `Superpack`_ installation script which automatically these scientific computing Python modules and others. (`back <#faq>`_)
 
 
 .. _sec:
@@ -1610,6 +1626,11 @@ General reading on probabilistic modeling and inference
 
 .. _A primer on probabilistic inference: http://cocosci.berkeley.edu/tom/papers/tutorial.pdf
 
+.. _distribute: http://packages.python.org/distribute/
+.. _pip: http://pypi.python.org/pypi/pip
+.. _Enthought Python Distribution: http://www.enthought.com/products/epd.php
+.. _EPD: http://www.enthought.com/products/epd.php
+.. _Superpack: http://fonnesbeck.github.com/ScipySuperpack/
 .. _UCSC Genome Browser: http://genome.ucsc.edu/
 .. _BioMart: http://www.ensembl.org/biomart/martview 
 .. _A Practical Course in Bayesian Graphical Modeling: http://www.socsci.uci.edu/~mdlee/bgm.html

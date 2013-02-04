@@ -23,7 +23,7 @@ def get_miso_files_from_dir(dirname):
     return miso_basename_files
 
 
-def is_miso_rawdir(dirname):
+def is_miso_rawdir(dirname, miso_ext=".miso"):
     """
     Return true if the given directory is one which contains
     raw MISO output (i.e. if it contains MISO chromosome directories.)
@@ -31,16 +31,16 @@ def is_miso_rawdir(dirname):
     dirname = utils.pathify(dirname)
     if not os.path.isdir(dirname):
         return False
-    subdirs = [utils.pathify(os.pathjoin(dirname, d)) \
-               for d in os.listdir(dirname)]
-    # If any of the subdirectories of the current directory
+    filenames = glob.glob(os.path.join(dirname, "*.miso"))
+    # If all of the subdirectories of the current directory
     # contain raw MISO (*.miso) files, consider it a raw MISO
     # output directory.
-    for subdir_name in subdirs:
-        miso_files = glob.glob(os.path.join(subdir_name, "*.miso"))
-        if len(miso_files) > 0:
-            return True
-    return False
+    if len(filenames) == 0:
+        return False
+    for fname in filenames:
+        if not fname.endswith(miso_ext):
+            return False
+    return True
 
 
 def get_miso_output_files(event_name, chrom, settings):

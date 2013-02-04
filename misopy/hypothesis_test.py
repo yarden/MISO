@@ -98,7 +98,9 @@ def compute_prior_proportion_diff(num_samples):
     return array(samples)
 
 
-def compute_delta_densities(samples1_filename, samples2_filename, diff_range,
+def compute_delta_densities(samples1_filename,
+                            samples2_filename,
+                            diff_range,
                             smoothing_param=0.3):
     """
     Compute the Gaussian kernel density fitted distributions
@@ -248,8 +250,9 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
                      'mRNA_starts',
                      'mRNA_ends']
     header_line = "\t".join(header_fields) + "\n"
-    output_filename = os.path.join(bf_output_dir, "%s_vs_%s.miso_bf" %(sample1_label,
-                                                                       sample2_label))
+    output_filename = \
+        os.path.join(bf_output_dir, "%s_vs_%s.miso_bf" %(sample1_label,
+                                                         sample2_label))
     output_file = open(output_filename, 'w')
     output_file.write(header_line)
 
@@ -264,13 +267,16 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
 
     compressed_ids_to_genes = None
     if use_compressed is not None:
-        print "  - Loading compressed IDs mapping from: %s" %(use_compressed)        
-        compressed_ids_to_genes = index_gff.load_compressed_ids_to_genes(use_compressed)
+        print "  - Loading compressed IDs mapping from: %s" \
+              %(use_compressed)        
+        compressed_ids_to_genes = \
+            index_gff.load_compressed_ids_to_genes(use_compressed)
 
     # Compute the Bayes factors for each file
     for sample1_filename in sample1_filenames:
-        sample1_event_name = get_event_name(sample1_filename,
-                                            use_compressed_map=compressed_ids_to_genes)
+        sample1_event_name = \
+            get_event_name(sample1_filename,
+                           use_compressed_map=compressed_ids_to_genes)
 
         # Parameters from raw MISO samples file
         params = parse_sampler_params(sample1_filename)
@@ -278,9 +284,10 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
         gene_info = get_gene_info_from_params(params)
         
 	# Find corresponding event filename in sample 2
-        sample2_filename = filter(lambda filename:
-                                  get_event_name(filename,
-                                                 use_compressed_map=compressed_ids_to_genes) == sample1_event_name,
+        sample2_filename = \
+            filter(lambda filename:
+                   get_event_name(filename,
+                                  use_compressed_map=compressed_ids_to_genes) == sample1_event_name,
                                   sample2_filenames)
 	if len(sample2_filename) == 0:
             continue
@@ -290,15 +297,16 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
 	
 	# Compute delta of posterior samples and Bayes factors
 	diff_range = arange(-1, 1, 0.001)
-	delta_densities = compute_delta_densities(sample1_filename, sample2_filename,
-                                                  diff_range)
+	delta_densities = \
+            compute_delta_densities(sample1_filename,
+                                    sample2_filename,
+                                    diff_range)
 	bf = delta_densities['bayes_factor']
         
         num_isoforms = shape(delta_densities['samples1'])[1]
         
 	sample1_posterior_mean = mean(delta_densities['samples1'], 0)
 	sample2_posterior_mean = mean(delta_densities['samples2'], 0)
-
 
         # Get the labels of the isoforms
         isoforms_field = delta_densities['isoforms']
@@ -308,16 +316,18 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
         sample2_counts_info = delta_densities['sample2_counts']
 
 	# Compute posterior mean and credible intervals for sample 1
-        sample1_cred_intervals = format_credible_intervals(sample1_event_name,
-                                                           delta_densities['samples1'],
-                                                           confidence_level=alpha)
+        sample1_cred_intervals = \
+            format_credible_intervals(sample1_event_name,
+                                      delta_densities['samples1'],
+                                      confidence_level=alpha)
         sample1_ci_low = sample1_cred_intervals[2]
         sample1_ci_high = sample1_cred_intervals[3]
 
         # Compute posterior mean and credible intervals for sample 2
-        sample2_cred_intervals = format_credible_intervals(sample1_event_name,
-                                                           delta_densities['samples2'],
-                                                           confidence_level=alpha)
+        sample2_cred_intervals = \
+            format_credible_intervals(sample1_event_name,
+                                      delta_densities['samples2'],
+                                      confidence_level=alpha)
         sample2_ci_low = sample2_cred_intervals[2]
         sample2_ci_high = sample2_cred_intervals[3]
         
@@ -325,12 +335,15 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
 
 	# Use precision of two decimal places
         if num_isoforms == 2:
-            sample1_posterior_mean = Decimal(str(sample1_posterior_mean[0])).quantize(Decimal('0.01'))
-            sample2_posterior_mean = Decimal(str(sample2_posterior_mean[0])).quantize(Decimal('0.01'))
+            sample1_posterior_mean = \
+                Decimal(str(sample1_posterior_mean[0])).quantize(Decimal('0.01'))
+            sample2_posterior_mean = \
+                Decimal(str(sample2_posterior_mean[0])).quantize(Decimal('0.01'))
             posterior_diff = "%.2f" %(sample1_posterior_mean - sample2_posterior_mean)
             bayes_factor = "%.2f" %(bf[0])
         else:
-            posterior_diff = ",".join(["%.2f" %(v) for v in (sample1_posterior_mean - sample2_posterior_mean)])
+            posterior_diff = \
+                ",".join(["%.2f" %(v) for v in (sample1_posterior_mean - sample2_posterior_mean)])
             sample1_posterior_mean = sample1_cred_intervals[1]
             sample2_posterior_mean = sample2_cred_intervals[1]
             bayes_factor = ",".join(["%.2f" %(max(v, 0)) for v in bf])
