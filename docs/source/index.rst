@@ -1108,7 +1108,7 @@ To compress directories containing raw MISO output files, a utility (currently o
 
   python miso_zip.py --compress mydata.misozip miso_output/
 
-(Note that compressed MISO files must end in ``.misozip``.) ``miso_zip`` will take as argument any directory containing ``*.miso`` files (either directory within it or within its subdirectories) and collapse all the ``*.miso`` files into a portable SQLite database, split by chromosome. Each chromosome directory will be transformed into a ``.miso_db`` file, which can be read in a Python-independent way through any SQLite interface. 
+(Note that compressed MISO files must end in ``.misozip``.) ``miso_zip`` will take as argument any directory containing ``*.miso`` files (either directory within it or within its subdirectories) and collapse all the ``*.miso`` files into a portable `SQLite database`_, split by chromosome. Each chromosome directory will be transformed into a ``.miso_db`` file, which can be read in a Python-independent way through any SQLite interface. 
 
 This compression reduces the number of files dramatically, since each sample gets one SQLite database per chromosome. The resulting directory structure is then compressed further using standard ``zip`` compression into a single zip file (in this case named ``mydata.zip``). 
 
@@ -1664,6 +1664,7 @@ General reading on probabilistic modeling and inference
 .. _EPD: http://www.enthought.com/products/epd.php
 .. _Superpack: http://fonnesbeck.github.com/ScipySuperpack/
 .. _UCSC Genome Browser: http://genome.ucsc.edu/
+.. _SQLite database: http://www.sqlite.org/
 .. _BioMart: http://www.ensembl.org/biomart/martview 
 .. _A Practical Course in Bayesian Graphical Modeling: http://www.socsci.uci.edu/~mdlee/bgm.html
 .. _Python 2.6: http://www.python.org
