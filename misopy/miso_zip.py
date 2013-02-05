@@ -100,6 +100,11 @@ class MISOCompressor:
         self.uncompressed = {}
         for unzipped_fname in unzipped_files:
             self.uncompress_miso_dir(unzipped_fname, output_dir)
+        # Remove the original .zip
+        if os.path.isfile(compressed_filename):
+            print "Removing the compressed file %s" %(compressed_filename)
+            if os.path.isfile(compressed_filename):
+                os.remove(compressed_filename)
             
 
     def uncompress_miso_dir(self, compressed_filename, output_dir):
@@ -144,6 +149,9 @@ class MISOCompressor:
                     miso_file.write(header)
                     # Write psi vals and their log scores
                     miso_file.write(psi_vals_and_scores)
+            # Remove the MISO db file once done uncompressing it
+            print "Deleting: %s" %(compressed_filename)
+            os.remove(compressed_filename)
             conn.close()
 
 
