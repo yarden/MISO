@@ -306,13 +306,21 @@ def get_const_exons_by_gene(gff_filename, output_dir,
     if not all_constitutive:
         print "Constitutive exon retrieval took %.2f seconds (%d exons)." \
               %((t2 - t1), num_exons)
-
         output_exons_to_file(const_exons_by_gene, output_filename,
                              output_format=output_format)
     else:
         print "Constitutive exons GFF was given, so not outputting " \
               "another one."
     return const_exons_by_gene, output_filename
+
+
+def greeting():
+    print "Utility for fetching constitutive exons from "
+    print "GFF files. Optionally fetch constitutive exons by size."
+    print "Usage:\n"
+    print "To fetch constitutive exons from GFF: "
+    print "  exon_utils.py --get-const-exons input.gff --output-dir outdir\n"
+    print "See --help for more options."
 
 
 def main():
@@ -332,6 +340,7 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.output_dir == None:
+        greeting()
         print "Error: need --output-dir."
         return
         
@@ -343,6 +352,8 @@ def main():
         get_const_exons_by_gene(gff_filename,
                                 output_dir,
                                 min_size=options.min_exon_size)
+    else:
+        greeting()
         
 
 if __name__ == '__main__':

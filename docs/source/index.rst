@@ -987,6 +987,9 @@ The header line (beginning with ``#``) gives information about the gene/event in
 
 The first column (``sampled_psi``) lists the |Psi| value sampled and the second column (``log_score``) gives the log score of that sample under the MISO model. The |Psi| value is comma-separated and will have as many entries as there are isoforms. In the above file, there are two isoforms, and so two entries in the |Psi| column that sum to 1.
 
+After raw MISO output is summarized and all pairwise comparisons between samples have been made, 
+the raw output can be compressed (see :ref:`compressing`.)
+
 .. _summarizing:
 
 Summarizing MISO output
@@ -1056,13 +1059,9 @@ this comparison is described below.
 Output of samples comparison
 ----------------------------
 
-The output of ``--compare-samples`` will be in two subdirectories:
+The main output of ``--compare-samples`` will be in:
 
 * ``bayes-factors/``: contains the file summarizing the output with the Bayes factors (ending in ``.miso_bf``)
-* ``delta-posteriors/``: contains the posterior distributiosn over the change in Psi (|Delta| |Psi|  values) for each event
-
-The main output is in ``bayes-factors/`` and most users will never need to directly
-look at the contents of ``delta-posteriors/``, though its format is described in :ref:`delta-posteriors`.
 
 .. _bf-output:
 
@@ -1098,22 +1097,50 @@ Starting with release ``misopy-0.4.1``, three additional columns are outputted w
 
 When one of those fields is not available (e.g. ``strand``), ``NA`` is outputted in its place.
 
-.. _delta-posteriors:
+.. _compressing:
 
-Raw |Delta| |Psi| distribution output format
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Compressing raw MISO output
+===========================
 
-The output of the ``--compare-samples`` option generates not only Bayes factors but also posterior
-distributions over the |Delta| |Psi| value of each isoform. These files are in the ``delta-posteriors/``
-subdirectory of the specified output directory. Each alternative event will have its own |Delta| |Psi| file, split into batches. The resulting directory structure (using the above example of a call to ``--compare-samples``) would be: ::
+Once all the samples have been summarized and all pairwise comparisons between samples have been made (as described in :ref:`summarizing` and :ref:`comparing-samples`), the directories containing the raw MISO output files (files ending in ``.miso``) can either be deleted or compressed for later use. 
 
-  comparisons/
-    control_vs_knockdown/
-      batch_500_1/
-      batch_500_2/
-      ...
+To compress directories containing raw MISO output files, a utility (currently only available in GitHub repository) called ``miso_zip.py`` can be used. For example, to compress the directory ``miso_output/`` into and name the result ``mydata.misozip``, use: ::
 
-where ``batch_500_1`` contains the |Delta| |Psi| files for the first set of 500 events in the sample, ``batch_500_2`` for the second set of 500 events in the sample, and so on. Within each batch directory, there will be a file per event (ending in ``.miso_dp``) that contains the |Delta| |Psi| distribution for that event. Each file simply contains a single column labeled ``delta_posteriors`` where each row is a sampled |Delta| |Psi| value. The values in each file form an estimate of the posterior distribution over |Delta| |Psi| for the event.
+  python miso_zip.py --compress mydata.misozip miso_output/
+
+(Note that compressed MISO files must end in ``.misozip``.) ``miso_zip`` will take as argument any directory containing ``*.miso`` files (either directory within it or within its subdirectories) and collapse all the ``*.miso`` files into a portable SQLite database, split by chromosome. Each chromosome directory will be transformed into a ``.miso_db`` file, which can be read in a Python-independent way through any SQLite interface. 
+
+This compression reduces the number of files dramatically, since each sample gets one SQLite database per chromosome. The resulting directory structure is then compressed further using standard ``zip`` compression into a single zip file (in this case named ``mydata.zip``). 
+
+The compressed ``.misozip`` files can be uncompressed using ``miso_zip`` as follows: ::
+
+  python miso_zip.py --uncompress mydata.misozip uncompressed/
+
+This will uncompress ``mydata.misozip`` and output its contents into the directory ``uncompressed/``. 
+
+If you would like to access the collapsed SQLite representation of the directory without retrieving the original ``*.miso`` files, all you need to do is unzip the ``.misozip`` file using the standard ``unzip`` utility: ::
+
+  unzip mydata.misozip
+
+This will give the original contents of the compressed directory except the ``*.miso`` files, which will now appear as ``*.miso_db`` (SQLite databases) arranged by chromosome for each sample.
+
+
+.. .. _delta-posteriors:
+
+.. Raw |Delta| |Psi| distribution output format
+.. ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. The output of the ``--compare-samples`` option generates not only Bayes factors but also posterior
+.. distributions over the |Delta| |Psi| value of each isoform. These files are in the ``delta-posteriors/``
+.. subdirectory of the specified output directory. Each alternative event will have its own |Delta| |Psi| file, split into batches. The resulting directory structure (using the above example of a call to ``--compare-samples``) would be: ::
+
+..   comparisons/
+..     control_vs_knockdown/
+..       batch_500_1/
+..       batch_500_2/
+..       ...
+
+.. where ``batch_500_1`` contains the |Delta| |Psi| files for the first set of 500 events in the sample, ``batch_500_2`` for the second set of 500 events in the sample, and so on. Within each batch directory, there will be a file per event (ending in ``.miso_dp``) that contains the |Delta| |Psi| distribution for that event. Each file simply contains a single column labeled ``delta_posteriors`` where each row is a sampled |Delta| |Psi| value. The values in each file form an estimate of the posterior distribution over |Delta| |Psi| for the event.
 
 .. _pipeline:
 

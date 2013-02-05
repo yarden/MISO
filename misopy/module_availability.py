@@ -5,8 +5,12 @@
 import time
 import os
 
+import misopy
+import misopy.misc_utils as utils
+
 def check_module_availability(required_modules):
     unavailable_mods = 0
+    print "Looking for required Python modules.."
     for module_name in required_modules:
 	print "Checking for availability of: %s" %(module_name)
 	try:
@@ -22,23 +26,35 @@ def check_module_availability(required_modules):
                           "for MISO use."
 	except ImportError:
 	    print "  - Module %s not available!" %(module_name)
+            if module_name == "matplotlib":
+                print "matplotlib is required for sashimi_plot"
 	    unavailable_mods += 1
     if unavailable_mods != 0:
 	print "Total of %d modules were not available. " \
               "Please install these and try again." %(unavailable_mods)
     else:
 	print "All modules are available!"
+    print "Looking for required executables.."
+    required_programs = ["samtools", "bedtools"]
+    for prog in required_programs:
+        p = utils.which(prog)
+        print "Checking if %s is available" %(prog)
+        if p is None:
+            print " - Cannot find %s!" %(prog)
+            if prog == "bedtools":
+                print "bedtools is only required for prefiltering " \
+                      "and computation of insert lengths."
+                if utils.which("tagBam"):
+                    print "Your bedtools installation might be available " \
+                          "but outdated. Please upgrade bedtools and " \
+                          "ensure that \'bedtools\' is available on path."
+        else:
+            print "  - %s is available" %(prog)
     return unavailable_mods
 
 
 if __name__ == '__main__':
-#    from optparse import OptionParser
-#    parser = OptionParser()
-#    parser.add_option("--add-modules", dest="add_modules", action="store_true", default=False,
-#		       help="Try to add modules using the 'modules' system.")
-#    (options, args) = parser.parse_args()
     required_modules = ['numpy', 'scipy', 'json', 'matplotlib',
                         'pysam']
- 	
     check_module_availability(required_modules)
     
