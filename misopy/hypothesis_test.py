@@ -257,13 +257,8 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
     output_file.write(header_line)
 
     num_events_compared = 0
-
-    # Number of events to put into directories -- used to
-    # split up the raw delta-posteriors
-    batch_size = 500
-
+    
     file_num = 0
-    curr_batch = file_num
 
     compressed_ids_to_genes = None
     if use_compressed is not None:
@@ -377,50 +372,14 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
                          gene_info["mRNA_ends"]]
 	output_line = "%s\n" %("\t".join(output_fields))
 	output_file.write(output_line)
-        
-	# Output raw delta posteriors
-	dp_header = "delta_posteriors\n"
-
-        # Move to next batch if needed
-        if file_num % batch_size == 0:
-            curr_batch += 1
-            print "Outputting batch number %d (batch size = %d)..." \
-                  %(curr_batch, batch_size)
-
-            # Make output dir for the current batch
-            batch_dir_name = "batch_%d_%d" %(batch_size, curr_batch)
-            curr_dp_dir = os.path.join(dp_output_dir, batch_dir_name)
-            
-            if not os.path.isdir(curr_dp_dir):
-                print "Making output directory: %s" %(curr_dp_dir)
-                os.makedirs(curr_dp_dir)
-            
-        file_num += 1
-
-        # File name for delta posterior file
-        dp_filename = os.path.join(curr_dp_dir,
-                                   sample1_event_name + '.miso_dp')
-
-        # Output the raw delta posteriors
-	dp_file = open(dp_filename, 'w')
-	dp_file.write(dp_header)
-
-        delta_posteriors = delta_densities['samples1'] - \
-                           delta_densities['samples2']
-
-	for delta_posterior in delta_posteriors:
-            if num_isoforms == 2:
-                delta_posterior = delta_posterior[0:-1]
-            dp_output_line = "%s\n" %(",".join(["%.4f" %(v) for v in delta_posterior]))
-	    dp_file.write(dp_output_line)
-	dp_file.close()
-                                 
 
     print "Compared a total of %d events." %(num_events_compared)
     output_file.close()
-    
 
-def compute_bayes_factor(prior_density, posterior_density, at_point=0, print_bayes=False):
+
+def compute_bayes_factor(prior_density, posterior_density,
+                         at_point=0,
+                         print_bayes=False):
     """
     Compute Bayes factor for given fitted densities.
     """
@@ -447,6 +406,7 @@ def compute_bayes_factor(prior_density, posterior_density, at_point=0, print_bay
 	print "bayes_factor: %.2f" %(bayes_factor)
 	
     return bayes_factor, diff_prior, diff_posterior
+
     
 def main():
     pass

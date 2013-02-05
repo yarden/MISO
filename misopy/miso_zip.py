@@ -58,6 +58,7 @@ class MISOCompressor:
                       "compression to run."
                 sys.exit(1)
             self.miso_dirs_to_compress = []
+            print "Copying source directory tree.."
             shutil.copytree(miso_dirname, output_dir,
                             ignore=self.collect_miso_dirs)
             for dir_to_compress in self.miso_dirs_to_compress:
@@ -126,6 +127,7 @@ class MISOCompressor:
 
 
     def uncompress_miso_file(self, compressed_filename, output_dir):
+        print "Uncompressing %s.." %(compressed_filename)
         compressed_filename = os.path.join(output_dir,
                                            compressed_filename)
         table_name = self.get_table_name_from_file(compressed_filename)
@@ -158,7 +160,6 @@ class MISOCompressor:
         print "Deleting: %s" %(compressed_filename)
         os.remove(compressed_filename)
         conn.close()
-
 
 
     def get_table_name_from_file(self, db_filename):

@@ -286,19 +286,22 @@ def get_const_exons_by_gene(gff_filename, output_dir,
 
     for gene, mRNAs in gff_in.mRNAs_by_gene.iteritems():
         # For each gene, look at all mRNAs and return constitutive exon
-        curr_const_exons = get_const_exons_from_mRNA(gff_in, mRNAs,
-                                                     all_constitutive=all_constitutive,
-                                                     min_size=min_size)
+        curr_const_exons = \
+            get_const_exons_from_mRNA(gff_in, mRNAs,
+                                      all_constitutive=all_constitutive,
+                                      min_size=min_size)
         const_exons_by_gene.extend(curr_const_exons)
         num_exons += len(curr_const_exons)
 
     t2 = time.time()
+
+    basename = re.sub("[.]gff3?", "", os.path.basename(gff_filename))
     if output_filename is None:
         # Create default output filename if not
         # given one as argument
         output_filename = os.path.join(output_dir,
                                        "%s.min_%d.const_exons.gff" \
-                                       %(os.path.basename(gff_filename).replace(".gff", ""),
+                                       %(basename,
                                          min_size))
     if not all_constitutive:
         print "Constitutive exon retrieval took %.2f seconds (%d exons)." \
@@ -315,12 +318,16 @@ def get_const_exons_by_gene(gff_filename, output_dir,
 def main():
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--get-const-exons", dest="get_const_exons", nargs=1, default=None,
+    parser.add_option("--get-const-exons", dest="get_const_exons",
+                      nargs=1, default=None,
                       help="Get constitutive exons from an input GFF file.")
-    parser.add_option("--min-exon-size", dest="min_exon_size", nargs=1, type="int", default=20,
-                      help="Minimum size of constitutive exon (in nucleotides) that should be used "
-                      "in the computation. Default is 20 bp.")
-    parser.add_option("--output-dir", dest="output_dir", nargs=1, default=None,
+    parser.add_option("--min-exon-size", dest="min_exon_size",
+                      nargs=1, type="int", default=20,
+                      help="Minimum size of constitutive exon (in nucleotides) "
+                      "that should be used in the computation. "
+                      "Default is 20 bp.")
+    parser.add_option("--output-dir", dest="output_dir",
+                      nargs=1, default=None,
                       help="Output directory.")
     (options, args) = parser.parse_args()
 
@@ -331,7 +338,8 @@ def main():
     output_dir = os.path.abspath(os.path.expanduser(options.output_dir))
 
     if options.get_const_exons != None:
-        gff_filename = os.path.abspath(os.path.expanduser(options.get_const_exons))
+        gff_filename = \
+            os.path.abspath(os.path.expanduser(options.get_const_exons))
         get_const_exons_by_gene(gff_filename,
                                 output_dir,
                                 min_size=options.min_exon_size)
