@@ -72,6 +72,8 @@ class MISOCompressor:
         print "Zipping compressed directory with standard zip..."
         t1 = time.time()
         zipper(output_dir, output_filename)
+        print "Deleting intermediate directory: %s" %(output_dir)
+        shutil.rmtree(output_dir)
         t2 = time.time()
         print "  - Standard zipping took %.2f minutes." \
               %((t2 - t1)/60.)
@@ -102,14 +104,59 @@ class MISOCompressor:
 
     def uncompress_miso_dir(self, compressed_filename, output_dir):
         """
-        Uncompress a MISO dir or filename.
+        Uncompress a MISO compressed dir (*.miso_db) file. Replaces
+        file 'name.miso_db' file with a directory named 'name' that
+        contains a .miso file for each event contained in 'name.miso_db'
         """
         if os.path.isdir(compressed_filename):
-            for root, dirs, files in os.walk(dir):
-            for root, print "Need to walk %s" %(compressed_filename)
+            for root, dirs, files in os.walk(compressed_filename):
+                for filename in files:
+                    if self.is_miso_db_file(filename):
+                        print "Need to uncompress: %s" %(filename)
+                        print os.path.join(root, filename)
+                        print os.path.abspath(filename)
         elif self.is_miso_db_file(compressed_filename):
-            print "%s is a compressed MISO dir" %(compressed_filename)
+            compressed_filename = os.path.join(output_dir,
+                                               compressed_filename)
+            table_name = self.get_table_name_from_file(compressed_filename)
+            if table_name is None:
+                print "Error: Cannot retrieve name of MISO db file %s" \
+                      %(compressed_filename)
+                return None
+            conn = sqlite3.connect(compressed_filename)
+            c = conn.cursor()
+            results = c.execute("SELECT * from %s" %(table_name))
+            # Create an uncompressed directory that contains the
+            # contents of the current *.miso_db file
+            uncompressed_dir = \
+                os.path.join(os.path.dirname(compressed_filename),
+                             table_name)
+            print "Making uncompressed directory %s" %(uncompressed_dir)
+            if not os.path.isdir(uncompressed_dir):
+                os.makedirs(uncompressed_dir)
+            for row in results:
+                event_name, psi_vals_and_scores, header = row
+                # Create *.miso file for current event
+                miso_filename = os.path.join(uncompressed_dir,
+                                             "%s.miso" %(event_name))
+                with open(miso_filename, "w") as miso_file:
+                    # Write header
+                    miso_file.write(header)
+                    # Write psi vals and their log scores
+                    miso_file.write(psi_vals_and_scores)
+            conn.close()
 
+
+    def get_table_name_from_file(self, db_filename):
+        """
+        Return the name of a file.
+        """
+        base_name = os.path.basename(db_filename)
+        if base_name.endswith(self.miso_db_ext):
+            # Strip extension
+            return base_name[0:-1*len(self.miso_db_ext)]
+        return None
+        
 
     def is_miso_db_file(self, compressed_filename):
         if os.path.isdir(compressed_filename):

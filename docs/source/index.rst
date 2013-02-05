@@ -871,6 +871,10 @@ We first get all constitutive exons from a gene models GFF, like the Ensembl ann
 
 This will output a GFF file (named ``Mus_musculus.NCBIM37.65.min_1000.const_exons.gff``) into the ``exons`` directory containing only constitutive exons that are at least 1000 bases long. This file can be used to compute the insert length distribution of all mouse RNA-Seq datasets. Exons here are defined as constitutive only if they occur in all annotated transcripts of a gene.
 
+.. ####
+.. #### ADD CONSTITUTIVE EXON TABLES HERE
+.. ####
+
 
 Computing the insert length distribution given a constitutive exons file
 ........................................................................
