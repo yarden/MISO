@@ -1124,6 +1124,7 @@ If you would like to access the collapsed SQLite representation of the directory
 
 This will give the original contents of the compressed directory except the ``*.miso`` files, which will now appear as ``*.miso_db`` (SQLite databases) arranged by chromosome for each sample.
 
+Note that ``miso_zip.py`` will *not* delete the directory being compressed. The directory can be deleted manually after compression is done. 
 
 .. .. _delta-posteriors:
 

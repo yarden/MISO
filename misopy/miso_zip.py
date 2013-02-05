@@ -78,6 +78,10 @@ class MISOCompressor:
         t2 = time.time()
         print "  - Standard zipping took %.2f minutes." \
               %((t2 - t1)/60.)
+        print "To access the SQLite representation of raw MISO output "
+        print "(*.miso) files, simply unzip with the .miso_zip file "
+        print "with standard unzip utility:\n"
+        print "  unzip %s" %(output_filename)
         
 
     def uncompress(self, compressed_filename, output_dir):

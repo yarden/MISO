@@ -225,11 +225,6 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
     bf_output_dir = os.path.join(output_dir, 'bayes-factors/')
     if not os.path.isdir(bf_output_dir):
 	os.mkdir(bf_output_dir)
-	
-    # Create directory for raw delta posteriors
-    dp_output_dir = os.path.join(output_dir, 'delta-posteriors/')
-    if not os.path.isdir(dp_output_dir):
-	os.makedirs(dp_output_dir)
     
     header_fields = ['event_name',
 		     'sample1_posterior_mean',
