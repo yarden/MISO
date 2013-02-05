@@ -117,42 +117,48 @@ class MISOCompressor:
             for root, dirs, files in os.walk(compressed_filename):
                 for filename in files:
                     if self.is_miso_db_file(filename):
-                        print "Need to uncompress: %s" %(filename)
-                        print os.path.join(root, filename)
-                        print os.path.abspath(filename)
+                        fname_to_uncompress = os.path.join(root, filename)
+                        self.uncompress_miso_file(fname_to_compress,
+                                                  output_dir)
         elif self.is_miso_db_file(compressed_filename):
-            compressed_filename = os.path.join(output_dir,
-                                               compressed_filename)
-            table_name = self.get_table_name_from_file(compressed_filename)
-            if table_name is None:
-                print "Error: Cannot retrieve name of MISO db file %s" \
-                      %(compressed_filename)
-                return None
-            conn = sqlite3.connect(compressed_filename)
-            c = conn.cursor()
-            results = c.execute("SELECT * from %s" %(table_name))
-            # Create an uncompressed directory that contains the
-            # contents of the current *.miso_db file
-            uncompressed_dir = \
-                os.path.join(os.path.dirname(compressed_filename),
-                             table_name)
-            print "Making uncompressed directory %s" %(uncompressed_dir)
-            if not os.path.isdir(uncompressed_dir):
-                os.makedirs(uncompressed_dir)
-            for row in results:
-                event_name, psi_vals_and_scores, header = row
-                # Create *.miso file for current event
-                miso_filename = os.path.join(uncompressed_dir,
-                                             "%s.miso" %(event_name))
-                with open(miso_filename, "w") as miso_file:
-                    # Write header
-                    miso_file.write(header)
-                    # Write psi vals and their log scores
-                    miso_file.write(psi_vals_and_scores)
-            # Remove the MISO db file once done uncompressing it
-            print "Deleting: %s" %(compressed_filename)
-            os.remove(compressed_filename)
-            conn.close()
+            self.uncompress_miso_file(compressed_filename,
+                                      output_dir)
+
+
+    def uncompress_miso_file(self, compressed_filename, output_dir):
+        compressed_filename = os.path.join(output_dir,
+                                           compressed_filename)
+        table_name = self.get_table_name_from_file(compressed_filename)
+        if table_name is None:
+            print "Error: Cannot retrieve name of MISO db file %s" \
+                  %(compressed_filename)
+            return None
+        conn = sqlite3.connect(compressed_filename)
+        c = conn.cursor()
+        results = c.execute("SELECT * from %s" %(table_name))
+        # Create an uncompressed directory that contains the
+        # contents of the current *.miso_db file
+        uncompressed_dir = \
+            os.path.join(os.path.dirname(compressed_filename),
+                         table_name)
+        print "Making uncompressed directory %s" %(uncompressed_dir)
+        if not os.path.isdir(uncompressed_dir):
+            os.makedirs(uncompressed_dir)
+        for row in results:
+            event_name, psi_vals_and_scores, header = row
+            # Create *.miso file for current event
+            miso_filename = os.path.join(uncompressed_dir,
+                                         "%s.miso" %(event_name))
+            with open(miso_filename, "w") as miso_file:
+                # Write header
+                miso_file.write(header)
+                # Write psi vals and their log scores
+                miso_file.write(psi_vals_and_scores)
+        # Remove the MISO db file once done uncompressing it
+        print "Deleting: %s" %(compressed_filename)
+        os.remove(compressed_filename)
+        conn.close()
+
 
 
     def get_table_name_from_file(self, db_filename):
