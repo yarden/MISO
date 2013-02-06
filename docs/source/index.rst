@@ -290,13 +290,19 @@ Installation requirements
 MISO requires a small number of Python modules and commonly used software like `samtools` for accessing SAM/BAM files. The requirements are:
 
 **Required Python modules:**
+
 1. `Python 2.6`_ or higher
+
 2. `numpy`_ and `scipy`_. **Note**: MISO requires numpy version > 1.4!
+
 3. `pysam`_, a Python library for working with SAM/BAM files through ``samtools`` (**Note**: MISO requires pysam version 0.6 or higher)
+
 4. `matplotlib`_: Only required for use with ``sashimi_plot`` for plotting
 
 **Other required software:**
+
 1. `samtools`_ for accessing SAM/BAM files
+
 2. `bedtools`_: optional, used for computing overlaps and intersections BAM/GFF files by certain features of MISO (like prefiltering and paired-end insert length computation.)
 
 We strongly recommend that you install MISO using a Python package manager (see :ref:`installing-fastmiso`) so that the required Python modules are automatically installed and managed for you.
