@@ -362,6 +362,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                                  sge_job_name=job_name,
                                  SGEarray=SGEarray)
     dispatcher.run()
+
             
 def output_gene_ids_in_batches(gene_ids_to_gff_index,
                                output_dir,
@@ -378,7 +379,6 @@ def output_gene_ids_in_batches(gene_ids_to_gff_index,
         indeed_filename = gene_ids_to_gff_index[gene_id]
         
     pass
-
     
         
 def compute_psi(sample_filenames, output_dir, event_type,

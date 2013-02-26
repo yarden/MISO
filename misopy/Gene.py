@@ -283,10 +283,6 @@ class Gene:
 	# ensure that the parts the coordinates map to are in the isoform
 	start_part = self.get_part_by_coord(genomic_start)
 	end_part = self.get_part_by_coord(genomic_end)
-
-#        print "COORDS2ISO: genomic_start, genomic_end: ", genomic_start, \
-#              genomic_end
-#        print "--->",start_part, end_part
         
 	if start_part == None or end_part == None:
 	    return None, None
@@ -870,12 +866,16 @@ def print_gene_hierarchy(gene_hierarchy):
 #    pp = pprint.PrettyPrinter(indent=4)
 #    pp.pprint(gene_hierarchy)
 
-def load_genes_from_gff(gff_filename):
+def load_genes_from_gff(gff_filename,
+                        include_introns=False,
+                        reverse_recs=False):
     """
     Load all records for a set of genes from a given GFF file.
     Parse each gene into a Gene object.
     """
-    gff_db = GFFDatabase(gff_filename)
+    gff_db = GFFDatabase(gff_filename,
+                         include_introns=include_introns,
+                         reverse_recs=reverse_recs)
     # dictionary mapping gene IDs to the list of all their relevant records
     gff_genes = {}
 

@@ -151,6 +151,11 @@ def compute_delta_densities(samples1_filename,
     warning_outputted = False
     
     for iso_num in range(num_isoforms):
+        ##
+        ## TODO: If distinct number of samples are used
+        ## in the two samples compared, take the minimum
+        ## number of samples
+        ##
         posterior_diff = posterior_samples1[:, iso_num] - \
                          posterior_samples2[:, iso_num]
 
@@ -173,8 +178,9 @@ def compute_delta_densities(samples1_filename,
             posterior_density = gaussian_kde_covfact(posterior_diff,
                                                      smoothing_param)
 
-        bayes_factor, diff_prior, diff_posterior = compute_bayes_factor(analytic_prior_density,
-                                                                        posterior_density)
+        bayes_factor, diff_prior, diff_posterior = \
+            compute_bayes_factor(analytic_prior_density,
+                                 posterior_density)
         # Edge case: if improperly samples, maintain Bayes factors
         # as list to be consistent with multi-isoform case
         densities['bayes_factor'].append(bayes_factor)

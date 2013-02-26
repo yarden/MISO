@@ -138,7 +138,8 @@ class GFFDatabase:
     A set of GFF entries from a GFF file.
     """
     def __init__(self, from_filename=None,
-                 reverse_recs=False):
+                 reverse_recs=False,
+                 include_introns=False):
 	self.genes = []
 	self.mRNAs = []
 	self.exons = []
@@ -154,7 +155,8 @@ class GFFDatabase:
 	if from_filename:
 	    # load GFF from given filename
 	    self.from_file(from_filename,
-                           reverse_recs=reverse_recs)
+                           reverse_recs=reverse_recs,
+                           include_introns=include_introns)
 	    self.from_filename = from_filename
             
     def __len(self):
@@ -162,7 +164,8 @@ class GFFDatabase:
 
 
     def from_file(self, filename, version="3",
-                  reverse_recs=False):
+                  reverse_recs=False,
+                  include_introns=False):
         FILE = open(filename, "r")
         reader = Reader(FILE, version)
         for record in reader.read_recs(reverse_recs=reverse_recs):
@@ -174,6 +177,10 @@ class GFFDatabase:
                 self.mRNAs_by_gene[record.get_parent()].append(record)
 	    elif record.type == "exon":
 		self.exons.append(record)
+                self.exons_by_mRNA[record.get_parent()].append(record)
+            elif include_introns and (record.type == "intron"):
+                # Treat introns like exons if asked to
+                self.exons.append(record)
                 self.exons_by_mRNA[record.get_parent()].append(record)
 	    elif record.type == "CDS":
 		self.cdss.append(record)
