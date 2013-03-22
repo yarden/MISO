@@ -990,10 +990,10 @@ def make_gene_from_gff_records(gene_label,
         # Record transcript ids that are not skipped
         used_transcript_ids.append(transcript_id)
 
-    if num_transcripts_with_exons < 2:
-        print "WARNING: %s does not have at least two mRNA/transcript entries " \
-              "with exons. Skipping over..." %(gene_label)
-        return None
+    #if num_transcripts_with_exons < 2:
+    #    print "WARNING: %s does not have at least two mRNA/transcript entries " \
+    #          "with exons. Skipping over..." %(gene_label)
+    #    return None
 
     # Compile all exons used in all transcripts
     all_exons = []
