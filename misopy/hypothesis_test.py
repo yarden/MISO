@@ -405,6 +405,10 @@ def compute_bayes_factor(prior_density, posterior_density,
     if print_bayes:
 	print "diff_posterior: %.4f" %(diff_posterior)
 	print "bayes_factor: %.2f" %(bayes_factor)
+
+    # Upper bound on Bayes factor
+    if bayes_factor > max_bf:
+        bayes_factor = max_bf
 	
     return bayes_factor, diff_prior, diff_posterior
 
