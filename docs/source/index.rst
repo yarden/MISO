@@ -106,6 +106,19 @@ Updates
 
 **2013**
 
+* **X, Y**: Released version ``0.4.8``. Includes mainly bug fixes and a few new features:
+
+
+  * Fixed bug in parsing of Ensembl style chromosomes
+
+  * Fixed bug in ``--prefilter`` option. Added ``-p`` option to ``run_events_analysis.py`` for determining the number of processors to be used.
+
+  * Fixed potential deadlock situation when running locally on machines with multiple cores.
+
+  * Added ``miso_zip`` utility for compressing/uncompressing MISO output.
+
+  * Better error checking for incompatibilities between BAM and GFF files, e.g. cases where the chromosome naming conventions between the annotation and the BAM differ.
+
 * **Tue, Jan 1:** Released version ``0.4.7``. Includes several new features, including:
 
   * Support for strand-specific reads

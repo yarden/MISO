@@ -404,7 +404,6 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     print "  - BAM: %s" %(bam_filename)
     print "  - Read length: %d" %(read_len)
     print "  - Output directory: %s" %(output_dir)
-    print "  - Prefilter: %s" %(str(prefilter))
 
     misc_utils.make_dir(output_dir)
 
