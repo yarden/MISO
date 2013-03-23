@@ -175,7 +175,6 @@ class MISOSampler:
 	"""
         self.params = params
 	self.paired_end = paired_end
-        print "IN SAMPLER"
 	# set default fragment length distribution parameters
 	if self.paired_end:
 	    if ((not 'mean_frag_len' in self.params) or \
@@ -212,7 +211,6 @@ class MISOSampler:
 
         Calls C version and returns results.
         """
-        self.miso_logger.warning("RUNNING ON %s" %(gene.label))
         num_isoforms = len(gene.isoforms)
         self.num_isoforms = num_isoforms
 

@@ -37,7 +37,8 @@ class GenesDispatcher:
                  chunk_jobs=200,
                  SGEarray=False,
                  sge_job_name="misojob",
-                 gene_ids=None):
+                 gene_ids=None,
+                 num_proc=None):
         self.threads = {}
         self.gff_dir = gff_dir
         self.bam_filename = bam_filename
@@ -66,6 +67,10 @@ class GenesDispatcher:
             self.chunk_jobs = 200
         self.SGEarray = SGEarray
         self.num_processors = Settings.get_num_processors()
+        if num_proc is not None:
+            num_proc = int(num_proc)
+            self.num_processors = num_proc
+            print "Using %d processors" %(num_proc)
         self.long_thresh = 50
         self.batch_logs_dir = \
             os.path.join(output_dir, "batch-logs")
@@ -379,6 +384,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           paired_end=None,
                           settings_fname=None,
                           job_name="misojob",
+                          num_proc=None,
                           prefilter=False):
     """
     Compute Psi values for genes using a GFF and a BAM filename.
@@ -447,7 +453,8 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                                  chunk_jobs=chunk_jobs,
                                  sge_job_name=job_name,
                                  SGEarray=SGEarray,
-                                 gene_ids=all_gene_ids)
+                                 gene_ids=all_gene_ids,
+                                 num_proc=num_proc)
     dispatcher.run()
 
             
@@ -608,6 +615,10 @@ def main():
                       "be processed or distributed to jobs if MISO is run on a "
                       "cluster. This options requires bedtools to be installed and "
                       "available on path.")
+    parser.add_option("-p", dest="num_proc", default=None, nargs=1,
+                      help="Number of processors to use. Only applies when running " \
+                      "MISO on a single machine with multiple cores; does not apply " \
+                      "to runs submitted to cluster with --use-cluster.")
     (options, args) = parser.parse_args()
 
     greeting()
@@ -675,7 +686,8 @@ def main():
                               chunk_jobs=options.chunk_jobs,
                               paired_end=options.paired_end,
                               settings_fname=settings_filename,
-                              prefilter=options.prefilter)
+                              prefilter=options.prefilter,
+                              num_proc=options.num_proc)
 
             
 		    

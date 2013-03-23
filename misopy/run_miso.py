@@ -51,8 +51,10 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
     - Optional: Run in paired-end mode. Gives mean and standard deviation
       of fragment length distribution.
     """
-    if not os.path.isdir(output_dir):
+    try:
         os.makedirs(output_dir)
+    except OSError:
+            pass
         
     if not os.path.exists(gff_index_filename):
         print "Error: No GFF %s" %(gff_index_filename)
@@ -149,7 +151,6 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
         ##
         ## Run the sampler
         ##
-        print "PROCESSING GENE _-> ", gene_id
         # Create the sampler with the right parameters depending on whether
         # this is a paired-end or single-end data set.
         if paired_end:
@@ -179,8 +180,11 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
             chrom_dir = os.path.join(output_dir, event_type, gene_obj.chrom)
         else:
             chrom_dir = os.path.join(output_dir, gene_obj.chrom)
-        if not os.path.isdir(chrom_dir):
+
+        try:
             os.makedirs(chrom_dir)
+        except OSError:
+            pass
 
         # Pick .miso output filename based on the pickle filename
         miso_basename = os.path.basename(gff_index_filename)
