@@ -14,6 +14,7 @@ from collections import defaultdict
 
 import misopy
 import misopy.gff_utils as gff_utils
+import misopy.misc_utils as misc_utils
 
 def is_exon_in_mRNA(gff_in, exon, mRNA):
     """
@@ -167,6 +168,9 @@ def map_bam2gff(bam_filename, gff_filename,
     # in the output BAM file. Thanks to Aaron Quinlan for implementing
     # this helpful feature.
     print "Preparing to call bedtools \'tagBam\'"
+    if misc_utils.which("tagBam") is None:
+        print "Aborting operation.."
+        sys.exit(1)
     tagBam_cmd = get_tagBam_cmd(bam_filename, interval_label,
                                 gff_filename)
     # Write intervals as BAM
