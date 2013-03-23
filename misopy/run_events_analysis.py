@@ -9,6 +9,8 @@ import sys
 import subprocess
 from collections import defaultdict
 
+import pysam
+
 import misopy.gff_utils as gff_utils
 import misopy.as_events as as_events
 import misopy.run_miso as run_miso
@@ -20,6 +22,7 @@ from misopy.settings import miso_path as miso_settings_path
 import misopy.cluster_utils as cluster_utils
 
 miso_path = os.path.dirname(os.path.abspath(__file__))
+manual_url = "http://genes.mit.edu/burgelab/miso/docs/"
 
 class GenesDispatcher:
     """
@@ -289,15 +292,81 @@ def get_ids_passing_filter(gff_index_dir,
     return ids_passing_filter
             
 
-def check_headers(gff_dir, bam_filename):
+def check_gff_and_bam(gff_dir, bam_filename,
+                      num_genes=1000,
+                      num_reads=1000):
     """
     Look for chromosome headers mismatches between input GFF
     annotation and BAM filename.  Warn users if there are
     headers mismatches.
     """
-#    if mismatch_found:
-#        print "It looks like your BAM file and input "
-    pass
+    # Check that BAM exists
+    if not os.path.isfile(bam_filename):
+        print "Error: BAM %s cannot be found." %(bam_filename)
+        return
+    # Check that a BAM header is available
+    bam_index_fname = "%s.bai" %(bam_filename)
+    if not os.path.isfile(bam_index_fname):
+        print "WARNING: Expected BAM index file %s not found." \
+            %(bam_index_fname)
+        print "Are you sure your BAM file is indexed?"
+    genes_fname = os.path.join(gff_dir, "genes.gff")
+    if not os.path.isfile(genes_fname):
+        # No genes.gff found - warn user and abort headers check
+        print "WARNING: No genes.gff file found in %s. Did you index "\
+              "your GFF with an older version of MISO?" \
+              %(gff_dir)
+        return
+    # Read first few genes chromosomes
+    gff_chroms = {}
+    gff_starts_with_chr = False
+    with open(genes_fname) as genes:
+        for n in range(num_genes):
+            for line in genes:
+                curr_gff_chrom = line.strip().split("\t")[0]
+                # Record that GFF chroms start with chr if they do
+                if curr_gff_chrom.startswith("chr"):
+                    gff_starts_with_chr = True
+                gff_chroms[curr_gff_chrom] = True
+    # Read first few BAM reads chromosomes
+    bam_file = pysam.Samfile(bam_filename, "rb")
+    bam_chroms = {}
+    bam_starts_with_chr = False
+    for n in range(num_reads):
+        bam_read = bam_file.next()
+        read_chrom = bam_file.getrname(bam_read.tid)
+        bam_chroms[read_chrom] = True
+        if str(read_chrom).startswith("chr"):
+            bam_starts_with_chr = True
+    mismatch_found = False
+    if bam_starts_with_chr != gff_starts_with_chr:
+        mismatch_found = True
+    if mismatch_found:
+        print "\nWARNING: It looks like your GFF annotation file and your BAM " \
+              "file might not have matching headers (chromosome names.) " \
+              "If this is the case, your run will fail as no reads from " \
+              "the BAM could be matched up with your annotation."
+        print "\nPlease see:\n\t%s\n for more information." %(manual_url)
+        # Default: assume BAM starts with chr headers
+        chr_containing = "BAM file (%s)" %(bam_filename)
+        not_chr_containing = "GFF annotation (%s)" %(gff_dir)
+        if not bam_starts_with_chr:
+            # BAM does not start with chr, GFF does
+            chr_containing, not_chr_containing = \
+                not_chr_containing, chr_containing
+        print "It looks like your %s contains \'chr\' chromosomes (UCSC-style) " \
+              "while your %s does not." %(chr_containing,
+                                          not_chr_containing)
+        print "\nThe first few BAM chromosomes were: "
+        print ",".join(bam_chroms.keys())
+        print "BAM references: "
+        print bam_file.references
+        print "The first few GFF chromosomes were: "
+        print ",".join(gff_chroms.keys())
+        print "\nRun is likely to fail or produce empty output. Proceeding " \
+              "anyway...\n"
+        time.sleep(15)
+        
 
 
 def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
@@ -326,6 +395,9 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     print "  - Output directory: %s" %(output_dir)
 
     misc_utils.make_dir(output_dir)
+
+    # Check GFF and BAM for various errors like headers mismatch
+    check_gff_and_bam(gff_dir, bam_filename)
     
     # Prefilter events that do not meet the coverage criteria
     # If filtering is on, only run on events that meet

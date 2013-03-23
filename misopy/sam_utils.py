@@ -172,9 +172,9 @@ def fetch_bam_reads_in_gene(bamfile, chrom, start, end, gene=None):
     else:
         chrom_parts = chrom.split("chr")
         if len(chrom_parts) <= 1:
-            print "Error: chromosome %s must match bamfile." \
-                %(chrom)
-        chrom = chrom_parts[1]
+            chrom = chrom_parts[0]
+        else:
+            chrom = chrom_parts[1]
 
     try:
         gene_reads = bamfile.fetch(chrom, start, end)
