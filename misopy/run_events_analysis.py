@@ -90,7 +90,10 @@ class GenesDispatcher:
         self.gene_ids_to_gff_index = \
             gff_utils.get_gene_ids_to_gff_index(gff_dir)
         # If we're given filtered gene IDs, use them
-        self.gene_ids = gene_ids
+        if gene_ids is not None:
+            self.gene_ids = gene_ids
+        else:
+            self.gene_ids = self.gene_ids_to_gff_index.keys()
         self.batch_filenames = self.output_batch_files()
 
 
@@ -411,6 +414,8 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     # Prefilter events that do not meet the coverage criteria
     # If filtering is on, only run on events that meet
     # the filter.
+    all_gene_ids = None
+    
     if prefilter:
         print "  - Prefiltering on"
         if misc_utils.which("bedtools") is None:
