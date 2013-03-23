@@ -36,7 +36,8 @@ class GenesDispatcher:
                  use_cluster=False,
                  chunk_jobs=200,
                  SGEarray=False,
-                 sge_job_name="misojob"):
+                 sge_job_name="misojob",
+                 gene_ids=None):
         self.threads = {}
         self.gff_dir = gff_dir
         self.bam_filename = bam_filename
@@ -83,6 +84,8 @@ class GenesDispatcher:
         # filenames
         self.gene_ids_to_gff_index = \
             gff_utils.get_gene_ids_to_gff_index(gff_dir)
+        # If we're given filtered gene IDs, use them
+        self.gene_ids = gene_ids
         self.batch_filenames = self.output_batch_files()
 
 
@@ -95,14 +98,13 @@ class GenesDispatcher:
         """
         batch_filenames = []
         chunk_jobs = self.chunk_jobs
-        all_gene_ids = self.gene_ids_to_gff_index.keys()
-        num_genes = len(all_gene_ids)
+        num_genes = len(self.gene_ids)
         num_chunks = max(1, int(round(num_genes / float(chunk_jobs))))
         if not self.use_cluster:
             # When not using cluster, use local multi-cores
             # using default number of processors
             num_chunks = self.num_processors
-        gene_ids_batches = cluster_utils.chunk_list(all_gene_ids,
+        gene_ids_batches = cluster_utils.chunk_list(self.gene_ids,
                                                     num_chunks)
         for batch_num, gene_ids_batch in enumerate(gene_ids_batches):
             batch_size = len(gene_ids_batch)
@@ -393,6 +395,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     print "  - BAM: %s" %(bam_filename)
     print "  - Read length: %d" %(read_len)
     print "  - Output directory: %s" %(output_dir)
+    print "  - Prefilter: %s" %(str(prefilter))
 
     misc_utils.make_dir(output_dir)
 
@@ -443,7 +446,8 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                                  use_cluster=use_cluster,
                                  chunk_jobs=chunk_jobs,
                                  sge_job_name=job_name,
-                                 SGEarray=SGEarray)
+                                 SGEarray=SGEarray,
+                                 gene_ids=all_gene_ids)
     dispatcher.run()
 
             
@@ -460,8 +464,8 @@ def output_gene_ids_in_batches(gene_ids_to_gff_index,
     """
     for gene_id in gene_ids_to_gff_index:
         indeed_filename = gene_ids_to_gff_index[gene_id]
-        
     pass
+
     
         
 def compute_psi(sample_filenames, output_dir, event_type,
