@@ -289,6 +289,17 @@ def get_ids_passing_filter(gff_index_dir,
     return ids_passing_filter
             
 
+def check_headers(gff_dir, bam_filename):
+    """
+    Look for chromosome headers mismatches between input GFF
+    annotation and BAM filename.  Warn users if there are
+    headers mismatches.
+    """
+#    if mismatch_found:
+#        print "It looks like your BAM file and input "
+    pass
+
+
 def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           use_cluster=False,
                           SGEarray=False,

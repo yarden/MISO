@@ -34,6 +34,45 @@ import glob
 import logging
 import logging.handlers
 
+loggers = {}
+
+def get_logger(logger_name, log_outdir,
+               level=logging.WARNING,
+               include_stdout=True):
+    """
+    Return a logging object.
+    """
+    global loggers
+    # Avoid race-conditions
+    try:
+        os.makedirs(log_outdir)
+    except OSError:
+        pass
+    if loggers.get(logger_name):
+        return loggers.get(logger_name)
+    logger = logging.getLogger(logger_name)
+    formatter = \
+        logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                          datefmt='%m/%d/%Y %I:%M:%S %p')
+    # Do not log to file
+    #if log_outdir is not None:
+    #    log_filename = os.path.join(log_outdir, "%s.log" %(logger_name))
+    #    fh = logging.FileHandler(log_filename)
+    #    fh.setLevel(level)
+    #    fh.setFormatter(formatter)
+    #    logger.addHandler(fh)
+    logging.root.setLevel(level)
+    # Optionally add handler that streams all logs
+    # to stdout
+    if include_stdout:
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(level)
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+    logger.info("Created logger %s" %(logger_name))
+    loggers.update({logger_name: logger})
+    return logger
+
 
 ##
 ## Helper statistics/linear algebra functions
@@ -136,6 +175,7 @@ class MISOSampler:
 	"""
         self.params = params
 	self.paired_end = paired_end
+        print "IN SAMPLER"
 	# set default fragment length distribution parameters
 	if self.paired_end:
 	    if ((not 'mean_frag_len' in self.params) or \
@@ -145,9 +185,8 @@ class MISOSampler:
 	    self.mean_frag_len = self.params['mean_frag_len']
 	    self.frag_variance = self.params['frag_variance']
 
-        # Record logs if asked
-        self.log_dir = os.path.abspath(os.path.expanduser(log_dir))
         if log_dir != None:
+            self.log_dir = os.path.abspath(os.path.expanduser(log_dir))
             self.log_dir = os.path.join(log_dir, 'logs')
             # Avoid race-conditions
             try:
@@ -155,34 +194,7 @@ class MISOSampler:
             except OSError:
                 pass
 
-        ch_file = None
-        
-	# create formatter
-	formatter = \
-            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-	self.miso_logger = logging.getLogger('miso_logger')
-#	self.miso_logger.setLevel(logging.ERROR)
-
-        if self.log_dir != None:
-            self.log_filename = \
-                os.path.join(self.log_dir, 'sampler_run.%s' \
-                             %(time.strftime("%m-%d-%y_%H:%M:%S")))
-            
-            # Delay creation of the file until there's an error
-	    ch_file = logging.FileHandler(self.log_filename,
-                                          delay=True)
-	    ch_file.setLevel(logging.ERROR)
-	    ch_file.setFormatter(formatter)
-	    self.miso_logger.addHandler(ch_file)
-            
-	ch_stream = logging.StreamHandler()
-	ch_stream.setLevel(logging.INFO)
-            
-	# add formatter to ch
-	ch_stream.setFormatter(formatter)
-        
-	# add ch to logger
-	self.miso_logger.addHandler(ch_stream)
+	self.miso_logger = get_logger('miso_logger', self.log_dir)
 	self.miso_logger.info("Instantiated sampler.")
 
 
@@ -200,6 +212,7 @@ class MISOSampler:
 
         Calls C version and returns results.
         """
+        self.miso_logger.warning("RUNNING ON %s" %(gene.label))
         num_isoforms = len(gene.isoforms)
         self.num_isoforms = num_isoforms
 
@@ -256,8 +269,7 @@ class MISOSampler:
         if num_isoforms == 1:
             one_iso_msg = "Gene %s has only one isoform; skipping..." \
                           %(gene.label)
-            self.miso_logger.info(one_iso_msg)
-            self.miso_logger.error(one_iso_msg)
+            self.miso_logger.warning(one_iso_msg)
             return
         
         # Convert Python Gene object to C

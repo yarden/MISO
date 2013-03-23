@@ -149,6 +149,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
         ##
         ## Run the sampler
         ##
+        print "PROCESSING GENE _-> ", gene_id
         # Create the sampler with the right parameters depending on whether
         # this is a paired-end or single-end data set.
         if paired_end:

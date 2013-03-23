@@ -54,20 +54,6 @@ def single_end_read_to_isoforms(read, gene, read_len, overhang_len=1):
                                                                        overhang_len)
     return alignment
 
-# def single_end_read_to_isoforms(read, gene, read_len=36, overhang_len=1):
-#     """
-#     Align single-end SAM read to gene's isoforms.
-#     """
-#     start = read.pos + 1
-#     end = cigar_to_end_coord(start, read.cigar)
-    
-#     assert(start < end)
-    
-#     alignment, isoform_coords = gene.align_read_to_isoforms(start, end,
-#                                                             overhang=overhang_len,
-#                                                             read_len=read_len)
-#     return alignment
-    
 
 def paired_read_to_isoforms(paired_read, gene, read_len,
                             overhang_len=1):
@@ -523,16 +509,13 @@ def sam_reads_to_isoforms(samfile, gene, read_len, overhang_len,
                                                               num_reads)
     return reads
 
+
+
+
+
 def main():
-    #bam_filename = 'sam-tests/skeletal-muscle/accepted_hits.n250000.bam'
-    #sam_filename = 'sam-tests/brain/GRIA1.mm9.sam'
-    sam_filename = 'sam-tests/muscle-c2c12/c2c12_cugbp1_kd.control_0d.Atp2b1.sam'
-    bam_filename = 'sam-tests/muscle-c2c12/c2c12_cugbp1_kd.control_0d.Atp2b1.sorted.bam'
-    mm9_header = pysam.Samfile('sam-tests/muscle-c2c12/mm9.genome.fasta.fai', "r")
-    bamfile = load_bam_reads(bam_filename, template=mm9_header)
-    for r in bamfile:
-        print r
-        break
+    pass
+
 
 if __name__ == "__main__":
     main()
