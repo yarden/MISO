@@ -121,6 +121,8 @@ Updates
 
   * Fixed entries in hg19 alternative event annotations where start > end. 
 
+  * Changed default MISO settings file to omit queue names from cluster submissions.
+
 * **Tue, Jan 1**: Released version ``0.4.7``. Includes several new features, including:
 
   * Support for strand-specific reads
