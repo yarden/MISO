@@ -359,6 +359,7 @@ where ``SE.gff3`` is a GFF file containing descriptions of isoforms/alternative 
 
 For a full example of running MISO, see :ref:`pipeline`. Also see the :ref:`faq` page.
 
+6. See `MISO glossary <glossary.html>`_ for quick explanations of MISO terminology.
 
 .. _installing-fastmiso:
 

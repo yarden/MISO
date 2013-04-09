@@ -1,24 +1,6 @@
 .. include:: <isogrk3.txt>
 
-.. image:: images/MISO-docs-logo-small.png
-   :scale: 65%
-   :align: right
-   :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
-
 .. contents::
-
-
-.. image:: images/speed.jpg
-   :scale: 40%
-   :align: left
-   :alt: fastmiso, a faster version of MISO written in C
-   :target: :ref:`installing-fastmiso`
-
-.. image:: images/sashimi-plot.png
-   :scale: 20%
-   :align: right
-   :alt: sashimi-plot
-   :target: `sashimi_plot`_
 
 
 Annotations for use with MISO and `sashimi_plot`_
