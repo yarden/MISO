@@ -55,7 +55,7 @@ We released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq d
 
 **Quick links:**
  
- * :ref:`Download MISO annotations in GFF format <annotation.html>`_
+ * `Download MISO annotations in GFF format <annotation.html>`_
 
 .. * :ref:`Download alternative event annotation files (available for human, mouse and D. melanogaster) <event-annotation>` 
 .. * :ref:`Download gene models in GFF format for isoform-centric analysis (available for human, mouse) <iso-centric>`
@@ -118,6 +118,8 @@ Updates
   * Added ``miso_zip`` utility for compressing/uncompressing MISO output.
 
   * Better error checking for incompatibilities between BAM and GFF files, e.g. cases where the chromosome naming conventions between the annotation and the BAM differ.
+
+  * Fixed entries in hg19 alternative event annotations where start > end. 
 
 * **Tue, Jan 1**: Released version ``0.4.7``. Includes several new features, including:
 
@@ -266,7 +268,7 @@ Releases
 
 MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python Package Index).
 
-* MISO version 0.4.8 (), April 9 release (**Latest version**)
+* MISO version 0.4.8 (``_), April 9 release (**Latest version**)
 * MISO version 0.4.7 (`misopy-0.4.7.tar.gz`_), Christmas release 
 * MISO version 0.4.6 (`misopy-0.4.6.tar.gz`_), September 27, 2012 release 
 * MISO version 0.4.5 (`misopy-0.4.5.tar.gz`_), September 4, 2012 release 
