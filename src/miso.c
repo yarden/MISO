@@ -633,6 +633,12 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   int shouldstop=0;
   splicing_matrix_t chainMeans, chainVars;
 
+  if (algorithm != SPLICING_ALGO_REASSIGN &&
+      algorithm != SPLICING_ALGO_MARGINAL &&
+      algorithm != SPLICING_ALGO_CLASSES) {
+    SPLICING_ERROR("`algorithm` is invalid", SPLICING_EINVAL);
+  }
+
   if (start == SPLICING_MISO_START_GIVEN && !start_psi) {
     SPLICING_ERROR("`start_psi' must be given when "
 		   "starting from a given PSI", SPLICING_EINVAL);
