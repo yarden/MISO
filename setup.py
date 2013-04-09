@@ -148,7 +148,7 @@ setup(name = 'misopy',
           "matplotlib",
           "numpy >= 1.5.0",
           "scipy >= 0.9.0",
-          "pysam >= 0.6.0",
+          "pysam >= 0.6.0"
           ],
       platforms = 'ALL',
       keywords = ['bioinformatics', 'sequence analysis',

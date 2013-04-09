@@ -1,9 +1,5 @@
 import os
-try:
-    import simplejson as json
-except:
-    import json 
-
+import json 
 
 def json_serialize(obj, filename):
     f = open(filename, 'w')
