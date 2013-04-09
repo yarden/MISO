@@ -202,8 +202,12 @@ class MISOSampler:
                     num_chains=6,                    
                     burn_in=1000,
                     lag=2,
-                    prior_params=None, 
-                    algorithm=pysplicing.MISO_ALGO_MARGINAL,
+                    prior_params=None,
+                    # By default, use sampler with read classes (collapsed)
+                    # to get speed boost for single-end reads
+                    # (To revert to old reassigning sampler, use
+                    # pysplicing.MISO_ALGO_REASSIGN)
+                    algorithm=pysplicing.MISO_ALGO_CLASSES,
                     start_cond=pysplicing.MISO_START_AUTO,
                     stop_cond=pysplicing.MISO_STOP_FIXEDNO,
                     verbose=True):
