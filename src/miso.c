@@ -278,7 +278,7 @@ int splicing_score_joint(splicing_algorithm_t algorithm,
 	for (k=0; k<noiso; k++) {
 	  isoscore += MATRIX(*match, k, i) * MATRIX(*psi, k, j);
 	}
-	readProb += log(isoscore);
+	if (isoscore != 0) { readProb += log(isoscore); }
       }
     } else if (algorithm == SPLICING_ALGO_CLASSES) {
       int no_classes=splicing_matrix_ncol(assignmentMatrix);
