@@ -350,7 +350,7 @@ where ``SE.gff3`` is a GFF file containing descriptions of isoforms/alternative 
  
 4. **Make pairwise comparisons** between samples to detect differentially expressed isoforms/events with ``run_miso.py --compare-samples``: ::
 
-      python run_miso.py --compare-samples my_output1/ my_output2/
+      python run_miso.py --compare-samples my_output1/ my_output2/ comparison_output/
 
 5. **Parse and filter** significant events with sufficient coverage.
 
