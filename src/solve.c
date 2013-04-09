@@ -130,7 +130,7 @@ int splicing_getMatchVector(const splicing_gff_t *gff, int gene,
 	found = (m1 > 0 && m2 > 0) || (m1 == 0 && m2 == 0);
       }
     }
-    VECTOR(*match)[cl-1] += 1;
+    if (found) { VECTOR(*match)[cl-1] += 1; }
   }
 
   return 0;
