@@ -58,6 +58,7 @@ We also released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-
 
 **Quick links:**
  
+ * :ref:`Download MISO annotations in GFF format <annotation.html>` 
  * :ref:`Download alternative event annotation files (available for human, mouse and D. melanogaster) <event-annotation>` 
  * :ref:`Download gene models in GFF format for isoform-centric analysis (available for human, mouse) <iso-centric>`
 
@@ -267,7 +268,8 @@ Releases
 
 MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python Package Index).
 
-* MISO version 0.4.7 (`misopy-0.4.7.tar.gz`_), Christmas release (**Latest version**)
+* MISO version 0.4.8 (), April 9 release (**Latest version**)
+* MISO version 0.4.7 (`misopy-0.4.7.tar.gz`_), Christmas release 
 * MISO version 0.4.6 (`misopy-0.4.6.tar.gz`_), September 27, 2012 release 
 * MISO version 0.4.5 (`misopy-0.4.5.tar.gz`_), September 4, 2012 release 
 * MISO version 0.4.4 (`misopy-0.4.4.tar.gz`_), July 26, 2012 release 
@@ -291,6 +293,7 @@ MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python P
 .. _misopy-0.4.5.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.5.tar.gz
 .. _misopy-0.4.6.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.6.tar.gz
 .. _misopy-0.4.7.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.7.tar.gz
+.. _misopy-0.4.8.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.8.tar.gz
 
 
 Latest version from GitHub
@@ -307,7 +310,7 @@ MISO requires a small number of Python modules and commonly used software like `
 
   1. `Python 2.6`_ or higher
 
-  2. `numpy`_ and `scipy`_. **Note**: MISO requires numpy version > 1.4!
+  2. `numpy`_ and `scipy`_. **Note**: MISO requires numpy version > 1.5!
 
   3. `pysam`_, a Python library for working with SAM/BAM files through ``samtools`` (**Note**: MISO requires pysam version 0.6 or higher)
 
