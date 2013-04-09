@@ -44,6 +44,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
     noBurnIn=500, noLag=10;
   int overhang=1;
   int no_chains=6;
+  splicing_algorithm_t algo=SPLICING_ALGO_REASSIGN;
   splicing_miso_start_t start=SPLICING_MISO_START_AUTO;
   splicing_miso_stop_t stop=SPLICING_MISO_STOP_FIXEDNO;
   splicing_gff_t *mygff;
@@ -58,10 +59,11 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   splicing_miso_rundata_t rundata;
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
   
-  if (!PyArg_ParseTuple(args, "OiOOi|iiiOiiii", 
+  if (!PyArg_ParseTuple(args, "OiOOi|iiiOiiiii",
 			&gff, &gene, &readpos, &readcigar,
 			&readLength, &noIterations, &noBurnIn, &noLag, 
-			&hyperp, &overhang, &no_chains, &start, &stop)) { 
+			&hyperp, &overhang, &no_chains, &start, &stop,
+			&algo)) {
     return NULL; 
   }
   
@@ -97,7 +99,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
 				 readLength, overhang, no_chains,
 				 noIterations, maxIterations, 
 				 noBurnIn, noLag,
-				 &myhyperp, start, stop, 0,
+				 &myhyperp, algo, start, stop, 0,
 				 &samples, &logLik, 
 				 /*match_matrix=*/ 0, &class_templates,
 				 &class_counts, &assignment, &rundata));
