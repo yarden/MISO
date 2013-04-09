@@ -277,6 +277,9 @@ def compute_insert_len(bams_to_process,
 
         # Load mapped BAM filename
         mapped_bam = pysam.Samfile(mapped_bam_filename, "rb")
+        ###
+        ### TODO: Rewrite this so that you only pair reads within an interval
+        ###
         paired_reads = sam_utils.pair_sam_reads(mapped_bam,
                                                 filter_reads=filter_reads)
         num_paired_reads = len(paired_reads)

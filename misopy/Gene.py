@@ -868,7 +868,8 @@ def print_gene_hierarchy(gene_hierarchy):
 
 def load_genes_from_gff(gff_filename,
                         include_introns=False,
-                        reverse_recs=False):
+                        reverse_recs=False,
+                        suppress_warnings=False):
     """
     Load all records for a set of genes from a given GFF file.
     Parse each gene into a Gene object.
@@ -888,7 +889,8 @@ def load_genes_from_gff(gff_filename,
         gene_label = gene.get_id()
 
         if gene_label not in gene_hierarchy:
-            print "Skipping gene %s..." %(gene_label)
+            if not suppress_warnings:
+                print "Skipping gene %s..." %(gene_label)
             continue
         
         gene_hierarchy[gene_label]['gene'] = gene
@@ -898,17 +900,20 @@ def load_genes_from_gff(gff_filename,
                                               gene_hierarchy[gene_label],
                                               gene_records)
         if gene_obj == None:
-            print "Cannot make gene out of %s" %(gene_label)
+            if not suppress_warnings:
+                print "Cannot make gene out of %s" %(gene_label)
             continue
         gff_genes[gene.get_id()] = {'gene_object': gene_obj,
                                     'hierarchy': gene_hierarchy}
 
         if (num_genes % 5000) == 0:
-            print "Through %d genes..." %(num_genes)
+            if not suppress_warnings:
+                print "Through %d genes..." %(num_genes)
         num_genes += 1
 
     num_genes = len(gff_genes)
-    print "Loaded %d genes" %(num_genes)
+    if not suppress_warnings:
+        print "Loaded %d genes" %(num_genes)
 
     return gff_genes
 

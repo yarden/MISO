@@ -108,7 +108,10 @@ def plot_bf_dist(bf_filename, settings_filename, output_dir,
 
 def plot_event(event_name, pickle_dir, settings_filename,
                output_dir,
-               no_posteriors=False):
+               no_posteriors=False,
+               plot_title=None,
+               plot_label=None):
+
     """
     Visualize read densities across the exons and junctions
     of a given MISO alternative RNA processing event.
@@ -146,7 +149,9 @@ def plot_event(event_name, pickle_dir, settings_filename,
 
     plot_density_from_file(settings_filename, pickle_filename, event_name,
                            output_dir,
-                           no_posteriors=no_posteriors)
+                           no_posteriors=no_posteriors,
+                           plot_title=plot_title,
+                           plot_label=plot_label)
 
 
 def plot_insert_len(insert_len_filename,
@@ -280,6 +285,13 @@ def main():
                       "(3) path to plotting settings file.")
     parser.add_option("--no-posteriors", dest="no_posteriors", default=False, action="store_true",
                       help="If given this argument, MISO posterior estimates are not plotted.")
+    parser.add_option("--plot-title", dest="plot_title", default=None, nargs=1,
+                      help="Title of plot: a string that will be displayed at top of plot. Example: " \
+                      "--plot-title \"My favorite gene\".")
+    parser.add_option("--plot-label", dest="plot_label", default=None, nargs=1,
+                      help="Plot label. If given, plot will be saved in the output directory as " \
+                      "the plot label ending in the relevant extension, e.g. <plot_label>.pdf. " \
+                      "Example: --plot-label my_gene")
     parser.add_option("--output-dir", dest="output_dir", nargs=1, default=None,
                       help="Output directory.")
     (options, args) = parser.parse_args()
@@ -294,6 +306,9 @@ def main():
         os.makedirs(output_dir)
 
     no_posteriors = options.no_posteriors
+
+    plot_title = options.plot_title
+    plot_label = options.plot_label
 
     if options.plot_insert_len != None:
         insert_len_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len[0]))
@@ -315,7 +330,10 @@ def main():
         pickle_dir = os.path.abspath(os.path.expanduser(options.plot_event[1]))
         settings_filename = os.path.abspath(os.path.expanduser(options.plot_event[2]))
         plot_event(event_name, pickle_dir, settings_filename, output_dir,
-                   no_posteriors=no_posteriors)
+                   no_posteriors=no_posteriors,
+                   plot_title=plot_title,
+                   plot_label=plot_label)
+
 
         
 

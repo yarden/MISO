@@ -78,12 +78,23 @@ class Sashimi:
             print "Using sans serif fonts."
             plotting.make_sans_serif(font_size=font_size)
 
-    def save_plot(self):
+    def save_plot(self, plot_label=None):
         """
         Save plot to the output directory. Determine
         the file type.
         """
         if self.output_filename == None:
             raise Exception, "sashimi_plot does not know where to save the plot."
-        plt.savefig(self.output_filename)
+        output_fname = None
+        if plot_label is not None:
+            # Use custom plot label if given
+            ext = self.output_filename.rsplit(".")[0]
+            dirname = os.path.dirname(self.output_filename)
+            output_fname = \
+                os.path.dirname(dirname, "%s.%s" %(plot_label, ext))
+        else:
+            output_fname = self.output_filename
+        print "Saving plot to: %s" %(output_fname)
+        plt.savefig(output_fname)
+            
         

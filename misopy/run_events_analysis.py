@@ -303,13 +303,14 @@ def get_ids_passing_filter(gff_index_dir,
             
 
 def check_gff_and_bam(gff_dir, bam_filename,
-                      num_genes=1000,
-                      num_reads=1000):
+                      num_genes=10000,
+                      num_reads=10000):
     """
     Look for chromosome headers mismatches between input GFF
     annotation and BAM filename.  Warn users if there are
     headers mismatches.
     """
+    print "Checking your GFF annotation and BAM for mismatches..."
     # Check that BAM exists
     if not os.path.isfile(bam_filename):
         print "Error: BAM %s cannot be found." %(bam_filename)
@@ -320,6 +321,29 @@ def check_gff_and_bam(gff_dir, bam_filename,
         print "WARNING: Expected BAM index file %s not found." \
             %(bam_index_fname)
         print "Are you sure your BAM file is indexed?"
+    print "Checking if BAM has mixed read lengths..."
+    bam_file = pysam.Samfile(bam_filename, "rb")
+    n = 0
+    seq_lens = {}
+    for bam_read in bam_file:
+        # Check more of the reads for mixed read lengths
+        if n >= (num_reads * 10):
+            break
+        seq_lens[len(bam_read.seq)] = True
+        n += 1
+    all_seq_lens = seq_lens.keys()
+    if len(all_seq_lens) > 1:
+        print "\nWARNING: Found mixed length reads in your BAM file! " \
+              "MISO does not support mixed read lengths. Please " \
+              "trim your reads to a uniform length and re-run " \
+              "or run MISO separately on each read length. " \
+              "Proceeding anyway, though it is likely that this will " \
+              "result in errors or inability to match reads to " \
+              "your annotation."
+        print "Read lengths were: %s" %(",".join(all_seq_lens))
+        time.sleep(15)
+    else:
+        print "Found reads of length %d in BAM." %(all_seq_lens[0])
     genes_fname = os.path.join(gff_dir, "genes.gff")
     if not os.path.isfile(genes_fname):
         # No genes.gff found - warn user and abort headers check
@@ -331,23 +355,29 @@ def check_gff_and_bam(gff_dir, bam_filename,
     gff_chroms = {}
     gff_starts_with_chr = False
     with open(genes_fname) as genes:
-        for n in range(num_genes):
-            for line in genes:
-                curr_gff_chrom = line.strip().split("\t")[0]
-                # Record that GFF chroms start with chr if they do
-                if curr_gff_chrom.startswith("chr"):
-                    gff_starts_with_chr = True
-                gff_chroms[curr_gff_chrom] = True
+        n = 0
+        for line in genes:
+            if n >= num_genes:
+                break
+            curr_gff_chrom = line.strip().split("\t")[0]
+            gff_chroms[curr_gff_chrom] = True
+            # Record that GFF chroms start with chr if they do
+            if curr_gff_chrom.startswith("chr"):
+                gff_starts_with_chr = True
+            n += 1
     # Read first few BAM reads chromosomes
     bam_file = pysam.Samfile(bam_filename, "rb")
     bam_chroms = {}
     bam_starts_with_chr = False
-    for n in range(num_reads):
-        bam_read = bam_file.next()
+    n = 0
+    for bam_read in bam_file:
+        if n >= num_reads:
+            break
         read_chrom = bam_file.getrname(bam_read.tid)
         bam_chroms[read_chrom] = True
         if str(read_chrom).startswith("chr"):
             bam_starts_with_chr = True
+        n += 1
     mismatch_found = False
     if bam_starts_with_chr != gff_starts_with_chr:
         mismatch_found = True
@@ -377,7 +407,6 @@ def check_gff_and_bam(gff_dir, bam_filename,
               "anyway...\n"
         time.sleep(15)
         
-
 
 def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           use_cluster=False,

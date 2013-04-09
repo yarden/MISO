@@ -22,11 +22,25 @@ from misopy.parse_gene import parseGene
 def plot_density_single(settings, sample_label,
                         tx_start, tx_end, gene_obj, mRNAs, strand,
                         graphcoords, graphToGene, bam_filename, axvar, chrom,
-                        paired_end=False, intron_scale=30, exon_scale=4, color='r',
-                        ymax=None, logged=False, coverage=1, number_junctions=True,
-                        resolution=.5, showXaxis=True, showYaxis=True,
-                        nyticks=3, nxticks=4, show_ylabel=True, show_xlabel=True,
-                        font_size=6, junction_log_base=10):
+                        paired_end=False,
+                        intron_scale=30,
+                        exon_scale=4,
+                        color='r',
+                        ymax=None,
+                        logged=False,
+                        coverage=1,
+                        number_junctions=True,
+                        resolution=.5,
+                        showXaxis=True,
+                        showYaxis=True,
+                        nyticks=3,
+                        nxticks=4,
+                        show_ylabel=True,
+                        show_xlabel=True,
+                        font_size=6,
+                        junction_log_base=10,
+                        plot_title=None,
+                        plot_label=None):
     """
     Plot MISO events using BAM files and posterior distribution files.
     TODO: If comparison files are available, plot Bayes factors too.
@@ -193,7 +207,11 @@ def plot_density(sashimi_obj, pickle_filename, event):
                                           exon_scale, reverse_minus)
 
     nfiles = len(bam_files)
-    suptitle(event, fontsize=10)
+    if plot_title is not None:
+        # Use custom title if given
+        suptitle(plot_title, fontsize=10)
+    else:
+        suptitle(event, fontsize=10)
     plotted_axes = []
     
     for i in range(nfiles):
@@ -630,7 +648,9 @@ def cubic_bezier(pts, t):
     
 def plot_density_from_file(settings_f, pickle_filename, event,
                            output_dir,
-                           no_posteriors=False):
+                           no_posteriors=False,
+                           plot_title=None,
+                           plot_label=None):
     """
     Read MISO estimates given an event name.
     """
@@ -663,7 +683,7 @@ def plot_density_from_file(settings_f, pickle_filename, event,
     plot_density(sashimi_obj, pickle_filename, event)
 
     # Save figure
-    sashimi_obj.save_plot()
+    sashimi_obj.save_plot(plot_label=plot_label)
                  # intron_scale=settings["intron_scale"],
                  # exon_scale=settings["exon_scale"],
                  # gene_posterior_ratio=settings["gene_posterior_ratio"],

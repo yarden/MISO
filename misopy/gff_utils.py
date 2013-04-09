@@ -139,18 +139,22 @@ class GFFDatabase:
     """
     def __init__(self, from_filename=None,
                  reverse_recs=False,
-                 include_introns=False):
+                 include_introns=False,
+                 suppress_warnings=False):
 	self.genes = []
 	self.mRNAs = []
 	self.exons = []
 	self.cdss = []
         self.__entries = []
 	self.from_filename = from_filename
+        self.suppress_warnings = suppress_warnings
 
         ## Indexed representation of GFFs
         self.mRNAs_by_gene = defaultdict(list)
         self.exons_by_mRNA = defaultdict(list)
         self.cdss_by_exon = defaultdict(list)
+
+        self.suppress_warnings = suppress_warnings
 
 	if from_filename:
 	    # load GFF from given filename
@@ -243,8 +247,9 @@ class GFFDatabase:
 			cdss.append(cds_rec)
                         
 	    if len(mRNAs) == len(exons) == len(cdss) == 0:
-                print "WARNING: No entries found for gene %s in GFF %s" \
-                      %(gene, self.from_filename)
+                if not self.suppress_warnings:
+                    print "WARNING: No entries found for gene %s in GFF %s" \
+                          %(gene, self.from_filename)
                 # Remove from gene hierarchy
                 del gene_hierarchy[gene]
 #		raise Exception, "No entries found for gene %s in GFF: %s" %(gene,
