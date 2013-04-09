@@ -288,7 +288,7 @@ int splicing_score_joint(splicing_algorithm_t algorithm,
 	for (k=0; k<noiso; k++) {
 	  score += MATRIX(*assignmentMatrix, k, i) * MATRIX(*psi, k, j);
 	}
-	readProb += log(score) * VECTOR(*matches)[i];
+	if (score != 0) { readProb += log(score) * VECTOR(*matches)[i]; }
       }
     }
     
