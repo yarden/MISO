@@ -774,8 +774,6 @@ The default file is: ::
   
   [cluster]
   cluster_command = qsub
-  long_queue_name = long
-  short_queue_name = short
   
   [sampler]
   burn_in = 500
