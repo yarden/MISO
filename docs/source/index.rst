@@ -1312,8 +1312,8 @@ Frequently Asked Questions (FAQ)
 #. **If I am running MISO with a GFF annotation containing multiple isoforms, how do I know which isoform each |Psi| value in the vector corresponds to?** (`answer <#answer15>`_)
 #. **When using** ``pe_utils`` **to compute the paired-end insert length distribution, I get the error** ``[main_samview] truncated file`` **and/or a segmentation fault.** (`answer <#answer16>`_)
 #. **When I try to index GFF files using** ``index_gff`` **I get a segmentation fault.** (`answer <#answer17>`_)
-#. **I am having trouble installing scipy/numpy/matplotlib. How can I install them?** (`answer <answer18>`_)
-#. **When should I use paired-end mode versus single-end mode?** (`answer <answer19>`_)
+#. **I am having trouble installing scipy/numpy/matplotlib. How can I install them?** (`answer <#answer18>`_)
+#. **When should I use paired-end mode versus single-end mode?** (`answer <#answer19>`_)
 
 
 Answers
