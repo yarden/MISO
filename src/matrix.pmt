@@ -1519,3 +1519,25 @@ int FUNCTION(splicing_matrix,fprint)(const TYPE(splicing_matrix) *m,
 }
 
 #endif
+
+/* Normalize rows to sum up to 1 */
+
+int FUNCTION(splicing_matrix,norm_row)(TYPE(splicing_matrix) *m) {
+  long int nr=FUNCTION(splicing_matrix,nrow)(m);
+  long int nc=FUNCTION(splicing_matrix,ncol)(m);
+  long int i, j;
+  for (i=0; i<nr; i++) {
+    BASE rowsum=ZERO;
+    for (j=0; j<nc; j++) {
+#ifdef SUM			/* Pretty useless, because we divide below... */
+      SUM(rowsum, rowsum, MATRIX(*m, i, j));
+#else
+      rowsum += MATRIX(*m, i, j);
+#endif
+    }
+    for (j=0; j<nc; j++) {
+      MATRIX(*m, i, j) /= rowsum;
+    }
+  }
+  return 0;
+}

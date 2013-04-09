@@ -205,4 +205,4 @@ int FUNCTION(splicing_matrix,permdelete_rows)(TYPE(splicing_matrix) *m,
 int FUNCTION(splicing_matrix,delete_rows_neg)(TYPE(splicing_matrix) *m, 
 					    const splicing_vector_t *neg, 
 					    long int nremove);
-
+int FUNCTION(splicing_matrix,norm_row)(TYPE(splicing_matrix) *m);
