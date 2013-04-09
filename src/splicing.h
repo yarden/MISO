@@ -161,6 +161,13 @@ int splicing_matchIso(const splicing_gff_t *gff, int gene,
 		      const char **cigarstr, int overHang, int readLength,
 		      splicing_matrix_t *result);
 
+int splicing_getMatchVector(const splicing_gff_t *gff, int gene,
+			    int no_reads, const splicing_vector_int_t *position,
+			    const char **cigarstr, int overHang, int readLength,
+			    const splicing_matrix_t *matchmatrix,
+			    const splicing_matrix_t *assMatrix,
+			    splicing_vector_t *match);
+
 int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
 			     const splicing_vector_int_t *position,
 			     const char **cigarstr, int readLength,

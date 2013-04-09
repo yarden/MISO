@@ -107,6 +107,35 @@ int splicing_matchIso(const splicing_gff_t *gff, int gene,
   return 0;
 }
 
+int splicing_getMatchVector(const splicing_gff_t *gff, int gene,
+			    int no_reads, const splicing_vector_int_t *position,
+			    const char **cigarstr, int overHang, int readLength,
+			    const splicing_matrix_t *matchMatrix,
+			    const splicing_matrix_t *assMatrix,
+			    splicing_vector_t *match) {
+
+  int no_classes=splicing_matrix_ncol(assMatrix);
+  int noiso=splicing_matrix_nrow(assMatrix);
+  int r;
+
+  SPLICING_CHECK(splicing_vector_resize(match, no_classes));
+
+  for (r=0; r<no_reads; r++) {
+    size_t cl, found;
+    for (cl=0, found=0; !found && cl < no_classes; cl++) {
+      size_t i;
+      for (i=0, found=1; i<noiso && found; i++) {
+	double m1=MATRIX(*matchMatrix, i, r);
+	double m2=MATRIX(*assMatrix, i, cl);
+	found = (m1 > 0 && m2 > 0) || (m1 == 0 && m2 == 0);
+      }
+    }
+    VECTOR(*match)[cl-1] += 1;
+  }
+
+  return 0;
+}
+
 /* We assume that the pairs are consecutive */
 
 int splicing_matchIso_paired(const splicing_gff_t *gff, int gene,
@@ -326,18 +355,10 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 				   readLength, mymatch_matrix));
   SPLICING_CHECK(splicing_vector_init(&match, no_classes));
   SPLICING_FINALLY(splicing_vector_destroy, &match);
-  for (r=0; r<no_reads; r++) {
-    size_t cl, found;
-    for (cl=0, found=0; !found && cl < no_classes; cl++) {
-      size_t i;
-      for (i=0, found=1; i<noiso && found; i++) {
-	double m1=MATRIX(*mymatch_matrix, i, r);
-	double m2=MATRIX(*myass_matrix, i, cl);
-	found = (m1 > 0 && m2 > 0) || (m1 == 0 && m2 == 0);
-      }
-    }
-    VECTOR(match)[cl-1] += 1;
-  }
+  SPLICING_CHECK(splicing_getMatchVector(gff, gene, no_reads, position,
+					 cigarstr, overHang, readLength,
+					 mymatch_matrix, myass_matrix,
+					 &match));
 
   /* This is modified, need a copy */
   SPLICING_CHECK(splicing_matrix_copy(&A, myass_matrix));
