@@ -203,6 +203,7 @@ class MISOSampler:
                     burn_in=1000,
                     lag=2,
                     prior_params=None, 
+                    algorithm=pysplicing.MISO_ALGO_MARGINAL,
                     start_cond=pysplicing.MISO_START_AUTO,
                     stop_cond=pysplicing.MISO_STOP_FIXEDNO,
                     verbose=True):
@@ -313,7 +314,8 @@ class MISOSampler:
                                            long(self.overhang_len),
                                            long(num_chains),
                                            start_cond,
-                                           stop_cond)
+                                           stop_cond,
+                                           algorithm)
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0]))
