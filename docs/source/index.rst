@@ -42,10 +42,7 @@
    <img src="_images/twitter.png" alt="twitter share button" title="twitter share button" />
    </a>
 
-We recently released a version of MISO written in the C language (called ``fastmiso``) which is **60-100x faster** than the original Python-only version! See :ref:`installing-fastmiso` section for more information.
-
-
-We also released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq data and MISO output. Check it out!
+We released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq data and MISO output. Check it out!
 
 .. "&para;"
 
