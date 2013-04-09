@@ -54,8 +54,6 @@ In addition to exon-centric tandem 3' UTR annotations, alternative 3' UTR annota
 
 * `3′READS annotations for (mm9) mouse genome (.zip)`_
 
-Reference gene annotations
---------------------------
 
 .. _A primer on probabilistic inference: http://cocosci.berkeley.edu/tom/papers/tutorial.pdf
 
