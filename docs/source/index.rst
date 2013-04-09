@@ -106,8 +106,9 @@ Updates
 
 **2013**
 
-* **X, Y**: Released version ``0.4.8``. Includes mainly bug fixes and a few new features:
+* **April 9, 2013**: Released version ``0.4.8``. Includes several important bug fixes and a new much faster version of the inference algorithm for single-end reads:
 
+  * New, much faster inference scheme for single-end reads (implemented by Gabor Csardi) 
 
   * Fixed bug in parsing of Ensembl style chromosomes
 
@@ -119,7 +120,7 @@ Updates
 
   * Better error checking for incompatibilities between BAM and GFF files, e.g. cases where the chromosome naming conventions between the annotation and the BAM differ.
 
-* **Tue, Jan 1:** Released version ``0.4.7``. Includes several new features, including:
+* **Tue, Jan 1**: Released version ``0.4.7``. Includes several new features, including:
 
   * Support for strand-specific reads
   
@@ -407,11 +408,6 @@ To install the latest version from the GitHub `repository`_, there are two optio
  git clone git://github.com/yarden/MISO.git
 
 This will create a directory called ``MISO``, containing the repository. Alternatively, if you do not want to go through ``git``, you can download a zip file containing the latest MISO GitHub release (following this link: https://github.com/yarden/MISO/zipball/fastmiso). This zip file has to be unzipped (e.g. using ``unzip fastmiso`` on Unix systems) and contains the latest release of the MISO repository. 
-
-Once you've obtained the MISO repository, either through ``git`` or by downloading the zip file snapshot, enter the directory and prepare the C code for compilation using ``make``: ::
-
-
- make Pythonpackage
 
 Next, compile the code and install MISO using the Python package manager (such as ``easy_install``) as described above, or using ``setup.py``. With the package manager, use: ::
 
@@ -1607,7 +1603,7 @@ for suggesting many improvements, or for creating useful software used by MISO:
 * Colin Dewey (University of Wisconsin-Madison)
 * Eric Suh (Princeton)
 * Warren Emmett (UCL)
-
+* Maayan Kreitzman (BCGSC)
 
 Authors
 =======
