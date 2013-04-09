@@ -261,7 +261,6 @@ int splicing_score_joint(splicing_algorithm_t algorithm,
     splicing_vector_t tmp;
     splicing_vector_int_t tmp2;
     splicing_vector_view(&tmp, &MATRIX(*psi, 0, j), noiso);
-    splicing_vector_int_view(&tmp2, &MATRIX(*assignment, 0, j), no_reads);
 
     if (algorithm == SPLICING_ALGO_REASSIGN) {
       /* Scores the reads */
@@ -295,6 +294,7 @@ int splicing_score_joint(splicing_algorithm_t algorithm,
     
     /* Score isoforms */
     if (algorithm == SPLICING_ALGO_REASSIGN) {
+      splicing_vector_int_view(&tmp2, &MATRIX(*assignment, 0, j), no_reads);
       SPLICING_CHECK(splicing_score_iso(&tmp, noiso, &tmp2, no_reads,
 					effisolen, &assProb));
     }
