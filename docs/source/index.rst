@@ -1312,6 +1312,7 @@ Frequently Asked Questions (FAQ)
 #. **When using** ``pe_utils`` **to compute the paired-end insert length distribution, I get the error** ``[main_samview] truncated file`` **and/or a segmentation fault.** (`answer <#answer16>`_)
 #. **When I try to index GFF files using** ``index_gff`` **I get a segmentation fault.** (`answer <#answer17>`_)
 #. **I am having trouble installing scipy/numpy/matplotlib. How can I install them?** (`answer <answer18>`_)
+#. **When should I use paired-end mode versus single-end mode?** (`answer <answer19>`_)
 
 
 Answers
@@ -1405,6 +1406,9 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 
 18. **I am having trouble installing scipy/numpy/matplotlib. How can I install them?** The best way to install Python modules is using a package manager such as `distribute`_ ``easy_install`` or `pip`_. These package managers automatically detect all the dependencies required for a package (like MISO) and then download and install these dependencies for you. However, Scipy can still be challenging to compile and install because of its various Fortran library dependencies. Another alternative is to get a prepackaged version of all the relevant scientific computing Python modules, such as that offered by `Enthought Python Distribution`_ (EPD), which is free for academic use and supported on Linux, Mac and Windows. Mac users might also be interested in the `Superpack`_ installation script which automatically these scientific computing Python modules and others. (`back <#faq>`_)
 
+.. _answer19:
+
+19. **When should I use paired-end mode versus single-end mode?** Paired-end inference should be used when possible, with one important exception. MISO only uses properly paired reads within an annotated event. If the GFF annotation you use contains events that are roughly as long or shorter than your insert length, then simply due to the length constraint, there won't be many read pairs in your data where both ends are mapped within the annotated event. In this case, it's best to use single-end reads. Failure to use single-end mode in this case can result in many events appearing not to have enough coverage, because no paired mates contained entirely within the event can be found, in spite of there being many read pairs where one of the mates maps within the event and is informative about the isoforms that are being expressed. (`back <#faq>`_)
 
 .. _sec:
 
