@@ -9,8 +9,8 @@ Annotations for use with MISO and `sashimi_plot`_
 This page contains links to GFF annotations for use with MISO and `sashimi_plot`. The annotations
 are described in detail in the `MISO manual <index.html>`_.
 
-Exon-centric
-------------
+Exon-centric annotations
+------------------------
 
 Available for human/mouse/fly genomes:
 
@@ -20,8 +20,8 @@ Available for human/mouse/fly genomes:
 * `Human genome (hg19) alternative events`_ (8.6M, .zip)
 
 
-Gene and isoform-centric annotations
-------------------------------------
+Isoform-centric annotations and reference gene models
+-----------------------------------------------------
 
 We provide GFF3 annotations based on UCSC Table Browser's version of Ensembl genes for the following genomes:
 
