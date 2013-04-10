@@ -428,7 +428,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
       Uses bedtools to determine coverage of each event and remove
       events that do not meet the coverage criteria from the run.
     """
-    print "Computing gene-level Psi for genes..." 
+    print "Computing Psi values..." 
     print "  - GFF index: %s" %(gff_dir)
     print "  - BAM: %s" %(bam_filename)
     print "  - Read length: %d" %(read_len)
