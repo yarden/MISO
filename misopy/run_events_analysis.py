@@ -53,7 +53,9 @@ class GenesDispatcher:
             print "Are you sure your BAM file is indexed?"
         self.output_dir = output_dir
         self.read_len = read_len
-        self.overhang_len = overhang_len
+        # For now setting overhang to 1 always
+        #self.overhang_len = overhang_len
+        self.overhang_len = 1
         self.settings_fname = settings_fname
         self.paired_end = paired_end
         self.use_cluster = use_cluster
