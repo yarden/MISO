@@ -548,11 +548,14 @@ class MISOSampler:
 	    if not self.paired_end:
                 # Single-end
 		read_probs = self.log_score_reads(reads, assignment, gene)
-		assignment_probs = self.log_score_assignment(assignment, psi_vector, gene)
+		assignment_probs = \
+                    self.log_score_assignment(assignment, psi_vector, gene)
 	    else:
                 # Paired-end
-		read_probs = self.log_score_paired_end_reads(reads, assignment, gene)
-                assignment_probs = self.log_score_paired_end_assignment(assignment, psi_vector, gene)                
+		read_probs = \
+                    self.log_score_paired_end_reads(reads, assignment, gene)
+                assignment_probs = \
+                    self.log_score_paired_end_assignment(assignment, psi_vector, gene)                
             reassignment_p = read_probs + assignment_probs
             reassignment_probs.append(reassignment_p)
             n += 1
@@ -1261,6 +1264,7 @@ class MISOSampler:
         output.close()
         print "Completed outputting."
 #        return [percent_acceptance, array(psi_vectors), array(kept_log_scores)]
+
 
 def run_sampler_on_event(gene, ni, ne, nb, read_len, overhang_len, num_iters,
                          output_dir, confidence_level=.95):
