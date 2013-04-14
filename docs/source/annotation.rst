@@ -6,7 +6,7 @@
 Annotations for use with MISO and `sashimi_plot`_
 =================================================
 
-This page contains links to GFF annotations for use with MISO and `sashimi_plot`. The annotations
+This page contains links to GFF annotations for use with MISO and `sashimi_plot`_. The annotations
 are described in detail in the `MISO manual <index.html>`_.
 
 Exon-centric annotations
