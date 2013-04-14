@@ -11,8 +11,7 @@ Terms used in the `MISO manual <index.html>`_.
 Annotations and GFF files
 -------------------------
 
-* **Exon-centric**: An annotation of alternative events in the genome that is based on inclusion/exclusion of a particular exon in a transcript. For example, an exon-centric annotation of an alternatively skipped exon would contain two isoforms, one containing the 
-skipped exon and its two flanking exon, and another isoform containing only the two flanking exons. This "exon-centric" annotation does not incorporate other exons in the gene, and so |Psi| values obtained from this annotation correspond only to the inclusion of the alternative exon relative to its two annotated flanking exons, without considering any other parts of the gene's isoforms.
+* **Exon-centric**: An annotation of alternative events in the genome that is based on inclusion/exclusion of a particular exon in a transcript. For example, an exon-centric annotation of an alternatively skipped exon would contain two isoforms, one containing the skipped exon and its two flanking exon, and another isoform containing only the two flanking exons. This "exon-centric" annotation does not incorporate other exons in the gene, and so |Psi| values obtained from this annotation correspond only to the inclusion of the alternative exon relative to its two annotated flanking exons, without considering any other parts of the gene's isoforms.
 
 * **Isoform-centric**: Unlike exon-centric annotations, in isoform-centric annotations each whole isoform of a gene is annotated and used as input to MISO. |Psi| values obtained this way are vectors, each entry corresponding to the percent inclusion of a whole isoform in the annotated gene.
 
