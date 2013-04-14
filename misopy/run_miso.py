@@ -137,7 +137,6 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
         #                              target_strand=gene_obj.strand)
         gene_reads = list(gene_reads)
         num_raw_reads = len(gene_reads)
-        print "NUM RAW READS: ", num_raw_reads
         # Skip gene if none of the reads align to gene boundaries
         if filter_reads:
             if num_raw_reads < min_event_reads:
