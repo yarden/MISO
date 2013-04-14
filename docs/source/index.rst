@@ -105,7 +105,7 @@ Updates
 
 **2013**
 
-* **April 9, 2013**: Released version ``0.4.8``. Includes several important bug fixes and a new much faster version of the inference algorithm for single-end reads:
+* **April 14, 2013**: Released version ``0.4.8``. Includes several important bug fixes and a new much faster version of the inference algorithm for single-end reads:
 
   * New, much faster inference scheme for single-end reads (implemented by Gabor Csardi) 
 
@@ -270,7 +270,7 @@ Releases
 
 MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python Package Index).
 
-* MISO version 0.4.8 (`misopy-0.4.8.tar.gz`_), April 9 release (**Latest version**)
+* MISO version 0.4.8 (`misopy-0.4.8.tar.gz`_), April 14 release (**Latest version**)
 * MISO version 0.4.7 (`misopy-0.4.7.tar.gz`_), Christmas release 
 * MISO version 0.4.6 (`misopy-0.4.6.tar.gz`_), September 27, 2012 release 
 * MISO version 0.4.5 (`misopy-0.4.5.tar.gz`_), September 4, 2012 release 
