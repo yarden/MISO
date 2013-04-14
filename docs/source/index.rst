@@ -270,8 +270,8 @@ Releases
 
 MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python Package Index).
 
-* MISO version 0.4.8 (`misopy-0.4.8.tar.gz`_), April 14 release (**Latest version**)
-* MISO version 0.4.7 (`misopy-0.4.7.tar.gz`_), Christmas release 
+* MISO version 0.4.8 (`misopy-0.4.8.tar.gz`_), April 14, 2013 release (**Latest version**)
+* MISO version 0.4.7 (`misopy-0.4.7.tar.gz`_), Christmas, 2013 release 
 * MISO version 0.4.6 (`misopy-0.4.6.tar.gz`_), September 27, 2012 release 
 * MISO version 0.4.5 (`misopy-0.4.5.tar.gz`_), September 4, 2012 release 
 * MISO version 0.4.4 (`misopy-0.4.4.tar.gz`_), July 26, 2012 release 
@@ -281,7 +281,7 @@ MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python P
 * MISO version 0.4 (`misopy-0.4.tar.gz`_), January 13, 2012 release
 * MISO version 0.3 (`misopy-0.3.tar.gz`_), January 8, 2012 release
 * MISO version 0.2 (`misopy-0.2.tar.gz`_), January 3, 2012 release
-* MISO version 0.1 (`misopy-0.1.tar.gz`_), Christmas release
+* MISO version 0.1 (`misopy-0.1.tar.gz`_), Christmas, 2012 release
 
 .. _pypi: http://pypi.python.org/pypi/misopy/
 .. _misopy-0.1.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.1.tar.gz
