@@ -196,18 +196,14 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
             sys.exit(1)
         miso_basename = miso_basename.replace(".pickle", "")
         output_filename = os.path.join(chrom_dir, "%s" %(miso_basename))
-        print "GENE READS: ", gene_reads
         # Align reads to isoforms
         reads_to_isoforms = sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj, read_len,
                                                             overhang_len)
-        print "READS TO ISOFORMS: "
-        print reads_to_isoforms
         # Only take reads that are not all zero
         num_isoforms = len(gene_obj.isoforms)
         zero_assignment = tuple([0] * num_isoforms)
         assignable_reads = \
             np.array([r for r in reads_to_isoforms if r != zero_assignment])
-        print "assignmenable reads: "
         sampler.run_sampler(num_iters, assignable_reads, gene_obj, hyperparameters,
                             sampler_params, output_filename,
                             num_chains=num_chains,
