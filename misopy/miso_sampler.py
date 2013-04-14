@@ -436,13 +436,15 @@ class MISOSampler:
 #        print "assigned_iso_frag_lens: ", assigned_iso_frag_lens
 #	print >> sys.stderr, "Scoring fragments: ", assigned_iso_frag_lens, " - reads: ", pe_reads
 #	print >> sys.stderr, "Isoform assignments: ", isoform_nums
-        num_reads_possible = gene.iso_lens[isoform_nums] - assigned_iso_frag_lens + 1 - num_overhang_excluded
+        num_reads_possible = \
+            gene.iso_lens[isoform_nums] - assigned_iso_frag_lens + 1 - num_overhang_excluded
 #	print >> sys.stderr, "num_reads_possible: ", num_reads_possible
 	# The probability of a paired-end read is
 	# (1 / num_possible_reads) * P(fragment_len)
 #	print >> sys.stderr, "log_frag_len_prob: ", self.log_frag_len_prob(assigned_iso_frag_lens)
 #	print >> sys.stderr, " reads : ", type(pe_reads)
-        log_prob_frags = self.log_frag_len_prob(assigned_iso_frag_lens, self.mean_frag_len, self.frag_variance)
+        log_prob_frags = self.log_frag_len_prob(assigned_iso_frag_lens,
+                                                self.mean_frag_len, self.frag_variance)
         log_prob_reads = (log(1) - log(num_reads_possible)) + log_prob_frags
 #        print "log_prob_reads: ", log_prob_reads
         zero_prob_indx = nonzero(pe_reads[range(self.num_reads), isoform_nums] == 0)[0]
