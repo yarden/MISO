@@ -2,8 +2,9 @@
 ##
 ## Filter two-isoform events
 ##
-
 import os
+import sys
+import time
 import re
 import string
 import misopy
@@ -80,7 +81,8 @@ def filter_event(sample_inc, sample_exc, sample_both,
     return True
 
 def multi_filter(filter_filename, output_dir, num_total, num_inc, num_exc,
-        num_sum, delta_psi_filter, bf_filter, vote_thresh, apply_both_samples=False):
+                 num_sum, delta_psi_filter, bf_filter, vote_thresh,
+                 apply_both_samples=False):
 
     diff_thresh = vote_thresh
 
@@ -108,9 +110,9 @@ def multi_filter(filter_filename, output_dir, num_total, num_inc, num_exc,
     if len(comp) is 1:
         num_pass = len(comp[0])
         output_filename = os.path.join(output_dir,
-                                   os.path.basename(fname) + ".filtered")
-        print "Filtering %s into %s" %(filter_filename,
-                                    output_filename)
+                                       os.path.basename(fname) + ".filtered")
+        print "Filtering %s into %s" %(",".join(filter_filename),
+                                       output_filename)
         filter_output(comp[0], output_filename, h, num_pass, total_events[0])
 
     else:
@@ -177,9 +179,9 @@ def multi_filter(filter_filename, output_dir, num_total, num_inc, num_exc,
             num_pass = len(comp_new[i])
             fname = filter_filename[i]
             output_filename = os.path.join(output_dir,
-                                       os.path.basename(fname) + ".filtered")
+                                           os.path.basename(fname) + ".filtered")
             print "Filtering %s into %s" %(fname,
-                                        output_filename)
+                                           output_filename)
             filter_output(comp_new[i], output_filename, h, num_pass, total_events[i])
 
 
@@ -253,6 +255,13 @@ def filter_events(data, h, num_total, num_inc, num_exc, num_sum,
         # Sometimes the bayes factor is not formatted correctly, this fixes that
         event['bayes_factor'] = fix_bayes_factor(event['bayes_factor'])
 
+        num_isoforms = len(event['isoforms'])
+        if num_isoforms != 2:
+            print "Error: filter_events.py is only defined for MISO output " \
+                  "on two-isoform alternative events. " \
+                  "Found a non-two isoform event: %s" %(event['event_name'])
+            sys.exit(1)
+
         # Get sample 1 counts
         sample1_counts = get_counts(event['sample1_counts'])
 
@@ -317,12 +326,12 @@ def filter_events(data, h, num_total, num_inc, num_exc, num_sum,
     # filter_output(filtered_Events, output_filename, h, num_pass, total_events)
     return(filtered_events)
 
+
 def filter_output(filtered_events, output_filename, h, num_pass, total_events):
     """
     produce the output of the filtered file
     """
     dictlist2file(filtered_events, output_filename, h)
-    
 
     print "%d/%d events pass the filter (%.2f percent)." \
           %(num_pass,
@@ -330,6 +339,10 @@ def filter_output(filtered_events, output_filename, h, num_pass, total_events):
             (num_pass/float(total_events)) * 100)
 
 
+def greeting():
+    print "filter_events.py: filtering MISO pairwise comparison output.\n"
+    print "Note: This utility is only works on MISO output for two-isoform "
+    print "event annotations.\n"
     
     
 def main():
@@ -370,6 +383,8 @@ def main():
     parser.add_option("--votes", dest="vote_thresh", nargs=1, default=0, type="int",
                     help="The number of biological replicates in a sample which must pass the  "
                     " filters to call an event significant.")
+
+    greeting()
 
     (options, args) = parser.parse_args()
 

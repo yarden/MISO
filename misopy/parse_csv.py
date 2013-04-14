@@ -139,10 +139,6 @@ def dictlist2file(dictrows, filename, fieldnames, delimiter='\t',
         header = dictrows[0].keys()
         header.sort()
     out_f.write(header)
-
-    print "dictlist2file: serializing entries to %s" %(filename)
-
-    t1 = time.time()
     if write_raw:
         for row in dictrows:
             out_f.write("%s%s" %(delimiter.join([row[name] for name in fieldnames]),
@@ -156,8 +152,6 @@ def dictlist2file(dictrows, filename, fieldnames, delimiter='\t',
         for row in dictrows:
             data.writerow(row)
     out_f.close()
-    t2 = time.time()
-    print "dictlist2file: took %.2f seconds" %(t2 - t1)
     
     
 def csv2dictlist_raw(filename, delimiter='\t'):
