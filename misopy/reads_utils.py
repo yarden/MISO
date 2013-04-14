@@ -45,3 +45,19 @@ def count_isoform_assignments(assignments):
               for iso_num in range(num_isoforms + 1)]
 
     return counts
+
+
+def collapse_isoform_assignments(assignments):
+    """
+    Given a set of assignments like:
+
+    [[0, 1],
+     [1, 1]
+     ...]
+
+    Return a collapsed representation.
+    """
+    collapsed_assignments = defaultdict(int)
+    for curr_assign in assignments:
+        collapsed_assignments[curr_assign] += 1
+    return collapsed_assignments

@@ -712,6 +712,95 @@ class Isoform:
 	last_part = self.parts[-1]
 	self.genomic_start = first_part.start
 	self.genomic_end = last_part.end
+
+
+    def get_cigar_from_start(self, genomic_start, read_len):
+        """
+        Return the CIGAR string for the current isoform
+        start at genomic position 'genomic_start' and assuming
+        a read of length 'read_len'.
+        """
+        # Locate the part that the genomic coordinate is in
+	isoform_interval_start = 0
+        # Initial part the isoform is in
+        start_part = None
+        # Initial coordinate of start part in isoform coordinates
+	isoform_start_coord = None
+	for part in self.parts:
+            if part.contains(genomic_start, genomic_start):
+		isoform_start_coord = \
+                    isoform_interval_start + (genomic_start - part.start)
+                start_part = part
+                break
+	    isoform_interval_start += part.len
+        # If part is not found, then the read does not start with a match,
+        # so it must not match this isoform.
+        if start_part is None:
+            # Signals invalid genomic start for this isoform
+            return None
+        # Initial part is found. Compute CIGAR string by extending
+        # read length through remainder of isoform
+        next_coord = genomic_start + read_len - 1
+        # If the read length is entirely contained within exon, we're done
+        # and the CIGAR string is a simple match
+        if next_coord <= start_part.end:
+            return "%dM" %(read_len)
+        # Get remaining parts from start part on
+        curr_part_num = self.parts.index(start_part)
+        remaining_parts = self.parts[curr_part_num+1:]
+        if len(remaining_parts) == 0:
+            return None
+        # Current position
+        curr_coord = isoform_start_coord
+        curr_part = start_part
+        # Compute the length of match of the first read
+        # to the current exon: BAM is 0-based!
+        match_len = start_part.end - genomic_start
+        if match_len < 0:
+            raise Exception, "Negative match len"
+        cigar_str = "%dM" %(match_len)
+        # Leftover
+        leftover = read_len
+        leftover -= match_len
+        if leftover < 0:
+            raise Exception, "Negative leftover."
+        # Keep track of exon start/end coordinates that were crossed
+        #exon_coords_crossed = []
+        for next_part in remaining_parts:
+            # Compute intron between the current part and next part
+            intron_size = (next_part.start - 1) - (curr_part.end + 1) + 1
+            if intron_size < 0:
+                raise Exception, "Negative intron size"
+            cigar_str += "%dN" %(intron_size)
+            # Compute the remaining length of the read that
+            # can be matched in the current part
+            if next_part.len >= leftover:
+                # Remainder of read matched entirely within
+                # this exon, so we're done
+                cigar_str += "%dM" %(leftover)
+                leftover = 0
+                break
+            # Junction read must be crossing multiple exons: the match
+            # is the length of the entire next exon. Compute
+            # the amount leftover
+            match_len = next_part.end - next_part.start + 1
+            leftover -= match_len
+            # Reassign current part
+            curr_part = next_part
+        if leftover > 0:
+            # Failed to match entire length to isoform
+            return None
+        return cigar_str
+
+
+    def get_parts_from(self, part):
+        """
+        Get all parts from 'part' on.
+        """
+        part_num = self.parts.index(part)
+        # Return parts from 'part' on, including part
+        return self.parts[part_num:]
+        
 	
     def get_parts_before(self, part):
 	"""
@@ -724,6 +813,7 @@ class Isoform:
 	    else:
 		return parts_before
 	return parts_before
+
 
     def get_part_by_coord(self, start_coord):
 	"""

@@ -13,6 +13,7 @@ import pysam
 import binascii
 import ctypes
 
+import numpy as np
 from numpy import array
 from scipy import *
 
@@ -41,6 +42,7 @@ def cigar_to_end_coord(start, cigar):
     end = start + offset - 1
     return end
 
+
 def single_end_read_to_isoforms(read, gene, read_len, overhang_len=1):
     """
     Align single-end SAM read to gene's isoforms.
@@ -50,8 +52,9 @@ def single_end_read_to_isoforms(read, gene, read_len, overhang_len=1):
     
     assert(start < end)
 
-    alignment, isoform_coords = gene.align_read_to_isoforms_with_cigar(read.cigar, start, end, read_len,
-                                                                       overhang_len)
+    alignment, isoform_coords = \
+        gene.align_read_to_isoforms_with_cigar(read.cigar, start, end, read_len,
+                                               overhang_len)
     return alignment
 
 
@@ -461,38 +464,39 @@ def sam_pe_reads_to_isoforms(samfile, gene, read_len, overhang_len):
     return pe_reads, num_read_pairs
 
 
-def sam_se_reads_to_isoforms(samfile, gene, read_len,
-                             overhang_len):
-    """
-    Align single-end reads to gene.
-    """
-    num_reads = 0
+# def sam_se_reads_to_isoforms(samfile, gene, read_len,
+#                              overhang_len):
+#     """
+#     Align single-end reads to gene.
+#     """
+#     num_reads = 0
 
-    alignments = []
+#     alignments = []
 
-    num_skipped = 0
+#     num_skipped = 0
     
-    for read in samfile:
-        alignment = single_end_read_to_isoforms(read, gene, read_len,
-                                                overhang_len)
-        if 1 in alignment:
-            # If the read aligns to at least one of the isoforms, keep it
-            alignments.append(alignment)
-            num_reads += 1
-        else:
-            num_skipped += 1
+#     for read in samfile:
+#         alignment = single_end_read_to_isoforms(read, gene, read_len,
+#                                                 overhang_len)
+#         if 1 in alignment:
+#             # If the read aligns to at least one of the isoforms, keep it
+#             alignments.append(alignment)
+#             num_reads += 1
+#         else:
+#             num_skipped += 1
 
-    print "Skipped total of %d reads." %(num_skipped)
+#     print "Skipped total of %d reads." %(num_skipped)
         
-    return alignments, num_reads
+#     return alignments, num_reads
 
+    
 
 def sam_reads_to_isoforms(samfile, gene, read_len, overhang_len,
-                          paired_end=False):
+                          paired_end=None):
     """
     Align BAM reads to the gene model.
     """
-    print "Aligning reads to gene..."
+    print "Aligning reads to gene..TEST."
     t1 = time.time()
 
     if paired_end != None:
@@ -500,17 +504,484 @@ def sam_reads_to_isoforms(samfile, gene, read_len, overhang_len,
         reads, num_reads = sam_pe_reads_to_isoforms(samfile, gene, read_len,
                                                     overhang_len)
     else:
+        print "Single end"
         # Single-end reads
-        reads, num_reads = sam_se_reads_to_isoforms(samfile, gene, read_len,
-                                                    overhang_len)
+        #reads, num_reads = sam_se_reads_to_isoforms(samfile, gene, read_len,
+        #                                            overhang_len)
+        reads = se_reads_to_assignments(samfile, gene, read_len)
     
     t2 = time.time()
-    print "Alignment to gene took %.2f seconds (%d reads)." %((t2 - t1),
-                                                              num_reads)
+    print "%d reads" %(len(reads))
+    print "Alignment to gene took %.2f seconds." %((t2 - t1))
     return reads
 
 
+def get_isoform_cigars_at_pos(gene, genomic_start, read_len):
+    """
+    Compute cigar strings of isoforms. Given a genomic start position and
+    a read length, compute the CIGAR strings that would arise
+    from a read at that position for each isoform.
 
+    Return a vector of CIGAR strings of length number of isoforms.
+    """
+    for isoform in gene.isoforms:
+        # Convert the genomic start to isoform coordinate
+        isoform_start = isoform.part_coord_to_isoform(genomic_start)
+        # Compute CIGAR string for given read length
+
+
+def read_to_isoform_assignment(gene, read, read_len):
+    """
+    Return assignment matrix for each of the gene's isoforms.
+    """
+    read_cigar_str = sam_cigar_to_str(read.cigar)
+    # Get the CIGAR strings for each isoform
+    isoform_cigars = \
+        [isoform.get_cigar_from_start(read.pos, read_len) \
+         for isoform in gene.isoforms]
+    assignments = tuple([1 if iso_cigar == read_cigar_str else 0 \
+                         for iso_cigar in isoform_cigars])
+    return assignments
+
+
+def se_reads_to_assignments(reads, gene, read_len, paired_end=False):
+    """
+    Calculate a read assignment matrix for reads to isoforms.
+    """
+    # For each read, align it to isoforms using its CIGAR string
+    assignments = \
+        [read_to_isoform_assignment(gene, read, read_len) \
+         for read in reads]
+    return assignments
+        
+
+
+# int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
+# 			       int readLength, int overHang, 
+# 			       splicing_matrix_t *matrix) {
+#   size_t noiso;
+#   splicing_vector_int_t exstart, exend, exidx;
+#   size_t genestart=VECTOR(gff->start)[ VECTOR(gff->genes)[gene] ];
+#   size_t geneend=VECTOR(gff->end)[ VECTOR(gff->genes)[gene] ];
+#   size_t i, elen;
+#   size_t p=0, lastp=geneend - genestart - readLength + 1;
+#   splicing_vector_int_t cigar, mp, mppos;
+#   splicing_vector_int_t isoseq, isomatch;
+#   splicing_i_assignmat_data_t mpdata = { &mp, &mppos };
+
+#   if (overHang > 1) { 
+#     SPLICING_ERROR("Overhang is not implemented in assignment matrix yet.",
+# 		   SPLICING_UNIMPLEMENTED);
+#   }
+
+#   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
+
+#   SPLICING_CHECK(splicing_vector_int_init(&cigar, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &cigar);
+#   SPLICING_CHECK(splicing_vector_int_init(&exstart, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &exstart);
+#   SPLICING_CHECK(splicing_vector_int_init(&exend, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &exend);
+#   SPLICING_CHECK(splicing_vector_int_init(&exidx, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &exidx);
+#   SPLICING_CHECK(splicing_gff_exon_start_end(gff, &exstart, &exend, &exidx,
+# 					     gene));
+#   elen=splicing_vector_int_size(&exstart);
+#   for (i=0; i<elen; i++) {
+#     VECTOR(exstart)[i] -= genestart;
+#     VECTOR(exend)[i] -= genestart;
+#   }
+  
+#   SPLICING_CHECK(splicing_numeric_cigar(&exstart, &exend, &exidx, noiso, 0,
+# 					&cigar));
+
+#   splicing_vector_int_destroy(&exidx);
+#   splicing_vector_int_destroy(&exend);
+#   splicing_vector_int_destroy(&exstart);
+#   SPLICING_FINALLY_CLEAN(3);
+  
+#   SPLICING_CHECK(splicing_vector_int_init(&mp, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &mp);
+#   SPLICING_CHECK(splicing_vector_int_init(&mppos, noiso));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &mppos);
+#   SPLICING_CHECK(splicing_vector_int_init(&isoseq, noiso));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &isoseq);
+#   SPLICING_CHECK(splicing_vector_int_init(&isomatch, noiso));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &isomatch);
+
+#   SPLICING_CHECK(splicing_matrix_resize(matrix, noiso, 0));
+
+#   while (p <= lastp) {
+#     size_t pos=0, nextp, tmppos, ipos, l;
+
+#     /* Calculate the initial CIGAR strings for all isoforms */
+#     splicing_vector_int_clear(&mp);
+#     SPLICING_CHECK(splicing_vector_int_push_back(&mp, 0)); l=1;
+#     for (i=0; i<noiso; i++) {
+#       int rl=readLength;
+#       pos++;
+#       VECTOR(mppos)[i]=l+1;
+#       if (VECTOR(cigar)[pos] <= 0) { 
+# 	VECTOR(mppos)[i]=0;
+# 	while (VECTOR(cigar)[pos] != 0) { pos++; }
+#       } else {
+# 	while (VECTOR(cigar)[pos] != 0) {
+# 	  if (VECTOR(cigar)[pos] < 0) {
+# 	    SPLICING_CHECK(splicing_vector_int_push_back(&mp, 
+# 					 VECTOR(cigar)[pos])); l++;
+# 	    pos++;
+# 	  } else if (rl <= VECTOR(cigar)[pos]) {
+# 	    SPLICING_CHECK(splicing_vector_int_push_back(&mp, rl)); l++;
+# 	    while (VECTOR(cigar)[pos] != 0) { pos++; }
+# 	    rl = 0;
+# 	    break;
+# 	  } else {
+# 	    SPLICING_CHECK(splicing_vector_int_push_back(&mp, 
+# 					 VECTOR(cigar)[pos])); l++;
+# 	    rl=rl-VECTOR(cigar)[pos];
+# 	    pos++;
+# 	  }
+# 	}
+# 	if (rl != 0) { VECTOR(mppos)[i] = 0; }
+#       }
+#       SPLICING_CHECK(splicing_vector_int_push_back(&mp, 0)); l++;
+#     } /* i<noiso */
+
+#     /* Calculate the next position to check */
+#     nextp = lastp + 1 - p;
+#     tmppos = 0;
+#     for (i=0; i<noiso; i++) {
+#       tmppos++;
+#       ipos=tmppos;
+#       if (VECTOR(cigar)[tmppos]==0) { continue; }
+#       if (abs(VECTOR(cigar)[tmppos]) < nextp) { 
+# 	nextp = abs(VECTOR(cigar)[tmppos]);
+#       }
+#       if (VECTOR(cigar)[tmppos] > 0) {
+# 	size_t pnextp=nextp;
+# 	int j=ipos;
+# 	int rl2=readLength;
+# 	while (VECTOR(cigar)[j] != 0) {
+# 	  if (VECTOR(cigar)[j] >= rl2) { 
+# 	    pnextp=VECTOR(cigar)[j]-rl2+1; 
+# 	    break;
+# 	  } else if (VECTOR(cigar)[j] > 0) {
+# 	    rl2 = rl2-VECTOR(cigar)[j];
+# 	  }
+# 	  j++;
+# 	}
+# 	if (pnextp < nextp) { nextp = pnextp; }
+#       }
+#       while (VECTOR(cigar)[tmppos] != 0) { tmppos++; }
+#     }
+
+#     /* Record the assignment classes. 
+#        First we sort the cigar prefixes; then we calculate the
+#        assignment class of the current position. Finally, we check
+#        whether this class is already in the result and then update/add
+#        it. */
+#     for (i=0; i<noiso; i++) { VECTOR(isoseq)[i]=i; }
+#     splicing_qsort_r(VECTOR(isoseq), noiso, sizeof(int), &mpdata, 
+# 		     splicing_i_assignmat_cmp);
+    
+#     for (i=0; i<noiso && VECTOR(mppos)[ VECTOR(isoseq)[i] ]==0; i++) ;
+#     while (i<noiso) {
+#       int col, j;
+#       i++;
+#       splicing_vector_int_null(&isomatch);
+#       VECTOR(isomatch)[ VECTOR(isoseq)[i-1] ] = 1;
+#       while (i < noiso &&  ! splicing_i_assignmat_cmp(&mpdata, 
+# 					      &(VECTOR(isoseq)[i-1]),
+# 					      &(VECTOR(isoseq)[i]))) {
+# 	VECTOR(isomatch)[ VECTOR(isoseq)[i] ] = 1;
+# 	i++;
+#       }
+#       SPLICING_CHECK(splicing_matrix_add_cols(matrix, 1));
+#       col=splicing_matrix_ncol(matrix)-1;
+#       for (j=0; j<noiso; j++) { 
+# 	MATRIX(*matrix, j, col) = VECTOR(isomatch)[j] * nextp;
+#       }
+#     }
+
+#     /* Update the CIGAR strings */
+#     tmppos=0, ipos=0;
+#     for (i=0; i<noiso; i++) {
+#       VECTOR(cigar)[ipos] = 0;
+#       tmppos++; ipos++;
+#       if (VECTOR(cigar)[tmppos] != 0) {
+# 	VECTOR(cigar)[ipos] = 
+# 	  (VECTOR(cigar)[tmppos] < 0 ? -1 : 1) * 
+# 	  (abs(VECTOR(cigar)[tmppos])-nextp);
+# 	tmppos++;
+# 	if (VECTOR(cigar)[ipos] !=0 ) ipos++;
+#       }
+#       while (VECTOR(cigar)[tmppos] != 0) {
+# 	VECTOR(cigar)[ipos]=VECTOR(cigar)[tmppos];
+# 	tmppos++;
+# 	ipos++;
+#       }      
+#     }
+#     VECTOR(cigar)[ipos] = 0;
+    
+#     p = p + nextp;
+
+
+#   } /* p <= lastp */
+  
+#   splicing_vector_int_destroy(&isomatch);
+#   splicing_vector_int_destroy(&isoseq);
+#   splicing_vector_int_destroy(&mppos);
+#   splicing_vector_int_destroy(&mp);
+#   splicing_vector_int_destroy(&cigar);
+#   SPLICING_FINALLY_CLEAN(5);
+
+#   splicing_i_assignmat_simplify(matrix);
+  
+#   return 0;
+# }
+
+# /* Calculate the CIGAR strings for the isoforms in 'subset', 
+#    from 'sp1' first, and then from 'sp2'. Concatenate everything 
+#    in mp, and index it in mppos. */
+
+# int splicing_i_get_mp(const splicing_gff_converter_t *converter, 
+# 		      const splicing_vector_int_t *subset,
+# 		      splicing_vector_int_t *mp,
+# 		      splicing_vector_int_t *mppos,
+# 		      int sp1, int sp2, int readLength) {
+  
+#   int i, n=splicing_vector_int_size(subset); 
+#   int l=0;
+#   const splicing_vector_int_t *exstart=&converter->exstart;
+#   const splicing_vector_int_t *exend=&converter->exend;
+#   const splicing_vector_int_t *exidx=&converter->exidx;
+
+#   splicing_vector_int_clear(mp); 
+#   splicing_vector_int_clear(mppos);
+
+#   SPLICING_CHECK(splicing_vector_int_push_back(mp, 0)); l++;
+#   for (i=0; i<n; i++) {
+#     int iso, pos, pos2, rl;
+
+#     /* ------------------------------------------------------------ */
+#     /* SP1 */
+
+#     iso=VECTOR(*subset)[i];
+#     pos=VECTOR(*exidx)[iso];
+#     pos2=VECTOR(*exidx)[iso+1];
+#     rl=readLength;
+
+#     SPLICING_CHECK(splicing_vector_int_push_back(mppos, l));
+
+#     /* Search for first exon. */
+#     for (; pos < pos2 && VECTOR(*exend)[pos] < sp1; pos++) ;
+#     if (pos==pos2) { 
+#       printf("Looking for %i in\n", sp1);
+#       splicing_vector_int_print(exstart);
+#       splicing_vector_int_print(exend);
+#       splicing_vector_int_print(exidx);
+#       printf("between pos %i and %i\n", VECTOR(*exidx)[iso], pos2);
+#       abort();
+#       SPLICING_ERROR("Internal splicing error", SPLICING_EINTERNAL);
+#     }
+    
+#     /* Record string */
+#     while (pos < pos2 && rl>0) {
+#       int len;
+#       if (sp1 > VECTOR(*exstart)[pos]) { 
+# 	len=VECTOR(*exend)[pos] - sp1 + 1;
+#       } else {
+# 	len=VECTOR(*exend)[pos] - VECTOR(*exstart)[pos];
+#       }
+      
+#       if (len>=rl) { 
+# 	SPLICING_CHECK(splicing_vector_int_push_back(mp, rl)); l++;
+# 	rl=0;
+# 	break;
+#       } else { 
+# 	int gap=VECTOR(*exstart)[pos+1] - VECTOR(*exend)[pos];
+# 	SPLICING_CHECK(splicing_vector_int_push_back(mp, len)); l++; 
+# 	SPLICING_CHECK(splicing_vector_int_push_back(mp, -gap)); l++;
+# 	rl -= len;
+# 	pos++;
+#       }
+#     }
+
+#     /* ------------------------------------------------------------ */
+#     /* SP2 */
+
+#     pos=VECTOR(*exidx)[iso];
+#     rl=readLength;
+
+#     /* Search for first exon. */
+#     for (; pos < pos2 && VECTOR(*exend)[pos] < sp2; pos++) ;
+#     if (pos==pos2) { 
+#       SPLICING_ERROR("Internal splicing error", SPLICING_EINTERNAL);
+#     }
+    
+#     /* Record string */
+#     while (pos < pos2 && rl>0) {
+#       int len;
+#       if (sp2 > VECTOR(*exstart)[pos]) { 
+# 	len=VECTOR(*exend)[pos] - sp2 + 1;
+#       } else {
+# 	len=VECTOR(*exend)[pos] - VECTOR(*exstart)[pos];
+#       }
+      
+#       if (len>=rl) { 
+# 	SPLICING_CHECK(splicing_vector_int_push_back(mp, rl)); l++;
+# 	rl=0;
+# 	break;
+#       } else { 
+# 	int gap=VECTOR(*exstart)[pos+1] - VECTOR(*exend)[pos];
+# 	SPLICING_CHECK(splicing_vector_int_push_back(mp, len)); l++; 
+# 	SPLICING_CHECK(splicing_vector_int_push_back(mp, -gap)); l++;
+# 	rl -= len;
+# 	pos++;
+#       }
+#     }
+
+#     SPLICING_CHECK(splicing_vector_int_push_back(mp, 0)); l++;
+#   }
+  
+#   return 0;
+# }
+
+
+
+
+
+
+# int splicing_matchIso(const splicing_gff_t *gff, int gene, 
+# 		      const splicing_vector_int_t *position, 
+# 		      const char **cigarstr, int overHang, int readLength,
+# 		      splicing_matrix_t *result) {
+
+#   int noreads=splicing_vector_int_size(position);
+#   int r, i;
+#   splicing_vector_int_t exstart, exend, exidx, cigar, cigaridx, cigarlength;
+#   size_t noiso;
+
+#   if (overHang==0) { overHang=1; }
+#   if (overHang < 1) {
+#     SPLICING_ERROR("Overhang length invalid. Must be positive", 
+# 		   SPLICING_EINVAL);
+#   }
+#   if (readLength < 0) { 
+#     SPLICING_ERROR("Read length cannot be negative", SPLICING_EINVAL);
+#   }
+
+#   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
+#   SPLICING_CHECK(splicing_vector_int_init(&exstart, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &exstart);
+#   SPLICING_CHECK(splicing_vector_int_init(&exend, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &exend);
+#   SPLICING_CHECK(splicing_vector_int_init(&exidx, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &exidx);
+#   SPLICING_CHECK(splicing_gff_exon_start_end(gff, &exstart, &exend, 
+# 					     &exidx, gene));
+
+#   SPLICING_CHECK(splicing_vector_int_init(&cigar, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &cigar);
+#   SPLICING_CHECK(splicing_vector_int_init(&cigaridx, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &cigaridx);
+#   SPLICING_CHECK(splicing_vector_int_init(&cigarlength, 0));
+#   SPLICING_FINALLY(splicing_vector_int_destroy, &cigarlength);
+#   SPLICING_CHECK(splicing_parse_cigar(cigarstr, noreads, &cigar, &cigaridx, 
+# 				      &cigarlength, readLength));
+
+#   SPLICING_CHECK(splicing_matrix_resize(result, noiso, noreads));
+
+#   for (r=0; r<noreads; r++) {
+#     int *mycig=VECTOR(cigar) + VECTOR(cigaridx)[r];
+#     int nocig=VECTOR(cigaridx)[r+1] - VECTOR(cigaridx)[r];
+#     int len =VECTOR(cigarlength)[r];
+
+#     /* If the read length is specified, then filter out the reads
+#        that are shorter */
+#     if (len < readLength) { 
+#       for (i=0; i<noiso; i++) { MATRIX(*result, i, r)=0; }
+
+#     /* We can also filter out the reads that do not satisfy the overhang 
+#        constraint here. We assume that the CIGAR string starts and ends 
+#        with a match (of non-zero length). */
+#     } else if (mycig[0] < overHang || mycig[nocig-1] < overHang) {
+#       for (i=0; i<noiso; i++) { MATRIX(*result, i, r)=0; }
+#     } else {
+
+#       for (i=0; i<noiso; i++) {
+# 	int c, pos=VECTOR(*position)[r];
+# 	int ex=VECTOR(exidx)[i];
+	
+# 	/* Look for the exon where the read starts */
+# 	while (ex < VECTOR(exidx)[i+1] &&
+# 	       (pos < VECTOR(exstart)[ex] || VECTOR(exend)[ex] < pos)) {
+# 	  ex++;
+# 	}
+# 	if (ex >= VECTOR(exidx)[i+1]) { MATRIX(*result, i, r)=0; continue; }
+	
+# 	/* Got it, match cigar string to exons */
+# 	MATRIX(*result, i, r)=1;
+# 	for (c=0; c<nocig; c++) {
+# 	  if (mycig[c] > 0) { /* exon */
+# 	    if (pos + mycig[c] - 1 > VECTOR(exend)[ex]) { 
+# 	      MATRIX(*result, i, r)=0; break;
+# 	    }
+# 	    pos += mycig[c];
+# 	  } else {	  	   /* intron */
+# 	    if (pos != VECTOR(exend)[ex]+1) {
+# 	      MATRIX(*result, i, r)=0; break; 
+# 	    }
+# 	    pos -= mycig[c];
+# 	    ex += 1;
+# 	    if (ex >= VECTOR(exidx)[i+1] || pos != VECTOR(exstart)[ex]) {
+# 	      MATRIX(*result, i, r)=0; break;
+# 	    }
+# 	  }
+# 	}
+#       } /* i < noiso */
+#     }   /* r < noreads */
+#   }	/* if overhang os OK */
+
+#   splicing_vector_int_destroy(&cigarlength);
+#   splicing_vector_int_destroy(&cigaridx);
+#   splicing_vector_int_destroy(&cigar);
+#   splicing_vector_int_destroy(&exidx);
+#   splicing_vector_int_destroy(&exend);
+#   splicing_vector_int_destroy(&exstart);
+#   SPLICING_FINALLY_CLEAN(6);
+  
+#   return 0;
+# }
+
+# int splicing_getMatchVector(const splicing_gff_t *gff, int gene,
+# 			    int no_reads, const splicing_vector_int_t *position,
+# 			    const char **cigarstr, int overHang, int readLength,
+# 			    const splicing_matrix_t *matchMatrix,
+# 			    const splicing_matrix_t *assMatrix,
+# 			    splicing_vector_t *match) {
+
+#   int no_classes=splicing_matrix_ncol(assMatrix);
+#   int noiso=splicing_matrix_nrow(assMatrix);
+#   int r;
+
+#   SPLICING_CHECK(splicing_vector_resize(match, no_classes));
+
+#   for (r=0; r<no_reads; r++) {
+#     size_t cl, found;
+#     for (cl=0, found=0; !found && cl < no_classes; cl++) {
+#       size_t i;
+#       for (i=0, found=1; i<noiso && found; i++) {
+# 	double m1=MATRIX(*matchMatrix, i, r);
+# 	double m2=MATRIX(*assMatrix, i, cl);
+# 	found = (m1 > 0 && m2 > 0) || (m1 == 0 && m2 == 0);
+#       }
+#     }
+#     if (found) { VECTOR(*match)[cl-1] += 1; }
+#   }
+
+#   return 0;
+# }
 
 
 def main():
