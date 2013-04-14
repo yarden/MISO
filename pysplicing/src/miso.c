@@ -965,7 +965,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   splicing_matrix_destroy(&valpha);
   splicing_matrix_destroy(&vpsiNew);
   splicing_matrix_destroy(&vpsi);
-  SPLICING_FINALLY_CLEAN(3);
+  SPLICING_FINALLY_CLEAN(4);
   if (algorithm == SPLICING_ALGO_REASSIGN || assignment) {
     splicing_matrix_int_destroy(&vass);
     SPLICING_FINALLY_CLEAN(1);
