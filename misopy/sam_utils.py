@@ -496,8 +496,6 @@ def sam_reads_to_isoforms(samfile, gene, read_len, overhang_len,
     """
     Align BAM reads to the gene model.
     """
-    t1 = time.time()
-
     if paired_end != None:
         # Paired-end reads
         reads, num_reads = sam_pe_reads_to_isoforms(samfile, gene, read_len,
@@ -508,10 +506,6 @@ def sam_reads_to_isoforms(samfile, gene, read_len, overhang_len,
         #reads, num_reads = sam_se_reads_to_isoforms(samfile, gene, read_len,
         #                                            overhang_len)
         reads = se_reads_to_assignments(samfile, gene, read_len)
-    
-    t2 = time.time()
-    print "%d reads" %(len(reads))
-    print "Alignment to gene took %.2f seconds." %((t2 - t1))
     return reads
 
 
