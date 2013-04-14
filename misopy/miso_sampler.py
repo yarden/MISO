@@ -236,12 +236,12 @@ class MISOSampler:
         res = ff * numarray.exp(-0.5*numarray.sum(numarray.multiply(centered,numarray.dot(centered,inverse)), 1));
         return numarray.log(res)[0]
 
+
     def logistic_normal_log_pdf(self, theta, mu):
         """
         The log of the PDF for the multivariate Logistic-Normal distribution.
         Written in terms of k-1 dimensions.  
         """
-#        print "Calling PDF of theta: ", theta, " with mu: ", mu, " Sigma: ", self.params['sigma_proposal']
         theta = theta[:-1]        
         if len(theta) != len(mu):
             raise Exception, "len(theta) = %d != len(mu) = %d -- logistic_normal_log_pdf undefined." \
@@ -255,7 +255,6 @@ class MISOSampler:
         second_log = log(theta/theta_last) - mu
         exp_part = dot(dot(first_log, invsigma), second_log)
         pdf_value = covar_constant*prod_theta*exp(exp_part)
-#        print "pdf_value: ", log(pdf_value)
         return log(pdf_value)
 
     def logistic_normal_pdf_Z(theta, mu):
@@ -266,30 +265,20 @@ class MISOSampler:
         """
         Return a log score for the joint distribution.  Efficient vectorized version.
         """
-#	DEBUG = True
         # Score the read
 	if not self.paired_end:
 	    log_reads_prob = sum(self.log_score_reads(reads, assignments, gene))
 	else:
 	    log_reads_prob = sum(self.log_score_paired_end_reads(reads, assignments, gene))
-#         if DEBUG:
-#             print " log_reads_prob: ", log_reads_prob
 	if not self.paired_end:
-	    log_assignments_prob = sum(self.log_score_assignment(assignments, psi_vector, gene))
+	    log_assignments_prob = \
+                sum(self.log_score_assignment(assignments, psi_vector, gene))
 	else:
-	    log_assignments_prob = sum(self.log_score_paired_end_assignment(assignments, psi_vector, gene))
-#         if DEBUG:
-#             print " log_assignments_prob: ", log_assignments_prob
+	    log_assignments_prob = \
+                sum(self.log_score_paired_end_assignment(assignments, psi_vector, gene))
         # Score the Psi vector
         log_psi_prob = self.log_score_psi_vector(psi_vector, hyperparameters)
-
-#         if DEBUG:
-#             print "log_psi_prob: ", log_psi_prob
         log_joint_score = log_reads_prob + log_assignments_prob + log_psi_prob
-#         if DEBUG:
-#             print "  -> total log_joint_score: ", log_joint_score
-# 	    time.sleep(2)
-
         return log_joint_score
 
 #     def log_score_joint(self, reads, assignments, psi_vector, gene, hyperparameters):
