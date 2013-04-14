@@ -59,5 +59,5 @@ def collapse_isoform_assignments(assignments):
     """
     collapsed_assignments = defaultdict(int)
     for curr_assign in assignments:
-        collapsed_assignments[curr_assign] += 1
+        collapsed_assignments[tuple(curr_assign)] += 1
     return collapsed_assignments

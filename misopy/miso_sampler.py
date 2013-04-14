@@ -15,8 +15,9 @@ from numpy.random import multinomial
 from numpy.random import multivariate_normal
 from numpy.random import normal
 from numpy import linalg as la
-from misopy.reads_utils import count_aligned_reads, \
-                               count_isoform_assignments
+import misopy.reads_utils as reads_utils
+#import count_aligned_reads, \
+#                               count_isoform_assignments
 from misopy.read_simulator import simulate_reads, print_reads_summary, \
                                   read_counts_to_read_list, \
                                   get_reads_summary
@@ -416,22 +417,20 @@ class MISOSampler:
         return log_prob_reads
 
 
-    def log_score_paired_end_reads(self, reads, isoform_nums, gene,
-                                   overhang_excluded={}):
+    def log_score_paired_end_reads(self, reads, isoform_nums, gene):
         """
-        Score a set of paired-end reads given their isoform assignments.  Vectorized version.
+        Score a set of paired-end reads given their isoform assignments.
+        Vectorized version.
 
-	Takes in a set of paired-end reads (set of pairs of read alignments and their fragment
-	lengths), a set of isoform assignments for those reads (isoforms by their number), and a gene.
+	Takes in a set of paired-end reads (set of pairs of read alignments and
+        their fragmentlengths), a set of isoform assignments for those reads
+        (isoforms by their number), and a gene.
 
 	Optional arguments:
 
-   	  - frag_len_dist: a function that takes in a fragment length and returns a log probability.
-	    By default, this is set to a binomial distribution (with a mean-variance parameterization)
-
-	  - overhang_excluded: a dictionary mapping reads an isoform length and a fragment length
-            to the number of possible reads of that fragment size that the isoform could have generated,
-	    taking into account the overhang constraint. [NOT USED]
+   	  - frag_len_dist: a function that takes in a fragment length and
+            returns a log probability. By default, this is set to a binomial
+            distribution (with a mean-variance parameterization)
         """
         # The probability of a read being assigned to an isoform that
         # could not have generated it (i.e. where the read is not a
@@ -494,7 +493,8 @@ class MISOSampler:
         proposed_alpha_vector = []
         if not self.params['uniform_proposal']:
             if len(alpha_vector) != 0:
-                proposed_psi_vector, proposed_alpha_vector = self.propose_norm_drift_psi_alpha(alpha_vector)
+                proposed_psi_vector, proposed_alpha_vector = \
+                    self.propose_norm_drift_psi_alpha(alpha_vector)
                 return (proposed_psi_vector, proposed_alpha_vector)
         else:
             proposed_psi_vector = self.propose_indep_psi_vector(psi_vector)
@@ -531,10 +531,8 @@ class MISOSampler:
         Compute the log probability of transitioning to the target_psi given
         that the proposal distribution has a mean of source_alpha_vector.
         """
-        # problematic line!
-        #log_transition = self.logistic_normal_log_pdf([target_psi[0]], alpha_vector)
-#        print "Target psi: ", target_psi
-        log_transition = self.logistic_normal_log_pdf(target_psi, alpha_vector)        
+        log_transition = \
+            self.logistic_normal_log_pdf(target_psi, alpha_vector)        
         return log_transition
 
 
@@ -550,8 +548,6 @@ class MISOSampler:
         reassignment_probs = []
         all_assignments = transpose(tile(arange(self.num_isoforms, dtype=int32),
                                          [self.num_reads, 1]))
-        assignment1_probs = {}
-        assignment2_probs = {}
         n = 0
         for assignment in all_assignments:
 	    if not self.paired_end:
@@ -560,10 +556,7 @@ class MISOSampler:
 	    else:
                 # Paired-end
 		read_probs = self.log_score_paired_end_reads(reads, assignment, gene)
-
-                ## DEBUG TEMPORARY USE SINGLE-END FUNCTIONS
                 assignment_probs = self.log_score_paired_end_assignment(assignment, psi_vector, gene)                
-
             reassignment_p = read_probs + assignment_probs
             reassignment_probs.append(reassignment_p)
             n += 1
@@ -581,7 +574,8 @@ class MISOSampler:
                                  proposed_alpha_vector,
                                  curr_psi_vector, curr_alpha_vector,
                                  proposal_score_func, gene,
-                                 hyperparameters, full_metropolis=True):
+                                 hyperparameters,
+                                 full_metropolis=True):
         """
         Compute the Metropolis-Hastings ratio:
 
@@ -614,7 +608,6 @@ class MISOSampler:
         # Q(x'; x), the probability of proposing to move to the proposed state x' from
         # the current state
         curr_to_proposal_score = proposal_score_func(proposed_psi_vector, curr_alpha_vector)
-
 #  	self.miso_logger.debug("Computing MH ratio...")
 #  	self.miso_logger.debug("  - Proposed Psi vector: " + str(proposed_psi_vector))
 #  	self.miso_logger.debug("  - curr_joint_score: " + str(curr_joint_score))
@@ -727,7 +720,6 @@ class MISOSampler:
         """
         if len(reads) == 0:
             return array([])
-        
         pe_reads = reads[:, 0]
         frag_lens = reads[:, 1]
         filtered_reads = []
@@ -742,8 +734,9 @@ class MISOSampler:
                                    assignment_frag_lens):
                 # compute the prior probability of the fragment lengths each
                 # read posits for each isoform
-                frag_len_score = exp(self.log_frag_len_prob(frag_len, self.mean_frag_len,
-                                                            self.frag_variance))
+                frag_len_score = \
+                    exp(self.log_frag_len_prob(frag_len, self.mean_frag_len,
+                                               self.frag_variance))
                 len_scores.append(frag_len_score)
 
             len_scores = array(len_scores)
@@ -1113,14 +1106,16 @@ class MISOSampler:
                     lag_counter = 0
                     psi_vectors.append(curr_psi_vector)
                     kept_log_scores.append(jscore)
-                    curr_joint_score = self.log_score_joint(reads, assignments, curr_psi_vector, gene,
-                                                            hyperparameters)
+                    curr_joint_score = \
+                        self.log_score_joint(reads, assignments, curr_psi_vector, gene,
+                                             hyperparameters)
                     log_scores[curr_joint_score] = [curr_psi_vector, assignments]
                 else:
                     lag_counter += 1
             else:
-                curr_joint_score = self.log_score_joint(reads, assignments, curr_psi_vector, gene,
-                                                        hyperparameters)
+                curr_joint_score = \
+                    self.log_score_joint(reads, assignments, curr_psi_vector, gene,
+                                         hyperparameters)
                 log_scores[curr_joint_score] = [curr_psi_vector, assignments]
             total_log_scores.append(jscore)            
             burn_in_counter += 1
@@ -1131,8 +1126,9 @@ class MISOSampler:
                 empty_reassign_msg = "Empty reassignments for reads! " + str(reads)
                 self.miso_logger.error(empty_reassign_msg)
 		raise Exception, empty_reassign_msg
-            curr_joint_score = self.log_score_joint(reads, assignments, curr_psi_vector, gene,
-                                                    hyperparameters)
+            curr_joint_score = \
+                self.log_score_joint(reads, assignments, curr_psi_vector, gene,
+                                     hyperparameters)
             if curr_joint_score == -inf:
 		self.miso_logger.error("Moved to impossible state!")
 		self.miso_logger.error("reassignments: " + str(reassignments))
@@ -1143,17 +1139,26 @@ class MISOSampler:
         if accepted_proposals == 0:
 	    self.miso_logger.error("0 proposals accepted!")
             raise Exception, "0 proposals accepted!"
-        percent_acceptance = (float(accepted_proposals)/(accepted_proposals + rejected_proposals))*100
-        self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
+        percent_acceptance = \
+            (float(accepted_proposals)/(accepted_proposals + rejected_proposals))*100
+        self.miso_logger.info("Percent acceptance (including burn-in): %.4f" \
+                              %(percent_acceptance))
         self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
         self.miso_logger.info("Mean of all Psi proposals (accepted or rejected): %s" \
                               %(str(mean(array(all_psi_proposals)))))
         # Write output to file
 	print "Outputting samples to: %s..." %(output_file)
         self.miso_logger.info("Outputting samples to: %s" %(output_file))
+        classes_to_counts = reads_utils.collapse_isoform_assignments(reads)
+        read_classes = []
+        read_class_counts = []
+        for read_class in classes_to_counts:
+            read_classes.append(read_class)
+            read_class_counts.append(classes_to_counts[read_class])
+        reads_data = (read_classes, read_class_counts)
         self.output_miso_results(output_file,
                                  gene,
-                                 reads,
+                                 reads_data,
                                  assignments,
                                  psi_vectors,
                                  kept_log_scores,
@@ -1192,7 +1197,6 @@ class MISOSampler:
         ## Compile header with information about isoforms and internal parameters used
         ## by the sampler, and also information about read counts and number of
         ## reads assigned to each isoform.
-
         read_classes, read_class_counts = reads_data
         read_counts_list = []
 
@@ -1201,6 +1205,7 @@ class MISOSampler:
 
             # Get the read class type in string format
             class_str = str(tuple([int(c) for c in class_type])).replace(" ", "")
+            print "class str: ", class_str
 
             # Get the read class counts in string format
             class_counts_str = "%s" %(int(read_class_counts[class_num]))
@@ -1213,7 +1218,7 @@ class MISOSampler:
         # Get a summary of the raw read counts supporting each isoform
         read_counts_str = ",".join(read_counts_list)
 
-        assigned_counts = count_isoform_assignments(assignments)
+        assigned_counts = reads_utils.count_isoform_assignments(assignments)
 
         # Get number of reads assigned to each isoform
         assigned_counts_str = ",".join(["%d:%d" %(c[0], c[1]) \
