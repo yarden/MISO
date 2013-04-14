@@ -1045,7 +1045,8 @@ class MISOSampler:
         # Compute Metropolis ratio: use drift proposal
         proposal_score_func = self.log_score_norm_drift_proposal
 	# Set Psi vectors from proposal
-	new_psi_vector, new_alpha_vector = self.propose_psi_vector(curr_psi_vector, curr_alpha_vector)
+	new_psi_vector, new_alpha_vector = \
+            self.propose_psi_vector(curr_psi_vector, curr_alpha_vector)
 	curr_psi_vector = new_psi_vector
 	curr_alpha_vector = new_alpha_vector
         
@@ -1055,7 +1056,8 @@ class MISOSampler:
                 if curr_iter > burn_in and curr_iter % 200 == 0:
 		    mean_psi_vectors = mean(psi_vectors, 0)
             # Propose a Psi value
-            new_psi_vector, new_alpha_vector = self.propose_psi_vector(curr_psi_vector, curr_alpha_vector)
+            new_psi_vector, new_alpha_vector = \
+                self.propose_psi_vector(curr_psi_vector, curr_alpha_vector)
             all_psi_proposals.append(new_psi_vector[0])
 	    if curr_iter > 0:
 		m_ratio, curr_joint_score, proposed_joint_score = \
