@@ -323,6 +323,7 @@ class MISOSampler:
         hyperparameters = [1]*len(psi_vector)
         return dirichlet_lnpdf(psi_vector, [hyperparameters])[0]
 
+
     def log_score_paired_end_assignment(self, isoform_nums, psi_vector, gene):
 	"""
 	Score an assignment of a set of paired-end reads given psi
