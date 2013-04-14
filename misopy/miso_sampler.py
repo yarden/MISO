@@ -1199,7 +1199,6 @@ class MISOSampler:
 
             # Get the read class type in string format
             class_str = str(tuple([int(c) for c in class_type])).replace(" ", "")
-            print "class str: ", class_str
 
             # Get the read class counts in string format
             class_counts_str = "%s" %(int(read_class_counts[class_num]))
