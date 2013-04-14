@@ -16,8 +16,6 @@ from numpy.random import multivariate_normal
 from numpy.random import normal
 from numpy import linalg as la
 import misopy.reads_utils as reads_utils
-#import count_aligned_reads, \
-#                               count_isoform_assignments
 from misopy.read_simulator import simulate_reads, print_reads_summary, \
                                   read_counts_to_read_list, \
                                   get_reads_summary
@@ -704,6 +702,9 @@ class MISOSampler:
 	else:
 	    for r in reads:
 		valid_assignments = nonzero(array(r))[0]
+                ###
+                ### TODO: Choose assignments probabilistically WITHOUT multinomial! Use randint
+                ###
 		#prob_assignments = [1/float(len(valid_assignments)) for v in valid_assignments]
 		#chosen_assignment = self.choose_assignment(prob_assignments, valid_assignments)
                 # Choose first assignment
