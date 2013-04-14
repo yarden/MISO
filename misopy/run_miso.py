@@ -23,7 +23,6 @@ import misopy.index_gff as index_gff
 from index_gff import is_compressed_index
 
 from misopy.parse_csv import *
-from misopy.json_utils import *
 from misopy.samples_utils import *
 
 import numpy as np

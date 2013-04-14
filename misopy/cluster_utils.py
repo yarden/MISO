@@ -14,11 +14,9 @@ from settings import Settings, load_settings
 def write_cluster_preface(file_handle):
     module_preface = \
 """
-module add python/2.6.4;
 module add numpy;		   
 module add scipy;
-module add matplotlib;
-module add simplejson;\n
+module add matplotlib;\n
 """
     file_handle.write(module_preface)
 

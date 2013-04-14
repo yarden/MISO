@@ -5,7 +5,6 @@ import re
 import misopy
 from misopy.gff_utils import *
 from misopy.parse_csv import *
-from misopy.json_utils import *
 import pprint
 
 
