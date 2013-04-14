@@ -218,22 +218,23 @@ class MISOSampler:
                 os.makedirs(self.log_dir)
             except OSError:
                 pass
-
 	self.miso_logger = get_logger('miso_logger', self.log_dir)
 	self.miso_logger.info("Instantiated sampler.")
+        self.gene = None
+        self.iso_lens_matrix = None
 
         
     def log_multivar_normal_pdf(x, mu, sigma):
         """
         Multivariate Normal pdf (adapted from PyMix.)
         """
-        dd = la.det(sigma);
-        inverse = la.inv(sigma);
+        dd = la.det(sigma)
+        inverse = la.inv(sigma)
         N = len(x)
-        ff = math.pow(2*math.pi,-N/2.0)*math.pow(dd,-0.5);
+        ff = math.pow(2*math.pi,-N/2.0)*math.pow(dd,-0.5)
         # centered input values
-        centered = numarray.subtract(x, numarray.repeat([mu], N));
-        res = ff * numarray.exp(-0.5*numarray.sum(numarray.multiply(centered,numarray.dot(centered,inverse)), 1));
+        centered = numarray.subtract(x, numarray.repeat([mu], N))
+        res = ff * numarray.exp(-0.5*numarray.sum(numarray.multiply(centered,numarray.dot(centered,inverse)), 1))
         return numarray.log(res)[0]
 
 
@@ -256,10 +257,12 @@ class MISOSampler:
         exp_part = dot(dot(first_log, invsigma), second_log)
         pdf_value = covar_constant*prod_theta*exp(exp_part)
         return log(pdf_value)
+        
 
     def logistic_normal_pdf_Z(theta, mu):
         theta = theta[0:-1]
         new_mu = array([0])
+        
 
     def log_score_joint(self, reads, assignments, psi_vector, gene, hyperparameters):
         """
@@ -656,7 +659,7 @@ class MISOSampler:
 	return valid_assignment_indx
 
 
-    def initialize_valid_assignments(self, reads, gene=None):
+    def initialize_valid_assignments(self, reads):
 	"""
 	Pick a random but valid/consistent assignments for the read to start with.
 	"""
@@ -947,6 +950,8 @@ class MISOSampler:
         """
         num_isoforms = len(gene.isoforms)
         self.num_isoforms = num_isoforms
+        # Record gene
+        self.gene = gene
 
         if self.paired_end:
             reads = self.filter_improbable_reads(reads)
@@ -957,7 +962,7 @@ class MISOSampler:
                                                     [num_isoforms, 1]))
 
         if len(reads) == 0:
-            print "No reads for gene: %s" %(gene.label)
+            print "No reads for gene: %s" %(self.gene.label)
             return
 
         self.num_reads = len(reads)
@@ -977,12 +982,11 @@ class MISOSampler:
         self.overhang_len = self.params['overhang_len']
         self.read_len = self.params['read_len']
         
-	self.miso_logger.info("Running sampler...")
-        self.miso_logger.info("  - num_iters: " + str(num_iters))
-        self.miso_logger.info("  - burn-in: " + str(burn_in))
-        self.miso_logger.info("  - lag: " + str(lag))
-	self.miso_logger.info("  - paired-end? " + str(self.paired_end))
-	self.miso_logger.info("  - gene: " + str(gene))
+#	self.miso_logger.info("Running sampler...")
+#        self.miso_logger.info("  - num_iters: " + str(num_iters))
+#        self.miso_logger.info("  - burn-in: " + str(burn_in))
+#        self.miso_logger.info("  - lag: " + str(lag))
+#	self.miso_logger.info("  - paired-end? " + str(self.paired_end))
 #	self.miso_logger.info("  - reads: " + str(reads))
         rejected_proposals = 0
         accepted_proposals = 0
@@ -1004,7 +1008,7 @@ class MISOSampler:
         # Do not process genes with one isoform
         elif num_isoforms == 1:
             one_iso_msg = "Gene %s has only one isoform; skipping..." \
-                          %(gene.label)
+                          %(self.gene.label)
             self.miso_logger.info(one_iso_msg)
             self.miso_logger.error(one_iso_msg)
             return
@@ -1012,7 +1016,7 @@ class MISOSampler:
         curr_psi_vector = init_psi
         self.miso_logger.debug("Init psi: " + str(init_psi))
         # Initialize assignments of reads to isoforms in a consistent way
-	assignments = self.initialize_valid_assignments(reads, gene)
+	assignments = self.initialize_valid_assignments(reads)
 	#self.miso_logger.debug("Initial assignments of reads to isoforms: " + str(assignments))
         #print_assignment_summary(assignments)
         # Main sampler loop
@@ -1290,9 +1294,10 @@ def run_sampler_on_event(gene, ni, ne, nb, read_len, overhang_len, num_iters,
     sampler = MISOSampler(sampler_params, log_dir=output_dir)
     reads = read_counts_to_read_list(ni, ne, nb)
     t1 = time.time()
-    sampler_results = sampler.run_sampler(num_iters, reads, gene, hyperparameters,
-                                          sampler_params, output_filename, burn_in=burn_in,
-                                          lag=lag)
+    sampler_results = \
+        sampler.run_sampler(num_iters, reads, gene, hyperparameters,
+                            sampler_params, output_filename, burn_in=burn_in,
+                            lag=lag)
     if not sampler_results:
 	return (samples, cred_interval)
     samples = sampler_results[1]
