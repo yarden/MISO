@@ -546,6 +546,7 @@ class MISOSampler:
         n = 0
         for assignment in all_assignments:
 	    if not self.paired_end:
+                # Single-end
 		read_probs = self.log_score_reads(reads, assignment, gene)
 		assignment_probs = self.log_score_assignment(assignment, psi_vector, gene)
 	    else:
@@ -599,10 +600,12 @@ class MISOSampler:
         # Q(x; x'), the probability of proposing to move back to current state from
         # proposed state x'
         mh_ratio = None
-        proposal_to_curr_score = proposal_score_func(curr_psi_vector, proposed_alpha_vector)
+        proposal_to_curr_score = \
+            proposal_score_func(curr_psi_vector, proposed_alpha_vector)
         # Q(x'; x), the probability of proposing to move to the proposed state x' from
         # the current state
-        curr_to_proposal_score = proposal_score_func(proposed_psi_vector, curr_alpha_vector)
+        curr_to_proposal_score = \
+            proposal_score_func(proposed_psi_vector, curr_alpha_vector)
 #  	self.miso_logger.debug("Computing MH ratio...")
 #  	self.miso_logger.debug("  - Proposed Psi vector: " + str(proposed_psi_vector))
 #  	self.miso_logger.debug("  - curr_joint_score: " + str(curr_joint_score))
@@ -1165,7 +1168,6 @@ class MISOSampler:
                                  lag,
                                  percent_acceptance,
                                  proposal_type)
-        print >> sys.stderr, "\nSamples outputted to: %s\n" %(output_file)
         
         
     def output_miso_results(self, output_file, gene, reads_data, assignments,
