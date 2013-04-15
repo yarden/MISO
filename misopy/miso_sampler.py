@@ -6,11 +6,11 @@
 ## The sampler uses a Metropolis-Hastings sampling scheme, combined with
 ## a Gibbs sampling step.
 ##
-import pygsl
-from pygsl.rng import dirichlet_lnpdf, binomial_pdf, negative_binomial_pdf
-from pygsl.sf import gamma
+#import pygsl
+#from pygsl.rng import dirichlet_lnpdf
 import scipy
 import misopy
+import numpy
 from numpy.random import multinomial
 from numpy.random import multivariate_normal
 from numpy.random import normal
@@ -20,6 +20,7 @@ from misopy.read_simulator import simulate_reads, print_reads_summary, \
                                   read_counts_to_read_list, \
                                   get_reads_summary
 from scipy.misc import logsumexp
+from scipy.special import gammaln
 import misopy.hypothesis_test as ht
 from misopy.Gene import Gene, Exon
 from misopy.py2c_gene import *
@@ -43,6 +44,20 @@ import logging
 import logging.handlers
 
 loggers = {}
+
+
+import math
+import operator
+
+
+def dirichlet_lnpdf(alpha, x):
+    """
+    Substitute for dirichlet_lnpdf of pygsl.
+    """
+    dir_log_pdf = \
+        gammaln(sum(alpha)) - sum(gammaln(alpha)) + numpy.dot((alpha - 1).T, log(x).T)
+    return dir_log_pdf
+
 
 def get_logger(logger_name, log_outdir,
                level=logging.WARNING,
@@ -311,8 +326,7 @@ class MISOSampler:
         """
         assert (all(hyperparameters > 0))
         # Hyperparameters first, Psi vector second (unlike C interface)
-        #return dirichlet_lnpdf(hyperparameters, [psi_vector])[0]
-        return dirichlet_lnpdf(psi_vector, [hyperparameters])[0]
+        return dirichlet_lnpdf(hyperparameters, psi_vector)
 
 
     def log_score_psi_vector_proposal(self, psi_vector, alpha_vector):
@@ -322,7 +336,7 @@ class MISOSampler:
         takes an alpha_vector argument but does not use it in the computation.
         """
         hyperparameters = [1]*len(psi_vector)
-        return dirichlet_lnpdf(psi_vector, [hyperparameters])[0]
+        return dirichlet_lnpdf(hyperparameters, psi_vector)
 
 
     def log_score_paired_end_assignment(self, isoform_nums, psi_vector, gene):
@@ -371,20 +385,6 @@ class MISOSampler:
                                     isoform_nums]
         return final_psi_frags
 
-
-    def log_dirichlet_naive(hyperparameters, phi):
-        alpha = array(hyperparameters)
-        num = 1.0
-        for i in range(len(alpha)):
-            num *= phi[i] ** (alpha[i]-1)
-        norm_denom =  pygsl.sf.gamma(sum(alpha))[0] 
-        norm_num = 1.0 
-        for i in range(len(alpha)):
-            norm_num *=  pygsl.sf.gamma(alpha[i])[0]
-        norm = norm_num / norm_denom 
-        res = num / norm
-        return log(res)
-        
 
     def log_score_reads(self, reads, isoform_nums, gene):
         """
@@ -545,13 +545,17 @@ class MISOSampler:
         for assignment in all_assignments:
 	    if not self.paired_end:
                 # Single-end
+                # Score reads given their assignment
 		read_probs = self.log_score_reads(reads, assignment, gene)
+                # Score the assignments of reads given Psi vector
 		assignment_probs = \
                     self.log_score_assignment(assignment, psi_vector, gene)
 	    else:
                 # Paired-end
+                # Score paired-end reads given their assignment
 		read_probs = \
                     self.log_score_paired_end_reads(reads, assignment, gene)
+                # Score the assignments of paired-end reads given Psi vector
                 assignment_probs = \
                     self.log_score_paired_end_assignment(assignment, psi_vector, gene)                
             reassignment_p = read_probs + assignment_probs
@@ -955,6 +959,7 @@ class MISOSampler:
 
         (3) For each read, sample reassignment to one of the available isoforms.
         """
+        print >> sys.stderr, "Running on %s" %(gene.label)
         num_isoforms = len(gene.isoforms)
         self.num_isoforms = num_isoforms
         # Record gene
@@ -970,6 +975,7 @@ class MISOSampler:
 
         if len(reads) == 0:
             print "No reads for gene: %s" %(self.gene.label)
+            print reads
             return
 
         self.num_reads = len(reads)
@@ -1055,9 +1061,6 @@ class MISOSampler:
         
         already_warned = False
         for curr_iter in xrange(num_iters):
-            if print_iters:
-                if curr_iter > burn_in and curr_iter % 200 == 0:
-		    mean_psi_vectors = mean(psi_vectors, 0)
             # Propose a Psi value
             new_psi_vector, new_alpha_vector = \
                 self.propose_psi_vector(curr_psi_vector, curr_alpha_vector)
@@ -1077,7 +1080,7 @@ class MISOSampler:
                                                   full_metropolis=False)
             if m_ratio == 0:
                 if not already_warned:
-                    self.miso_logger.warn("MH ratio is ~0! Gene: %s" %(gene.label))
+                    self.miso_logger.error("MH ratio is ~0! Gene: %s" %(gene.label))
                     self.miso_logger.error("MH ratio is ~0!\ncurr_joint_score: %.2f\n"
                                            "proposed_joint_score: %.2f\nGene: %s" \
                                            %(curr_joint_score, proposed_joint_score,

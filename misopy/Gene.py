@@ -729,7 +729,7 @@ class Isoform:
 	for part in self.parts:
             if part.contains(genomic_start, genomic_start):
 		isoform_start_coord = \
-                    isoform_interval_start + (genomic_start - part.start)
+                    isoform_interval_start + (genomic_start - part.start + 1) 
                 start_part = part
                 break
 	    isoform_interval_start += part.len
@@ -784,7 +784,7 @@ class Isoform:
             # is the length of the entire next exon. Compute
             # the amount leftover
             match_len = next_part.end - next_part.start + 1
-            leftover -= match_len
+            leftover -= match_len 
             # Reassign current part
             curr_part = next_part
         if leftover > 0:

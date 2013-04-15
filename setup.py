@@ -73,7 +73,7 @@ for scheme in INSTALL_SCHEMES.values():
 ##
 ## Definition of the current version
 ##
-MISO_VERSION = "0.4.8"
+MISO_VERSION = "0.4.8python"
 
 ##
 ## Generate a __version__.py attribute
@@ -124,6 +124,8 @@ setup(name = 'misopy',
                      ['misopy/gff-events/mm9/SE.mm9.gff']),
                     ('misopy/gff-events/mm9/genes',
                      ['misopy/gff-events/mm9/genes/Atp2b1.mm9.gff']),
+                    ('misopy/gff-events/mm9/events',
+                     ['misopy/gff-events/mm9/events/test_event.gff']),                     
                     ('misopy/sashimi_plot/test-data', 
                       ['misopy/sashimi_plot/test-data/events.gff']),
                     ('misopy/sashimi_plot/test-data/miso-data',

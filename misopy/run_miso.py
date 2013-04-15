@@ -196,8 +196,9 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
         miso_basename = miso_basename.replace(".pickle", "")
         output_filename = os.path.join(chrom_dir, "%s" %(miso_basename))
         # Align reads to isoforms
-        reads_to_isoforms = sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj, read_len,
-                                                            overhang_len)
+        reads_to_isoforms = \
+            sam_utils.sam_reads_to_isoforms(gene_reads, gene_obj, read_len,
+                                            overhang_len)
         # Only take reads that are not all zero
         num_isoforms = len(gene_obj.isoforms)
         zero_assignment = tuple([0] * num_isoforms)

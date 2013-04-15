@@ -43,7 +43,7 @@ class TestMISO(unittest.TestCase):
         
 
 
-    def ___test_a_sam_to_bam(self):
+    def test_a_sam_to_bam(self):
         """
         Test conversion of SAM to BAM.
 
@@ -175,7 +175,7 @@ class TestMISO(unittest.TestCase):
             "(+, -) must *not* match - under fr-secondstrand."                                 
 
         
-    def ___test_z_gene_psi(self):
+    def test_z_gene_psi(self):
         """
         Test gene-level Psi inferences using SAM/BAM reads.
 
@@ -185,7 +185,7 @@ class TestMISO(unittest.TestCase):
         sam_dir = os.path.join(self.tests_output_dir, "sam-output")
         bam_filename = os.path.join(sam_dir, "c2c12.Atp2b1.sorted.bam")
 
-        read_len = 35
+        read_len = 36
         insert_mean = 250
         insert_sd = 30
 
