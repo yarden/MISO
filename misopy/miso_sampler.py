@@ -28,6 +28,11 @@ from misopy.py2c_gene import *
 # C MISO interface
 import pysplicing
 
+# Cython interface
+import pyximport
+pyximport.install(pyimport=True)
+import miso_scores
+
 from scipy import *
 from numpy.random.mtrand import dirichlet
 from numpy import *
@@ -43,11 +48,10 @@ import glob
 import logging
 import logging.handlers
 
-loggers = {}
-
-
 import math
 import operator
+
+loggers = {}
 
 
 def dirichlet_lnpdf(alpha, x):
@@ -139,10 +143,12 @@ def exp_logsumexp(a):
 
 
 def vect_logsumexp(a, axis=None):
+    """
+    Assume a is an array.
+    """
     if axis is None:
-        # Use the scipy.maxentropy version.
         return logsumexp(a)
-    a = asarray(a)
+    #a = asarray(a)
     shp = list(a.shape)
     shp[axis] = 1
     a_max = a.max(axis=axis)
@@ -291,7 +297,7 @@ class MISOSampler:
                 sum(self.log_score_paired_end_reads(reads, assignments, gene))
 	if not self.paired_end:
 	    log_assignments_prob = \
-                sum(self.log_score_assignment(assignments, psi_vector, gene))
+                sum(self.log_score_assignment(assignments, psi_vector))
 	else:
 	    log_assignments_prob = \
                 sum(self.log_score_paired_end_assignment(assignments,
@@ -407,7 +413,7 @@ class MISOSampler:
         num_reads_possible = \
             (gene.iso_lens[isoform_nums] - self.read_len + 1) - overhang_excluded
         log_prob_reads = log(1) - log(num_reads_possible)
-        zero_prob_indx = nonzero(reads[range(self.num_reads), isoform_nums] == 0)[0]
+        zero_prob_indx = nonzero(reads[xrange(self.num_reads), isoform_nums] == 0)[0]
         # Assign probability 0 to reads inconsistent with assignment
         log_prob_reads[zero_prob_indx] = -inf
         return log_prob_reads
@@ -460,26 +466,22 @@ class MISOSampler:
         return log_prob_reads        
 
 
-    def log_score_assignment(self, isoform_nums, psi_vector, gene):
+    def log_score_assignment(self, isoform_nums, psi_vector):
         """
         Score an assignment of a set of reads given psi
         and a gene (i.e. a set of isoforms).
         """
-        #psi_frag = psi_vector*(gene.iso_lens-self.params['read_len']+1)
-        #psi_frag = psi_frag/sum(psi_frag)
-        # Take the log of Psi frags
-        scaled_lens = gene.iso_lens - self.read_len + 1
-
-        # If the scaled length is highly unlikely, set it to 0
-        invalid_lens_ind = where(scaled_lens <= 0)
-        scaled_lens[invalid_lens_ind] = 0
-        
-        psi_frag = log(psi_vector) + log(scaled_lens)
+        ###
+        ### TODO: no need to compute scaled lens each time!
+        ###
+        psi_frag = log(psi_vector) + log(self.scaled_lens_single_end)
         
         psi_frag = psi_frag - logsumexp(psi_frag)
         psi_frags = tile(psi_frag, [self.num_reads, 1])
+        # NEW VERSION: uses xrange
         return psi_frags[range(self.num_reads), isoform_nums]
-        #return log(psi_frags[range(num_reads), isoform_nums])
+        # OLD VERSION: uses range
+        #return psi_frags[range(self.num_reads), isoform_nums]
 
 
     def propose_psi_vector(self, psi_vector, alpha_vector):
@@ -489,23 +491,10 @@ class MISOSampler:
         # Independent uniform proposal distribution
         proposed_psi_vector = None
         proposed_alpha_vector = []
-        if not self.params['uniform_proposal']:
-            if len(alpha_vector) != 0:
-                proposed_psi_vector, proposed_alpha_vector = \
-                    self.propose_norm_drift_psi_alpha(alpha_vector)
-                return (proposed_psi_vector, proposed_alpha_vector)
-        else:
-            proposed_psi_vector = self.propose_indep_psi_vector(psi_vector)
+        #if len(alpha_vector) != 0:
+        proposed_psi_vector, proposed_alpha_vector = \
+            self.propose_norm_drift_psi_alpha(alpha_vector)
         return (proposed_psi_vector, proposed_alpha_vector)
-
-
-    def propose_indep_psi_vector(self, psi_vector):
-        """
-        Independently propose a new Psi vector from symmetric Dirichlet.
-        """
-        hyperparameters = [1/float(self.num_isoforms) for iso in psi_vector]
-        proposed_psi_vector = dirichlet(hyperparameters)
-        return proposed_psi_vector
 
 
     def propose_norm_drift_psi_alpha(self, alpha_vector):
@@ -544,7 +533,6 @@ class MISOSampler:
         reassignment_probs = []
         all_assignments = transpose(tile(arange(self.num_isoforms, dtype=int32),
                                          [self.num_reads, 1]))
-        n = 0
         for assignment in all_assignments:
 	    if not self.paired_end:
                 # Single-end
@@ -552,7 +540,7 @@ class MISOSampler:
 		read_probs = self.log_score_reads(reads, assignment, gene)
                 # Score the assignments of reads given Psi vector
 		assignment_probs = \
-                    self.log_score_assignment(assignment, psi_vector, gene)
+                    self.log_score_assignment(assignment, psi_vector)
 	    else:
                 # Paired-end
                 # Score paired-end reads given their assignment
@@ -563,7 +551,6 @@ class MISOSampler:
                     self.log_score_paired_end_assignment(assignment, psi_vector, gene)                
             reassignment_p = read_probs + assignment_probs
             reassignment_probs.append(reassignment_p)
-            n += 1
         reassignment_probs = transpose(array(reassignment_probs))
         m = transpose(vect_logsumexp(reassignment_probs, axis=1)[newaxis,:])
         norm_reassignment_probs = exp(reassignment_probs - m)
@@ -964,7 +951,6 @@ class MISOSampler:
         self.num_isoforms = num_isoforms
         # Record gene
         self.gene = gene
-
         if self.paired_end:
             reads = self.filter_improbable_reads(reads)
 
@@ -990,18 +976,29 @@ class MISOSampler:
 	self.params['iters'] = num_iters
 	self.params['burn_in'] = burn_in
 	self.params['lag'] = lag
-
         # Define local variables related to reads and overhang
         self.overhang_len = self.params['overhang_len']
         self.read_len = self.params['read_len']
+        ##
+        ## Precompute fixed parameters related to sampling
+        ##
+        self.scaled_lens_single_end = gene.iso_lens - self.read_len + 1
+        # Record cases where read length is greater than isoform length
+        # as zero (i.e. not possible)
+        self.scaled_lens_single_end[where(self.scaled_lens_single_end <= 0)] = 0
+        ##
+        ## TODO: Do same for paired-end!
+        ##
+        self.scaled_lens_paired_end = None
+        
         rejected_proposals = 0
         accepted_proposals = 0
         psi_vectors = []
-        log_scores = {}
+#        log_scores = {}
         all_psi_proposals = []
         proposal_type = "drift"	    
         init_psi = ones(num_isoforms)/float(num_isoforms)
-        # Initialize randomly the starting Psi vector if it's the two isoform case
+        # Initialize the starting Psi vector randomly if it's the two isoform case
         if num_isoforms == 2:
             init_psi = dirichlet(ones(num_isoforms)/float(num_isoforms))
         # Do not process genes with one isoform
@@ -1027,9 +1024,6 @@ class MISOSampler:
         burn_in_counter = 0
         total_log_scores = []
         kept_log_scores = []
-        print_iters = False
-        if num_iters >= 500:
-            print_iters = True
         # Compute Metropolis ratio: use drift proposal
         proposal_score_func = self.log_score_norm_drift_proposal
 	# Set Psi vectors from proposal
@@ -1084,14 +1078,14 @@ class MISOSampler:
                     curr_joint_score = \
                         self.log_score_joint(reads, assignments, curr_psi_vector, gene,
                                              hyperparameters)
-                    log_scores[curr_joint_score] = [curr_psi_vector, assignments]
+#                    log_scores[curr_joint_score] = [curr_psi_vector, assignments]
                 else:
                     lag_counter += 1
             else:
                 curr_joint_score = \
                     self.log_score_joint(reads, assignments, curr_psi_vector, gene,
                                          hyperparameters)
-                log_scores[curr_joint_score] = [curr_psi_vector, assignments]
+#                log_scores[curr_joint_score] = [curr_psi_vector, assignments]
             total_log_scores.append(jscore)            
             burn_in_counter += 1
 
