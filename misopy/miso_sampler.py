@@ -535,8 +535,6 @@ class MISOSampler:
         Note that this does not dependent on the read's current assignment since
         we're already considering the possibility of 'reassigning' the read to
         its current assignment in the probability calculations.
-
-        Only applies to paired-end reads!
         """
         reassignment_probs = []
         all_assignments = transpose(tile(arange(self.num_isoforms, dtype=int32),
