@@ -29,9 +29,7 @@ from misopy.py2c_gene import *
 import pysplicing
 
 # Cython interface
-import pyximport
-pyximport.install(pyimport=True)
-import miso_scores
+import misopy.miso_scores as miso_scores
 
 from scipy import *
 from numpy.random.mtrand import dirichlet
@@ -413,7 +411,7 @@ class MISOSampler:
         num_reads_possible = \
             (gene.iso_lens[isoform_nums] - self.read_len + 1) - overhang_excluded
         log_prob_reads = log(1) - log(num_reads_possible)
-        zero_prob_indx = nonzero(reads[xrange(self.num_reads), isoform_nums] == 0)[0]
+        zero_prob_indx = nonzero(reads[np.arange(self.num_reads), isoform_nums] == 0)[0]
         # Assign probability 0 to reads inconsistent with assignment
         log_prob_reads[zero_prob_indx] = -inf
         return log_prob_reads
@@ -475,7 +473,6 @@ class MISOSampler:
         ### TODO: no need to compute scaled lens each time!
         ###
         psi_frag = log(psi_vector) + log(self.scaled_lens_single_end)
-        
         psi_frag = psi_frag - logsumexp(psi_frag)
         psi_frags = tile(psi_frag, [self.num_reads, 1])
         # NEW VERSION: uses xrange
@@ -947,6 +944,11 @@ class MISOSampler:
         (3) For each read, sample reassignment to one of the available isoforms.
         """
         #print >> sys.stderr, "Running on %s" %(gene.label)
+        print "READS: "
+        obj = [list(k) for k in reads]
+        import cPickle as pickle
+        pickle.dump(obj, open("/home/yarden/jaen/test-miso/test_pysampler/reads.pickle", "wb"))
+        sys.exit(0)
         num_isoforms = len(gene.isoforms)
         self.num_isoforms = num_isoforms
         # Record gene
