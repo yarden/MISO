@@ -11,6 +11,7 @@
 import scipy
 import misopy
 import numpy
+import numpy as np
 from numpy.random import multinomial
 from numpy.random import multivariate_normal
 from numpy.random import normal
@@ -288,8 +289,22 @@ class MISOSampler:
         """
         # Score the read
 	if not self.paired_end:
-	    log_reads_prob = \
-                sum(self.log_score_reads(reads, assignments, gene))
+#            log_reads_prob = \
+#                sum(self.log_score_reads(reads, assignments, gene))
+#	    log_reads_prob = \
+#                sum(miso_scores.log_score_reads(reads,
+#                                                assignments,
+#                                                self.num_parts_per_isoform,
+#                                                self.iso_lens,
+#                                                self.num_reads,
+#                                                self.log_num_reads_possible_per_iso))
+            log_reads_prob = \
+                miso_scores.sum_log_score_reads(reads,
+                                                assignments,
+                                                self.num_parts_per_isoform,
+                                                self.iso_lens,
+                                                self.num_reads,
+                                                self.log_num_reads_possible_per_iso)
 	else:
 	    log_reads_prob = \
                 sum(self.log_score_paired_end_reads(reads, assignments, gene))
@@ -528,13 +543,19 @@ class MISOSampler:
         its current assignment in the probability calculations.
         """
         reassignment_probs = []
-        all_assignments = transpose(tile(arange(self.num_isoforms, dtype=int32),
+        all_assignments = transpose(tile(arange(self.num_isoforms, dtype=int),
                                          [self.num_reads, 1]))
         for assignment in all_assignments:
 	    if not self.paired_end:
                 # Single-end
                 # Score reads given their assignment
-		read_probs = self.log_score_reads(reads, assignment, gene)
+                read_probs = \
+                    miso_scores.log_score_reads(reads,
+                                                assignment,
+                                                self.num_parts_per_isoform,
+                                                self.iso_lens,
+                                                self.num_reads,
+                                                self.log_num_reads_possible_per_iso)
                 # Score the assignments of reads given Psi vector
 		assignment_probs = \
                     self.log_score_assignment(assignment, psi_vector)
@@ -944,13 +965,8 @@ class MISOSampler:
         (3) For each read, sample reassignment to one of the available isoforms.
         """
         #print >> sys.stderr, "Running on %s" %(gene.label)
-        print "READS: "
-        obj = [list(k) for k in reads]
-        import cPickle as pickle
-        pickle.dump(obj, open("/home/yarden/jaen/test-miso/test_pysampler/reads.pickle", "wb"))
-        sys.exit(0)
-        num_isoforms = len(gene.isoforms)
-        self.num_isoforms = num_isoforms
+        self.num_isoforms = len(gene.isoforms)
+        num_isoforms = self.num_isoforms
         # Record gene
         self.gene = gene
         if self.paired_end:
@@ -966,8 +982,6 @@ class MISOSampler:
             print reads
             return
 
-        self.num_reads = len(reads)
-            
         #output_file = output_file + ".%d_iters.%d_burnin.%d_lag" %(num_iters, burn_in, lag)
         # Don't need to put parameters in filename
         output_file = output_file + ".miso"
@@ -984,6 +998,26 @@ class MISOSampler:
         ##
         ## Precompute fixed parameters related to sampling
         ##
+        # Read length
+        self.num_reads = len(reads)
+        # Number of exons per isoform
+        self.num_parts_per_isoform = \
+            np.array([len(isoform.parts) for isoform in gene.isoforms])
+        # Length for each isoform
+        self.iso_lens = \
+            np.array([isoform.len for isoform in gene.isoforms])
+        # Isoform numbers: 0,...,K-1 for K isoforms
+        self.iso_nums = np.arange(num_isoforms)
+        # Log number of reads possible per isoform
+        num_overhang_excluded = \
+            2*(self.overhang_len - 1)*(self.num_parts_per_isoform[self.iso_nums] - 1)
+        num_reads_possible = \
+            (self.iso_lens[self.iso_nums] - self.read_len + 1) - num_overhang_excluded
+        # The number of reads possible is the number of ways a read can be
+        # aligned onto the length of the current isoforms, minus the number of positions
+        # that are ruled out due to overhang constraints.
+        self.log_num_reads_possible_per_iso = \
+            np.log((self.iso_lens[self.iso_nums] - self.read_len + 1) - num_overhang_excluded)
         self.scaled_lens_single_end = gene.iso_lens - self.read_len + 1
         # Record cases where read length is greater than isoform length
         # as zero (i.e. not possible)
@@ -992,6 +1026,7 @@ class MISOSampler:
         ## TODO: Do same for paired-end!
         ##
         self.scaled_lens_paired_end = None
+
         
         rejected_proposals = 0
         accepted_proposals = 0
@@ -999,7 +1034,7 @@ class MISOSampler:
 #        log_scores = {}
         all_psi_proposals = []
         proposal_type = "drift"	    
-        init_psi = ones(num_isoforms)/float(num_isoforms)
+        init_psi = np.ones(num_isoforms)/float(num_isoforms)
         # Initialize the starting Psi vector randomly if it's the two isoform case
         if num_isoforms == 2:
             init_psi = dirichlet(ones(num_isoforms)/float(num_isoforms))
