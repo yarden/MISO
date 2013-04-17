@@ -76,7 +76,9 @@ def sum_log_score_reads(np.ndarray[DTYPE_t, ndim=2] reads,
         sum_scores += vect_log_scores[curr_read]
     return sum_scores
 
-
+cdef extern from "math.h":
+    float INFINITY
+    
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
@@ -108,7 +110,9 @@ def log_score_reads(np.ndarray[DTYPE_t, ndim=2] reads,
     cdef int curr_iso_num = 0
     # Constant used in probability calculation
     cdef double log_one_val = log(1)
-    cdef double log_zero_prob_val = -2000
+    #cdef double log_zero_prob_val = -2000
+    #cdef double log_zero_prob_val = -1 * float('inf')
+    cdef double log_zero_prob_val = -1 * INFINITY
     for curr_read in xrange(num_reads):
         # For each isoform assignment, score its probability
         # Get the current isoform's number (0,...,K-1 for K isoforms)
