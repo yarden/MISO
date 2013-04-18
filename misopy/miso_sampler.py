@@ -287,6 +287,7 @@ class MISOSampler:
         """
         Return a log score for the joint distribution.
         """
+        # Get the logged Psi frag vector
         # Score the read
 	if not self.paired_end:
 #            log_reads_prob = \
@@ -305,12 +306,24 @@ class MISOSampler:
                                                 self.iso_lens,
                                                 self.num_reads,
                                                 self.log_num_reads_possible_per_iso)
+            log_psi_frag = \
+                miso_scores.compute_log_psi_frag(psi_vector,
+                                                 self.scaled_lens_single_end,
+                                                 self.num_isoforms)
 	else:
+            raise Exception, "Paired-end not implemented!"
 	    log_reads_prob = \
                 sum(self.log_score_paired_end_reads(reads, assignments, gene))
+            log_psi_frag = None
 	if not self.paired_end:
-	    log_assignments_prob = \
-                sum(self.log_score_assignment(assignments, psi_vector))
+	    #log_assignments_prob = \
+            #    sum(self.log_score_assignment(assignments, psi_vector))
+            #print "OLD SUM: "
+            #print log_assignments_prob
+            log_assignments_prob = \
+                miso_scores.sum_log_score_assignments(assignments,
+                                                      log_psi_frag,
+                                                      self.num_reads)
 	else:
 	    log_assignments_prob = \
                 sum(self.log_score_paired_end_assignment(assignments,
@@ -491,7 +504,7 @@ class MISOSampler:
         psi_frag = psi_frag - logsumexp(psi_frag)
         psi_frags = tile(psi_frag, [self.num_reads, 1])
         # NEW VERSION: uses xrange
-        return psi_frags[range(self.num_reads), isoform_nums]
+        return psi_frags[np.arange(self.num_reads), isoform_nums]
         # OLD VERSION: uses range
         #return psi_frags[range(self.num_reads), isoform_nums]
 
@@ -506,6 +519,7 @@ class MISOSampler:
         #if len(alpha_vector) != 0:
         proposed_psi_vector, proposed_alpha_vector = \
             self.propose_norm_drift_psi_alpha(alpha_vector)
+        proposed_psi_vector = np.array(proposed_psi_vector)
         return (proposed_psi_vector, proposed_alpha_vector)
 
 
@@ -535,7 +549,7 @@ class MISOSampler:
         return log_transition
 
 
-    def sample_reassignments(self, reads, psi_vector, gene):
+    def sample_reassignments(self, reads, log_psi_frag, gene):
         """
         Sample a reassignments of reads to isoforms.
         Note that this does not dependent on the read's current assignment since
@@ -557,16 +571,19 @@ class MISOSampler:
                                                 self.num_reads,
                                                 self.log_num_reads_possible_per_iso)
                 # Score the assignments of reads given Psi vector
-		assignment_probs = \
-                    self.log_score_assignment(assignment, psi_vector)
+                assignment_probs = \
+                    miso_scores.log_score_assignments(assignment,
+                                                      log_psi_frag,
+                                                      self.num_reads)
 	    else:
+                raise Exception, "Paired-end unimplemented!"
                 # Paired-end
                 # Score paired-end reads given their assignment
 		read_probs = \
                     self.log_score_paired_end_reads(reads, assignment, gene)
                 # Score the assignments of paired-end reads given Psi vector
-                assignment_probs = \
-                    self.log_score_paired_end_assignment(assignment, psi_vector, gene)                
+                #assignment_probs = \
+                #    self.log_score_paired_end_assignment(assignment, psi_vector, gene)                
             reassignment_p = read_probs + assignment_probs
             reassignment_probs.append(reassignment_p)
         reassignment_probs = transpose(array(reassignment_probs))
@@ -1113,27 +1130,38 @@ class MISOSampler:
                     psi_vectors.append(curr_psi_vector)
                     kept_log_scores.append(jscore)
                     curr_joint_score = \
-                        self.log_score_joint(reads, assignments, curr_psi_vector, gene,
+                        self.log_score_joint(reads,
+                                             assignments,
+                                             curr_psi_vector,
+                                             gene,
                                              hyperparameters)
-#                    log_scores[curr_joint_score] = [curr_psi_vector, assignments]
                 else:
                     lag_counter += 1
             else:
                 curr_joint_score = \
                     self.log_score_joint(reads, assignments, curr_psi_vector, gene,
                                          hyperparameters)
-#                log_scores[curr_joint_score] = [curr_psi_vector, assignments]
             total_log_scores.append(jscore)            
             burn_in_counter += 1
 
-            # For each read, sample its reassignment to one of the gene's isoforms
-            reassignments = self.sample_reassignments(reads, curr_psi_vector, gene)
+            ##
+            ## For each read, sample its reassignment to one of the isoforms
+            ##
+            # Get the log scaled Psi (psi frag) for current Psi vector
+            curr_log_psi_frag = \
+                miso_scores.compute_log_psi_frag(curr_psi_vector,
+                                                 self.scaled_lens_single_end,
+                                                 self.num_isoforms)
+            reassignments = self.sample_reassignments(reads, curr_log_psi_frag, gene)
 	    if len(reassignments) == 0:
                 empty_reassign_msg = "Empty reassignments for reads! " + str(reads)
                 self.miso_logger.error(empty_reassign_msg)
 		raise Exception, empty_reassign_msg
             curr_joint_score = \
-                self.log_score_joint(reads, assignments, curr_psi_vector, gene,
+                self.log_score_joint(reads,
+                                     assignments,
+                                     curr_psi_vector,
+                                     gene,
                                      hyperparameters)
             if curr_joint_score == -inf:
 		self.miso_logger.error("Moved to impossible state!")

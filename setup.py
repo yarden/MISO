@@ -92,6 +92,7 @@ setup(name = 'misopy',
                       'misopy/sashimi_plot/test-data/bam-data/heartWT2.sorted.bam.bai'])],
       # Required modules
       install_requires = [
+          "cython",
           "matplotlib",
           "numpy >= 1.5.0",
           "scipy >= 0.9.0",

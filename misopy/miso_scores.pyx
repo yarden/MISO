@@ -7,28 +7,41 @@ cimport numpy as np
 np.import_array()
 cimport cython
 
-from libc.math cimport log
+from libc.math cimport log, exp
 
 ctypedef np.int_t DTYPE_t
 ctypedef np.float_t DTYPE_float_t
 
-# cdef log_score_assignments(cnp.ndarray[DTYPE_t, ndim=1] isoform_nums,
-#                            cnp.ndarray[double, ndim=1] psi_vector,
-#                            cnp.ndarray[long, ndim=1] scaled_lens,
-#                            int num_reads):
-#     """
-#     Single-end
-#     ----------
-#     Score an assignment of a set of reads given psi
-#     and a gene (i.e. a set of isoforms).
-#     """
-#     cdef:
-#        cnp.ndarray[double, ndim=1] psi_frag
-#        cnp.ndarray[double, ndim=2] psi_frags
-#     psi_frag = np.log(psi_vector) + np.log(scaled_lens)
-#     psi_frag = psi_frag - scipy.misc.logsumexp(psi_frag)
-#     psi_frags = np.tile(psi_frag, [num_reads, 1])
-#     return psi_frags[np.arange(num_reads), isoform_nums]
+
+##
+## Statistics helper functions (TODO: remove to separate module)
+##
+cdef my_logsumexp(np.ndarray[DTYPE_float_t, ndim=1] log_vector,
+                  int vector_len):
+    """
+    Log sum exp.
+
+    Parameters:
+    -----------
+
+    log_vector : array of floats corresponding to log values.
+    vector_len : int, length of vector.
+
+    Returns:
+    --------
+
+    Result of log(sum(exp(log_vector)))
+    """
+    cdef DTYPE_float_t curr_exp_value = 0.0
+    cdef DTYPE_float_t sum_of_exps = 0.0
+    cdef DTYPE_float_t log_sum_of_exps = 0.0
+    cdef int curr_elt = 0
+    for curr_elt in xrange(vector_len):
+        curr_exp_value = exp(log_vector[curr_elt])
+        sum_of_exps += curr_exp_value
+    # Now take log of the sum of exp values
+    log_sum_of_exps = log(sum_of_exps)
+    return log_sum_of_exps
 
 
 ##
@@ -48,6 +61,79 @@ ctypedef np.float_t DTYPE_float_t
 #     return (proposed_psi_vector, proposed_alpha_vector)
 
 
+##
+## Sampler scoring functions
+##
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
+                          np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
+                          int num_reads):
+    """
+    Score an assignment of a set of reads given psi
+    and a gene (i.e. a set of isoforms).
+    """
+    cdef np.ndarray[DTYPE_float_t, ndim=1] log_scores = np.empty(num_reads)
+    cdef DTYPE_float_t curr_log_psi_frag = 0.0
+    cdef int curr_read = 0
+    cdef int curr_iso_num = 0
+    for curr_read in xrange(num_reads):
+        curr_iso_num = isoform_nums[curr_read]
+        curr_log_psi_frag = log_psi_frag_vector[curr_iso_num]
+        log_scores[curr_read] = curr_log_psi_frag 
+    return log_scores
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def sum_log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
+                              np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
+                              int num_reads):
+    """
+    Score an assignment of a set of reads given psi
+    and a gene (i.e. a set of isoforms).
+    """
+    cdef np.ndarray[DTYPE_float_t, ndim=1] assignment_scores = \
+        np.empty(num_reads)
+    cdef DTYPE_float_t sum_log_scores = 0.0
+    cdef DTYPE_float_t curr_assignment_score = 0.0
+    cdef int curr_read = 0
+    # Get log score of assignments
+    assignment_scores = log_score_assignments(isoform_nums,
+                                              log_psi_frag_vector,
+                                              num_reads)
+    for curr_read in xrange(num_reads):
+        curr_assignment_score = assignment_scores[curr_read]
+        sum_log_scores += curr_assignment_score
+    return sum_log_scores
+
+
+def compute_log_psi_frag(np.ndarray[DTYPE_float_t, ndim=1] psi_vector,
+                         np.ndarray[DTYPE_t, ndim=1] scaled_lens,
+                         int num_isoforms):
+    """
+    Compute log Psi frag from Psi vector.
+
+    FOR SINGLE-END right now.
+    """
+    # Log psi frag vector computed from psi vector
+    cdef np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag = \
+        np.empty(num_isoforms)
+    # Isoform counter
+    cdef int curr_isoform = 0
+    for curr_isoform in xrange(num_isoforms):
+        log_psi_frag[curr_isoform] = \
+            log(psi_vector[curr_isoform]) + log(scaled_lens[curr_isoform])
+    # Normalize scaled Psi values to sum to 1
+    log_psi_frag = \
+        log_psi_frag - my_logsumexp(log_psi_frag, num_isoforms)
+    return log_psi_frag
+    #curr_log_psi_frag = \
+    #    np.log(curr_psi_vector) + np.log(self.scaled_lens_single_end)
+    #curr_log_psi_frag = \
+    #    curr_log_psi_frag - scipy.misc.logsumexp(curr_log_psi_frag)
 
 
 @cython.boundscheck(False)
@@ -108,6 +194,10 @@ def log_score_reads(np.ndarray[DTYPE_t, ndim=2] reads,
     cdef int curr_read = 0
     # Isoform counter
     cdef int curr_iso_num = 0
+    ##
+    ## TODO: move 'log_one_val' and 'zero_log_prob_val' to be
+    ## global constants
+    ##
     # Constant used in probability calculation
     cdef double log_one_val = log(1)
     #cdef double log_zero_prob_val = -2000
