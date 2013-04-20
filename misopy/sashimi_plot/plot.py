@@ -280,9 +280,8 @@ def main():
     parser.add_option("--plot-event", dest="plot_event", nargs=3, default=None,
                       help="Plot read densities and MISO inferences for a given alternative event. "
                       "Takes the arguments: (1) event name (i.e. the ID= of the event based on MISO gff3 "
-                      "annotation file, (2) directory where MISO output is for that event type (e.g. if event is a "
-                      "skipped exon, provide the directory where the output for all SE events are), "
-                      "(3) path to plotting settings file.")
+                      "annotation file, (2) directory where indexed GFF annotation is (output of "
+                      "index_gff.py), (3) path to plotting settings file.")
     parser.add_option("--no-posteriors", dest="no_posteriors", default=False, action="store_true",
                       help="If given this argument, MISO posterior estimates are not plotted.")
     parser.add_option("--plot-title", dest="plot_title", default=None, nargs=1,
