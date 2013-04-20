@@ -162,7 +162,7 @@ def plot_density_single(settings, sample_label,
 
 
 # Plot density for a series of bam files.
-def plot_density(sashimi_obj, pickle_filename, event):
+def plot_density(sashimi_obj, pickle_filename, event, plot_title=None):
 #                 intron_scale=30, exon_scale=1, gene_posterior_ratio=5, posterior_bins=40,
 #                 colors=None, ymax=None, logged=False, show_posteriors=True, coverages=None,
 #                 number_junctions=True, resolution=.5, fig_width=8.5, fig_height=11,
@@ -191,6 +191,8 @@ def plot_density(sashimi_obj, pickle_filename, event):
     nxticks = settings["nxticks"]
     show_ylabel = settings["show_ylabel"]
     show_xlabel = settings["show_xlabel"]
+    if plot_title is None:
+        plot_title = event
     print "Using intron scale ", intron_scale
     print "Using exon scale ", exon_scale
 
@@ -680,7 +682,8 @@ def plot_density_from_file(settings_f, pickle_filename, event,
     # Setup the figure
     sashimi_obj.setup_figure()
 
-    plot_density(sashimi_obj, pickle_filename, event)
+    plot_density(sashimi_obj, pickle_filename, event,
+                 plot_title=plot_title)
 
     # Save figure
     sashimi_obj.save_plot(plot_label=plot_label)
