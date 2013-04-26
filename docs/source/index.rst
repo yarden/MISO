@@ -105,6 +105,8 @@ Updates
 
 **2013**
 
+* **April 26, 2013**: Released version ``0.4.9``. Contains Sashimi plot-related bug fixes.
+
 * **April 14, 2013**: Released version ``0.4.8``. Includes several important bug fixes and a new much faster version of the inference algorithm for single-end reads:
 
   * New, much faster inference scheme for single-end reads (implemented by Gabor Csardi) 
@@ -270,7 +272,8 @@ Releases
 
 MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python Package Index).
 
-* MISO version 0.4.8 (`misopy-0.4.8.tar.gz`_), April 14, 2013 release (**Latest version**)
+* MISO version 0.4.9 (`misopy-0.4.9.tar.gz`_), April 26, 2013 release (**Latest version**)
+* MISO version 0.4.8 (`misopy-0.4.8.tar.gz`_), April 14, 2013 release
 * MISO version 0.4.7 (`misopy-0.4.7.tar.gz`_), Christmas, 2013 release 
 * MISO version 0.4.6 (`misopy-0.4.6.tar.gz`_), September 27, 2012 release 
 * MISO version 0.4.5 (`misopy-0.4.5.tar.gz`_), September 4, 2012 release 
@@ -296,6 +299,7 @@ MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python P
 .. _misopy-0.4.6.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.6.tar.gz
 .. _misopy-0.4.7.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.7.tar.gz
 .. _misopy-0.4.8.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.8.tar.gz
+.. _misopy-0.4.9.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.9.tar.gz
 
 
 Latest version from GitHub
