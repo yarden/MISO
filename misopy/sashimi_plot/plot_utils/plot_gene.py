@@ -322,6 +322,7 @@ def plot_density(sashimi_obj, pickle_filename, event, plot_title=None):
                 else:
                     curr_ax.set_ylabel('RPKM',
                                        fontsize=font_size,
+                                       va="bottom",
                                        ha=y_horz_alignment)
 
         else:
