@@ -11,6 +11,7 @@ from collections import defaultdict
 
 import pysam
 
+import misopy
 import misopy.gff_utils as gff_utils
 import misopy.as_events as as_events
 import misopy.run_miso as run_miso
@@ -654,9 +655,15 @@ def main():
                       help="Number of processors to use. Only applies when running " \
                       "MISO on a single machine with multiple cores; does not apply " \
                       "to runs submitted to cluster with --use-cluster.")
+    parser.add_option("--version", dest="version", default=False,
+                      action="store_true",
+                      help="Print MISO version.")
     (options, args) = parser.parse_args()
 
     greeting()
+
+    if options.version:
+        print "MISO version %s\n" %(misopy.__version__)
 
     ##
     ## Load the settings file 
@@ -723,6 +730,8 @@ def main():
                               settings_fname=settings_filename,
                               prefilter=options.prefilter,
                               num_proc=options.num_proc)
+
+     
 
             
 		    

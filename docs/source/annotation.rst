@@ -12,12 +12,38 @@ are described in detail in the `MISO manual <index.html>`_.
 Exon-centric annotations
 ------------------------
 
-Available for human/mouse/fly genomes:
+Exon-centric annotations for human and mouse genomes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Version 1 of the human/mouse annotations (compiled 2008):**
+
+* `Mouse genome (mm9) alternative events`_ v1.0 
+* `Human genome (hg18) alternative events`_ v1.0 
+* `Human genome (hg19) alternative events`_ v1.0
+
+Version 1 of the annotations for human and mouse genomes was derived from by Wang et. al. (2008) using ESTs and various annotation databases (like Ensembl, UCSC and AceView) to define alternative splicing events.
+
+
+**Version 2 (alpha release) of the human/mouse annotations (compiled 2013):**
+
+* `Mouse genome (mm9) alternative events v2.0`_
+* `Mouse genome (mm10) alternative events v2.0`_
+* `Human genome (hg18) alternative events v2.0`_
+* `Human genome (hg19) alternative events v2.0`_
+
+Version 2 of the annotations was derived by considering all transcripts annotated in Ensembl genes, knownGenes (UCSC) and RefSeq genes.
+For mm9 and hg18 genomes, annotations from Version 1.
+
+These annotations are still being tested. Comments on the annotation are welcomed.
+
+
+
+Exon-centric annotations for fly genome
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * `Drosophila melanogaster alternative events (modENCODE)`_ (3.2M .zip)
-* `Mouse genome (mm9) alternative events`_ (7.9M, .zip)
-* `Human genome (hg18) alternative events`_ (45M, .zip)
-* `Human genome (hg19) alternative events`_ (8.6M, .zip)
+
+These annotations were derived by the Graveley lab.
 
 
 Isoform-centric annotations and reference gene models
@@ -37,7 +63,7 @@ We provide GFF3 annotations based on UCSC Table Browser's version of Ensembl gen
 
     - Annotation for hg19: `hg19 ensGene GFF annotation`_
 
-These can be used with MISO for isoform-centric quantitation, or with `sashimi_plot` to make plots of RNA-Seq data across gene models.
+These can be used with MISO for isoform-centric quantitation, or with `sashimi_plot`_ to make plots of RNA-Seq data across gene models.
 
 For convenience, we also provide GFF3 annotations of gene models from Ensembl (release 65), which were simply converted from Ensembl's GTF to GFF3 format and are otherwise identical to the Ensembl annotation.
 
