@@ -31,11 +31,15 @@ Version 1 of the annotations for human and mouse genomes was derived from by Wan
 * `Human genome (hg18) alternative events v2.0`_
 * `Human genome (hg19) alternative events v2.0`_
 
-Version 2 of the annotations was derived by considering all transcripts annotated in Ensembl genes, knownGenes (UCSC) and RefSeq genes.
-For mm9 and hg18 genomes, annotations from Version 1.
+Version 2 of the annotations was derived by considering all transcripts annotated in Ensembl genes, knownGenes (UCSC) and RefSeq genes. The flanking exons to alternative exons were chosen using the "common shortest" rule, i.e. taking the shortest stretches of flanking that are most common among the annotated transcripts for the gene. The code used to generate these annotations is available as part of `rnaseqlib`_.
+
+The annotations contain the following additional GFF attributes for each event's ``gene`` entry:
+
+* ``ensg_id``: Ensembl ID for the gene the event falls within
+* ``refseq_id``: RefSeq ID for the gene the event falls within
+* ``gsymbol``: Gene symbol for the gene the event falls within
 
 These annotations are still being tested. Comments on the annotation are welcomed.
-
 
 
 Exon-centric annotations for fly genome
@@ -82,7 +86,7 @@ In addition to exon-centric tandem 3' UTR annotations, alternative 3' UTR annota
 
 
 .. _A primer on probabilistic inference: http://cocosci.berkeley.edu/tom/papers/tutorial.pdf
-
+.. _rnaseqlib: http://rnaseqlib.readthedocs.org
 .. _distribute: http://packages.python.org/distribute/
 .. _pip: http://pypi.python.org/pypi/pip
 .. _Enthought Python Distribution: http://www.enthought.com/products/epd.php
@@ -120,6 +124,10 @@ In addition to exon-centric tandem 3' UTR annotations, alternative 3' UTR annota
 .. _Mouse genome (mm9) alternative events: http://genes.mit.edu/burgelab/miso/annotations/mm9_alt_events.zip
 .. _Human genome (hg18) alternative events: http://genes.mit.edu/burgelab/miso/annotations/hg18_alt_events.zip
 .. _Human genome (hg19) alternative events: http://genes.mit.edu/burgelab/miso/annotations/hg19_alt_events.zip
+.. _Mouse genome (mm9) alternative events v2.0: http://genes.mit.edu/burgelab/miso/annotations/ver2/miso_annotations_mm9_v2.zip
+.. _Mouse genome (mm10) alternative events v2.0: http://genes.mit.edu/burgelab/miso/annotations/ver2/miso_annotations_mm10_v2.zip
+.. _Human genome (hg18) alternative events v2.0: http://genes.mit.edu/burgelab/miso/annotations/ver2/miso_annotations_hg18_v2.zip
+.. _Human genome (hg19) alternative events v2.0: http://genes.mit.edu/burgelab/miso/annotations/ver2/miso_annotations_hg19_v2.zip
 .. _3′READS annotations for (mm9) mouse genome (.zip): http://genes.mit.edu/burgelab/miso/annotations/tian_apa_events.zip
 .. _Mus_musculus.NCBIM37.65.gff: http://genes.mit.edu/burgelab/miso/annotations/gene-models/Mus_musculus.NCBIM37.65.gff.zip
 .. _Mus_musculus.NCBIM37.65.with_chr.gff: http://genes.mit.edu/burgelab/miso/annotations/gene-models/Mus_musculus.NCBIM37.65.with_chr.gff.zip

@@ -54,6 +54,10 @@ We chose "Sashimi" because our tool plots the *raw* RNA-Seq data in addition to 
 Updates
 =======
 
+**2013**
+
+* **Wed, May 15**: Sashimi plot is now part of the Broad Integrated Genome Viewer (IGV) browser. 
+
 **2012**
 
 * **Wed, Feb 1**: New features:
@@ -276,6 +280,21 @@ Command-line options
 
 
 .. _plotting:
+
+
+Making Sashimi plots from IGV
+=============================
+
+To create Sashimi plot within IGV, download the snapshot release of IGV:
+
+`IGV Browser snapshot (http://www.broadinstitute.org/igv/projects/downloads/snapshot/IGV_snapshot.zip) <http://www.broadinstitute.org/igv/projects/downloads/snapshot/IGV_snapshot.zip>`_
+
+Run IGV with the Sashimi plot feature enabled: ::
+
+  java -jar -Xmx2g -DenableSashimi="true" igv.jar
+
+Load the RNA-Seq samples as BAM tracks.  Navigate to the region of interest, right click the tracks window and select "Sashimi plot" from the menu. A customizable Sashimi plot will appear in a new window, which can be saved in PNG or SVG formats.
+
 
 Visualizing and plotting MISO output
 ====================================
