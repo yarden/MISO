@@ -24,7 +24,7 @@ Exon-centric annotations for human and mouse genomes
 Version 1 of the annotations for human and mouse genomes was derived from by Wang et. al. (2008) using ESTs and various annotation databases (like Ensembl, UCSC and AceView) to define alternative splicing events.
 
 
-**Version 2 (alpha release) of the human/mouse annotations (compiled 2013):**
+**Version 2 (alpha release) of the human/mouse annotations (compiled May 2013):**
 
 * `Mouse genome (mm9) alternative events v2.0`_
 * `Mouse genome (mm10) alternative events v2.0`_
@@ -39,7 +39,7 @@ The annotations contain the following additional GFF attributes for each event's
 * ``refseq_id``: RefSeq ID for the gene the event falls within
 * ``gsymbol``: Gene symbol for the gene the event falls within
 
-These annotations are still being tested. Comments on the annotation are welcomed.
+These annotations are still being tested. Comments on the annotation are welcomed. 
 
 
 Exon-centric annotations for fly genome
@@ -47,7 +47,7 @@ Exon-centric annotations for fly genome
 
 * `Drosophila melanogaster alternative events (modENCODE)`_ (3.2M .zip)
 
-These annotations were derived by the Graveley lab.
+These fly genome annotations were derived by the Graveley lab.
 
 
 Isoform-centric annotations and reference gene models
