@@ -28,7 +28,7 @@ class Settings(object):
                                              "settings",
                                              "miso_settings.txt")
 
-        print "Loading settings from: %s" %(cls.settings_path)
+        print "Using MISO settings file: %s" %(cls.settings_path)
         if not os.path.isfile(cls.settings_path):
             print "Error: Settings file %s does not exist." \
                 %(cls.settings_path)

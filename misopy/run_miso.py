@@ -358,11 +358,6 @@ def main():
                       nargs=1, default=None,
                       help="Label for MISO summary file. If not given, "
                       "uses basename of MISO output directory.")
-    parser.add_option("--summarize-multi-iso-samples", dest="summarize_samples",
-                      nargs=2, default=None,
-		      help="Compute summary statistics of the given set of "
-                      "samples from multi-isoform runs. Expects a directory with "
-                      "MISO output and a directory to output summary file to.")
     parser.add_option("--use-cluster", action="store_true",
                       dest="use_cluster", default=False)
     parser.add_option("--chunk-jobs", dest="chunk_jobs",
