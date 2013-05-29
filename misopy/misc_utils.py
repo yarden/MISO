@@ -5,6 +5,36 @@ import os
 import sys
 import time
 
+COMPRESS_PREFIX = "misocomp"
+
+def load_compressed_ids_to_genes(compressed_filename):
+    """
+    Load mapping from compressed IDs to genes.
+    """
+    if not os.path.exists(compressed_filename):
+        print "Error: %s does not exist." %(compressed_filename)
+        sys.exit(1)
+    compressed_ids_to_genes = {}
+    # Load mapping from gene IDs to their hashes
+    compressed_ids_to_genes = shelve.open(compressed_filename)
+    return compressed_ids_to_genes
+
+
+def is_compressed_name(event_name):
+    return event_name.startswith(COMPRESS_PREFIX)
+
+
+def is_compressed_index(index_filename):
+    """
+    Check if the given index filename uses a compressed (hash)
+    ID or not.
+    """
+    basename = os.path.basename(index_filename)
+    if is_compressed_name(basename):
+        return True
+    return False
+
+
 def make_dir(dirpath):
     if os.path.isfile(dirpath):
         print "Error: %s is a file!" %(dirpath)

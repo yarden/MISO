@@ -19,8 +19,11 @@ import misopy.miso_sampler as miso
 import misopy.Gene as gene_utils
 import misopy.gff_utils as gff_utils
 
-import misopy.index_gff as index_gff
-from index_gff import is_compressed_index
+#import misopy.index_gff as index_gff
+#from index_gff import is_compressed_index
+
+import misopy.misc_utils as misc_utils
+from misc_utils import is_compressed_index
 
 from misopy.parse_csv import *
 from misopy.samples_utils import *
@@ -381,7 +384,7 @@ def main():
                       nargs=1, default=None,
                       help="Use compressed event IDs. Takes as input a "
                       "genes_to_filenames.shelve file produced by the "
-                      "index_gff.py script.")
+                      "index_gff script.")
     ##
     ## Gene utilities
     ##

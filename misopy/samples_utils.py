@@ -14,8 +14,8 @@ import misopy
 
 from misopy.parse_csv import *
 from misopy.credible_intervals import *
+import misopy.misc_utils as misc_utils
 
-import misopy.index_gff as index_gff
 
 def maxi(l):
     m = max(l)
@@ -184,7 +184,7 @@ def summarize_sampler_results(samples_dir, summary_filename,
     if use_compressed is not None:
         print "  - Loading compressed IDs mapping from: %s" %(use_compressed)
         # Load mapping from gene IDs to their hashes
-        compressed_ids_to_genes = index_gff.load_compressed_ids_to_genes(use_compressed)
+        compressed_ids_to_genes = misc_utils.load_compressed_ids_to_genes(use_compressed)
     
     for samples_filename in all_filenames:
         # Parse sampler parameters
@@ -205,7 +205,7 @@ def summarize_sampler_results(samples_dir, summary_filename,
         else:
             # If we're not given a mapping to compressed IDs, check
             # that the event IDs do not look compressed
-            if index_gff.is_compressed_name(event_name):
+            if misc_utils.is_compressed_name(event_name):
                 print "WARNING: %s looks like a compressed id, but no mapping file " \
                     "from compressed IDs to event IDs was given! Try: --use-compressed" \
                     %(event_name)
