@@ -139,10 +139,11 @@ def plot_density_single(settings, sample_label,
                                                        strand),
                fontsize=font_size)
         max_graphcoords = max(graphcoords) - 1
+        coords_fontsize = font_size - (font_size * 0.2)
         xticks(linspace(0, max_graphcoords, nxticks),
                [graphToGene[int(x)] for x in \
                 linspace(0, max_graphcoords, nxticks)],
-               fontsize=font_size)
+               fontsize=coords_fontsize)
     else:
         axvar.spines['bottom'].set_color('none')
         xticks([])
@@ -289,7 +290,7 @@ def plot_density(sashimi_obj, pickle_filename, event, plot_title=None):
 
     # Reset axes based on this.
     # Set fake ymin bound to allow lower junctions to be visible
-    fake_ymin = -0.5 * max_used_yval
+    fake_ymin = -0.6 * max_used_yval
     universal_yticks = linspace(0, max_used_yval,
                                 nyticks + 1)
     # Round up yticks
@@ -353,7 +354,7 @@ def plot_density(sashimi_obj, pickle_filename, event, plot_title=None):
     ax = subplot2grid((nfiles + 3, gene_posterior_ratio), (nfiles + 1, 0),
                       colspan=gene_posterior_ratio - 1, rowspan=2)
     plot_mRNAs(tx_start, mRNAs, strand, graphcoords, reverse_minus)
-    subplots_adjust(hspace=.1, wspace=.7)
+    subplots_adjust(hspace=.10, wspace=.7)
 
 
 def getScaling(tx_start, tx_end, strand, exon_starts, exon_ends,
@@ -605,8 +606,8 @@ def plot_posterior_single(miso_f, axvar, posterior_bins,
     # Use same x-axis for all subplots
     # but only show x-axis labels for the bottom plot
     xlim([0, 1])
-    xticks([0, .2, .4, .6, .8, 1])
-    xticks(fontsize=font_size)
+    psi_axis_fontsize = font_size - (font_size * 0.3)
+    xticks([0, .2, .4, .6, .8, 1], fontsize=psi_axis_fontsize)
     
     if (not bar_posterior) and showYaxis:
         axes_to_show = ['bottom', 'left']
