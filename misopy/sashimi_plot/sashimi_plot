@@ -1,10 +1,10 @@
+# -*- mode: python; -*-
 ##
 ## sashimi-plot
 ##
 ## Utility for visualizing RNA-Seq densities along gene models and
 ## for plotting MISO output
 ##
-
 import os
 import sys
 import glob
