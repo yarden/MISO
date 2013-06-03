@@ -117,6 +117,7 @@ setup(name = 'misopy',
                  'misopy/summarize_miso',
                  'misopy/index_gff',
                  # sashimi_plot scripts
+                 'misopy/sashimi_plot/plot.py',
                  'misopy/sashimi_plot/sashimi_plot'],
       data_files = [('misopy/settings',
                      ['misopy/settings/miso_settings.txt',
