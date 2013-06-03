@@ -19,11 +19,7 @@ import misopy.miso_sampler as miso
 import misopy.Gene as gene_utils
 import misopy.gff_utils as gff_utils
 
-#import misopy.index_gff as index_gff
-#from index_gff import is_compressed_index
-
 import misopy.misc_utils as misc_utils
-from misc_utils import is_compressed_index
 
 from misopy.parse_csv import *
 from misopy.samples_utils import *
@@ -108,7 +104,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
     bamfile = sam_utils.load_bam_reads(bam_filename,
                                        template=template)
     # Check if we're in compressed mode
-    compressed_mode = is_compressed_index(gff_index_filename)
+    compressed_mode = misc_utils.is_compressed_index(gff_index_filename)
     
     for gene_id, gene_info in gff_genes.iteritems():
         lookup_id = gene_id
@@ -487,4 +483,9 @@ def main():
                 print " - ", exon
 
 if __name__ == '__main__':
-    main()
+    print "MISO (Mixture of Isoforms model)"
+    print "run_miso.py is deprecated and has been replaced by \'miso\'. " \
+          "Please run \'miso\' instead."
+    print "To compare samples and get differential isoform statistics, " \
+          "run \'compare_miso\'"
+    print "To summarize samples, run \'summarize_miso\'"

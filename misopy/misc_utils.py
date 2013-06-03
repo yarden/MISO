@@ -77,3 +77,11 @@ def which(program):
             if is_exe(exe_file):
                 return exe_file
     return None
+
+
+def main():
+    pass
+
+
+if __name__ == "__main__":
+    main()
