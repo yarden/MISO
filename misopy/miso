@@ -16,7 +16,6 @@ import misopy.gff_utils as gff_utils
 import misopy.as_events as as_events
 import misopy.run_miso as run_miso
 import misopy.misc_utils as misc_utils
-import misopy.exon_utils as exon_utils
 import misopy.run_events_analysis as run_events
 from misopy.parse_csv import *
 from misopy.settings import Settings, load_settings
