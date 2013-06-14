@@ -484,8 +484,4 @@ def main():
 
 if __name__ == '__main__':
     print "MISO (Mixture of Isoforms model)"
-    print "run_miso.py is deprecated and has been replaced by \'miso\'. " \
-          "Please run \'miso\' instead."
-    print "To compare samples and get differential isoform statistics, " \
-          "run \'compare_miso\'"
-    print "To summarize samples, run \'summarize_miso\'"
+    main()
