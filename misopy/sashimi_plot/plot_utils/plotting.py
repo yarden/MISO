@@ -170,6 +170,7 @@ def make_sans_serif(font_size=10):
     plt.rcParams['ps.useafm'] = True
     plt.rcParams['pdf.fonttype'] = 42
     #rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+    print "Setting to FreeSans"
     rc('font',**{'family':'sans-serif','sans-serif':['FreeSans']})
     plt.rcParams['pdf.fonttype'] = 42
     plt.rcParams['font.size'] = font_size
