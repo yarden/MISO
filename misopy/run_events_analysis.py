@@ -198,7 +198,8 @@ class GenesDispatcher:
             batch_logfile = os.path.join(self.batch_logs_dir,
                                          "batch-%d-%s.log" %(batch_num,
                                                              time_str))
-            cmd_to_run = "%s >> \"%s\";" %(miso_cmd, batch_logfile)
+            # Include stderr in output
+            cmd_to_run = "%s &>> \"%s\";" %(miso_cmd, batch_logfile)
             if not self.use_cluster:
                 # Run locally
                 p = subprocess.Popen(cmd_to_run, shell=True)
