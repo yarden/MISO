@@ -46,7 +46,13 @@ def plot_density_single(settings, sample_label,
     TODO: If comparison files are available, plot Bayes factors too.
     """
     bamfile = pysam.Samfile(bam_filename, 'rb')
-    subset_reads = bamfile.fetch(reference=chrom, start=tx_start,end=tx_end)
+    try:
+        subset_reads = bamfile.fetch(reference=chrom, start=tx_start,end=tx_end)
+    except ValueError as e:
+        print "Error retrieving files from %s: %s" %(chrom, str(e))
+        print "Are you sure %s appears in your BAM file?" %(chrom)
+        print "Aborting plot..."
+        return axvar
     wiggle, jxns = readsToWiggle_pysam(subset_reads, tx_start, tx_end)
     wiggle = 1e3 * wiggle / coverage
                 
@@ -396,6 +402,10 @@ def readsToWiggle_pysam(reads, tx_start, tx_end):
     wiggle = zeros((tx_end - tx_start + 1), dtype='f')
     jxns = {}
     for read in reads:
+        # Skip reads with no CIGAR string
+        if read.cigar is None:
+            print "Skipping read with no CIGAR string: %s" %(read.cigar)
+            continue
         cigar_str = sam_utils.sam_cigar_to_str(read.cigar)
 
         if ("N" in cigar_str) and (cigar_str.count("N") > 1):

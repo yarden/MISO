@@ -176,13 +176,15 @@ def run_on_cluster(cmd, job_name, cluster_output_dir,
         print "Warning: Unknown queue type: %s" %(queue_type)
         queue_name = queue_type
     
-    if queue_type == None:
-        print "  - queue: unspecified"
+    if queue_type is None:
+        print "  - queue type: unspecified"
     else:
-        print "  - queue: %s, using queue name %s" %(queue_type,
-                                                     queue_name)
-
-    #print "  - cmd: %s" %(cmd)
+        print "  - queue type: %s" %(queue_type)
+    if queue_name is None:
+        print " - queue name unspecified"
+    else:
+        print " - queue name: %s" %(queue_name)
+        
     misc_utils.make_dir(cluster_output_dir)
     if cluster_scripts_dir == None:
 	cluster_scripts_dir = os.path.join(cluster_output_dir,
