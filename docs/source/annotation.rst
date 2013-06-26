@@ -61,7 +61,7 @@ These contain annotations of:
 1. Skipped exons (SE)
 2. Alternative 3'/5' splice sites (A3SS, A5SS)
 3. Mutually exclusive exons (MXE)
-5. Retained introns (RI)
+4. Retained introns (RI)
 
 Version 2 of the annotations was derived by considering all transcripts annotated in Ensembl genes, knownGenes (UCSC) and RefSeq genes. The flanking exons to alternative exons were chosen using the "common shortest" rule, i.e. taking the shortest stretches of flanking that are most common among the annotated transcripts for the gene. The code used to generate these annotations is available as part of `rnaseqlib`_.
 
