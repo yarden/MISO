@@ -7,7 +7,7 @@
 
 
 .. image:: images/MISO-docs-logo-small.png
-   :scale: 65%
+   :scale: 60%
    :align: right
    :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
 
@@ -78,7 +78,7 @@ the family of techniques known as Markov Chain Monte Carlo ("MCMC").
 For details of the inference procedure, see Katz et. al. (2010).
 
 Features
-========
+--------
 
 * Estimates of isoform expression (|Psi| values, for "Percent Spliced In" or "Percent Spliced Isoform") and differential
   isoform expression for single-end or paired-end RNA-Seq data
@@ -99,7 +99,7 @@ Mailing list where users can ask technical questions is available at `miso-users
 Installation
 ============
 
-The primary version of MISO is called ``fastmiso`` -- which is written in a combination of Python and the C programming language. This version is approximately 60-100x faster than the older Python-only version of MISO, which is no longer supported. To install ``fastmiso``, see section :ref:`installing-fastmiso`. (To download the Python only version of MISO, see :ref:`installing-pymiso`.) We recommend using ``fastmiso``.
+The primary version of MISO is called ``fastmiso`` -- which is written in a combination of Python and the C programming language. This version is approximately 60-100x faster than the older Python-only version of MISO, which is no longer supported. To install ``fastmiso``, see section :ref:`installing-fastmiso`. 
 
 To install MISO, either download one of the stable releases (see :ref:`releases`) or install the latest version from our GitHub repository. See below for detailed installation instructions.
 
@@ -405,7 +405,7 @@ The event types covered are:
 6. Alternative first exons (AFE)
 7. Alternative last exons (ALE)
 
-These exon-centric annotations can be downloaded from the `MISO annotations page <annotation.html>`_.
+These annotations can be downloaded from the `MISO annotations page <annotation.html>`_.
 
 For performing isoform-centric analyses, any gene models annotation can be used (e.g. from Ensembl, UCSC or RefSeq) as long as it is specified in the GFF3 format. As an example, we provide GFF3 annotations from Ensembl (which were converted from Ensembl's GTF format to GFF3), available in :ref:`iso-centric`.
 
@@ -1391,153 +1391,153 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 
 19. **When should I use paired-end mode versus single-end mode?** Paired-end inference should be used when possible, with one important exception. MISO only uses properly paired reads within an annotated event. If the GFF annotation you use contains events that are roughly as long or shorter than your insert length, then simply due to the length constraint, there won't be many read pairs in your data where both ends are mapped within the annotated event. In this case, it's best to use single-end reads. Failure to use single-end mode in this case can result in many events appearing not to have enough coverage, because no paired mates contained entirely within the event can be found, in spite of there being many read pairs where one of the mates maps within the event and is informative about the isoforms that are being expressed. Also, as of release 0.4.8, single-end inference is dramatically faster (particularly for high-coverage datasets) than paired-end inference. (`back <#faq>`_)
 
-.. _sec:
+.. .. _sec:
 
-Single-end Event Counts (SEC) format 
-====================================
+.. Single-end Event Counts (SEC) format 
+.. ====================================
 
-.. WARNING:: 
-   The SEC format is deprecated - we recommend using BAM files along with GFF annotation files instead, as that format is more flexible and standard, and allows representation of both individual alternative splicing events (for exon-centric) and whole mRNA isoforms (for isoform-centric analyses).
+.. .. WARNING:: 
+..    The SEC format is deprecated - we recommend using BAM files along with GFF annotation files instead, as that format is more flexible and standard, and allows representation of both individual alternative splicing events (for exon-centric) and whole mRNA isoforms (for isoform-centric analyses).
 
-The Single-end Event Counts (SEC) format can be used to quantitate individual alternative splicing events
-(exon-centric analyses) using single-end RNA-Seq data sets. This format does not support paired-end
-information and is best suited for cases where individual events are quantitated. The format currently 
-supports skipped exons (SE), alternative 3' UTRs (TandemUTR), and retained introns (RI). The format is
-described below.
+.. The Single-end Event Counts (SEC) format can be used to quantitate individual alternative splicing events
+.. (exon-centric analyses) using single-end RNA-Seq data sets. This format does not support paired-end
+.. information and is best suited for cases where individual events are quantitated. The format currently 
+.. supports skipped exons (SE), alternative 3' UTRs (TandemUTR), and retained introns (RI). The format is
+.. described below.
 
-SEC format specification
-------------------------
+.. SEC format specification
+.. ------------------------
 
-The SEC format is a two-column *tab-separated* format, where the first column identifies the coordinates of the 
-alternative events, and the second gives a set of counts. The elements in each field as always
-separated by semicolons (``;``).
+.. The SEC format is a two-column *tab-separated* format, where the first column identifies the coordinates of the 
+.. alternative events, and the second gives a set of counts. The elements in each field as always
+.. separated by semicolons (``;``).
 
-Skipped exons (SE) format
-^^^^^^^^^^^^^^^^^^^^^^^^^
+.. Skipped exons (SE) format
+.. ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For skipped exons, the SEC format is:  ::
+.. For skipped exons, the SEC format is:  ::
 
-  up_exon;skipped_exon;down_exon	up;se;dn;ijxn1;ijxn2;ejxn
+..   up_exon;skipped_exon;down_exon	up;se;dn;ijxn1;ijxn2;ejxn
 
-where the first column specifies the coordinates as follows:
+.. where the first column specifies the coordinates as follows:
 
-* ``up_exon``: coordinates of the exon upstream (5') of the skipped exon,
+.. * ``up_exon``: coordinates of the exon upstream (5') of the skipped exon,
 
-* ``skipped_exon``: coordinates of the skipped exon,
+.. * ``skipped_exon``: coordinates of the skipped exon,
 
-* ``down_exon``: coordinates of the exon downstream (3') of the skipped exon
+.. * ``down_exon``: coordinates of the exon downstream (3') of the skipped exon
 
-and the second column specifies the counts for the skipped exon event:
+.. and the second column specifies the counts for the skipped exon event:
 
-  .. image:: images/MISO-SEC-SE.png
-   :scale: 40%
-   :alt: SEC format for SE
-   :align: right
+..   .. image:: images/MISO-SEC-SE.png
+..    :scale: 40%
+..    :alt: SEC format for SE
+..    :align: right
 
-* ``up``: number of reads aligning to the upstream exon body,
+.. * ``up``: number of reads aligning to the upstream exon body,
 
-* ``se``: number of reads aligning to the skipped exon body,
+.. * ``se``: number of reads aligning to the skipped exon body,
 
-* ``dn``: number of reads aligning to the downstream exon body,
+.. * ``dn``: number of reads aligning to the downstream exon body,
 
-* ``ijxn1``: number of reads aligning to the "upstream inclusion junction" (connecting the upstream and skipped exons)
+.. * ``ijxn1``: number of reads aligning to the "upstream inclusion junction" (connecting the upstream and skipped exons)
 
-* ``ijxn2``: number of reads aligning to the "downstream inclusion junction" (connecting the skipped and downstream exons)
+.. * ``ijxn2``: number of reads aligning to the "downstream inclusion junction" (connecting the skipped and downstream exons)
 
-* ``ejxn``: number of reads aligning to the "exclusion junction" (connecting the upstream and downstream exons)
+.. * ``ejxn``: number of reads aligning to the "exclusion junction" (connecting the upstream and downstream exons)
 
-The reads corresponding to each set of counts are shown in the figure above. 
+.. The reads corresponding to each set of counts are shown in the figure above. 
 
-An example SE event is: ::
+.. An example SE event is: ::
 
-  chr1:88443357:88443232:-;chr1:88442382:88442277:-;chr1:88440158:88439569:-	22;39;91;2;2;1
-
-
-Alternative tandem 3' UTRs (TandemUTR) format
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For alternative tandem 3' UTRs, the SEC format is: ::
-
-  core_coords;ext_coords	ext_count;core_count
-
-where the first column specifies the coordinates of the core and extension regions of the TandemUTR event as follows:
-
- .. image:: images/MISO-SEC-TandemUTR.png
-   :scale: 40%
-   :alt: SEC format for TandemUTR
-   :align: right
-
-* ``core_coords``: coordinates of the core region,
-* ``ext_coords``: coordinates of the extension region
-
-and the second column specifies the counts in the regions:
-
-* ``ext_count``: number of reads in the extension region,
-* ``core_count``: number of reads in the core region
+..   chr1:88443357:88443232:-;chr1:88442382:88442277:-;chr1:88440158:88439569:-	22;39;91;2;2;1
 
 
-  .. note:: 
-     The coordinates of the event are given in the order core, extension but the counts are given in the *opposite order* of extension count followed by core count.
+.. Alternative tandem 3' UTRs (TandemUTR) format
+.. ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The reads corresponding to each count are shown in the figure above.
+.. For alternative tandem 3' UTRs, the SEC format is: ::
 
-An example TandemUTR event is: ::
+..   core_coords;ext_coords	ext_count;core_count
 
-  chr1:136527951:136528770:+;chr1:136528771:136529456:+	 41;147
+.. where the first column specifies the coordinates of the core and extension regions of the TandemUTR event as follows:
 
-Retained intron (RI) format 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..  .. image:: images/MISO-SEC-TandemUTR.png
+..    :scale: 40%
+..    :alt: SEC format for TandemUTR
+..    :align: right
 
-For retained introns, the SEC format is: ::
+.. * ``core_coords``: coordinates of the core region,
+.. * ``ext_coords``: coordinates of the extension region
 
-  up_exon;retained_intron;dn_exon	up;ri;dn;ejxn
+.. and the second column specifies the counts in the regions:
 
-where the first column specifies the coordinates of the retained intron and its flanking exons as follows:
-
- .. image:: images/MISO-SEC-RI.png
-   :scale: 40%
-   :alt: SEC format for RI
-   :align: right
-
-* ``up_exon``: coordinates of the exon upstream (5') of the retained intron
-* ``retained_intron``: coordinates of the retained intron
-* ``dn_exon``: coordinates of the exon downstream (3') of the retained intron
-
-and the second column specifies the counts in the regions:
-
-* ``up``: number of reads in the upstream exon,
-* ``ri``: number of reads in the retained intron. This includes: (1) reads in the junction between the upstream exon and retained intron, (2) reads in the body of the retained intron, and (3) reads in the junction between the retained intron and downstream exon,
-* ``dn``: number of reads in the downstream exon,
-* ``ejxn``: number of reads in the "exclusion junction" connecting the upstream and downstream exon (these reads support splicing out of the intron.)
-
-An example RI event is: ::
-
-  chr3:141907860:141907975:-;chr3:141907976:141910258:-;chr3:141910259:141910379:-	171;8;281;103
-
-The reads corresponding to each count are shown in the figure above.
+.. * ``ext_count``: number of reads in the extension region,
+.. * ``core_count``: number of reads in the core region
 
 
-Running MISO on SEC files
-^^^^^^^^^^^^^^^^^^^^^^^^^
+..   .. note:: 
+..      The coordinates of the event are given in the order core, extension but the counts are given in the *opposite order* of extension count followed by core count.
 
-To run MISO on a SEC format, the ``run_events_analysis.py --compute-events-psi`` script is used: ::
+.. The reads corresponding to each count are shown in the figure above.
 
-  --compute-events-psi
-                        Compute Psi values for all events. Expects two
-                        arguments: a set of labels and a set of filenames with
-                        associated read counts.
+.. An example TandemUTR event is: ::
 
-The first argument to ``--compute-events-psi`` is a comma-separated set of sample labels and the second is a comma-separated set of counts filenames. For instance, ``--compute-events-psi control,knockdown control.counts,knockdown.counts`` would run MISO on the SEC files ``control.counts`` and ``knockdown.counts``, labeling the output directories ``control`` and ``knockdown``, respectively. When running on a single sample, the comma notation can be dropped (e.g. ``--compute-events-psi control control.counts``).
+..   chr1:136527951:136528770:+;chr1:136528771:136529456:+	 41;147
 
-To use ``--compute-events-psi``, the type of event must be specified through the ``--event-type`` option, which
-can be either ``SE`` (skipped exons), ``TandemUTR`` (alt. tandem UTRs) or ``RI`` (retained introns.) The sequenced 
-read length must be specified with ``--read-len``. Optionally, the overhang length imposed on junction reads during alignment can be specified with ``--overhang-len``.
+.. Retained intron (RI) format 
+.. ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For example, the following command would run MISO on a set of skipped exons in the SEC file ``control.counts`` in an experiment where the reads are 35 nt long and an overhang length of 4 was placed on junction reads during alignment: ::
+.. For retained introns, the SEC format is: ::
 
-  python run_events_analysis.py --compute-events-psi control control.counts --event-type SE --read-len 35 --overhang-len 4 --output-dir control
+..   up_exon;retained_intron;dn_exon	up;ri;dn;ejxn
 
-This will create a directory called ``SE/control/`` with MISO output for each event in ``control.counts`` that meets the default read counts filter.
+.. where the first column specifies the coordinates of the retained intron and its flanking exons as follows:
+
+..  .. image:: images/MISO-SEC-RI.png
+..    :scale: 40%
+..    :alt: SEC format for RI
+..    :align: right
+
+.. * ``up_exon``: coordinates of the exon upstream (5') of the retained intron
+.. * ``retained_intron``: coordinates of the retained intron
+.. * ``dn_exon``: coordinates of the exon downstream (3') of the retained intron
+
+.. and the second column specifies the counts in the regions:
+
+.. * ``up``: number of reads in the upstream exon,
+.. * ``ri``: number of reads in the retained intron. This includes: (1) reads in the junction between the upstream exon and retained intron, (2) reads in the body of the retained intron, and (3) reads in the junction between the retained intron and downstream exon,
+.. * ``dn``: number of reads in the downstream exon,
+.. * ``ejxn``: number of reads in the "exclusion junction" connecting the upstream and downstream exon (these reads support splicing out of the intron.)
+
+.. An example RI event is: ::
+
+..   chr3:141907860:141907975:-;chr3:141907976:141910258:-;chr3:141910259:141910379:-	171;8;281;103
+
+.. The reads corresponding to each count are shown in the figure above.
+
+
+.. Running MISO on SEC files
+.. ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. To run MISO on a SEC format, the ``run_events_analysis.py --compute-events-psi`` script is used: ::
+
+..   --compute-events-psi
+..                         Compute Psi values for all events. Expects two
+..                         arguments: a set of labels and a set of filenames with
+..                         associated read counts.
+
+.. The first argument to ``--compute-events-psi`` is a comma-separated set of sample labels and the second is a comma-separated set of counts filenames. For instance, ``--compute-events-psi control,knockdown control.counts,knockdown.counts`` would run MISO on the SEC files ``control.counts`` and ``knockdown.counts``, labeling the output directories ``control`` and ``knockdown``, respectively. When running on a single sample, the comma notation can be dropped (e.g. ``--compute-events-psi control control.counts``).
+
+.. To use ``--compute-events-psi``, the type of event must be specified through the ``--event-type`` option, which
+.. can be either ``SE`` (skipped exons), ``TandemUTR`` (alt. tandem UTRs) or ``RI`` (retained introns.) The sequenced 
+.. read length must be specified with ``--read-len``. Optionally, the overhang length imposed on junction reads during alignment can be specified with ``--overhang-len``.
+
+.. For example, the following command would run MISO on a set of skipped exons in the SEC file ``control.counts`` in an experiment where the reads are 35 nt long and an overhang length of 4 was placed on junction reads during alignment: ::
+
+..   python run_events_analysis.py --compute-events-psi control control.counts --event-type SE --read-len 35 --overhang-len 4 --output-dir control
+
+.. This will create a directory called ``SE/control/`` with MISO output for each event in ``control.counts`` that meets the default read counts filter.
 
 
 

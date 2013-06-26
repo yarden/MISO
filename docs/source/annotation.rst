@@ -20,8 +20,19 @@ Version 1 of the human/mouse annotations (compiled 2008):
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * `Mouse genome (mm9) alternative events v1.0`_
+* `Mouse genome (mm10) alternative events v1.0`_
 * `Human genome (hg18) alternative events v1.0`_ 
 * `Human genome (hg19) alternative events v1.0`_ 
+
+These contain annotations of:
+
+1. Skipped exons (SE)
+2. Alternative 3'/5' splice sites (A3SS, A5SS)
+3. Mutually exclusive exons (MXE)
+4. Tandem 3' UTRs (TandemUTR)
+5. Retained introns (RI)
+6. Alternative first exons (AFE)
+7. Alternative last exons (ALE)
 
 Version 1 of the annotations for human and mouse genomes was derived from by Wang et. al. (2008) using ESTs and various annotation databases (like Ensembl, UCSC and AceView) to define alternative splicing events. Briefly, each splicing event was considered alternative if it was supported by several ESTs, and alternative tandem 3' UTRs (TandemUTR events) were derived from `PolyA DB`_.
 
@@ -29,7 +40,7 @@ Note that Version 1 of the annotations was originally made for mm9 and hg18, and
 
  .. warning::
 
-    The lifted over Version 1 annotations of mm10/hg19 contain the ``ID`` entries in the GFF from mm9/hg18; however, the actual genomic coordinates, which are the only part read by MISO, have been lifted over to the more recent genomes. The ``ID`` value used in the GFF is arbitrary and is ignored by MISO; it is only used to encode the gene models hierarchy of genes, mRNAs and exons.
+    The lifted over Version 1 annotations of mm10/hg19 contain the ``ID`` entries in the GFF from mm9/hg18; however, the actual genomic coordinates, which are the only part read by MISO, have been lifted over to the more recent genomes. The ``ID`` value used in the GFF is arbitrary and is ignored by MISO; it is only used to encode the gene models hierarchy of genes, mRNAs and exons. Also note that lifting over is an imperfect process: not all events can always be fully lifted over.
 
 
 **Mapping from alternative events to genes for Version 1 annotations**
@@ -44,6 +55,13 @@ Version 2 (alpha release) of the human/mouse annotations (compiled June 2013):
 * `Mouse genome (mm10) alternative events v2.0`_
 * `Human genome (hg18) alternative events v2.0`_
 * `Human genome (hg19) alternative events v2.0`_
+
+These contain annotations of:
+
+1. Skipped exons (SE)
+2. Alternative 3'/5' splice sites (A3SS, A5SS)
+3. Mutually exclusive exons (MXE)
+5. Retained introns (RI)
 
 Version 2 of the annotations was derived by considering all transcripts annotated in Ensembl genes, knownGenes (UCSC) and RefSeq genes. The flanking exons to alternative exons were chosen using the "common shortest" rule, i.e. taking the shortest stretches of flanking that are most common among the annotated transcripts for the gene. The code used to generate these annotations is available as part of `rnaseqlib`_.
 
@@ -143,6 +161,7 @@ Updates
 .. _hg18 ensGene GFF annotation: http://genes.mit.edu/burgelab/miso/annotations/ucsc_tables/hg18/ensGene.gff3
 .. _hg19 ensGene GFF annotation: http://genes.mit.edu/burgelab/miso/annotations/ucsc_tables/hg19/ensGene.gff3
 .. _Mouse genome (mm9) alternative events v1.0: http://genes.mit.edu/burgelab/miso/annotations/miso_annotations_mm9_v1.zip
+.. _Mouse genome (mm10) alternative events v1.0: http://genes.mit.edu/burgelab/miso/annotations/miso_annotations_mm10_v1.zip
 .. _Human genome (hg18) alternative events v1.0: http://genes.mit.edu/burgelab/miso/annotations/miso_annotations_hg18_v1.zip
 .. _Human genome (hg19) alternative events v1.0: http://genes.mit.edu/burgelab/miso/annotations/miso_annotations_hg19_v1.zip
 .. _Mouse genome (mm9) alternative events v2.0: http://genes.mit.edu/burgelab/miso/annotations/ver2/miso_annotations_mm9_v2.zip
