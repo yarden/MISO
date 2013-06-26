@@ -17,7 +17,11 @@
 What is sashimi_plot?
 =====================
 
-``sashimi_plot`` is a utility for automatically producing publication-quality plots for RNA-Seq analyses of isoform expression. It is part of the `MISO`_ framework. In particular, ``sashimi_plot`` can: (1) plot raw RNA-Seq densities along exons and junctions for multiple samples, while simultaneously visualizing the gene model/isoforms to which reads map, and (2) plot MISO output alongside the raw data or separately.
+``sashimi_plot`` is a utility for automatically producing publication-quality plots Sashimi plots for RNA-Seq analyses of isoform expression. It is part of the `MISO`_ framework. In particular, ``sashimi_plot`` can: (1) plot raw RNA-Seq densities along exons and junctions for multiple samples, while simultaneously visualizing the gene model/isoforms to which reads map, and (2) plot MISO output alongside the raw data or separately. Sashimi plots can also be made from IGV (see :ref:`igv-sashimi`).
+
+Sashimi plots are described here:
+
+Katz Y, Wang ET, Silterra J, Schwartz S, Wong B, Mesirov JP, Airoldi EM, Burge, CB. Sashimi plots: Quantitative visualization of RNA sequencing read alignments. `Sashimi plots: Quantitative visualization of RNA sequencing read alignments <http://arxiv.org/pdf/1306.3466v1>`_. `arXiv:1306.3466 <http://arxiv.org/abs/1306.3466>`_ [q-bio.GN], 2013.
 
 The MISO framework is described in Katz et. al., `Analysis and design of RNA sequencing experiments for identifying isoform regulation`_. *Nature Methods* (2010).
 
@@ -48,7 +52,7 @@ Features
 Why is it called sashimi_plot?
 ==============================
 
-We chose "Sashimi" because our tool plots the *raw* RNA-Seq data in addition to inferences made about the RNA-Seq reads (hat tip to Vincent Butty.) Also, the variations and various "bumps" in read densities that one commonly observes also look a bit like rolls of Sashimi. Besides, we thought Sashimi would go well with `MISO`_.
+We chose "Sashimi" because our tool plots the *raw* RNA-Seq data in addition to inferences made about the RNA-Seq reads (hat tip to Vincent Butty.) Also, the variations and various "bumps" in exonic read densities in RNA-Seq data look a bit like rolls of Sashimi. Besides, we thought sashimi would go well with `MISO`_.
  
 
 Updates
@@ -84,11 +88,11 @@ Thanks to Sol Katzman, Michael Lovci, Sean O'Keeffe and Vincent Butty for their 
 
 * **Mon, Dec 26**: We've reorganized the codebase to be a proper Python module that is part of MISO. This forced us to change the name from ``sashimi-plot`` to ``sashimi_plot`` (underscore now instead of dash), so please change your code accordingly. ``sashimi_plot`` can now be imported as a module (using ``misopy.sashimi_plot``) and no longer relies on MISO being explicitly in your path. We also fixed some issues with CIGAR string parsing and fixed other minor bugs.
 
-* **Monday, December 19**: Added support for all event types from MISO annotation. Previous versions could not handle ALE/AFE events properly.
+* **Mon, Dec 19**: Added support for all event types from MISO annotation. Previous versions could not handle ALE/AFE events properly.
 
-* **Sunday, December 18**: ``sashimi_plot`` now recursively searches the subdirectories of paths given in the ``miso_files`` section of the configuration file to find the ``.miso`` file associated with an event. This should allow more flexibility in organization of MISO output directories that the plotting program recognizes.
+* **Sun, Dec 18**: ``sashimi_plot`` now recursively searches the subdirectories of paths given in the ``miso_files`` section of the configuration file to find the ``.miso`` file associated with an event. This should allow more flexibility in organization of MISO output directories that the plotting program recognizes.
 
-* **Saturday, December 3 (12/2/11)**: ``sashimi_plot`` is released!
+* **Sat, Dec 3**: ``sashimi_plot`` is released!
 
 
 Installation
@@ -279,8 +283,8 @@ Command-line options
 
 
 
-.. _plotting:
 
+.. _igv-sashimi:
 
 Making Sashimi plots from IGV
 =============================
