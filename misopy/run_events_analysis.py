@@ -342,7 +342,7 @@ def check_gff_and_bam(gff_dir, bam_filename,
               "Proceeding anyway, though it is likely that this will " \
               "result in errors or inability to match reads to " \
               "your annotation."
-        print "Read lengths were: %s" %(",".join(all_seq_lens))
+        print "Read lengths were: %s" %(",".join(map(str, all_seq_lens)))
         time.sleep(15)
     else:
         print "Found reads of length %d in BAM." %(all_seq_lens[0])

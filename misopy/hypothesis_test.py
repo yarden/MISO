@@ -10,6 +10,7 @@ from decimal import Decimal
 import misopy
 from misopy.samples_utils import *
 from misopy.credible_intervals import *
+import misopy.misc_utils as misc_utils
 
 #load_samples, format_credible_intervals, \
 #     get_samples_dir_filenames, get_isoforms_from_header
@@ -200,16 +201,15 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
     Expects two directories with samples from a MISO run, where corresponding
     events in the two samples' directories begin with the same event name.
     """
-    print "Given output dir: ", output_dir
+    print "Given output dir: %s" %(output_dir)
+    print "Retrieving MISO files in sample directories..."
     # Retrieve only the files that are in the two given directories
     sample1_filenames = get_samples_dir_filenames(sample1_dir)
     sample2_filenames = get_samples_dir_filenames(sample2_dir)
-    
     print "Computing sample comparison between %s and %s..." %(sample1_dir,
                                                                sample2_dir)
     print "  - # files in %s: %d" %(sample1_dir, len(sample1_filenames))
     print "  - # files in %s: %d" %(sample2_dir, len(sample2_filenames))
-
     # Output header for Bayes factor file
     if sample_labels == None:
         sample1_label = os.path.basename(os.path.normpath(sample1_dir))
@@ -224,13 +224,11 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
     print "Creating comparisons parent directory: %s" %(output_dir)
 
     # Create parent directory for comparison
-    if not os.path.isdir(output_dir):
-	os.makedirs(output_dir)
+    misc_utils.make_dir(output_dir)
 	
     # Create directory for Bayes factors
     bf_output_dir = os.path.join(output_dir, 'bayes-factors/')
-    if not os.path.isdir(bf_output_dir):
-	os.mkdir(bf_output_dir)
+    misc_utils.make_dir(bf_output_dir)
     
     header_fields = ['event_name',
 		     'sample1_posterior_mean',
