@@ -345,7 +345,7 @@ def check_gff_and_bam(gff_dir, bam_filename,
         print "Read lengths were: %s" %(",".join(map(str, all_seq_lens)))
         time.sleep(15)
     else:
-        print "Found reads of length %d in BAM." %(all_seq_lens[0])
+        print "Found reads of length %d in BAM." %(str(all_seq_lens[0]))
     genes_fname = os.path.join(gff_dir, "genes.gff")
     if not os.path.isfile(genes_fname):
         # No genes.gff found - warn user and abort headers check
