@@ -121,6 +121,11 @@ class GenesDispatcher:
                                        "batch-%d_genes.txt" %(batch_num))
             with open(batch_fname, "w") as batch_out:
                 for gene_id in gene_ids_batch:
+                    if gene_id not in self.gene_ids_to_gff_index:
+                        # If gene is not found (perhaps because it had only a 'gene'
+                        # entry in GFF, with no mRNA children), then skip it
+                        print "Skipping: %s" %(gene_id)
+                        continue
                     index_fname = self.gene_ids_to_gff_index[gene_id]
                     output_line = "%s\t%s\n" %(gene_id,
                                                index_fname)
