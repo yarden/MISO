@@ -49,10 +49,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
     - Optional: Run in paired-end mode. Gives mean and standard deviation
       of fragment length distribution.
     """
-    try:
-        os.makedirs(output_dir)
-    except OSError:
-            pass
+    misc_utils.make_dir(output_dir)
         
     if not os.path.exists(gff_index_filename):
         print "Error: No GFF %s" %(gff_index_filename)
@@ -113,6 +110,13 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
             continue
         gene_obj = gene_info['gene_object']
         gene_hierarchy = gene_info['hierarchy']
+
+        # Sanity check: if the isoforms are all shorter than the read,
+        # skip the event
+        if all(map(lambda l: l < read_len, gene_obj.iso_lens)):
+            print "All isoforms of %s shorter than %d, so skipping" \
+                  %(gene_id, read_len)
+            continue
         
         # Find the most inclusive transcription start and end sites
         # for each gene
