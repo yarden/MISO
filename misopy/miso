@@ -220,7 +220,7 @@ class GenesDispatcher:
             if not self.use_cluster:
                 # Run locally
                 print "cmd to run: ", cmd_to_run
-                p = subprocess.Popen(cmd_to_run)
+                p = subprocess.Popen(cmd_to_run, shell=True)
                 thread_id = "batch-%d" %(batch_num)
                 print "  - Submitted thread %s" %(thread_id)
                 self.threads[thread_id] = p
@@ -244,13 +244,11 @@ class GenesDispatcher:
                 time.sleep(delay_constant)
         # If ran jobs on cluster, wait for them if there are any
         # to wait on.
-        if self.use_cluster:
-            cluster_utils.wait_on_jobs(cluster_jobs,
-                                       self.cluster_cmd)
-        else:
-            print "Waiting on local threads..."
-            # If ran jobs locally, wait on them to finish
-            self.wait_on_threads()
+        cluster_utils.wait_on_jobs(cluster_jobs,
+                                   self.cluster_cmd)
+        print "Waiting on local threads..."
+        # If ran jobs locally, wait on them to finish
+        self.wait_on_threads()
 
 
     def wait_on_threads(self):
