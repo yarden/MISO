@@ -502,17 +502,17 @@ def main():
         if options.overhang_len != None:
             overhang_len = options.overhang_len
         
-        run_events.compute_all_genes_psi(gff_filename, bam_filename,
-                                         options.read_len, output_dir,
-                                         overhang_len=overhang_len,
-                                         use_cluster=options.use_cluster,
-                                         SGEarray=options.SGEarray,
-                                         job_name=options.job_name,
-                                         chunk_jobs=options.chunk_jobs,
-                                         paired_end=options.paired_end,
-                                         settings_fname=settings_filename,
-                                         prefilter=options.prefilter,
-                                         num_proc=options.num_proc)
+        compute_all_genes_psi(gff_filename, bam_filename,
+                              options.read_len, output_dir,
+                              overhang_len=overhang_len,
+                              use_cluster=options.use_cluster,
+                              SGEarray=options.SGEarray,
+                              job_name=options.job_name,
+                              chunk_jobs=options.chunk_jobs,
+                              paired_end=options.paired_end,
+                              settings_fname=settings_filename,
+                              prefilter=options.prefilter,
+                              num_proc=options.num_proc)
 
     if options.view_gene != None:
         indexed_gene_filename = \
