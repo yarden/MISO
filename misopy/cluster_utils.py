@@ -24,6 +24,8 @@ def chunk_list(seq, num):
   avg = len(seq) / float(num)
   out = []
   last = 0.0
+  if len(seq) < num:
+      return [seq]
   while last < len(seq):
     out.append(seq[int(last):int(last + avg)])
     last += avg

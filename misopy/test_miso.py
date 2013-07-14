@@ -17,8 +17,7 @@ class TestMISO(unittest.TestCase):
         self.tests_data_dir = \
             os.path.join(self.miso_path, "test-data")
         self.events_analysis_cmd = \
-            "python %s " %(os.path.join(self.miso_path,
-                                        "run_events_analysis.py"))
+            "python %s " %(os.path.join(self.miso_path, "miso"))
         self.tests_output_dir = \
             os.path.join(self.miso_path, "test-output")
         self.test_sam_filename = \
@@ -28,9 +27,9 @@ class TestMISO(unittest.TestCase):
         self.gff_events_dir = \
             os.path.join(self.miso_path, "gff-events")
         self.sam_to_bam_script = \
-            os.path.join(self.miso_path, "sam_to_bam.py")
+            os.path.join(self.miso_path, "sam_to_bam")
         self.index_gff_script = \
-            os.path.join(self.miso_path, "index_gff.py")
+            os.path.join(self.miso_path, "index_gff")
 
 
     def test_a_sam_to_bam(self):
@@ -199,7 +198,7 @@ class TestMISO(unittest.TestCase):
 
         output_dir = os.path.join(self.tests_output_dir,
                                   "gene-psi-output")
-        miso_cmd = "%s --compute-genes-psi %s %s --output-dir %s --read-len %d " \
+        miso_cmd = "%s --run %s %s --output-dir %s --read-len %d " \
                    %(self.events_analysis_cmd,
                      gff_index_dir,
                      bam_filename,
