@@ -219,7 +219,7 @@ class GenesDispatcher:
             cmd_to_run = "%s &>> \"%s\";" %(miso_cmd, batch_logfile)
             if not self.use_cluster:
                 # Run locally
-                p = subprocess.Popen(cmd_to_run, shell=True)
+                p = subprocess.Popen(cmd_to_run)
                 thread_id = "batch-%d" %(batch_num)
                 print "  - Submitted thread %s" %(thread_id)
                 self.threads[thread_id] = p
