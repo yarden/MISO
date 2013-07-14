@@ -107,6 +107,12 @@ class GenesDispatcher:
             self.gene_ids = gene_ids
         else:
             self.gene_ids = self.gene_ids_to_gff_index.keys()
+        if len(self.gene_ids) == 0:
+            print "Error: No genes to run on. Did you pass me the wrong path " \
+                  "to your index GFF directory? " \
+                  "Or perhaps your indexed GFF directory " \
+                  "is empty?"
+            sys.exit(1)
         self.batch_filenames = self.output_batch_files()
 
 
@@ -215,11 +221,9 @@ class GenesDispatcher:
             batch_logfile = os.path.join(self.batch_logs_dir,
                                          "batch-%d-%s.log" %(batch_num,
                                                              time_str))
-            # Include stderr in output
-            cmd_to_run = "%s &>> \"%s\";" %(miso_cmd, batch_logfile)
+            cmd_to_run = "%s >> \"%s\";" %(miso_cmd, batch_logfile)
             if not self.use_cluster:
                 # Run locally
-                print "cmd to run: ", cmd_to_run
                 p = subprocess.Popen(cmd_to_run, shell=True)
                 thread_id = "batch-%d" %(batch_num)
                 print "  - Submitted thread %s" %(thread_id)
@@ -242,6 +246,8 @@ class GenesDispatcher:
                 if job_id is not None:
                     cluster_jobs.append(job_id)
                 time.sleep(delay_constant)
+            # Extra delay constant
+            time.sleep(delay_constant)                
         # If ran jobs on cluster, wait for them if there are any
         # to wait on.
         cluster_utils.wait_on_jobs(cluster_jobs,
@@ -269,6 +275,8 @@ class GenesDispatcher:
             if curr_thread.returncode != 0:
                 print "WARNING: Thread %s might have failed..." \
                     %(thread_name)
+            if curr_thread.returncode is None:
+                print "WARNING: Thread still going..." 
             threads_completed[thread_name] = True
         t_end = time.time()
         duration = ((t_end - t_start) / 60.) / 60.
@@ -537,9 +545,6 @@ def main():
             print "Exons: "
             for exon in gene_obj.parts:
                 print " - ", exon
-        
-
-    
     
 if __name__ == "__main__":
     main()
