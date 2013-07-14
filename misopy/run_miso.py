@@ -487,5 +487,4 @@ def main():
                 print " - ", exon
 
 if __name__ == '__main__':
-    print "MISO (Mixture of Isoforms model)"
     main()

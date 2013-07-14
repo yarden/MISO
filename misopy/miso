@@ -219,6 +219,7 @@ class GenesDispatcher:
             cmd_to_run = "%s &>> \"%s\";" %(miso_cmd, batch_logfile)
             if not self.use_cluster:
                 # Run locally
+                print "cmd to run: ", cmd_to_run
                 p = subprocess.Popen(cmd_to_run)
                 thread_id = "batch-%d" %(batch_num)
                 print "  - Submitted thread %s" %(thread_id)
@@ -266,9 +267,7 @@ class GenesDispatcher:
             if thread_name in threads_completed:
                 continue
             curr_thread = self.threads[thread_name]
-            print "CALLING WAIT!"
             curr_thread.wait()
-            print "wait done!"
             if curr_thread.returncode != 0:
                 print "WARNING: Thread %s might have failed..." \
                     %(thread_name)
