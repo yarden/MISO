@@ -73,7 +73,8 @@ def get_ids_passing_filter(gff_index_dir,
 
 def check_gff_and_bam(gff_dir, bam_filename,
                       num_genes=10000,
-                      num_reads=10000):
+                      num_reads=10000,
+                      given_read_len=None):
     """
     Look for chromosome headers mismatches between input GFF
     annotation and BAM filename.  Warn users if there are
@@ -113,6 +114,20 @@ def check_gff_and_bam(gff_dir, bam_filename,
         time.sleep(15)
     else:
         print "Found reads of length %d in BAM." %(all_seq_lens[0])
+        # Check the BAM read length against the read length that was
+        # given
+        if given_read_len != None:
+            if all_seq_lens[0] != given_read_len:
+                print "Error: The given read length (%d) does not match " \
+                      "the read length found in BAM (%d). Please re-run " \
+                      "and pass the correct --read-len argument. " \
+                      "Note that MISO does not support mixed read lengths " \
+                      "in the same BAM file." \
+                      %(given_read_len,
+                        all_seq_lens[0])
+                sys.exit(1)
+        time.sleep(5)
+        
     genes_fname = os.path.join(gff_dir, "genes.gff")
     if not os.path.isfile(genes_fname):
         # No genes.gff found - warn user and abort headers check

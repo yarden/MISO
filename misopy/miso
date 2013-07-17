@@ -313,7 +313,8 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     misc_utils.make_dir(output_dir)
 
     # Check GFF and BAM for various errors like headers mismatch
-    run_events.check_gff_and_bam(gff_dir, bam_filename)
+    run_events.check_gff_and_bam(gff_dir, bam_filename,
+                                 given_read_len=read_len)
     
     # Prefilter events that do not meet the coverage criteria
     # If filtering is on, only run on events that meet
