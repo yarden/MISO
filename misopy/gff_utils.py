@@ -595,7 +595,7 @@ class Reader:
         except KeyError:
             self._record_parser = self._record_parsers[self._default_version]
             print >>sys.stderr, "Warning: Unrecognized GFF version (%s). " + \
-                "Using default version %s." % (self._version, self._default_version)
+                "Using default version %s %s." % (self._version, self._default_version)
 
     def _parse_directive(self, line):
         tokens = line[2:-1].split(None, 1)
