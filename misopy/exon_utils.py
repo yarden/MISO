@@ -127,8 +127,8 @@ def get_tagBam_cmd(bam_filename,
         tagBam_cmd += " | samtools view -h -"
 
     if only_interval:
-        assert(as_sam == True), \
-                      "Must use as_sam= with only_interval=."
+        assert (as_sam == True), \
+               "Must use as_sam=True with only_interval=True."
         # Keep only the header or the interval intersecting
         # reads
         tagBam_cmd += " | egrep '^@|:%s:'" %(interval_label)
