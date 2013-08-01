@@ -30,6 +30,7 @@
 import os
 import sys
 import re
+import shelve
 import misopy
 import misopy.pickle_utils as pickle_utils
 from urllib import quote as url_quote, unquote as url_unquote
@@ -67,6 +68,24 @@ def load_indexed_gff_chrom(indexed_gff_chrom_filename):
     return indexed_gff_chrom
 
 
+def load_shelved_genes_to_fnames(indexed_gff_dir,
+                                 shelve_basename="genes_to_filenames.shelve"):
+    """
+    Load mapping from gene IDs to their indexed
+    filenames from the 'genes_to_filenames.shelve' file
+    if it exists. Return None if it does not exist.
+    """
+    shelve_fname = os.path.join(indexed_gff_dir, shelve_basename)
+    print "Searching for %s.." %(shelve_fname)
+    gene_ids_to_gff_index = None    
+    if os.path.isfile(shelve_fname):
+        print "  - Found shelved file."
+        gene_ids_to_gff_index = shelve.open(shelve_fname)
+    else:
+        print "  - File not found."
+    return gene_ids_to_gff_index
+
+
 def get_gene_ids_to_gff_index(indexed_gff_dir):
     """
     Return mapping from gene IDs to their indexed GFF filename.
@@ -75,6 +94,15 @@ def get_gene_ids_to_gff_index(indexed_gff_dir):
           %(indexed_gff_dir)
     gff_chrom_dirs = os.listdir(indexed_gff_dir)
 
+    # Load gene IDs to mapping from .shelve file
+    # if it exists
+    gene_ids_to_gff_index = load_shelved_genes_to_fnames(indexed_gff_dir)
+    if gene_ids_to_gff_index is not None:
+        # File loaded from shelve successfully
+        return gene_ids_to_gff_index
+
+    # Shelve file not found, so reconstruct the mapping from gene IDs
+    # to their indexed filenames
     gene_ids_to_gff_index = {}
 
     for chrom_dir in gff_chrom_dirs:
