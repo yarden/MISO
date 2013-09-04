@@ -328,8 +328,10 @@ def zipper(dir, zip_file):
     
     by Corey Goldberg.
     """
+    # Enable Zip64 to allow creation of large Zip files
     zip = zipfile.ZipFile(zip_file, 'w',
-                          compression=zipfile.ZIP_DEFLATED)
+                          compression=zipfile.ZIP_DEFLATED,
+                          allowZip64=True)
     root_len = len(os.path.abspath(dir))
     for root, dirs, files in os.walk(dir):
         archive_root = os.path.abspath(root)[root_len:]
@@ -347,7 +349,8 @@ def unzipper(zip_file, outdir):
     
     Return the names of files in the archive.
     """
-    zf = zipfile.ZipFile(zip_file, "r")
+    zf = zipfile.ZipFile(zip_file, "r",
+                         allowZip64=True)
     filenames = zf.namelist()
     zf.extractall(outdir)
     return filenames
