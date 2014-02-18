@@ -25,6 +25,16 @@ import misopy.miso_db as miso_db
 class MISOCompressor:
     """
     Compressor/uncompressor of MISO output-containing directories.
+
+    The compressor:
+
+    (1) copies the original directory containing MISO directories
+    (2) creates MISO databases (.miso_db files)
+        from the *.miso-containing directories
+    (3) then zip's up the resulting directory
+
+    The compressor works on the copy and leaves the original
+    directory unmodified.
     """
     def __init__(self):
         self.input_dir = None

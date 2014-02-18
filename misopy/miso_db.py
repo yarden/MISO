@@ -100,7 +100,7 @@ def miso_dir_to_db(dir_to_compress, output_filename):
     if os.path.isfile(output_filename):
         print "Error: Database %s already exists, aborting." \
               %(output_filename)
-        sys.exit(1)
+        return None
     conn = sqlite3.connect(output_filename)
     c = conn.cursor()
     # Create table for the current directory to compress
@@ -113,7 +113,7 @@ def miso_dir_to_db(dir_to_compress, output_filename):
         miso_file_fields = load_miso_file_as_str(miso_fname)
         if miso_file_fields is None:
             print "Error: Cannot compress %s. Aborting." %(miso_fname)
-            sys.exit(1)
+            return None
         header, psi_vals_and_scores = miso_file_fields
         ######
         ###### TODO:
@@ -177,6 +177,21 @@ def is_miso_db_fname(fname):
     chrX.miso_db
     """
     return fname.endswith(MISO_DB_EXT)
+
+
+def is_miso_unpacked_dir(dirname):
+    """
+    Return True if it's a MISO directory that is unpacked,
+    i.e. a directory containing *.miso text files immediately
+    within it (so having these files in a subdir of that dir
+    will not count.)
+    """
+    if not os.path.isdir(dirname):
+        return False
+    matches = fnmatch.filter(os.listdir(dirname), "*.miso")
+    if len(matches) != 0:
+        return True
+    return False
                 
 
 def strip_miso_ext(filename):

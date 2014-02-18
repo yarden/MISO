@@ -207,6 +207,9 @@ class TestMISO(unittest.TestCase):
         print "Executing: %s" %(miso_cmd)
         os.system(miso_cmd)
 
+def main():
+    unittest.main()
+        
         
 if __name__ == '__main__':
-    unittest.main()
+    main()

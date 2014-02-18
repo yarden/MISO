@@ -340,7 +340,7 @@ def filter_output(filtered_events, output_filename, h, num_pass, total_events):
 
 
 def greeting():
-    print "filter_events.py: filtering MISO pairwise comparison output.\n"
+    print "filter_events: filtering MISO pairwise comparison output.\n"
     print "Note: This utility is only works on MISO output for two-isoform "
     print "event annotations.\n"
     
