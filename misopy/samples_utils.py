@@ -267,7 +267,8 @@ def summarize_sampler_results(samples_dir, summary_filename,
             continue
         # If we're not given a mapping to compressed IDs, check
         # that the event IDs do not look compressed
-        if misc_utils.is_compressed_name(event_name):
+        if misc_utils.is_compressed_name(event_name) and \
+           (use_compressed is None):
             print "WARNING: %s looks like a compressed id, but no mapping file " \
                   "from compressed IDs to event IDs was given! Try: --use-compressed" \
                   %(event_name)
