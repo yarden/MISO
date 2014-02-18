@@ -75,7 +75,7 @@ class MISOPacker:
                     # containing the *.miso file
                     shutil.rmtree(dir_to_compress)
         t2 = time.time()
-        print "Packing took %.2f minutes" %((t1 - t2)/60.)
+        print "Packing took %.2f minutes" %((t2 - t1)/60.)
         
 
 def greeting(parser=None):

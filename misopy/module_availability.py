@@ -53,8 +53,12 @@ def check_module_availability(required_modules):
     return unavailable_mods
 
 
-if __name__ == '__main__':
+def main():
     required_modules = ['numpy', 'scipy', 'json', 'matplotlib',
                         'pysam']
     check_module_availability(required_modules)
+    
+
+if __name__ == '__main__':
+    main()
     
