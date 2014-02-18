@@ -344,6 +344,10 @@ def main():
                       help="Output directory.")
     (options, args) = parser.parse_args()
 
+    if options.get_const_exons is None:
+        greeting()
+        sys.exit(1)
+
     if options.output_dir == None:
         greeting()
         print "Error: need --output-dir."
