@@ -93,15 +93,12 @@ class MISOSamples:
         if event_fname.endswith(".miso"):
             # Get event from plain text .miso file
             f = open(event_fname, "r")
-            print "OPENING: %s" %(event_fname)
             samples = load_samples(f)
             f.close()
         elif miso_db.is_miso_db_fname(event_fname):
             # Get event from miso_db file
             curr_db = miso_db.MISODatabase(event_fname)
             event_data = curr_db.get_event_data_as_stream(event_name)
-            print event_name
-            print "EVENT DATA: ", event_data
             samples = load_samples(event_data)
         if samples is None:
             print "WARNING: Could not parse event %s samples" %(event_name)
