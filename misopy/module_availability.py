@@ -10,6 +10,7 @@ import misopy.misc_utils as utils
 
 def check_module_availability(required_modules):
     unavailable_mods = 0
+    print "Checking availability of Python modules for MISO"
     print "Looking for required Python modules.."
     for module_name in required_modules:
 	print "Checking for availability of: %s" %(module_name)
