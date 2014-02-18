@@ -103,7 +103,7 @@ def multi_filter(filter_filename, output_dir, num_total, num_inc, num_exc,
 
         filtered = filter_events(data, h, num_total, num_inc, num_exc, num_sum, 
                                     delta_psi_filter, bf_filter, 
-                                    apply_both_samples=False)
+                                    apply_both_samples=apply_both_samples)
         comp.append(filtered)
 
     # if there is just a single file of inputs

@@ -18,7 +18,6 @@ import misopy.sam_utils as sam_utils
 import misopy.miso_sampler as miso
 import misopy.Gene as gene_utils
 import misopy.gff_utils as gff_utils
-
 import misopy.misc_utils as misc_utils
 
 from misopy.parse_csv import *

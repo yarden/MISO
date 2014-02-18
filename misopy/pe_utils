@@ -268,6 +268,10 @@ def compute_insert_len(bams_to_process,
         output_filename = os.path.join(output_dir,
                                        "%s.insert_len" \
                                        %(os.path.basename(bam_filename)))
+        if not os.path.isfile(bam_filename):
+            print "Cannot find BAM file %s" %(bam_filename)
+            print "Quitting..."
+            sys.exit(1)
         print "Fetching reads in constitutive exons"
         mapped_bam_filename = exon_utils.map_bam2gff(bam_filename,
                                                      const_exons_gff_filename,
