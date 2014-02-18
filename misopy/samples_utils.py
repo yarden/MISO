@@ -11,11 +11,102 @@ import os
 import sys
 import glob
 import misopy
+import misopy.miso_db as miso_db
 
 from misopy.parse_csv import *
 from misopy.credible_intervals import *
 import misopy.misc_utils as misc_utils
 
+
+class EventSamples:
+    """
+    Samples for a particular event.
+    """
+    def __init__(self, event_name, params, header):
+        self.event_name = event_name
+        self.params = params
+        self.header = header
+
+        
+class MISOSamples:
+    """
+    Representation of MISO samples directory.
+    The samples filename is either a plain-text *.miso
+    file, e.g. event_name.miso, or a .miso_db file.
+    """
+    def __init__(self, samples_dir, use_compressed=None):
+        self.samples_dir = samples_dir
+        # Handle compressed IDS if asked. Load mapping of compressed
+        # ids to filenames
+        self.compressed_ids_fname = use_compressed
+        self.compressed_ids_to_genes = None
+        if self.compressed_ids_fname is not None:
+            print "  - Loading compressed IDs mapping from: %s" \
+                  %(self.compressed_ids_fname)
+            # Load mapping from gene IDs to their hashes
+            self.compressed_ids_to_genes = \
+              misc_utils.load_compressed_ids_to_genes(self.compressed_ids_fname)
+        # Get all the MISO relevant filenames
+        self.all_filenames = get_samples_dir_filenames(samples_dir)
+        # Mapping of event names to the files that they are in
+        # these are either *.miso files or *.miso_db files.
+        # Example:
+        #   myevent -> myevent.miso
+        #   myotherevent_on_chr12 -> chr12.miso_db
+        self.event_names_to_fnames = {}
+        # Get all the event names in the current samples directory
+        self.all_event_names = self.get_all_event_names()
+
+        
+    def get_all_event_names(self):
+        """
+        Return all event names in current samples dir.
+        """
+        all_event_names = []
+        for curr_fname in self.all_filenames:
+            if curr_fname.endswith(".miso"):
+                # It's a regular .miso plain text file
+                event_name = \
+                  get_event_name(curr_fname,
+                                 use_compressed_map=self.compressed_ids_to_genes)
+                # Record event name and its mapping to a .miso file
+                all_event_names.append(event_name)
+                self.event_names_to_fnames[event_name] = curr_fname
+            elif miso_db.is_miso_db_fname(curr_fname):
+                # It's a MISO database file, so load all the event
+                # names in that file
+                curr_db = miso_db.MISODatabase(curr_fname)
+                # Record event name and its mapping to the chromosome's
+                # .miso_db file
+                for curr_event_name in curr_db.get_all_event_names():
+                    all_event_names.append(curr_event_name)
+                    self.event_names_to_fnames[curr_event_name] = curr_fname
+        return all_event_names
+    
+
+    def get_event_samples(self, event_name):
+        """
+        Get the samples information for the given event by name.
+        """
+        event_fname = self.event_names_to_fnames[event_name]
+        samples = None
+        if event_fname.endswith(".miso"):
+            # Get event from plain text .miso file
+            f = open(event_fname, "r")
+            print "OPENING: %s" %(event_fname)
+            samples = load_samples(f)
+            f.close()
+        elif miso_db.is_miso_db_fname(event_fname):
+            # Get event from miso_db file
+            curr_db = miso_db.MISODatabase(event_fname)
+            event_data = curr_db.get_event_data_as_stream(event_name)
+            print event_name
+            print "EVENT DATA: ", event_data
+            samples = load_samples(event_data)
+        if samples is None:
+            print "WARNING: Could not parse event %s samples" %(event_name)
+        return samples
+                                
 
 def maxi(l):
     m = max(l)
@@ -23,14 +114,15 @@ def maxi(l):
         if m == v:
             return i
 
-def load_samples(samples_file):
+        
+def load_samples(samples_in):
     """
-    Load a file with samples.
+    Load a file with samples. Takes in a string of data.
     Return the samples, header from the file, the sampled MAP estimate,
     and the sampled MAP's log score.
     """
     try:
-        data, h = csv2array(samples_file, skiprows=1, raw_header=True)
+        data, h = csv2array(samples_in, skiprows=1, raw_header=True)
         sampled_map_indx = maxi(data['sampled_psi'])
         sampled_map = \
             [float(v) for v in data['sampled_psi'][sampled_map_indx].split(',')]
@@ -49,18 +141,14 @@ def load_samples(samples_file):
         return (samples, h, data['log_score'], sampled_map,
                 sampled_map_log_score, counts_info)
     except ValueError:
-        print "WARNING: could not parse samples file %s" %(samples_file)
         return None
 
 
-def parse_sampler_params(miso_filename):
+def parse_sampler_params_from_header(header):
     """
-    Parse parameters that were used to produce a set of samples.  
+    Parse parameters that were used to produce a set of samples.
+    miso_file is a stream to a MISO file.
     """
-    miso_file = open(miso_filename, 'r')
-    header = miso_file.readline().strip()
-    miso_file.close()
-    
     if header[0] == '#':
 	# strip header start
 	header = header[1:]
@@ -177,55 +265,32 @@ def summarize_sampler_results(samples_dir, summary_filename,
     summary_file.write(summary_header)
     print "Loading events from: %s" %(samples_dir)
     print "Writing summary to: %s" %(summary_filename)
-    all_filenames = get_samples_dir_filenames(samples_dir)
+    samples_obj = MISOSamples(samples_dir,
+                              use_compressed=use_compressed)
     num_events = 0
 
-    compressed_ids_to_genes = {}
-    if use_compressed is not None:
-        print "  - Loading compressed IDs mapping from: %s" %(use_compressed)
-        # Load mapping from gene IDs to their hashes
-        compressed_ids_to_genes = misc_utils.load_compressed_ids_to_genes(use_compressed)
-    
-    for samples_filename in all_filenames:
-        # Parse sampler parameters
-        params = parse_sampler_params(samples_filename)
-        event_name = get_event_name(samples_filename)
-        
-        if event_name == None:
-            print "Skipping %s" %(samples_filename)
-            continue
-        # If using compressed event IDs, convert event
-        # to its real event ID
-        if use_compressed is not None:
-            if event_name not in compressed_ids_to_genes:
-                print "Error: Compressed id %s does not map to any event name." \
-                    %(event_name)
-                sys.exit(1)
-            event_name = compressed_ids_to_genes[event_name]
-        else:
-            # If we're not given a mapping to compressed IDs, check
-            # that the event IDs do not look compressed
-            if misc_utils.is_compressed_name(event_name):
-                print "WARNING: %s looks like a compressed id, but no mapping file " \
-                    "from compressed IDs to event IDs was given! Try: --use-compressed" \
-                    %(event_name)
-            
-        # Load samples and header information
-	samples_results = load_samples(samples_filename)
+    for event_name in samples_obj.all_event_names:
+        samples_results = samples_obj.get_event_samples(event_name)
         if samples_results is None:
-            print "Skipping %s" %(samples_filename)
+            print "WARNING: Skipping %s" %(event_name)
             # Skip files that could not be parsed
             continue
-	samples = samples_results[0]
+        # If we're not given a mapping to compressed IDs, check
+        # that the event IDs do not look compressed
+        if misc_utils.is_compressed_name(event_name):
+            print "WARNING: %s looks like a compressed id, but no mapping file " \
+                  "from compressed IDs to event IDs was given! Try: --use-compressed" \
+                  %(event_name)
+        # Load header/parameters information
+        samples = samples_results[0]
         header = samples_results[1]
         header = header[0]
-
+        params = parse_sampler_params_from_header(header)
         # Get counts information from header
         counts_info = samples_results[5]
-
         shape_len = len(shape(samples))
         if shape_len < 2:
-            print "Skipping %s" %(samples_filename)
+            print "WARNING: Skipping %s -- mishaped file" %(samples_filename)
             continue
         num_samples, num_isoforms = shape(samples)
         output_fields = format_credible_intervals(event_name, samples)
@@ -282,6 +347,14 @@ def get_samples_dir_filenames(samples_dir):
         ...
         - chrN
 
+    or:
+
+      - samples_dir
+        - chr1.miso_db
+        - chr2.miso_db
+        ...
+        - chrN.miso_db
+
     Also collect files in samples_dir for backwards compatibility.
     """
     directories = glob.glob(os.path.join(samples_dir, "*"))
@@ -310,9 +383,18 @@ def get_samples_dir_filenames(samples_dir):
     filenames = filter(lambda f: not os.path.basename(f).startswith("."),
                        filenames)
 
-    # Remove files that do not end with proper extension
-    filenames = filter(lambda f: os.path.basename(f).endswith(".miso"),
-                       filenames)
-    return filenames
+    # Resulting files should be either *.miso files
+    # or *.miso_db files, but not both
+    miso_filenames = \
+      filter(lambda f: os.path.basename(f).endswith(".miso"),
+             filenames)
+    miso_db_filenames = \
+      filter(miso_db.is_miso_db_fname,
+             filenames)
+    if len(miso_filenames) > 0 and len(miso_db_filenames) > 0:
+        print "WARNING: Directory %s has both *.miso and *.miso_db files" \
+              %(samples_dir)
+    relevant_filenames = miso_filenames + miso_db_filenames
+    return relevant_filenames
 
 

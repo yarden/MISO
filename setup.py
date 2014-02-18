@@ -116,6 +116,7 @@ setup(name = 'misopy',
                  'misopy/compare_miso',
                  'misopy/summarize_miso',
                  'misopy/index_gff',
+                 'misopy/index_gff.py',
                  # sashimi_plot scripts
                  'misopy/sashimi_plot/plot.py',
                  'misopy/sashimi_plot/sashimi_plot'],

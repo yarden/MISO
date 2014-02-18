@@ -10,10 +10,14 @@ import sqlite3
 import shutil
 import fnmatch
 import glob
+import StringIO
 
 import misopy
 import misopy.misc_utils as utils
 import misopy.miso_utils as miso_utils
+
+# File extension for MISO SQLite databases
+MISO_DB_EXT = ".miso_db"
 
 
 class MISODatabase:
@@ -21,47 +25,82 @@ class MISODatabase:
     Representation of a MISO SQLite database.
     """
     def __init__(self, db_fname):
-        if not os.path.isfile(db_fname)
+        if not os.path.isfile(db_fname):
             raise Exception, "%s does not exist." %(db_fname)
         self.db_fname = db_fname
-        
+        self.table_name = get_table_name_from_file(self.db_fname)
+        if self.table_name is None:
+            print "Error: Cannot retrieve name of MISO db file %s" \
+                  %(self.db_fname)
+            return None
+        self.conn = sqlite3.connect(self.db_fname)
 
-    def get_event_as_stream(self, chrom, event_name):
+
+    def get_event_data_as_stream(self, event_name):
         """
-        Get information for an event as a string
-        stream.
+        Get data for given event. If there's no data, return None.
         """
-        pass
+        c = self.conn.cursor()
+        results = \
+          c.execute("SELECT * from %s WHERE event_name=\'%s\'" \
+                    %(self.table_name,
+                      event_name))
+        rows = results.fetchall()
+        if len(rows) == 0:
+            # Event not found
+            return None
+        if len(rows) > 1:
+            raise Exception, \
+              "More than one entry for event %s" %(event_name)
+        event_name, psi_vals_and_scores, header = rows[0]
+        event_data = "%s\n%s\n" %(header,
+                                  psi_vals_and_scores)
+        event_stream = StringIO.StringIO(event_data)
+        return event_stream
 
 
-def miso_dir_to_db(miso_dir, output_fname):
-    """
-    Convert a MISO directory to an SQL db.
-    """
-    if not os.path.isdir(miso_dir):
-        print "Error: %s not a directory." %(miso_dir)
-        sys.exit(1)
-    if os.path.isfile(output_fname):
-        print "Error: %s already exists." %(output_fname)
-        sys.exit(1)
+    def get_event_data_as_string(self, event_name):
+        data = self.get_event_data_as_stream(event_name).read()
+        return data
+
+
+    def get_all_events(self):
+        """
+        Get all events from table. Return iterator of results.
+        """
+        c = self.conn.cursor()
+        results = c.execute("SELECT * from %s" %(self.table_name))
+        return results
+
+    
+    def get_all_event_names(self):
+        """
+        Return all event names
+        """
+        event_names = []
+        for result in self.get_all_events():
+            event_names.append(result[0])
+        return event_names
 
         
-def compress_miso_dir(self, dir_to_compress, output_filename):
+def miso_dir_to_db(dir_to_compress, output_filename):
     """
-    Compress MISO directory into MySQL table using sqlite3.
+    Convert MISO directory into MySQL table using sqlite3.
     """
-    print "Compressing %s into %s" %(dir_to_compress, output_filename)
+    print "Converting MISO directory into database" 
+    print "  - MISO dir: %s" %(dir_to_compress)
+    print "  - Output file: %s" %(output_filename)
     if not os.path.isdir(dir_to_compress):
         print "Error: %s not a directory, aborting." %(dir_to_compress)
-        return None
+        sys.exit(1)
     miso_filenames = glob.glob(os.path.join(dir_to_compress, "*.miso"))
     num_files = len(miso_filenames)
     print "  - %d files to compress" %(num_files)
     # Initialize the SQLite database
     if os.path.isfile(output_filename):
-        print "Error: Compressed database %s already exists, aborting." \
+        print "Error: Database %s already exists, aborting." \
               %(output_filename)
-        return None
+        sys.exit(1)
     conn = sqlite3.connect(output_filename)
     c = conn.cursor()
     # Create table for the current directory to compress
@@ -102,6 +141,17 @@ def get_non_miso_files(filenames, miso_ext=".miso"):
     return non_miso_files
 
 
+def get_table_name_from_file(db_filename):
+    """
+    Return the name of a file.
+    """
+    base_name = os.path.basename(db_filename)
+    if base_name.endswith(MISO_DB_EXT):
+        # Strip extension
+        return base_name[0:-1*len(MISO_DB_EXT)]
+    return None
+
+
 def load_miso_file_as_str(miso_filename):
     """
     Load raw *.miso file as a set of strings to be inserted
@@ -119,6 +169,14 @@ def load_miso_file_as_str(miso_filename):
         for line in miso_file:
             psi_vals_and_scores += line
     return header, psi_vals_and_scores
+
+
+def is_miso_db_fname(fname):
+    """
+    Return True if it's a MISO db filename, like
+    chrX.miso_db
+    """
+    return fname.endswith(MISO_DB_EXT)
                 
 
 def strip_miso_ext(filename):

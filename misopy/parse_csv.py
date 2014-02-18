@@ -48,45 +48,40 @@ def dictlist2array(dictlist, header_fields):
     return data_array
 
 
-def csv2array(filename,
+def csv2array(f,
               skiprows=0,
               delimiter='\t',
               raw_header=False,
               missing=None,
-              with_header=True):
+              with_header=True,
+              comments="#"):
     """
-    Parse a file name into an array.
+    Parse a file into a dictionary of arrays.
     Return the array and additional header lines. By default,
-    parse the header lines into dictionaries,
-    assuming the parameters are numeric,
-    using 'parse_header'.
+    parse the header lines into dictionaries, assuming the parameters
+    are numeric, using 'parse_header'.
     """
-    f = open(filename, 'r')
+    file_in = f
+    if type(f) == str:
+        file_in = open(f)
     skipped_rows = []
     for n in range(skiprows):
-        header_line = f.readline().strip()
+        header_line = file_in.readline().strip()
         if raw_header:
             skipped_rows.append(header_line)
         else:
             skipped_rows.append(parse_header(header_line))
-    f.close()
     try:
-        if missing:
-            data = genfromtxt(filename, dtype=None, names=with_header,
-                              deletechars='', skip_header=skiprows,
-                              missing=missing)
-        else:
-            if delimiter != '\t':
-                data = genfromtxt(filename, dtype=None, names=with_header,
-                                  delimiter=delimiter,
-                                  deletechars='', skip_header=skiprows)
-            else:
-                data = genfromtxt(filename, dtype=None, names=with_header,
-                                  deletechars='', skip_header=skiprows)
+        data_array = genfromtxt(file_in,
+                                dtype=None,
+                                deletechars='',
+                                delimiter=delimiter)
     except IOError as io_error:
-        raise Exception, "IOError: %s. Filename: %s" %(io_error, filename)
-    if data.ndim == 0:
-	data = array([data.item()])
+        raise Exception, "IOError: %s, file: %s" %(io_error, file_in)
+    cols = data_array[0,:]
+    data = {}
+    for n in range(data_array.ndim):
+        data[cols[n]] = data_array[1:, n]
     return (data, skipped_rows)
 
 
@@ -95,6 +90,7 @@ def tryEval(s):
     return eval(s, {}, {})
   except:
     return s
+
 
 def evalDict(d):
     for k, v in d.iteritems():
@@ -166,27 +162,6 @@ def csv2dictlist_raw(filename, delimiter='\t'):
 	dictlist.append(dictline)
     return (dictlist, header_fields)
     
-
-def csv2dictlist(filename, raw_header=False, missing=None, delimiter=None,
-                 with_header=True):
-    """
-    Parse a file into a list of dictionaries, where each dictionary has the values of that line
-    keyed by the headers.
-    """
-    if not delimiter:
-	data, header = csv2array(filename, raw_header=raw_header, missing=missing,
-                                 with_header=with_header)
-    else:
-	data, header = csv2array(filename, raw_header=raw_header, missing=missing,
-                                 delimiter=delimiter, with_header=with_header)
-    header_line = open(filename).readline().strip()
-    header_fields = header_line.split(delimiter)
-    dictlist = []
-    # convert data to list of dictionaries
-    for values in data:
-	dictline = dict(zip(header_fields, values))
-	dictlist.append(dictline)
-    return (dictlist, header_fields)
 
 def find(val, values):
     """

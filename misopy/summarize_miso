@@ -18,9 +18,9 @@ import misopy.miso_sampler as miso
 import misopy.Gene as gene_utils
 import misopy.gff_utils as gff_utils
 import misopy.misc_utils as misc_utils
+import misopy.samples_utils as samples_utils
 
 from misopy.parse_csv import *
-from misopy.samples_utils import *
 
 import numpy as np
 np.seterr(all='ignore')
@@ -88,8 +88,9 @@ def main():
 	    
 	summary_filename = os.path.join(summary_output_dir,
 					'%s.miso_summary' %(samples_label))
-	summarize_sampler_results(samples_dir, summary_filename,
-                                  use_compressed=use_compressed)
+	samples_utils.summarize_sampler_results(samples_dir,
+                                            summary_filename,
+                                            use_compressed=use_compressed)
 
 
 
