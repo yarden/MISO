@@ -12,19 +12,6 @@ from misopy.samples_utils import *
 from misopy.credible_intervals import *
 import misopy.misc_utils as misc_utils
 
-#load_samples, format_credible_intervals, \
-#     get_samples_dir_filenames, get_isoforms_from_header
-
-#import matplotlib
-#import matplotlib.pyplot as plt
-#from matplotlib import rc
-#rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-#plt.rcParams['ps.useafm'] = True
-#rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-#plt.rcParams['font.size'] = 10
-# Trying this setting
-#plt.rcParams['pdf.fonttype'] = 42
-
 class NullPeakedDensity:
     """
     A density peaked on the null hypothesis
@@ -99,8 +86,8 @@ def compute_prior_proportion_diff(num_samples):
     return array(samples)
 
 
-def compute_delta_densities(samples1_filename,
-                            samples2_filename,
+def compute_delta_densities(samples1_results,
+                            samples2_results,
                             diff_range,
                             smoothing_param=0.3):
     """
@@ -114,10 +101,7 @@ def compute_delta_densities(samples1_filename,
     # Compute analytic prior density
     prior_density_fn = lambda x: 1 + x if x <= 0 else 1 - x
     analytic_prior_density = map(prior_density_fn, diff_range)
-    # Load posterior samples from files
-    samples1_results = load_samples(samples1_filename)
     posterior_samples1 = samples1_results[0]
-    samples2_results = load_samples(samples2_filename)
     posterior_samples2 = samples2_results[0]
 
     num_samples, num_isoforms = shape(posterior_samples1)
@@ -203,26 +187,27 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
     """
     print "Given output dir: %s" %(output_dir)
     print "Retrieving MISO files in sample directories..."
-    # Retrieve only the files that are in the two given directories
-    sample1_filenames = get_samples_dir_filenames(sample1_dir)
-    sample2_filenames = get_samples_dir_filenames(sample2_dir)
+    sample1_obj = MISOSamples(sample1_dir,
+                              use_compressed=use_compressed)
+    sample2_obj = MISOSamples(sample2_dir,
+                              use_compressed=use_compressed)
     print "Computing sample comparison between %s and %s..." %(sample1_dir,
                                                                sample2_dir)
-    print "  - # files in %s: %d" %(sample1_dir, len(sample1_filenames))
-    print "  - # files in %s: %d" %(sample2_dir, len(sample2_filenames))
+    print "  - No. of events in %s: %d" %(sample1_dir, sample1_obj.num_events)
+    print "  - No. of events in %s: %d" %(sample2_dir, sample2_obj.num_events)
     # Output header for Bayes factor file
-    if sample_labels == None:
+    if sample_labels is None:
+        # Use directory names as sample labels
         sample1_label = os.path.basename(os.path.normpath(sample1_dir))
         sample2_label = os.path.basename(os.path.normpath(sample2_dir))
     else:
+        # If we're given sample labels, use them
         sample1_label, sample2_label = sample_labels
         print "Using user-given sample labels (sample1 = %s, sample2 = %s)" \
               %(sample1_label, sample2_label)
     output_dir = os.path.join(output_dir, "%s_vs_%s" %(sample1_label,
                                                        sample2_label))
-
     print "Creating comparisons parent directory: %s" %(output_dir)
-
     # Create parent directory for comparison
     misc_utils.make_dir(output_dir)
 	
@@ -231,14 +216,14 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
     misc_utils.make_dir(bf_output_dir)
     
     header_fields = ['event_name',
-		     'sample1_posterior_mean',
-		     'sample1_ci_low',
-		     'sample1_ci_high',
-		     'sample2_posterior_mean',
-		     'sample2_ci_low',
-		     'sample2_ci_high',
-		     'diff',
-		     'bayes_factor',
+                     'sample1_posterior_mean',
+                     'sample1_ci_low',
+                     'sample1_ci_high',
+                     'sample2_posterior_mean',
+                     'sample2_ci_low',
+                     'sample2_ci_high',
+                     'diff',
+                     'bayes_factor',
                      'isoforms',
                      'sample1_counts',
                      'sample1_assigned_counts',
@@ -256,78 +241,55 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
     output_file.write(header_line)
 
     num_events_compared = 0
-    
     file_num = 0
 
-    compressed_ids_to_genes = None
-    if use_compressed is not None:
-        print "  - Loading compressed IDs mapping from: %s" \
-              %(use_compressed)        
-        compressed_ids_to_genes = \
-            index_gff.load_compressed_ids_to_genes(use_compressed)
-
     # Compute the Bayes factors for each file
-    for sample1_filename in sample1_filenames:
-        sample1_event_name = \
-            get_event_name(sample1_filename,
-                           use_compressed_map=compressed_ids_to_genes)
-
+    for event_name in sample1_obj.all_event_names:
+        sample1_results = sample1_obj.get_event_samples(event_name)
         # Parameters from raw MISO samples file
-        params = parse_sampler_params(sample1_filename)
+        samples1 = sample1_results[0]
+        header1 = sample1_results[1]
+        header1 = header1[0]
+        params1 = parse_sampler_params_from_header(header1)
         # Extract gene information if available
-        gene_info = get_gene_info_from_params(params)
-        
-	# Find corresponding event filename in sample 2
-        sample2_filename = \
-            filter(lambda filename:
-                   get_event_name(filename,
-                                  use_compressed_map=compressed_ids_to_genes) == sample1_event_name,
-                                  sample2_filenames)
-	if len(sample2_filename) == 0:
+        gene_info = get_gene_info_from_params(params1)
+        # Find corresponding event filename in sample 2
+        sample2_results = sample2_obj.get_event_samples(event_name)
+        if sample2_results is None:
             continue
-        sample2_filename = sample2_filename[0]
-        
         num_events_compared += 1
-	
-	# Compute delta of posterior samples and Bayes factors
-	diff_range = arange(-1, 1, 0.001)
-	delta_densities = \
-            compute_delta_densities(sample1_filename,
-                                    sample2_filename,
-                                    diff_range)
-	bf = delta_densities['bayes_factor']
-        
+        # Compute delta of posterior samples and Bayes factors
+        diff_range = arange(-1, 1, 0.001)
+        delta_densities = \
+          compute_delta_densities(sample1_results,
+                                  sample2_results,
+                                  diff_range)
+        bf = delta_densities['bayes_factor']
         num_isoforms = shape(delta_densities['samples1'])[1]
-        
-	sample1_posterior_mean = mean(delta_densities['samples1'], 0)
-	sample2_posterior_mean = mean(delta_densities['samples2'], 0)
-
+        sample1_posterior_mean = mean(delta_densities['samples1'], 0)
+        sample2_posterior_mean = mean(delta_densities['samples2'], 0)
         # Get the labels of the isoforms
         isoforms_field = delta_densities['isoforms']
-
         # Get the counts information about both samples
         sample1_counts_info = delta_densities['sample1_counts']
         sample2_counts_info = delta_densities['sample2_counts']
 
-	# Compute posterior mean and credible intervals for sample 1
+        # Compute posterior mean and credible intervals for sample 1
         sample1_cred_intervals = \
-            format_credible_intervals(sample1_event_name,
-                                      delta_densities['samples1'],
-                                      confidence_level=alpha)
+          format_credible_intervals(event_name,
+                                    delta_densities['samples1'],
+                                    confidence_level=alpha)
         sample1_ci_low = sample1_cred_intervals[2]
         sample1_ci_high = sample1_cred_intervals[3]
-
         # Compute posterior mean and credible intervals for sample 2
         sample2_cred_intervals = \
-            format_credible_intervals(sample1_event_name,
-                                      delta_densities['samples2'],
-                                      confidence_level=alpha)
+          format_credible_intervals(event_name,
+                                    delta_densities['samples2'],
+                                    confidence_level=alpha)
         sample2_ci_low = sample2_cred_intervals[2]
         sample2_ci_high = sample2_cred_intervals[3]
-        
-	posterior_diff = sample1_posterior_mean - sample2_posterior_mean
-
-	# Use precision of two decimal places
+        posterior_diff = sample1_posterior_mean - sample2_posterior_mean
+        # Use precision of two decimal places
         if num_isoforms == 2:
             sample1_posterior_mean = \
                 Decimal(str(sample1_posterior_mean[0])).quantize(Decimal('0.01'))
@@ -343,19 +305,19 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
             bayes_factor = ",".join(["%.2f" %(max(v, 0)) for v in bf])
 
         # Write comparison output line
-	output_fields = [sample1_event_name,
+        output_fields = [event_name,
                          # Mean and confidence bounds for sample 1
-			 "%s" %(sample1_posterior_mean),
-			 "%s" %(sample1_ci_low),
-			 "%s" %(sample1_ci_high),
+                         "%s" %(sample1_posterior_mean),
+                         "%s" %(sample1_ci_low),
+                         "%s" %(sample1_ci_high),
                          # Mean and confidence bounds for sample 2
-			 "%s" %(sample2_posterior_mean),
-			 "%s" %(sample2_ci_low),
-			 "%s" %(sample2_ci_high),
+                         "%s" %(sample2_posterior_mean),
+                         "%s" %(sample2_ci_low),
+                         "%s" %(sample2_ci_high),
                          # Delta Psi value
-			 "%s" %(posterior_diff),
+                         "%s" %(posterior_diff),
                          # Bayes factor
-			 "%s" %(bayes_factor),
+                         "%s" %(bayes_factor),
                          # Description of the isoforms
                          "%s" %(isoforms_field),
                          # Counts information for sample 1
@@ -369,9 +331,8 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
                          gene_info["strand"],
                          gene_info["mRNA_starts"],
                          gene_info["mRNA_ends"]]
-	output_line = "%s\n" %("\t".join(output_fields))
-	output_file.write(output_line)
-
+        output_line = "%s\n" %("\t".join(output_fields))
+        output_file.write(output_line)
     print "Compared a total of %d events." %(num_events_compared)
     output_file.close()
 

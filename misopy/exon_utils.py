@@ -323,8 +323,8 @@ def greeting():
     print "Optionally fetch constitutive exons by size."
     print "Part of MISO (Mixture of Isoforms model)\n"
     print "Usage:\n"
-    print "To fetch constitutive exons from GFF: "
-    print "  exon_utils.py --get-const-exons input.gff --output-dir outdir\n"
+    print "To fetch constitutive exons from GFF:\n"
+    print "exon_utils.py --get-const-exons input.gff --output-dir outdir\n"
     print "See --help for more options.\n"
 
 

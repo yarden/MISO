@@ -31,6 +31,8 @@ def greeting(parser=None):
     print "MISO (Mixture of Isoforms model)"
     print "Compare MISO samples to get differential isoform statistics."
     print "Use --help argument to view options.\n"
+    print "Example usage:\n"
+    print "compare_miso --compare-samples sample1/ sample2/ results/"
     if parser is not None:
         parser.print_help()
     

@@ -70,8 +70,6 @@ class MISOPacker:
                     # If packed file exists, move on
                     if os.path.isfile(db_fname):
                         continue
-                    print "Packing %s -> %s" %(dir_to_compress,
-                                               db_fname)
                     status = miso_db.miso_dir_to_db(dir_to_compress, db_fname)
                     # If packing was successful, delete the input directory
                     # containing the *.miso file
@@ -85,7 +83,7 @@ def greeting(parser=None):
     print "Pack the MISO output into an SQL database."
     print "Use --help argument to view options.\n"
     print "Example usage:\n"
-    print "miso_pack mydir"
+    print "miso_pack --pack mydir"
     if parser is not None:
         parser.print_help()
 

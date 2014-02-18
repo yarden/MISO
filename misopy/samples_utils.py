@@ -17,16 +17,6 @@ from misopy.parse_csv import *
 from misopy.credible_intervals import *
 import misopy.misc_utils as misc_utils
 
-
-class EventSamples:
-    """
-    Samples for a particular event.
-    """
-    def __init__(self, event_name, params, header):
-        self.event_name = event_name
-        self.params = params
-        self.header = header
-
         
 class MISOSamples:
     """
@@ -56,6 +46,7 @@ class MISOSamples:
         self.event_names_to_fnames = {}
         # Get all the event names in the current samples directory
         self.all_event_names = self.get_all_event_names()
+        self.num_events = len(self.all_event_names)
 
         
     def get_all_event_names(self):
