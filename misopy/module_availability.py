@@ -30,10 +30,10 @@ def check_module_availability(required_modules):
                 print "matplotlib is required for sashimi_plot"
 	    unavailable_mods += 1
     if unavailable_mods != 0:
-	print "Total of %d modules were not available. " \
+        print "Total of %d modules were not available. " \
               "Please install these and try again." %(unavailable_mods)
     else:
-	print "All modules are available!"
+        print "All modules are available!"
     print "Looking for required executables.."
     required_programs = ["samtools", "bedtools"]
     for prog in required_programs:
