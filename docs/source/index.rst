@@ -177,27 +177,27 @@ To quickly start using MISO, follow these steps (each of which is described in d
 
 2. **Index the annotation** using ``index_gff.py``: ::
 
-      python index_gff.py --index SE.gff3 indexed_SE_events/
+      index_gff --index SE.gff3 indexed_SE_events/
 
 where ``SE.gff3`` is a GFF file containing descriptions of isoforms/alternative splicing events to be quantitated (e.g. skipped exons).
 
 3. **Run MISO:**
 
- - Use ``run_events_analysis.py`` to get isoform expression estimates, optionally using a cluster to run jobs in parallel, e.g.: ::
+ - Use ``miso`` to get isoform expression estimates, optionally using a cluster to run jobs in parallel, e.g.: ::
 
-      python run_events_analysis.py --compute-genes-psi indexed_SE_events/ my_sample1.bam --output-dir my_output1/ --read-len 36 --use-cluster 
-      python run_events_analysis.py --compute-genes-psi indexed_SE_events/ my_sample2.bam --output-dir my_output2/ --read-len 36 --use-cluster 
+      miso --compute-genes-psi indexed_SE_events/ my_sample1.bam --output-dir my_output1/ --read-len 36 --use-cluster 
+      miso --compute-genes-psi indexed_SE_events/ my_sample2.bam --output-dir my_output2/ --read-len 36 --use-cluster 
 
   where ``indexed_SE_events`` is a directory containing the indexed skipped exon events.
 
- - **Summarize MISO inferences** using ``run_miso.py --summarize-samples``: ::
+ - **Summarize MISO inferences** using ``summarize_miso --summarize-samples``: ::
 
-      python run_miso.py --summarize-samples my_output1/ summaries/
-      python run_miso.py --summarize-samples my_output2/ summaries/
+      summarize_miso --summarize-samples my_output1/ summaries/
+      summarize_miso --summarize-samples my_output2/ summaries/
  
-4. **Make pairwise comparisons** between samples to detect differentially expressed isoforms/events with ``run_miso.py --compare-samples``: ::
+4. **Make pairwise comparisons** between samples to detect differentially expressed isoforms/events with ``compare_miso --compare-samples``: ::
 
-      python run_miso.py --compare-samples my_output1/ my_output2/ comparison_output/
+      compare_miso --compare-samples my_output1/ my_output2/ comparison_output/
 
 5. **Parse and filter** significant events with sufficient coverage.
 
@@ -285,9 +285,9 @@ Testing the installation
 ------------------------
 
 To test if the required modules are available, use the
-``module_availability.py`` script as follows: ::
+``module_availability`` script as follows: ::
 
- $ python module_availability.py 
+ $ module_availability
  Checking for availability of: numpy
  Checking for availability of: scipy
  ...
@@ -310,12 +310,12 @@ You should be able to import both of these packages without errors from the Pyth
 Testing MISO
 ------------
 
-To test that MISO can be run properly, run ``test_miso.py`` as shown
+To test that MISO can be run properly, run ``test_miso`` as shown
 below. These tests ensure that MISO can be run on a few
 genes/exons. The output of these tests can be ignored and the
 abbreviated version should be along the following lines: ::
 
- $ python misopy/test_miso.py
+ $ test_miso
  Testing conversion of SAM to BAM...
  ...output omitted...
  Computing Psi for 1 genes...
@@ -694,16 +694,16 @@ Computing the insert length distribution and its statistics
 
 We provide a set of utilities for computing and plotting the insert length distribution in paired-end RNA-Seq samples. The insert length distribution of a sample is computed by aligning the read pairs to long constitutive exons and then measuring the insert length of each pair. The set of insert lengths obtained this way form a distribution, and summary statistics of this distribution -- like its mean and standard deviation -- are used by MISO to assign read pairs to isoforms.
 
-The utilities in ``exon_utils.py`` and ``pe_utils.py`` can be used to first get a set of long constitituve exons to map read pairs to, and second compute the insert length distribution and its statistics. 
+The utilities in ``exon_utils`` and ``pe_utils`` can be used to first get a set of long constitituve exons to map read pairs to, and second compute the insert length distribution and its statistics. 
 
 Getting a set of long constitutive exons
 ........................................
 
 When computing the insert length distribution, it's important to use exons that are significantly larger than the insert length that was selected for in preparing the RNA-Seq library. If the insert length selected for in preparing the RNA-Seq library was roughly 250-300 nt, we can use constitutive exons that are at least 1000 bases long, for example, so that both read pairs will map within the exon and not outside of it. The requirement that the exons be constitutive is to avoid errors in the insert length measurements that are caused by alternative splicing of the exon (which could alter the insert length.)
 
-We first get all constitutive exons from a gene models GFF, like the Ensembl annotation of mouse genes (available here, `Mus_musculus.NCBIM37.65.gff`_), we use ``exon_utils.py``: ::
+We first get all constitutive exons from a gene models GFF, like the Ensembl annotation of mouse genes (available here, `Mus_musculus.NCBIM37.65.gff`_), we use ``exon_utils``: ::
 
- python exon_utils.py --get-const-exons Mus_musculus.NCBIM37.65.gff --min-exon-size 1000 --output-dir exons/
+ exon_utils --get-const-exons Mus_musculus.NCBIM37.65.gff --min-exon-size 1000 --output-dir exons/
 
 This will output a GFF file (named ``Mus_musculus.NCBIM37.65.min_1000.const_exons.gff``) into the ``exons`` directory containing only constitutive exons that are at least 1000 bases long. This file can be used to compute the insert length distribution of all mouse RNA-Seq datasets. Exons here are defined as constitutive only if they occur in all annotated transcripts of a gene.
 
@@ -715,11 +715,11 @@ This will output a GFF file (named ``Mus_musculus.NCBIM37.65.min_1000.const_exon
 Computing the insert length distribution given a constitutive exons file
 ........................................................................
 
-Now that we have a file containing the long constitutive exons, we can compute the insert length for any BAM file using the ``pe_utils.py`` utilities. The option ``--compute-insert-len`` takes a BAM file with the RNA-Seq sample and a GFF file containing the long constitutive exons. The insert length is defined simply as the distance between the start coordinate of the first mate in the read pair and the end coordinate of the second mate in the read pair.
+Now that we have a file containing the long constitutive exons, we can compute the insert length for any BAM file using the ``pe_utils`` utilities. The option ``--compute-insert-len`` takes a BAM file with the RNA-Seq sample and a GFF file containing the long constitutive exons. The insert length is defined simply as the distance between the start coordinate of the first mate in the read pair and the end coordinate of the second mate in the read pair.
 
 To compute the insert length for ``sample.bam`` using the constitutive exons file we made above, run: ::
 
-  python pe_utils.py --compute-insert-len sample.bam Mus_musculus.NCBIM37.65.min_1000.const_exons.gff --output-dir insert-dist/
+  pe_utils --compute-insert-len sample.bam Mus_musculus.NCBIM37.65.min_1000.const_exons.gff --output-dir insert-dist/
 
 This will efficiently map the BAM reads to the exons in the GFF file using `bedtools`_, and use the result to compute the insert lengths. The command requires the latest version of bedtools to be installed, where the ``tagBam`` utility was added the ability to output the interval that each read maps to in its BAM output file. The reads that aligned to these exons will be kept in a directory called ``bam2gff_Mus_musculus.NCBIM37.65.min_1000.const_exons.gff/`` in the ``insert-dist`` directory.
 
@@ -753,7 +753,7 @@ To compute the insert length by simple pairing of read mates by their ID (assumi
 Prefiltering MISO events
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-To increase efficiency, a prefiltering option was added in release ``0.4.7``. When ``--prefilter`` is given to ``run_events_analysis.py``, MISO will calculate the number of reads in the input BAM mapping to each event in the input GFF. Events that do not meet the read coverage thresholds (as set in the configuration file) will be removed from the run. This feature requires the Bedtools utility ``tagBam`` to be installed and available on path. The call to ``tagBam`` introduces a startup cost per BAM file, but could in many cases save computation time, since events low coverage events will not processed or distributed as jobs to nodes when running on the cluster. From ``run_events_analysis.py --help``: ::
+To increase efficiency, a prefiltering option was added in release ``0.4.7``. When ``--prefilter`` is given to ``miso``, MISO will calculate the number of reads in the input BAM mapping to each event in the input GFF. Events that do not meet the read coverage thresholds (as set in the configuration file) will be removed from the run. This feature requires the Bedtools utility ``tagBam`` to be installed and available on path. The call to ``tagBam`` introduces a startup cost per BAM file, but could in many cases save computation time, since events low coverage events will not processed or distributed as jobs to nodes when running on the cluster. From ``miso --help``: ::
 
   --prefilter           Prefilter events based on coverage. If given as
                         argument, run will begin by mapping BAM reads to event
@@ -782,7 +782,7 @@ cluster, the following options can be used:
 
 MISO will use the cluster submission and queue settings described in the settings file to submit jobs (see :ref:`config`). An example of a MISO pipeline for computing isoform expression estimates and detecting differentially expressed isoforms is given in :ref:`pipeline`.
 
-To use MISO on Sun Grid Engine, the following options to ``run_events_analysis.py`` can be used:
+To use MISO on Sun Grid Engine, the following options to ``miso`` can be used:
 
 * ``--SGEarray``: Run jobs on Sun Grid Engine. To be used in conjunction with ``--use-cluster``.
 * ``--job-name``: Name the job submitted to Sun Grid Engine system.
@@ -793,7 +793,7 @@ Thanks to Michael Lovci for this feature.
 Raw MISO output format 
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-When running MISO, through ``run_events_analysis.py --compute-genes-psi``, the raw output will be a set of posterior distributions over |Psi| values. Each exon or gene, depending on whether the analysis is exon or isoform-centric, will have its own file containing posterior samples from the distribution over |Psi|. 
+When running MISO, through ``miso --compute-genes-psi``, the raw output will be a set of posterior distributions over |Psi| values. Each exon or gene, depending on whether the analysis is exon or isoform-centric, will have its own file containing posterior samples from the distribution over |Psi|. 
 
 Most users will never need to access these raw distributions and can simply summarize this raw output as described in :ref:`summarizing`, or perform a comparison between a set of samples as described in :ref:`comparing-samples`.
 
@@ -831,7 +831,7 @@ the raw output can be compressed (see :ref:`compressing`.)
 Summarizing MISO output
 =======================
 
-To summarize MISO output and obtain confidence intervals (CIs) for |Psi| values, the ``run_miso.py --summarize-samples`` option can be used: ::
+To summarize MISO output and obtain confidence intervals (CIs) for |Psi| values, the ``summarize_miso --summarize-samples`` option can be used: ::
 
  --summarize-samples
                         Compute summary statistics of the given set of
@@ -840,7 +840,7 @@ To summarize MISO output and obtain confidence intervals (CIs) for |Psi| values,
 
 For example, to summarize the MISO output in ``my_sample_output/``, run: ::
 
-  python run_miso.py --summarize-samples my_sample_output/ summary_output/
+  summarize_miso --summarize-samples my_sample_output/ summary_output/
 
 This will create a subdirectory ``summary_output/summary/`` with a file ``my_sample_output.miso_summary`` that summarizes all the events in the sample in ``my_sample_output/``.
 
@@ -883,9 +883,9 @@ in the data in favor of differential expression versus not. For example, a Bayes
 that the isoform/exon is two times more likely to be differentially expressed than not.
 The computation of Bayes factors is described in detail in Katz et. al. (2010).
 
-To compute Bayes factors, the ``run_miso.py --compare-samples`` option can be used. For example: ::
+To compute Bayes factors, the ``compare_miso --compare-samples`` option can be used. For example: ::
 
-  python run_miso.py --compare-samples control/ knockdown/ comparisons/
+  compare_miso --compare-samples control/ knockdown/ comparisons/
 
 This would compare the MISO output in ``control/`` to ``knowndown/``, and output the result 
 to the directory ``comparisons/control_vs_knockdown``. Note that
@@ -935,14 +935,14 @@ When one of those fields is not available (e.g. ``strand``), ``NA`` is outputted
 
 .. _compressing:
 
-Compressing raw MISO output
-===========================
+Compressing raw MISO output for long-term archival
+==================================================
 
 Once all the samples have been summarized and all pairwise comparisons between samples have been made (as described in :ref:`summarizing` and :ref:`comparing-samples`), the directories containing the raw MISO output files (files ending in ``.miso``) can either be deleted or compressed for later use. 
 
-To compress directories containing raw MISO output files, a utility (currently only available in GitHub repository) called ``miso_zip.py`` can be used. For example, to compress the directory ``miso_output/`` into and name the result ``mydata.misozip``, use: ::
+To compress directories containing raw MISO output files, a utility (currently only available in GitHub repository) called ``miso_zip`` can be used. For example, to compress the directory ``miso_output/`` into and name the result ``mydata.misozip``, use: ::
 
-  python miso_zip.py --compress mydata.misozip miso_output/
+  miso_zip --compress mydata.misozip miso_output/
 
 (Note that compressed MISO files must end in ``.misozip``.) ``miso_zip`` will take as argument any directory containing ``*.miso`` files (either directory within it or within its subdirectories) and collapse all the ``*.miso`` files into a portable `SQLite database`_, split by chromosome. Each chromosome directory will be transformed into a ``.miso_db`` file, which can be read in a Python-independent way through any SQLite interface. 
 
@@ -950,7 +950,7 @@ This compression reduces the number of files dramatically, since each sample get
 
 The compressed ``.misozip`` files can be uncompressed using ``miso_zip`` as follows: ::
 
-  python miso_zip.py --uncompress mydata.misozip uncompressed/
+  miso_zip --uncompress mydata.misozip uncompressed/
 
 This will uncompress ``mydata.misozip`` and output its contents into the directory ``uncompressed/``. 
 
@@ -960,7 +960,7 @@ If you would like to access the collapsed SQLite representation of the directory
 
 This will give the original contents of the compressed directory except the ``*.miso`` files, which will now appear as ``*.miso_db`` (SQLite databases) arranged by chromosome for each sample.
 
-Note that ``miso_zip.py`` will *not* delete the directory being compressed. The directory can be deleted manually after compression is done. 
+Note that ``miso_zip`` will *not* delete the directory being compressed. The directory can be deleted manually after compression is done. 
 
 .. .. _delta-posteriors:
 
@@ -992,21 +992,21 @@ Below is an example of a MISO pipeline, where |Psi| values for a set of alternat
   ## the cluster
 
   # Compute Psi values for control sample
-  python run_events_analysis.py --compute-genes-psi mm9/pickled/SE data/control.bam --output-dir SE/control/ --read-len 35 --paired-end 250 15 --use-cluster
+  miso --compute-genes-psi mm9/pickled/SE data/control.bam --output-dir SE/control/ --read-len 35 --paired-end 250 15 --use-cluster
 
   # Compute Psi values for knockdown sample
-  python run_events_analysis.py --compute-genes-psi mm9/pickled/SE data/knockdown.bam --output-dir SE/knockdown/ --read-len 35 --paired-end 250 15 --use-cluster
+  miso --compute-genes-psi mm9/pickled/SE data/knockdown.bam --output-dir SE/knockdown/ --read-len 35 --paired-end 250 15 --use-cluster
 
   
   ## Summarize the output (only run this once --compute-genes-psi finished!)
   ## This will create a "summary" directory in SE/control/ and in SE/knockdown/
-  python run_miso.py --summarize-samples SE/control/ SE/control/
-  python run_miso.py --summarize-samples SE/knockdown/ SE/knockdown/
+  summarize_miso --summarize-samples SE/control/ SE/control/
+  summarize_miso --summarize-samples SE/knockdown/ SE/knockdown/
 
   ## Detect differentially expressed isoforms between "control" and "knockdown"
   ## This will compute Bayes factors and delta Psi values between the samples
   ## and place the results in the directory SE/comparisons/control_vs_knockdown
-  python run_miso.py --compare-samples SE/control/ SE/knockdown/ SE/comparisons/
+  compare_miso --compare-samples SE/control/ SE/knockdown/ SE/comparisons/
 
 
 .. _interpreting:
@@ -1016,7 +1016,7 @@ Interpreting and filtering MISO output
 
 Once MISO runs are completed and pairwise comparisons between your samples have been made to compute Bayes factors (using ``--compare-samples``), the resulting files can be interpreted to detect differential events.  For each pairwise comparison, we will have a ``.miso_bf`` file which contains the |Psi| values of each event in both samples along with confidence intervals (assuming the event is detectable in both), the |Delta| |Psi| values, the Bayes factor, and other useful information about the read counts used to compute these values.
 
-MISO comes with several utilities (such as ``filter_events.py``, described in :ref:`filterscript`) for helping with the interpretation and analysis of these output files. This section serves as a brief guide the MISO output files, the utilities for analyzing them, and to various caveats in interpreting the output.
+MISO comes with several utilities (such as ``filter_events``, described in :ref:`filterscript`) for helping with the interpretation and analysis of these output files. This section serves as a brief guide the MISO output files, the utilities for analyzing them, and to various caveats in interpreting the output.
 
 .. _usingcounts:
 
@@ -1086,7 +1086,7 @@ The figure on the right shows two posterior distributions over |Psi| for the sam
 Filtering differentially expressed events
 -----------------------------------------
 
-Given a MISO Bayes factor comparison file for two-isoform events, events can be filtered based on their coverage or magnitude of change. The ``filter_events.py`` script allows filtering of events, based on the following criteria:
+Given a MISO Bayes factor comparison file for two-isoform events, events can be filtered based on their coverage or magnitude of change. The ``filter_events`` script allows filtering of events, based on the following criteria:
 
 * ``--num-total N``: Number of total reads aligning to any isoform (or to both isoforms) has to be greater than or equal to N.
 * ``--num-inc N``: Number of inclusion reads (i.e. reads supporting the first isoform) has to be greater than or equal to N.
@@ -1098,7 +1098,7 @@ Given a MISO Bayes factor comparison file for two-isoform events, events can be 
 
 For example, to filter the file ``control.miso_bf`` to contain only events with: (a) at least 1 inclusion read, (b) 1 exclusion read, such that (c) the sum of inclusion and exclusion reads is at least 10, and (d) the |Delta| |Psi| is at least 0.20 and (e) the Bayes factor is at least 10, and (a)-(e) are true in one of the samples, use the following command: ::
 
-  python filter_events.py --filter control.miso_bf --num-inc 1 --num-exc 1 --num-sum-inc-exc 10 --delta-psi 0.20 --bayes-factor 10 --output-dir filtered/
+  filter_events --filter control.miso_bf --num-inc 1 --num-exc 1 --num-sum-inc-exc 10 --delta-psi 0.20 --bayes-factor 10 --output-dir filtered/
 
 This will output a filtered Bayes factor file, ``filtered/control.miso_bf.filtered`` that contains only events meeting the above criteria. 
 
@@ -1113,6 +1113,14 @@ MISO comes with a built-in utility, `sashimi_plot`_, for visualizing its output 
 
 Updates
 =======
+
+**2014**
+
+* Renamed scripts. The core MISO scripts are now named ``miso``, ``summarize_miso`` and ``compare_samples``. Python extensions (``.py``) have been dropped. Entry points are used in Python installations to resolve issues with scripts not being registered as executables after installation.
+
+* Added ``--no-wait`` option to ``miso`` to prevent main process from waiting on cluster jobs
+
+* Fixed bug that prevented ``--apply-both`` from working in ``filter_events``
 
 **2013**
 

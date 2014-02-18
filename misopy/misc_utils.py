@@ -4,6 +4,7 @@
 import os
 import sys
 import time
+import shelve
 
 COMPRESS_PREFIX = "misocomp"
 

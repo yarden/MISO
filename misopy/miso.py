@@ -49,7 +49,8 @@ class GenesDispatcher:
                  SGEarray=False,
                  sge_job_name="misojob",
                  gene_ids=None,
-                 num_proc=None):
+                 num_proc=None,
+                 wait_on_jobs=True):
         self.threads = {}
         self.gff_dir = gff_dir
         self.bam_filename = bam_filename
@@ -74,6 +75,7 @@ class GenesDispatcher:
         self.settings = Settings.get()
         self.cluster_cmd = Settings.get_cluster_command()
         self.sge_job_name = sge_job_name
+        self.wait_on_jobs = wait_on_jobs
         # if chunk_jobs not given (i.e. set to False),
         # then set it to arbitrary value
         if not self.chunk_jobs:
@@ -293,7 +295,8 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                           settings_fname=None,
                           job_name="misojob",
                           num_proc=None,
-                          prefilter=False):
+                          prefilter=False,
+                          wait_on_jobs=True):
     """
     Compute Psi values for genes using a GFF and a BAM filename.
 
@@ -364,7 +367,8 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                                  sge_job_name=job_name,
                                  SGEarray=SGEarray,
                                  gene_ids=all_gene_ids,
-                                 num_proc=num_proc)
+                                 num_proc=num_proc,
+                                 wait_on_jobs=wait_on_jobs)
     dispatcher.run()
 
 
@@ -439,6 +443,10 @@ def main():
     parser.add_option("--version", dest="version", default=False,
                       action="store_true",
                       help="Print MISO version.")
+    parser.add_option("--no-wait", dest="no_wait_on_jobs", default=False,
+                      action="store_true",
+                      help="If passed in, do not wait on cluster jobs after " \
+                      "they are submitted. By default, wait.")
     ##
     ## Gene utilities
     ##
@@ -507,7 +515,9 @@ def main():
 
         if options.overhang_len != None:
             overhang_len = options.overhang_len
-        
+
+        # Whether to wait on cluster jobs or not
+        wait_on_jobs = not options.no_wait
         compute_all_genes_psi(gff_filename, bam_filename,
                               options.read_len, output_dir,
                               overhang_len=overhang_len,
@@ -518,7 +528,8 @@ def main():
                               paired_end=options.paired_end,
                               settings_fname=settings_filename,
                               prefilter=options.prefilter,
-                              num_proc=options.num_proc)
+                              num_proc=options.num_proc,
+                              wait_on_jobs=wait_on_jobs)
 
     if options.view_gene != None:
         indexed_gene_filename = \
