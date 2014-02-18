@@ -46,11 +46,11 @@ def main():
     ##
     parser.add_option("--compare-samples", dest="samples_to_compare",
                       nargs=3, default=None,
-		      help="Compute comparison statistics between the two "
-                      "given samples. Expects three directories: the first is "
-                      "sample1's MISO output, the second is sample2's MISO "
-                      "output, and the third is the directory where "
-		      "results of the sample comparison will be outputted.")
+                      help="Compute comparison statistics between the two " \
+                      "given samples. Expects three directories: the first is " \
+                      "sample1's MISO output, the second is sample2's MISO " \
+                      "output, and the third is the directory where " \
+                      "results of the sample comparison will be outputted.")
     parser.add_option("--comparison-labels", dest="comparison_labels",
                       nargs=2, default=None,
                       help="Use these labels for the sample comparison "
@@ -66,7 +66,8 @@ def main():
                       "index_gff script.")
     (options, args) = parser.parse_args()
 
-    greeting()
+    if options.compare_samples is None:
+        greeting()
 
     use_compressed = None
     if options.use_compressed is not None:

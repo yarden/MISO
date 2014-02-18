@@ -79,8 +79,10 @@ class MISOSamples:
         """
         Get the samples information for the given event by name.
         """
-        event_fname = self.event_names_to_fnames[event_name]
         samples = None
+        if event_name not in self.event_names_to_fnames:
+            return None
+        event_fname = self.event_names_to_fnames[event_name]
         if event_fname.endswith(".miso"):
             # Get event from plain text .miso file
             f = open(event_fname, "r")
