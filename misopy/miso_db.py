@@ -26,10 +26,8 @@ class MISODatabase:
     """
     def __init__(self, db_fname, comp_to_uncomp=None):
         self.comp_to_uncomp = comp_to_uncomp
-        ####
-        #### TODO MAKE MAPPING FROM UNCOMPRESSED TO COMPRESSED
-        #### GENES HERE
-        ####
+        # Get mapping of uncompressed to compressed
+        # event IDs
         self.uncomp_to_comp = None
         if self.comp_to_uncomp is not None:
             # Make mapping from uncompressed to compressed IDs
@@ -87,7 +85,6 @@ class MISODatabase:
         # name
         event_data = "%s\n%s\n" %(header,
                                   psi_vals_and_scores)
-        print "EVENT DATA: ", event_data
         event_stream = StringIO.StringIO(event_data)
         return event_stream
 

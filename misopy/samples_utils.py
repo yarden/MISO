@@ -103,9 +103,7 @@ class MISOSamples:
               miso_db.MISODatabase(event_fname,
                                    comp_to_uncomp=self.compressed_ids_to_genes)
             event_data = curr_db.get_event_data_as_stream(event_name)
-            print "event data:", event_data
             samples = load_samples(event_data)
-            print "SAMPLES -> ", samples
         if samples is None:
             print "WARNING: Could not parse event %s samples" %(event_name)
         return samples
