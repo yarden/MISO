@@ -66,12 +66,21 @@ class MISOSamples:
             elif miso_db.is_miso_db_fname(curr_fname):
                 # It's a MISO database file, so load all the event
                 # names in that file
-                curr_db = miso_db.MISODatabase(curr_fname)
+                curr_db = \
+                  miso_db.MISODatabase(curr_fname,
+                                       comp_to_uncomp=self.compressed_ids_to_genes)
                 # Record event name and its mapping to the chromosome's
                 # .miso_db file
                 for curr_event_name in curr_db.get_all_event_names():
-                    all_event_names.append(curr_event_name)
-                    self.event_names_to_fnames[curr_event_name] = curr_fname
+                    curr_event_name = str(curr_event_name)
+                    event_name_to_use = curr_event_name
+                    # If we're given a mapping of compressed IDs, use the
+                    # mapping to get the uncompressed event name
+                    if self.compressed_ids_to_genes is not None:
+                        event_name_to_use = \
+                          str(self.compressed_ids_to_genes[curr_event_name])
+                    all_event_names.append(event_name_to_use)
+                    self.event_names_to_fnames[event_name_to_use] = curr_fname
         return all_event_names
     
 
@@ -90,9 +99,13 @@ class MISOSamples:
             f.close()
         elif miso_db.is_miso_db_fname(event_fname):
             # Get event from miso_db file
-            curr_db = miso_db.MISODatabase(event_fname)
+            curr_db = \
+              miso_db.MISODatabase(event_fname,
+                                   comp_to_uncomp=self.compressed_ids_to_genes)
             event_data = curr_db.get_event_data_as_stream(event_name)
+            print "event data:", event_data
             samples = load_samples(event_data)
+            print "SAMPLES -> ", samples
         if samples is None:
             print "WARNING: Could not parse event %s samples" %(event_name)
         return samples

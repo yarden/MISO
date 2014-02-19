@@ -8,6 +8,17 @@ import shelve
 
 COMPRESS_PREFIX = "misocomp"
 
+
+def inv_dict(mydict):
+    """
+    Reverse key -> val into val -> key.
+    """
+    new_dict = {}
+    for k in mydict:
+        new_dict[mydict[k]] = k
+    return new_dict
+
+
 def load_compressed_ids_to_genes(compressed_filename):
     """
     Load mapping from compressed IDs to genes.
