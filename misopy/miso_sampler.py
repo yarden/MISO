@@ -238,7 +238,7 @@ class MISOSampler:
                 %(output_file)
             return None
 
-    self.params['iters'] = num_iters
+        self.params['iters'] = num_iters
         self.params['burn_in'] = burn_in
         self.params['lag'] = lag
 
