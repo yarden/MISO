@@ -242,18 +242,18 @@ class MISOSampler:
         self.iso_lens_matrix = None
 
         
-    def log_multivar_normal_pdf(x, mu, sigma):
-        """
-        Multivariate Normal pdf (adapted from PyMix.)
-        """
-        dd = la.det(sigma)
-        inverse = la.inv(sigma)
-        N = len(x)
-        ff = math.pow(2*math.pi,-N/2.0)*math.pow(dd,-0.5)
-        # centered input values
-        centered = numarray.subtract(x, numarray.repeat([mu], N))
-        res = ff * numarray.exp(-0.5*numarray.sum(numarray.multiply(centered,numarray.dot(centered,inverse)), 1))
-        return numarray.log(res)[0]
+    # def log_multivar_normal_pdf(x, mu, sigma):
+    #     """
+    #     Multivariate Normal pdf (adapted from PyMix.)
+    #     """
+    #     dd = la.det(sigma)
+    #     inverse = la.inv(sigma)
+    #     N = len(x)
+    #     ff = math.pow(2*math.pi,-N/2.0)*math.pow(dd,-0.5)
+    #     # centered input values
+    #     centered = numarray.subtract(x, numarray.repeat([mu], N))
+    #     res = ff * numarray.exp(-0.5*numarray.sum(numarray.multiply(centered,numarray.dot(centered,inverse)), 1))
+    #     return numarray.log(res)[0]
 
 
     def logistic_normal_log_pdf(self, theta, mu):
@@ -275,11 +275,6 @@ class MISOSampler:
         exp_part = dot(dot(first_log, invsigma), second_log)
         pdf_value = covar_constant*prod_theta*exp(exp_part)
         return log(pdf_value)
-        
-
-    def logistic_normal_pdf_Z(theta, mu):
-        theta = theta[0:-1]
-        new_mu = array([0])
         
 
     def log_score_joint(self, reads, assignments, psi_vector,
@@ -316,21 +311,20 @@ class MISOSampler:
                 sum(self.log_score_paired_end_reads(reads, assignments, gene))
             log_psi_frag = None
 	if not self.paired_end:
-	    #log_assignments_prob = \
-            #    sum(self.log_score_assignment(assignments, psi_vector))
-            #print "OLD SUM: "
-            #print log_assignments_prob
             log_assignments_prob = \
                 miso_scores.sum_log_score_assignments(assignments,
                                                       log_psi_frag,
                                                       self.num_reads)
 	else:
+            raise Exception, "Paired-end not implemented!"
 	    log_assignments_prob = \
                 sum(self.log_score_paired_end_assignment(assignments,
                                                          psi_vector,
                                                          gene))
-        # Score the Psi vector
-        log_psi_prob = self.log_score_psi_vector(psi_vector, hyperparameters)
+        # Score the Psi vector: keep this in Python for now
+        #log_psi_prob = self.log_score_psi_vector(psi_vector, hyperparameters)
+        log_psi_prob = \
+            miso_scores.log_score_psi_vector(psi_vector, hyperparameters)
         log_joint_score = log_reads_prob + log_assignments_prob + log_psi_prob
         return log_joint_score
 
@@ -423,26 +417,26 @@ class MISOSampler:
         return final_psi_frags
 
 
-    def log_score_reads(self, reads, isoform_nums, gene):
-        """
-        Score a set of reads given their isoform assignments.
-        Vectorized version.
-        """
-        # The probability of a read being assigned to an isoform that
-        # could not have generated it (i.e. where the read is not a
-        # substring of the isoform) is zero.  Check for consistency
-        overhang_excluded = \
-            2*(self.overhang_len - 1)*(gene.num_parts_per_isoform[isoform_nums] - 1)
-        # The number of reads possible is the number of ways a 36 nt long read can be
-        # aligned onto the length of the current isoforms, minus the number of positions
-        # that are ruled out due to overhang constraints.
-        num_reads_possible = \
-            (gene.iso_lens[isoform_nums] - self.read_len + 1) - overhang_excluded
-        log_prob_reads = log(1) - log(num_reads_possible)
-        zero_prob_indx = nonzero(reads[np.arange(self.num_reads), isoform_nums] == 0)[0]
-        # Assign probability 0 to reads inconsistent with assignment
-        log_prob_reads[zero_prob_indx] = -inf
-        return log_prob_reads
+    # def log_score_reads(self, reads, isoform_nums, gene):
+    #     """
+    #     Score a set of reads given their isoform assignments.
+    #     Vectorized version.
+    #     """
+    #     # The probability of a read being assigned to an isoform that
+    #     # could not have generated it (i.e. where the read is not a
+    #     # substring of the isoform) is zero.  Check for consistency
+    #     overhang_excluded = \
+    #         2*(self.overhang_len - 1)*(gene.num_parts_per_isoform[isoform_nums] - 1)
+    #     # The number of reads possible is the number of ways a 36 nt long read can be
+    #     # aligned onto the length of the current isoforms, minus the number of positions
+    #     # that are ruled out due to overhang constraints.
+    #     num_reads_possible = \
+    #         (gene.iso_lens[isoform_nums] - self.read_len + 1) - overhang_excluded
+    #     log_prob_reads = log(1) - log(num_reads_possible)
+    #     zero_prob_indx = nonzero(reads[np.arange(self.num_reads), isoform_nums] == 0)[0]
+    #     # Assign probability 0 to reads inconsistent with assignment
+    #     log_prob_reads[zero_prob_indx] = -inf
+    #     return log_prob_reads
 
 
     def log_score_paired_end_reads(self, reads, isoform_nums, gene):
@@ -492,21 +486,21 @@ class MISOSampler:
         return log_prob_reads        
 
 
-    def log_score_assignment(self, isoform_nums, psi_vector):
-        """
-        Score an assignment of a set of reads given psi
-        and a gene (i.e. a set of isoforms).
-        """
-        ###
-        ### TODO: no need to compute scaled lens each time!
-        ###
-        psi_frag = log(psi_vector) + log(self.scaled_lens_single_end)
-        psi_frag = psi_frag - logsumexp(psi_frag)
-        psi_frags = tile(psi_frag, [self.num_reads, 1])
-        # NEW VERSION: uses xrange
-        return psi_frags[np.arange(self.num_reads), isoform_nums]
-        # OLD VERSION: uses range
-        #return psi_frags[range(self.num_reads), isoform_nums]
+    # def log_score_assignment(self, isoform_nums, psi_vector):
+    #     """
+    #     Score an assignment of a set of reads given psi
+    #     and a gene (i.e. a set of isoforms).
+    #     """
+    #     ###
+    #     ### TODO: no need to compute scaled lens each time!
+    #     ###
+    #     psi_frag = log(psi_vector) + log(self.scaled_lens_single_end)
+    #     psi_frag = psi_frag - logsumexp(psi_frag)
+    #     psi_frags = tile(psi_frag, [self.num_reads, 1])
+    #     # NEW VERSION: uses xrange
+    #     return psi_frags[np.arange(self.num_reads), isoform_nums]
+    #     # OLD VERSION: uses range
+    #     #return psi_frags[range(self.num_reads), isoform_nums]
 
 
     def propose_psi_vector(self, psi_vector, alpha_vector):
