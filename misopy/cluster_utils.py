@@ -190,7 +190,7 @@ def run_on_cluster(cmd, job_name, cluster_output_dir,
         
     misc_utils.make_dir(cluster_output_dir)
     if cluster_scripts_dir == None:
-	cluster_scripts_dir = os.path.join(cluster_output_dir,
+        cluster_scripts_dir = os.path.join(cluster_output_dir,
                                            'cluster_scripts')
         misc_utils.make_dir(cluster_scripts_dir)
     scripts_output_dir = os.path.join(cluster_output_dir,

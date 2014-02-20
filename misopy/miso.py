@@ -253,14 +253,28 @@ class GenesDispatcher:
         # If ran jobs on cluster, wait for them if there are any
         # to wait on.
         if self.wait_on_jobs:
+            if self.use_cluster and (len(cluster_jobs) == 0):
+                # If we're asked to use the cluster but the list
+                # of cluster jobs is empty, it means we could not
+                # find the IDs of the job from the submission
+                # system. Report this to the user.
+                print "I was asked to wait on cluster jobs but I cannot " \
+                      "parse their job IDs from the cluster submission " \
+                      "system."
+            # Try to wait on jobs no matter what; though if 'cluster_jobs'
+            # is empty here, it will not wait
             cluster_utils.wait_on_jobs(cluster_jobs,
                                        self.cluster_cmd)
-            # If ran jobs locally, wait on them to finish
-            # (this will do nothing if we submitted jobs to
-            # cluster)
-            self.wait_on_threads()
         else:
-            print "Not waiting on jobs/threads."
+            if self.use_cluster:
+                # If we're running in cluster mode and asked not
+                # to wait for jobs, let user know
+                print "Not waiting on cluster jobs."
+        # If ran jobs locally, wait on them to finish
+        # (this will do nothing if we submitted jobs to
+        # cluster)
+        self.wait_on_threads()
+        
 
     def wait_on_threads(self):
         if self.use_cluster:
@@ -446,7 +460,7 @@ def main():
     parser.add_option("--version", dest="version", default=False,
                       action="store_true",
                       help="Print MISO version.")
-    parser.add_option("--no-wait", dest="no_wait_on_jobs", default=False,
+    parser.add_option("--no-wait", dest="no_wait", default=False,
                       action="store_true",
                       help="If passed in, do not wait on cluster jobs after " \
                       "they are submitted. By default, wait.")
