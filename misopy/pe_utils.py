@@ -524,7 +524,11 @@ def main():
                       help="Output directory.")
     (options, args) = parser.parse_args()
 
-    if options.output_dir == None:
+    if options.compute_insert_len is None:
+        greeting()
+        return
+
+    if options.output_dir is None:
         greeting()
         
         print "Error: need --output-dir."

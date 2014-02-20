@@ -252,12 +252,15 @@ class GenesDispatcher:
             time.sleep(delay_constant)                
         # If ran jobs on cluster, wait for them if there are any
         # to wait on.
-        cluster_utils.wait_on_jobs(cluster_jobs,
-                                   self.cluster_cmd)
-        print "Waiting on local threads..."
-        # If ran jobs locally, wait on them to finish
-        self.wait_on_threads()
-
+        if self.wait_on_jobs:
+            cluster_utils.wait_on_jobs(cluster_jobs,
+                                       self.cluster_cmd)
+            # If ran jobs locally, wait on them to finish
+            # (this will do nothing if we submitted jobs to
+            # cluster)
+            self.wait_on_threads()
+        else:
+            print "Not waiting on jobs/threads."
 
     def wait_on_threads(self):
         if self.use_cluster:
@@ -385,19 +388,19 @@ def main():
                       "process, and a sorted, indexed BAM file (with "
                       "headers) to run on.")
     parser.add_option("--event-type", dest="event_type", nargs=1,
-		      help="Type of event (e.g. SE, RI, A3SS, ...)",
+                      help="[OPTIONAL] Type of event (e.g. SE, RI, A3SS, ...)",
                       default=None)
     parser.add_option("--use-cluster", dest="use_cluster",
                       action="store_true", default=False,
-		      help="Run events on cluster.")
+                      help="Run events on cluster.")
     parser.add_option("--chunk-jobs", dest="chunk_jobs",
                       default=False, type="int",
-		      help="Size (in number of events) of each job to chunk "
+                      help="Size (in number of events) of each job to chunk "
                       "events file into. Only applies when running on cluster.")
     parser.add_option("--no-filter-events", dest="no_filter_events",
                       action="store_true", default=False,
-		      help="Do not filter events for computing Psi. "
-		      "By default, MISO computes Psi only for events that "
+                      help="Do not filter events for computing Psi. "
+                      "By default, MISO computes Psi only for events that "
                       "have a sufficient number of junction reads. "
                       "The default filter varies by event type.")
     parser.add_option("--settings-filename", dest="settings_filename",
@@ -406,16 +409,16 @@ def main():
                                            "miso_settings.txt"),                    
                       help="Filename specifying MISO settings.")
     parser.add_option("--read-len", dest="read_len", default=None, type="int",
-		      help="Length of sequenced reads.")
-    parser.add_option("--paired-end", dest="paired_end", nargs=2, default=None, 
-		      help="Run in paired-end mode. Takes mean and "
+                      help="Length of sequenced reads.")
+    parser.add_option("--paired-end", dest="paired_end", nargs=2, default=None,
+                      help="Run in paired-end mode. Takes mean and "
                       "standard deviation of insert length distribution.")
     parser.add_option("--overhang-len", dest="overhang_len",
                       default=None, type="int",
-		      help="Length of overhang constraints "
+                      help="Length of overhang constraints "
                       "imposed on junctions.")
     parser.add_option("--output-dir", dest="output_dir", default=None,
-		      help="Directory for MISO output.")
+                      help="Directory for MISO output.")
     parser.add_option("--job-name", dest="job_name", nargs=1,
                       help="Name for jobs submitted to queue for SGE jobs. " \
                       "Default is misojob", default="misojob")
