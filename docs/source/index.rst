@@ -190,7 +190,7 @@ where ``SE.gff3`` is a GFF file containing descriptions of isoforms/alternative 
       miso --compute-genes-psi indexed_SE_events/ my_sample1.bam --output-dir my_output1/ --read-len 36 --use-cluster 
       miso --compute-genes-psi indexed_SE_events/ my_sample2.bam --output-dir my_output2/ --read-len 36 --use-cluster 
 
-  where ``indexed_SE_events`` is a directory containing the indexed skipped exon events. **Optionally*, you can pack the MISO output to reduce the space and number of files taken up by the output: ::
+  where ``indexed_SE_events`` is a directory containing the indexed skipped exon events. **Optionally**, you can pack the MISO output to reduce the space and number of files taken up by the output: ::
 
       miso_pack --pack my_output1/
       miso_pack --pack my_output2/
@@ -936,16 +936,33 @@ When one of those fields is not available (e.g. ``strand``), ``NA`` is outputted
 
 .. _compressing:
 
-Compressing raw MISO output for long-term archival
-==================================================
+Compressing raw MISO output
+===========================
 
-Once all the samples have been summarized and all pairwise comparisons between samples have been made (as described in :ref:`summarizing` and :ref:`comparing-samples`), the directories containing the raw MISO output files (files ending in ``.miso``) can either be deleted or compressed for later use. 
+Packing MISO output
+-------------------
 
-To compress directories containing raw MISO output files, a utility (currently only available in GitHub repository) called ``miso_zip`` can be used. For example, to compress the directory ``miso_output/`` into and name the result ``mydata.misozip``, use: ::
+Starting from version 0.5.0, the ``miso_pack`` utility is available for *packing* raw MISO output. The packing utility converts the raw MISO output directories that contain ``*.miso`` files and converts them into a portable `SQLite database`_ (one database file per chromosome.) This reduces the number of files substantially, which otherwise could burden the filesystem. The packing operation uses the built-in SQL library of Python (``sqlite3``) and does not require installation of any external SQL databases.
+
+All downstream analyses analyses (like sample summary and comparisons, as described in :ref:`summarizing` and :ref:`comparing-samples`) work with the packed format, and so there is never a need to 'unpack' MISO output once ``miso_pack`` was run. To pack a directory ``miso_output/`` that contains output from MISO, run: ::
+
+  miso_pack --pack miso_output/
+
+The ``miso_pack`` utility will traverse the entire directory structure of ``miso_output`` and pack any directories that contain raw MISO output.
+
+*Note:* The SQLite databases made by ``miso_pack`` can be read independently of Python and queries as ordinary SQLite databases. However, end-users should never need to deal with these files directly.
+
+
+Long-term archival and compression of MISO output
+-------------------------------------------------
+
+Once all the samples have been summarized and all pairwise comparisons between samples have been made (as described in :ref:`summarizing` and :ref:`comparing-samples`), space can be saved by archiving the MISO output for long-term storage.
+
+To compress directories containing raw MISO output files, a utility called ``miso_zip`` can be used. For example, to compress the directory ``miso_output/`` into and name the result ``mydata.misozip``, use: ::
 
   miso_zip --compress mydata.misozip miso_output/
 
-(Note that compressed MISO files must end in ``.misozip``.) ``miso_zip`` will take as argument any directory containing ``*.miso`` files (either directory within it or within its subdirectories) and collapse all the ``*.miso`` files into a portable `SQLite database`_, split by chromosome. Each chromosome directory will be transformed into a ``.miso_db`` file, which can be read in a Python-independent way through any SQLite interface. 
+(Note that compressed MISO files must end in ``.misozip``.) If ``miso_output`` is not already packed, ``miso_zip`` will first pack it, and then compress the result using standard ``zip`` comrpession to save space. ``miso_zip`` will take as argument any directory containing ``*.miso`` files (either directory within it or within its subdirectories)
 
 This compression reduces the number of files dramatically, since each sample gets one SQLite database per chromosome. The resulting directory structure is then compressed further using standard ``zip`` compression into a single zip file (in this case named ``mydata.zip``). 
 
@@ -955,13 +972,7 @@ The compressed ``.misozip`` files can be uncompressed using ``miso_zip`` as foll
 
 This will uncompress ``mydata.misozip`` and output its contents into the directory ``uncompressed/``. 
 
-If you would like to access the collapsed SQLite representation of the directory without retrieving the original ``*.miso`` files, all you need to do is unzip the ``.misozip`` file using the standard ``unzip`` utility: ::
-
-  unzip mydata.misozip
-
-This will give the original contents of the compressed directory except the ``*.miso`` files, which will now appear as ``*.miso_db`` (SQLite databases) arranged by chromosome for each sample.
-
-Note that ``miso_zip`` will *not* delete the directory being compressed. The directory can be deleted manually after compression is done. 
+*Note:* ``miso_zip`` will *not* delete the directory being compressed. The directory can be deleted manually after compression is done. 
 
 .. .. _delta-posteriors:
 
