@@ -66,7 +66,7 @@ def main():
                       "index_gff script.")
     (options, args) = parser.parse_args()
 
-    if options.compare_samples is None:
+    if options.samples_to_compare is None:
         greeting()
 
     use_compressed = None
