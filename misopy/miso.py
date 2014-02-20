@@ -258,7 +258,7 @@ class GenesDispatcher:
                 # of cluster jobs is empty, it means we could not
                 # find the IDs of the job from the submission
                 # system. Report this to the user.
-                print "I was asked to wait on cluster jobs but I cannot " \
+                print "WARNING: Asked to wait on cluster jobs but cannot " \
                       "parse their job IDs from the cluster submission " \
                       "system."
             # Try to wait on jobs no matter what; though if 'cluster_jobs'
