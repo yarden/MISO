@@ -280,7 +280,7 @@ This will create a directory called ``lib`` inside that directory that contains 
 
 This will place the local ``site-packages`` ahead of the current setting of ``PYTHONPATH``, resulting in Python loading the version of the package installed there (if it is available) over versions existing in the system's global ``site-packages`` directory.
 
-Executable scripts that are part of MISO (like ``run_events_analysis.py``) get placed in a local ``bin`` directory (e.g. ``~/bin/``) directory. If you'd like these to get used from the shell in place of a globally installed version, make sure that ``~/bin`` is first in your ``PATH`` variable. 
+Executable scripts that are part of MISO (like ``miso``) get placed in a local ``bin`` directory (e.g. ``~/bin/``) directory. If you'd like these to get used from the shell in place of a globally installed version, make sure that ``~/bin`` is first in your ``PATH`` variable. 
 
 We strongly recommend that you manage Python packages using a package manager rather than manually installing packages and modifying your ``PYTHONPATH``, which is error prone and time consuming.
 
@@ -521,15 +521,11 @@ Running MISO
 Invoking MISO from the command line
 -----------------------------------
 
-When installing the MISO package, the set of scripts that make up to inteface to MISO will automatically be placed as an executables in your path, so that you can refer to these without modifying your shell environment. For example, if you install MISO using ``setup.py install`` globally, then a MISO script like ``run_events_analysis.py`` will become available on the path, and can be run as: ::
+When installing the MISO package, the set of scripts that make up to inteface to MISO will automatically be placed as an executables in your path, so that you can refer to these without modifying your shell environment. For example, if you install MISO using ``setup.py install`` globally, then a MISO script like ``miso`` will become available on the path, and can be run as: ::
 
- run_events_analysis.py ...
+  miso
 
-Or alternatively, as: ::
-
- python run_events_analysis.py ...
-
-Though the ``python`` prefix is not necessary. The path of the Python version on the system used to install MISO will automatically be invoked when running these scripts.
+The path of the Python version on the system used to install MISO will automatically be invoked when running these scripts.
 
 If you installed MISO using ``setup.py --prefix=~/`` in your home directory or some other path, these scripts will typically be placed in a designated executables directory in your home directory, e.g. ``~/bin/``. 
 
@@ -543,17 +539,17 @@ Files in SAM format must be converted to an indexed, sorted BAM file that contai
 If you have an indexed, sorted BAM file you can move on to the next section. 
 
 The right BAM file can be created using `samtools`_ manually, or with the help of the wrapper 
-script ``sam_to_bam.py`` that calls samtools. For example, to convert ``my_sample.sam`` to an 
+script ``sam_to_bam`` that calls samtools. For example, to convert ``my_sample.sam`` to an 
 indexed, sorted BAM file with headers specified in ``mm9_complete.fa.fai`` and output the result 
 to the directory ``my_sample/``, use: ::
 
-  python sam_to_bam.py --convert my_sample.sam my_sample/ --ref mm9_complete.fa.fai
+  sam_to_bam --convert my_sample.sam my_sample/ --ref mm9_complete.fa.fai
 
 The ``mm9_complete.fa.fai`` is a header file that contains the lengths of each chromosome
 in the genome used to create the ``my_sample.sam`` file. The .fai files can be created from the 
 FASTA files of a genome using the ``faidx`` option of samtools (e.g. ``samtools faidx genome.fasta``).
 
-The ``sam_to_bam.py`` script will output a set of BAM files and their indices (``my_sample.bam``,
+The ``sam_to_bam`` script will output a set of BAM files and their indices (``my_sample.bam``,
 ``my_sample.sorted.bam``, ``my_sample.sorted.bam.bai``) to ``my_sample/``.
 
 .. _indexing-annotation:
@@ -575,9 +571,9 @@ whole transcripts -- as described in :ref:`gff-event-annotation`.  The GFF file 
 indexed for efficient representation. A set of indexed, ready-to-use events is available for the 
 mouse and human genomes.
 
-To create an index for the GFF annotations, the ``index_gff.py`` script can be used as follows: ::
+To create an index for the GFF annotations, the ``index_gff`` script can be used as follows: ::
 
-  python index_gff.py --index SE.mm9.gff indexed/
+  index_gff --index SE.mm9.gff indexed/
 
 This will index the GFF file ``SE.mm9.gff`` and output the result to the ``indexed/`` directory. 
 This indexed directory is then used as input to MISO. 
@@ -636,7 +632,7 @@ Computing expression estimates ("Psi" / |Psi| values)
 -----------------------------------------------------
 
 To run MISO to estimate the expression level of a set of annotated isoforms or events in GFF format,
-the ``run_events_analysis.py`` script is used with the ``--compute-genes-psi`` option. 
+the ``miso`` script is used with the ``--compute-genes-psi`` option. 
 This produces distributions over "Psi" values (|Psi|), which stand for
 "Percent Spliced In". See Katz et. al. (2010) for a description of
 these values and how they are computed.
