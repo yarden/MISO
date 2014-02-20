@@ -17,7 +17,7 @@ class TestMISO(unittest.TestCase):
         self.tests_data_dir = \
             os.path.join(self.miso_path, "test-data")
         self.events_analysis_cmd = \
-            "python %s " %(os.path.join(self.miso_path, "miso"))
+            "%s " %(os.path.join(self.miso_path, "miso"))
         self.tests_output_dir = \
             os.path.join(self.miso_path, "test-output")
         self.test_sam_filename = \
@@ -43,9 +43,9 @@ class TestMISO(unittest.TestCase):
         output_dir = \
             os.path.join(self.tests_output_dir, "sam-output")
         sam_to_bam_cmd = \
-            "python %s --convert %s %s" %(self.sam_to_bam_script,
-                                          self.test_sam_filename,
-                                          output_dir)
+            "%s --convert %s %s" %(self.sam_to_bam_script,
+                                   self.test_sam_filename,
+                                   output_dir)
         print "Executing: %s" %(sam_to_bam_cmd)
         os.system(sam_to_bam_cmd)
 
@@ -189,9 +189,9 @@ class TestMISO(unittest.TestCase):
                                      "Atp2b1",
                                      "indexed")
         print "Testing GFF indexing of: %s" %(gff_filename)
-        index_cmd = "python %s --index %s %s" %(self.index_gff_script,
-                                                gff_filename,
-                                                gff_index_dir)
+        index_cmd = "%s --index %s %s" %(self.index_gff_script,
+                                         gff_filename,
+                                         gff_index_dir)
 
         print "Executing: %s" %(index_cmd)
         os.system(index_cmd)
