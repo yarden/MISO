@@ -94,7 +94,7 @@ def mini(l):
         if m == v:
             return i
 
-        
+
 def exp_logsumexp(a):
     return exp(a - logsumexp(a))
 
@@ -119,7 +119,7 @@ def print_assignment_summary(assignments):
     for k, v in counts.iteritems():
         print "Total of %d in isoform %d" %(v, k)
 
-    
+
 def float_array_to_str(array_of_floats):
     """
     Convert a float numpy array to a string for printing purposes.
@@ -170,19 +170,19 @@ class MISOSampler:
     def __init__(self, params,
                  paired_end=False,
                  log_dir=None):
-	"""
-	Make a sampler with the given parameters.
-	"""
+        """
+        Make a sampler with the given parameters.
+        """
         self.params = params
-	self.paired_end = paired_end
-	# set default fragment length distribution parameters
-	if self.paired_end:
-	    if ((not 'mean_frag_len' in self.params) or \
+        self.paired_end = paired_end
+        # set default fragment length distribution parameters
+        if self.paired_end:
+            if ((not 'mean_frag_len' in self.params) or \
                 (not 'frag_variance' in self.params)):
-		raise Exception, "Must set mean_frag_len and frag_variance when " \
+                raise Exception, "Must set mean_frag_len and frag_variance when " \
                       "running in sampler on paired-end data."
-	    self.mean_frag_len = self.params['mean_frag_len']
-	    self.frag_variance = self.params['frag_variance']
+            self.mean_frag_len = self.params['mean_frag_len']
+            self.frag_variance = self.params['frag_variance']
 
         if log_dir != None:
             self.log_dir = os.path.abspath(os.path.expanduser(log_dir))
@@ -193,13 +193,13 @@ class MISOSampler:
             except OSError:
                 pass
 
-	self.miso_logger = get_logger('miso_logger', self.log_dir)
-	self.miso_logger.info("Instantiated sampler.")
+        self.miso_logger = get_logger('miso_logger', self.log_dir)
+        self.miso_logger.info("Instantiated sampler.")
 
 
     def run_sampler(self, num_iters, reads, gene, hyperparameters, params,
                     output_file,
-                    num_chains=6,                    
+                    num_chains=6,
                     burn_in=1000,
                     lag=2,
                     prior_params=None,
@@ -232,14 +232,15 @@ class MISOSampler:
             return
 
         output_file = output_file + ".miso"
-	# If output filename exists, don't run sampler
-	if os.path.isfile(os.path.normpath(output_file)):
-	    print "Output filename %s exists, not running MISO." \
+        # If output filename exists, don't run sampler
+        if os.path.isfile(os.path.normpath(output_file)):
+            print "Output filename %s exists, not running MISO." \
                 %(output_file)
-	    return None
-	self.params['iters'] = num_iters
-	self.params['burn_in'] = burn_in
-	self.params['lag'] = lag
+            return None
+
+    self.params['iters'] = num_iters
+        self.params['burn_in'] = burn_in
+        self.params['lag'] = lag
 
         # Define local variables related to reads and overhang
         self.overhang_len = self.params['overhang_len']
@@ -249,12 +250,12 @@ class MISOSampler:
         t2 = 0
         if verbose:
             t1 = time.time()
-	#self.miso_logger.info("Running sampler...")
+        #self.miso_logger.info("Running sampler...")
         #self.miso_logger.info("  - num_iters: " + str(num_iters))
         #self.miso_logger.info("  - burn-in: " + str(burn_in))
         #self.miso_logger.info("  - lag: " + str(lag))
-	#self.miso_logger.info("  - paired-end? " + str(self.paired_end))
-	#self.miso_logger.info("  - gene: " + str(gene))
+        #self.miso_logger.info("  - paired-end? " + str(self.paired_end))
+        #self.miso_logger.info("  - gene: " + str(gene))
         rejected_proposals = 0
         accepted_proposals = 0
         psi_vectors = []
@@ -262,11 +263,11 @@ class MISOSampler:
 
         if params['uniform_proposal']:
             self.miso_logger.debug("UNIFORM independent proposal being used.")
-	    proposal_type = "unif"	    
+            proposal_type = "unif"
         else:
             self.miso_logger.debug("Non-uniform proposal being used.")
             self.miso_logger.debug("  - sigma_proposal: " + str(params['sigma_proposal']))
-	    proposal_type = "drift"	    
+            proposal_type = "drift"
         init_psi = ones(num_isoforms)/float(num_isoforms)
         # Do not process genes with one isoform
         if num_isoforms == 1:
@@ -274,7 +275,7 @@ class MISOSampler:
                           %(gene.label)
             self.miso_logger.warning(one_iso_msg)
             return
-        
+
         # Convert Python Gene object to C
         c_gene = py2c_gene(gene)
 
@@ -299,7 +300,7 @@ class MISOSampler:
                                                  long(num_iters),
                                                  long(burn_in),
                                                  long(lag),
-                                                 prior_params, 
+                                                 prior_params,
                                                  long(self.overhang_len),
                                                  long(num_chains),
                                                  start_cond,
@@ -314,7 +315,7 @@ class MISOSampler:
                                            long(num_iters),
                                            long(burn_in),
                                            long(lag),
-                                           prior_params, 
+                                           prior_params,
                                            long(self.overhang_len),
                                            long(num_chains),
                                            start_cond,
@@ -327,7 +328,7 @@ class MISOSampler:
         # Log scores of accepted samples
         kept_log_scores = transpose(array(miso_results[1]))
 
-        # Read classes 
+        # Read classes
         read_classes = miso_results[2]
 
         # Read class statistics
@@ -351,17 +352,17 @@ class MISOSampler:
         if all(assignments == -1):
             print "All reads incompatible with annotation, skipping..."
             return
-        
+
         accepted_proposals = run_stats[4]
         rejected_proposals = run_stats[5]
-        
+
         percent_acceptance = (float(accepted_proposals)/(accepted_proposals + \
                                                          rejected_proposals)) * 100
         #self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
         #self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
-        
+
         # Write MISO output to file
-	print "Outputting samples to: %s..." %(output_file)
+        print "Outputting samples to: %s..." %(output_file)
         self.miso_logger.info("Outputting samples to: %s" %(output_file))
         self.output_miso_results(output_file, gene, reads_data, assignments,
                                  psi_vectors, kept_log_scores, num_iters,
@@ -371,7 +372,7 @@ class MISOSampler:
             t2 = time.time()
             print "Event took %.2f seconds" %(t2 - t1)
 
-        
+
     def output_miso_results(self, output_file, gene, reads_data, assignments,
                             psi_vectors, kept_log_scores, num_iters, burn_in,
                             lag, percent_acceptance, proposal_type):
@@ -379,7 +380,7 @@ class MISOSampler:
         Output results of MISO to a file.
         """
         output = open(output_file, 'w')
-        
+
         # Get a string representation of the isoforms - use '_'
         # in the delimiter regardless
         iso_delim = '_'
@@ -416,7 +417,7 @@ class MISOSampler:
             curr_str = "%s:%s" %(class_str,
                                  class_counts_str)
             read_counts_list.append(curr_str)
-        
+
         # Get a summary of the raw read counts supporting each isoform
         read_counts_str = ",".join(read_counts_list)
 
@@ -448,11 +449,11 @@ class MISOSampler:
                    assigned_counts_str,
                    # Fields related to gene/event
                    chrom,
-                   strand,               
+                   strand,
                    mRNA_start_coords,
                    mRNA_end_coords)
         output.write(header)
-            
+
         # Output samples and their associated log scores, as well as read counts
         results_fields = ["sampled_psi", "log_score"]
         results_header = "%s\n" %("\t".join(results_fields))
@@ -491,11 +492,11 @@ def run_sampler_on_event(gene, ni, ne, nb, read_len, overhang_len, num_iters,
     hyperparameters = ones(num_isoforms)
     proposal_diag = 0.05
     sigma = set_diag(zeros([num_isoforms-1, num_isoforms-1]),
-                     proposal_diag)	
+                     proposal_diag)
     sampler_params = {'read_len': read_len,
-		      'overhang_len': overhang_len,
-		      'uniform_proposal': False,
-		      'sigma_proposal': sigma}
+                      'overhang_len': overhang_len,
+                      'uniform_proposal': False,
+                      'sigma_proposal': sigma}
     sampler = MISOSampler(sampler_params, log_dir=output_dir)
     reads = read_counts_to_read_list(ni, ne, nb)
     t1 = time.time()
@@ -503,11 +504,11 @@ def run_sampler_on_event(gene, ni, ne, nb, read_len, overhang_len, num_iters,
                                           sampler_params, output_filename, burn_in=burn_in,
                                           lag=lag)
     if not sampler_results:
-	return (samples, cred_interval)
+        return (samples, cred_interval)
     samples = sampler_results[1]
     # Compute credible intervals
     cred_interval = ht.compute_credible_intervals(samples, confidence_level=confidence_level)
-    t2 = time.time()    
+    t2 = time.time()
     print "  - Sampler run took %s seconds." %(str(t2-t1))
     # return samples and credible intervals
     return (samples, cred_interval)
@@ -523,8 +524,8 @@ def profile_miso():
         print "x = %d" %(x)
         a, b = run_sampler_on_event(gene, 500, 50, 40, read_len, overhang_len,
                                     10000, output_dir)
-    
-    
+
+
 
 def main():
     return
@@ -539,6 +540,6 @@ def main():
     # p.print_stats()
     # print "cumulative (top 10): "
     # p.sort_stats('cumulative').print_stats(20)
-    
+
 if __name__ == '__main__':
     main()
