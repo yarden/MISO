@@ -99,6 +99,19 @@ def pack_miso_output(dirs_to_pack_as_str):
     miso_packer.pack_dirs(dirs_to_pack)
 
 
+def view_miso_db(db_fname):
+    db_fname = misc_utils.pathify(db_fname)
+    if not os.path.isfile(db_fname):
+        print "Error: %s does not exist." %(db_fname)
+        sys.exit(1)
+    curr_db = miso_db.MISODatabase(db_fname)
+    event_names = curr_db.get_all_event_names()
+    num_events = len(event_names)
+    print "Database contains %d events" %(num_events)
+    for event in event_names:
+        print event
+
+
 def main():
     from optparse import OptionParser
     parser = OptionParser()
@@ -107,14 +120,20 @@ def main():
                       help="Pack a MISO output containing dir(s). Takes as input " \
                       "a directory or a comma-separated set of directories " \
                       "that contain MISO output.")
+    parser.add_option("--view", dest="view",
+                      nargs=1, default=None,
+                      help="View a MISO database (.miso_db file).")
     (options, args) = parser.parse_args()
 
-    if options.pack is None:
+    if (options.pack is None) and (options.view is None):
         greeting()
         sys.exit(1)
 
     if options.pack is not None:
         pack_miso_output(options.pack)
+
+    if options.view is not None:
+        view_miso_db(options.view)
 
         
 if __name__ == "__main__":

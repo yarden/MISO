@@ -36,6 +36,12 @@ class MISOSamples:
             # Load mapping from gene IDs to their hashes
             self.compressed_ids_to_genes = \
               misc_utils.load_compressed_ids_to_genes(self.compressed_ids_fname)
+            if len(self.compressed_ids_to_genes) == 0:
+                print "Error: Compressed IDs shelve file is empty. Are you sure " \
+                      "the index directory you passed was created with the " \
+                      "--compress-id flag, e.g.:\n" \
+                      "index_gff yourfile.gff --compress-id"
+                sys.exit(1)
         # Get all the MISO relevant filenames
         self.all_filenames = get_samples_dir_filenames(samples_dir)
         # Mapping of event names to the files that they are in
@@ -236,8 +242,8 @@ def get_event_name(miso_filename,
     event_name = basename.split(".miso")[0]
     if use_compressed_map is not None:
         if event_name not in use_compressed_map:
-            print "WARNING: Cannot find compressed id %s in given mapping." \
-                %(event_name)
+            print "MISO FILENAME IS: %s" %(miso_filename)
+            print event_name
         else:
             event_name = use_compressed_map[event_name]
     return event_name

@@ -60,6 +60,7 @@ Updates
 
 **2014**
 
+* **Tue, Feb 11**: Sashimi plot paper is now `on the bioRxiv <http://biorxiv.org/content/early/2014/02/11/002576>`_.
 
 **2013**
 

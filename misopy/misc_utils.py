@@ -33,7 +33,7 @@ def load_compressed_ids_to_genes(compressed_filename):
 
 
 def is_compressed_name(event_name):
-    return event_name.startswith(COMPRESS_PREFIX)
+    return str(event_name).startswith(COMPRESS_PREFIX)
 
 
 def is_compressed_index(index_filename):

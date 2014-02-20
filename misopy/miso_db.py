@@ -53,9 +53,10 @@ class MISODatabase:
         c = self.conn.cursor()
         results = \
           c.execute("SELECT * from %s" %(self.table_name))
-        first_result = results.fetchone(), " <<<"
+        first_result = results.fetchone()
         event_name = str(first_result[0])
-        return misc_utils.is_compressed_name(event_name)
+        is_comp = misc_utils.is_compressed_name(event_name)
+        return is_comp
         
 
     def get_event_data_as_stream(self, event_name):
@@ -68,7 +69,7 @@ class MISODatabase:
         # Error checking: if the database is compressed but we're not
         # given a mapping, this is a major error
         if self.is_db_events_compressed and \
-           (self.comp_to_uncomp is None):
+           ((self.comp_to_uncomp is None) or (self.uncomp_to_comp is None)):
            raise Exception, "The database contains compressed IDs but no " \
                             "mapping (.shelve) file was given."
         # If we have a compressed event representation in database and
@@ -83,6 +84,11 @@ class MISODatabase:
         # is *uncompressed*, then uncompress the event
         elif (not self.is_db_events_compressed) and \
            misc_utils.is_compressed_name(event_name):
+           # If there's no compressed mapping, we can't
+           # use this event
+           if self.comp_to_uncomp is None:
+               raise Exception, "Cannot get compressed event %s from " \
+                                "uncompressed database." %(event_name)
            if event_name not in self.comp_to_uncomp:
                return None
            event_to_query = self.comp_to_uncomp[event_name]
