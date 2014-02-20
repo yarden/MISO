@@ -117,7 +117,7 @@ To test that ``sashimi_plot`` is working, we first need to get a GFF annotation 
 
 We can now plot this event by running the following from within the ``sashimi_plot`` directory in MISO: ::
 
-  python plot.py --plot-event "chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-" test-data/event-data/ settings/sashimi_plot_settings.txt --output-dir test-plot
+  sashimi_plot --plot-event "chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-" test-data/event-data/ settings/sashimi_plot_settings.txt --output-dir test-plot
 
 
 If successful, you should get a plot in the directory ``test-plot/`` called ``chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.pdf``. An annotated graphical explanation of the main features of the output is shown below.
@@ -146,7 +146,7 @@ Visualizing RNA-Seq reads along isoforms with MISO estimates
 
 We return to our main test example of the ``--plot-event`` feature. The call: ::
 
-  python plot.py --plot-event "chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-" test-data/event-data/ settings/sashimi_plot_settings.txt --output-dir test-plot
+  sashimi_plot --plot-event "chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-" test-data/event-data/ settings/sashimi_plot_settings.txt --output-dir test-plot
 
 Plots the event called ``chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-``, using the directory pickled event ``test-data/event-data/`` and plotting according to the information provided in the settings file ``settings/sashimi_plot_settings.txt``. The name of this event in this case is simply the ID given to this skipped exon in the GFF annotations provided with MISO (see `Mouse genome (mm9) alternative events`_). The name is arbitrary, and ``sashimi_plot`` will visualize whatever events you give it as long as they have a corresponding indexed GFF file. 
 
@@ -261,7 +261,7 @@ The above settings file specifies where the BAM files for each sample are (and t
 Command-line options
 --------------------
 
-``sashimi_plot/plot.py`` takes the following arguments: ::
+``sashimi_plot`` takes the following arguments: ::
 
   --plot-insert-len
                         Plot the insert length distribution from a given
@@ -304,7 +304,7 @@ Load the RNA-Seq samples as BAM tracks.  Navigate to the region of interest, rig
 Visualizing and plotting MISO output
 ====================================
 
-MISO comes with several built-in utilities for plotting its output, which all make use of the Python ``matplotlib`` environment package. These can be accessed through the ``plot.py`` utility.
+MISO comes with several built-in utilities for plotting its output, which all make use of the Python ``matplotlib`` environment package. These can be accessed through the ``sashimi_plot`` utility.
 
 
 Customizing the appearance of MISO estimates alongside raw RNA-Seq data
@@ -328,7 +328,7 @@ Plotting the distribution of events with Bayes factors
 
 It is often useful to plot the distribution of events that meet various Bayes factor thresholds. For any Bayes factor threshold, we can compute the number of events that meet that threshold in a given comparison file and visualize this as a distribution. The option ``--plot-bf-dist`` does this, as follows: ::
 
-  plot.py --plot-bf-dist control_vs_knockdown.miso_bf settings.txt --output-dir plots/
+  sashimi_plot --plot-bf-dist control_vs_knockdown.miso_bf settings.txt --output-dir plots/
 
 This will plot the distribution of events meeting various Bayes factors thresholds in the file ``control_vs_knockdown.miso_bf`` (outputted by calling ``--compare-samples`` in MISO) using the plotting settings file ``settings.txt``, and output the resulting plot to ``plots/``. The resulting plot will look like:
  
@@ -360,7 +360,7 @@ For paired-end RNA-Seq samples, we can visualize the insert length distribution.
 
 The distribution can be plotted using the ``--plot-insert-len`` option, which takes as input: (1) an insert length file (ending in ``.insert_len``) produced by MISO and (2) a plotting settings filename. For example: ::
 
-  python plot.py --plot-insert-len sample.insert_len settings.txt --output-dir plots/
+  sashimi_plot --plot-insert-len sample.insert_len settings.txt --output-dir plots/
 
 will produce a histogram of the insert length in ``sample.insert_len`` and place it in the ``plots`` directory. The histogram might look like this: 
 
@@ -374,7 +374,7 @@ Frequently Asked Questions (FAQ)
 ================================
 
 1. **I'd like to plot RNA-Seq data for my own annotations, which are not part of the MISO events. Can this be done?** 
-Yes. ``sashimi_plot`` can plot any event, as long as it is specified in the GFF3 format and indexed by the ``index_gff.py`` script that we provide. See :ref:`indexing-annotation`.
+Yes. ``sashimi_plot`` can plot any event, as long as it is specified in the GFF3 format and indexed by the ``index_gff`` script that we provide. See :ref:`indexing-annotation`.
 
 2. **I get the error that the** ``.positions`` **field is undefined.** 
 This is caused by using an older version of the `pysam`_ module. Upgrading to version 0.6 or higher fixes the issue.
