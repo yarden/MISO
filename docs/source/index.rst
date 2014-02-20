@@ -110,7 +110,8 @@ Releases
 
 MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python Package Index).
 
-* MISO version 0.4.9 (`misopy-0.4.9.tar.gz`_), April 26, 2013 release (**Latest version**)
+* MISO version 0.5.0 (`misopy-0.5.0.tar.gz`_), XXXX (**Latest version**)
+* MISO version 0.4.9 (`misopy-0.4.9.tar.gz`_), April 26, 2013 release 
 * MISO version 0.4.8 (`misopy-0.4.8.tar.gz`_), April 14, 2013 release
 * MISO version 0.4.7 (`misopy-0.4.7.tar.gz`_), Christmas, 2013 release 
 * MISO version 0.4.6 (`misopy-0.4.6.tar.gz`_), September 27, 2012 release 
@@ -138,6 +139,7 @@ MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python P
 .. _misopy-0.4.7.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.7.tar.gz
 .. _misopy-0.4.8.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.8.tar.gz
 .. _misopy-0.4.9.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.9.tar.gz
+.. _misopy-0.5.0.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.5.0.tar.gz
 
 
 Latest version from GitHub
@@ -175,7 +177,7 @@ To quickly start using MISO, follow these steps (each of which is described in d
 
 1. **Choose your GFF annotation set** (see :ref:`event-annotation` for our own annotations, available for human, mouse and fruit fly genomes.)
 
-2. **Index the annotation** using ``index_gff.py``: ::
+2. **Index the annotation** using ``index_gff``: ::
 
       index_gff --index SE.gff3 indexed_SE_events/
 
@@ -188,7 +190,10 @@ where ``SE.gff3`` is a GFF file containing descriptions of isoforms/alternative 
       miso --compute-genes-psi indexed_SE_events/ my_sample1.bam --output-dir my_output1/ --read-len 36 --use-cluster 
       miso --compute-genes-psi indexed_SE_events/ my_sample2.bam --output-dir my_output2/ --read-len 36 --use-cluster 
 
-  where ``indexed_SE_events`` is a directory containing the indexed skipped exon events.
+  where ``indexed_SE_events`` is a directory containing the indexed skipped exon events. **Optionally*, you can pack the MISO output to reduce the space and number of files taken up by the output: ::
+
+      miso_pack --pack my_output1/
+      miso_pack --pack my_output2/
 
  - **Summarize MISO inferences** using ``summarize_miso --summarize-samples``: ::
 
