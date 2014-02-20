@@ -21,7 +21,7 @@ What is sashimi_plot?
 
 Sashimi plots are described here:
 
-Katz Y, Wang ET, Silterra J, Schwartz S, Wong B, Mesirov JP, Airoldi EM, Burge, CB. Sashimi plots: Quantitative visualization of RNA sequencing read alignments. `Sashimi plots: Quantitative visualization of RNA sequencing read alignments <http://arxiv.org/pdf/1306.3466v1>`_. `arXiv:1306.3466 <http://arxiv.org/abs/1306.3466>`_ [q-bio.GN], 2013.
+Katz, Y, Wang ET, Silterra J, Schwartz S, Wong B, Thorvaldsdóttir H, Robinson JT, Mesirov JP, Airoldi EM, Burge, CB. `Sashimi plots: Quantitative visualization of alternative isoform expression from RNA-seq data <http://biorxiv.org/content/early/2014/02/11/002576>`_
 
 The MISO framework is described in Katz et. al., `Analysis and design of RNA sequencing experiments for identifying isoform regulation`_. *Nature Methods* (2010).
 
@@ -57,6 +57,9 @@ We chose "Sashimi" because our tool plots the *raw* RNA-Seq data in addition to 
 
 Updates
 =======
+
+**2014**
+
 
 **2013**
 
@@ -259,9 +262,6 @@ Command-line options
 
 ``sashimi_plot/plot.py`` takes the following arguments: ::
 
-  --plot-posterior
-                        Plot the posterior distribution. Takes as input a raw
-                        MISO output file (.miso)
   --plot-insert-len
                         Plot the insert length distribution from a given
                         insert length (*.insert_len) filename. Second
@@ -350,21 +350,6 @@ The color of the bars used in the plot and Bayes factor thresholds for the x-axi
 
   # Bayes factor thresholds for --plot-bf-dist
   bf_thresholds = [0, 1, 2, 5, 10, 20]
-
-
-Plotting MISO estimates individually
-------------------------------------
-
-We can visualize posterior distributions as histograms using the ``--plot-posterior`` argument to ``plot.py``. For example, to plot the MISO posterior distribution of our example event in the ``heartKOa`` sample, run: ::
-
-  python plot.py --plot-posterior "test-data/miso-data/heartKOa/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso" --output-dir test-plot
-
-This will produce a PDF plot that looks like this:
-
-.. image:: images/posterior_plot1.png
-  :scale: 50%
-  :align: center
-  :alt: sashimi_plot of posterior distribution
 
 
 Plotting insert length distributions and summary statistics
