@@ -780,6 +780,7 @@ cluster, the following options can be used:
 
 * ``--use-cluster``: causes jobs to be sent to a cluster
 * ``--chunk-jobs N`` (optional): places ``N`` many genes or events into each job. For example, if running MISO on a set of skipped exons, ``--chunk-jobs 200`` will place roughly 200 exons whose expression is to be estimated into each job. If each job was sent to a separate node, it would mean every node in parallel will sequentially compute the expression level of 200 exons. The value of ``--chunk-jobs`` depends on both cluster size/availability and on the number of exons whose expression is to be estimated. On very large clusters where nodes are generally available, a relatively small setting of ``--chunk-jobs`` is likely to be more efficient.
+* ``--no-wait`` (optional): by default, the main process that submits the jobs to the cluster will wait for them to finish. If ``--no-wait`` is passed, the main process will not wait, and simply quit after submitting the jobs. 
 
 MISO will use the cluster submission and queue settings described in the settings file to submit jobs (see :ref:`config`). An example of a MISO pipeline for computing isoform expression estimates and detecting differentially expressed isoforms is given in :ref:`pipeline`.
 
