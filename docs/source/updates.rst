@@ -1,3 +1,5 @@
+.. include:: <isogrk3.txt>
+
 Updates
 =======
 
