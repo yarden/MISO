@@ -1198,6 +1198,7 @@ Frequently Asked Questions (FAQ)
 #. **When I try to index GFF files using** ``index_gff`` **I get a segmentation fault.** (`answer <#answer17>`_)
 #. **I am having trouble installing scipy/numpy/matplotlib. How can I install them?** (`answer <#answer18>`_)
 #. **When should I use paired-end mode versus single-end mode?** (`answer <#answer19>`_)
+#. **What is the license for MISO?** (`answer <#answer20>`_)
 
 
 Answers
@@ -1294,6 +1295,10 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 .. _answer19:
 
 19. **When should I use paired-end mode versus single-end mode?** Paired-end inference should be used when possible, with one important exception. MISO only uses properly paired reads within an annotated event. If the GFF annotation you use contains events that are roughly as long or shorter than your insert length, then simply due to the length constraint, there won't be many read pairs in your data where both ends are mapped within the annotated event. In this case, it's best to use single-end reads. Failure to use single-end mode in this case can result in many events appearing not to have enough coverage, because no paired mates contained entirely within the event can be found, in spite of there being many read pairs where one of the mates maps within the event and is informative about the isoforms that are being expressed. Also, as of release 0.4.8, single-end inference is dramatically faster (particularly for high-coverage datasets) than paired-end inference. (`back <#faq>`_)
+
+.. _answer20:
+
+20. **What is the license for MISO?** MISO is distributed under a free for academic use CreativeCommons license. For more information on licensing, please contact Dan Dardani at `MIT TLO <http://web.mit.edu/tlo/www/>`_.
 
 .. .. _sec:
 
