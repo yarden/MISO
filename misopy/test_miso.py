@@ -16,8 +16,7 @@ class TestMISO(unittest.TestCase):
             os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
         self.tests_data_dir = \
             os.path.join(self.miso_path, "test-data")
-        self.events_analysis_cmd = \
-            "%s " %(os.path.join(self.miso_path, "miso"))
+        self.events_analysis_cmd = "miso"
         self.tests_output_dir = \
             os.path.join(self.miso_path, "test-output")
         self.test_sam_filename = \
@@ -26,10 +25,8 @@ class TestMISO(unittest.TestCase):
                          "c2c12.Atp2b1.sam")
         self.gff_events_dir = \
             os.path.join(self.miso_path, "gff-events")
-        self.sam_to_bam_script = \
-            os.path.join(self.miso_path, "sam_to_bam")
-        self.index_gff_script = \
-            os.path.join(self.miso_path, "index_gff")
+        self.sam_to_bam_script = "sam_to_bam"
+        self.index_gff_script = "index_gff"
 
 
     def test_a_sam_to_bam(self):
@@ -174,7 +171,7 @@ class TestMISO(unittest.TestCase):
         sam_dir = os.path.join(self.tests_output_dir, "sam-output")
         bam_filename = os.path.join(sam_dir, "c2c12.Atp2b1.sorted.bam")
 
-        read_len = 35
+        read_len = 36
         insert_mean = 250
         insert_sd = 30
 

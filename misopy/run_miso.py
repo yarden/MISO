@@ -245,7 +245,7 @@ def run_compute_genes_from_file(options):
         for line in genes_in:
             gene_id, gff_filename = line.strip().split("\t")
             if not os.path.isfile(gff_filename):
-                print "Error: %s does not exist."
+                print "Error: %s does not exist." %(gff_filename)
                 sys.exit(1)
             compute_gene_psi([gene_id], gff_filename, bam_filename,
                              output_dir, options.read_len, overhang_len,
