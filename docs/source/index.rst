@@ -1128,11 +1128,13 @@ Updates
 
 **2014**
 
-* Renamed scripts. The core MISO scripts are now named ``miso``, ``summarize_miso`` and ``compare_samples``. Python extensions (``.py``) have been dropped. Entry points are used in Python installations to resolve issues with scripts not being registered as executables after installation.
+* **Thu, Feb 20**: Released ``0.5.0``. 
 
-* Added ``--no-wait`` option to ``miso`` to prevent main process from waiting on cluster jobs
+  * Renamed scripts: The core MISO scripts are now named ``miso``, ``summarize_miso`` and ``compare_samples``. Python extensions (``.py``) have been dropped. Entry points are used in Python installations to resolve issues with scripts not being registered as executables after installation.
 
-* Fixed bug that prevented ``--apply-both`` from working in ``filter_events``
+  * Added ``--no-wait`` option to ``miso`` to prevent main process from waiting on cluster jobs
+
+  * Fixed bug that prevented ``--apply-both`` from working in ``filter_events``
 
 **2013**
 
