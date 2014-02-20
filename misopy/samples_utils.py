@@ -77,8 +77,13 @@ class MISOSamples:
                     # If we're given a mapping of compressed IDs, use the
                     # mapping to get the uncompressed event name
                     if self.compressed_ids_to_genes is not None:
-                        event_name_to_use = \
-                          str(self.compressed_ids_to_genes[curr_event_name])
+                        # The internal database representation of compressed
+                        # index databases are compressed IDs, so if the
+                        # ID is uncompressed it must be converted to a
+                        # compressed one.
+                        if not misc_utils.is_compressed_name(curr_event_name):
+                            event_name_to_use = \
+                              str(curr_db.uncomp_to_comp[curr_event_name])
                     all_event_names.append(event_name_to_use)
                     self.event_names_to_fnames[event_name_to_use] = curr_fname
         return all_event_names

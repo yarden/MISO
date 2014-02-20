@@ -41,7 +41,22 @@ class MISODatabase:
                   %(self.db_fname)
             return None
         self.conn = sqlite3.connect(self.db_fname)
+        # Determine event name format
+        self.is_db_events_compressed = self.is_event_name_compressed()
+        
 
+    def is_event_name_compressed(self):
+        """
+        Determine if the events in the database are compressed
+        or not.
+        """
+        c = self.conn.cursor()
+        results = \
+          c.execute("SELECT * from %s" %(self.table_name))
+        first_result = results.fetchone(), " <<<"
+        event_name = str(first_result[0])
+        return misc_utils.is_compressed_name(event_name)
+        
 
     def get_event_data_as_stream(self, event_name):
         """
@@ -50,23 +65,27 @@ class MISODatabase:
         # The name of the event as stored in database (if using
         # compressed event IDs, this would be a misocomp ID)
         event_to_query = event_name
-        # If we have a compressed event mapping, use it
-        if self.uncomp_to_comp is not None:
-            if misc_utils.is_compressed_name(event_name):
-                # If event name is already compressed, use it
-                event_to_query = event_name
-                # Event to return is uncompressed name
-                if event_name not in self.comp_to_uncomp:
-                    print "WARNING: Failed to find uncompressed ID for %s" \
-                          %(event_name)
-                    return None
-            else:
-                # Event name is not compressed
-                if event_name not in self.uncomp_to_comp:
-                    print "WARNING: Failed to find compressed ID for %s" \
-                          %(event_name)
-                    return None
-                event_to_query = self.uncomp_to_comp[event_name]
+        # Error checking: if the database is compressed but we're not
+        # given a mapping, this is a major error
+        if self.is_db_events_compressed and \
+           (self.comp_to_uncomp is None):
+           raise Exception, "The database contains compressed IDs but no " \
+                            "mapping (.shelve) file was given."
+        # If we have a compressed event representation in database and
+        # the event given is uncompressed, then look at the
+        # compressed representation
+        if self.is_db_events_compressed and \
+           (not misc_utils.is_compressed_name(event_name)):
+           if event_name not in self.uncomp_to_comp:
+               return None
+           event_to_query = self.uncomp_to_comp[event_name]
+        # If the event given is compressed and the database representation
+        # is *uncompressed*, then uncompress the event
+        elif (not self.is_db_events_compressed) and \
+           misc_utils.is_compressed_name(event_name):
+           if event_name not in self.comp_to_uncomp:
+               return None
+           event_to_query = self.comp_to_uncomp[event_name]
         c = self.conn.cursor()
         results = \
           c.execute("SELECT * from %s WHERE event_name=\'%s\'" \
