@@ -24,7 +24,8 @@ def load_compressed_ids_to_genes(compressed_filename):
     Load mapping from compressed IDs to genes.
     """
     if not os.path.exists(compressed_filename):
-        print "Error: %s does not exist." %(compressed_filename)
+        print "Error: %s compressed file does not exist." \
+              %(compressed_filename)
         sys.exit(1)
     compressed_ids_to_genes = {}
     # Load mapping from gene IDs to their hashes
