@@ -296,6 +296,8 @@ def sam_cigar_to_str(sam_cigar):
     #                     for c in sam_cigar])
     #### OPTIMIZED VERSION
     cigar_str = ""
+    if sam_cigar is None:
+        return cigar_str
     for c in sam_cigar:
         cigar_str += "%d%s" %(c[1], CIGAR_TYPES[c[0]])
     return cigar_str
@@ -395,9 +397,6 @@ def sam_parse_reads(samfile,
                     continue
             read1, read2 = read_info
             if (read1.cigar is None) or (read2.cigar is None):
-                print "Skipping read pair with no CIGAR (%s, %s)" \
-                      %(read1.qname,
-                        read2.qname)
                 continue
             # Read positions and cigar strings are collected
             read_positions.append(int(read1.pos))
@@ -409,7 +408,6 @@ def sam_parse_reads(samfile,
         # Single-end
         for read in samfile:
             if read.cigar is None:
-                print "Skipping read with no CIGAR %s" %(read.qname)
                 continue
             if check_strand:
                 if not read_matches_strand(read,
