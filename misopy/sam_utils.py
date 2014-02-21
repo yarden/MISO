@@ -380,7 +380,6 @@ def sam_parse_reads(samfile,
     if paired_end:
         # Pair up the reads 
         paired_reads = pair_sam_reads(samfile)
-
         # Process reads into format required by fastmiso
         # MISO C engine requires pairs to follow each other in order.
         # Unpaired reads are not supported.
@@ -395,6 +394,11 @@ def sam_parse_reads(samfile,
                     num_strand_discarded += 1
                     continue
             read1, read2 = read_info
+            if (read1.cigar is None) or (read2.cigar is None):
+                print "Skipping read pair with no CIGAR (%s, %s)" \
+                      %(read1.qname,
+                        read2.qname)
+                continue
             # Read positions and cigar strings are collected
             read_positions.append(int(read1.pos))
             read_positions.append(int(read2.pos))
@@ -404,6 +408,9 @@ def sam_parse_reads(samfile,
     else:
         # Single-end
         for read in samfile:
+            if read.cigar is None:
+                print "Skipping read with no CIGAR %s" %(read.qname)
+                continue
             if check_strand:
                 if not read_matches_strand(read,
                                            target_strand,
