@@ -110,7 +110,7 @@ Releases
 
 MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python Package Index).
 
-* MISO version 0.5.0 (`misopy-0.5.0.tar.gz`_), February 20, 2014 release (**Latest version**)
+* MISO version 0.5.0 (`misopy-0.5.0.tar.gz`_), February 21, 2014 release (**Latest version**)
 * MISO version 0.4.9 (`misopy-0.4.9.tar.gz`_), April 26, 2013 release 
 * MISO version 0.4.8 (`misopy-0.4.8.tar.gz`_), April 14, 2013 release
 * MISO version 0.4.7 (`misopy-0.4.7.tar.gz`_), Christmas, 2013 release 
@@ -1128,6 +1128,8 @@ Updates
 =======
 
 **2014**
+
+* **Fri, Feb 21**: Fixed critical bug in ``miso_pack`` handling of Ensembl chromosomes in ``0.5.0`` release. Please update your release. 
 
 * **Thu, Feb 20**: Released ``0.5.0``. 
 
