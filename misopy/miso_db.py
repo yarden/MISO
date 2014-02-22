@@ -35,7 +35,10 @@ class MISODatabase:
         if not os.path.isfile(db_fname):
             raise Exception, "%s does not exist." %(db_fname)
         self.db_fname = db_fname
-        self.table_name = get_table_name_from_file(self.db_fname)
+        # Create table names that start with 'table_' to properly handle
+        # Ensembl headers, which are numeric only and tables cannot
+        # be named numerically.
+        self.table_name = "table_%s" %(get_table_name_from_file(self.db_fname))
         if self.table_name is None:
             print "Error: Cannot retrieve name of MISO db file %s" \
                   %(self.db_fname)
@@ -159,7 +162,7 @@ def miso_dir_to_db(dir_to_compress, output_filename):
     conn = sqlite3.connect(output_filename)
     c = conn.cursor()
     # Create table for the current directory to compress
-    table_name = os.path.basename(dir_to_compress)
+    table_name = "table_%s" %(os.path.basename(dir_to_compress))
     sql_create = \
         "CREATE TABLE %s " %(table_name) + \
         "(event_name text, psi_vals_and_scores text, header text)"
