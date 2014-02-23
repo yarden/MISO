@@ -111,6 +111,14 @@ class TestScores(unittest.TestCase):
         assert (self.approx_eq(manual_result, total_log_assignments_prob)), \
           "Failed to score assignments correctly."
         print "total_log_assignments_prob: ", total_log_assignments_prob
+
+
+    def test_my_logsumexp(self):
+        v = np.log(np.array([-0.6, -0.6]))
+        manual_result = np.log(np.exp(np.sum(v)))
+        print "Manual result: ", manual_result
+        result = my_logsumexp(v)
+        print "Result: ", result
            
 
 

@@ -343,7 +343,6 @@ def log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
         # The score of an assignment to isoform i is the ith entry
         # is simply the Psi_Frag vector
         curr_log_psi_frag = log_psi_frag_vector[curr_iso_num]
-        print "ASSIGNMENT -> ", curr_log_psi_frag
         log_scores[curr_read] = curr_log_psi_frag 
     return log_scores
 
@@ -549,11 +548,13 @@ def sample_reassignments(np.ndarray[DTYPE_t, ndim=2] reads,
     for curr_read in xrange(num_reads):
         # Compute the probability of assigning each read to every
         # isoform
+        print "Going through read %d" %(curr_read)
         for curr_isoform in xrange(num_isoforms):
             # Copy the current assignment of read to isoform
             old_assignment = iso_nums[curr_isoform]
             # Now consider reassigning this read to the current isoform
             iso_nums[curr_isoform] = <DTYPE_t>curr_isoform
+            print "ISO NUMS: ", iso_nums
             # Score this assignment of reads to isoforms
             total_log_read_prob = sum_log_score_reads(reads,
                                                       iso_nums,
@@ -572,9 +573,7 @@ def sample_reassignments(np.ndarray[DTYPE_t, ndim=2] reads,
             # Copy the old assignment of the read to the isoform
             iso_nums[curr_isoform] = old_assignment
             # Probability of assigning the read to this isoform
-            # is the sum of the log(probability of reads given assignment)
-            # and log(probability of assignment)
-            # Record the assignment probabilities
+            # is the sum: log(P(reads | assignment)) + log(P(assignment | Psi))
             reassignment_probs[curr_isoform] = \
               total_log_read_prob + total_log_assignment_prob
             print "reassignment_probs[curr_isoform]"
