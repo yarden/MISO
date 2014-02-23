@@ -141,6 +141,7 @@ MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python P
 .. _misopy-0.4.8.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.8.tar.gz
 .. _misopy-0.4.9.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.4.9.tar.gz
 .. _misopy-0.5.0.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.5.0.tar.gz
+.. _misopy-0.5.1.tar.gz: http://pypi.python.org/packages/source/m/misopy/misopy-0.5.1.tar.gz
 
 
 Latest version from GitHub
