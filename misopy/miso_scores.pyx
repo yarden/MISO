@@ -96,12 +96,27 @@ cdef DTYPE_float_t my_logsumexp(np.ndarray[DTYPE_float_t, ndim=1] log_vector,
     cdef DTYPE_float_t sum_of_exps = 0.0
     cdef DTYPE_float_t log_sum_of_exps = 0.0
     cdef int curr_elt = 0
+    # First find the maximum value first
+    cdef DTYPE_float_t max_val = log_vector[0]
     for curr_elt in xrange(vector_len):
-        curr_exp_value = exp(log_vector[curr_elt])
+        if (vector_len[curr_elt] > max_val):
+            max_val = vector_len[curr_elt]
+    # Subtract maximum value from the rest
+    for curr_elt in xrange(vector_len):
+        curr_exp_value = exp(log_vector[curr_elt] - max_val)
         sum_of_exps += curr_exp_value
-    # Now take log of the sum of exp values
-    log_sum_of_exps = log(sum_of_exps)
+    # Now take log of the sum of exp values and add
+    # back the missing value
+    log_sum_of_exps = log(sum_of_exps) + max_exp
     return log_sum_of_exps
+
+
+def py_my_logsumexp(np.ndarray[DTYPE_float_t, ndim=1] log_vector,
+                    int vector_len):
+    """
+    Version of my_logsumexp that is callable from Python.
+    """
+    return my_logsumexp(log_vector, vector_len)
 
 
 ##
@@ -585,7 +600,6 @@ def sample_reassignments(np.ndarray[DTYPE_t, ndim=2] reads,
         norm_reassignment_probs = \
           norm_log_probs(reassignment_probs, num_isoforms)
         print "NORM REASSIGNMENT PROBS: ", norm_reassignment_probs
-        raise Exception, "Foo bar"
         curr_read_assignment = \
           sample_from_multinomial(norm_reassignment_probs, 1)
         new_assignments[curr_read] = curr_read_assignment
@@ -620,7 +634,7 @@ def norm_log_probs(np.ndarray[DTYPE_float_t, ndim=1] log_probs,
         # Record unlogged probability
         norm_probs[curr_entry] = norm_prob
     print "RETURNING: ", norm_probs
-    return norm_log_probs
+    return norm_probs
         
 
 def sample_from_multinomial(np.ndarray[double, ndim=1] probs,

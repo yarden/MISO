@@ -85,14 +85,9 @@ class TestScores(unittest.TestCase):
         return (np.abs(p1 - p2) < error)
 
 
-    def test_log_score_assignments(self):
+    def __test_log_score_assignments(self):
         curr_num_reads = 2
         two_reads = self.reads[0:curr_num_reads]
-        psi_frag_numer = \
-          np.array([(self.scaled_lens[0] * self.psi_vector[0]),
-                    (self.scaled_lens[1] * self.psi_vector[1])])
-        psi_frag_denom = np.sum(psi_frag_numer)
-        psi_frag = psi_frag_numer / psi_frag_denom
         assert self.approx_eq(sum(psi_frag), 1.0), "Psi frag does not sum to 1."
         print "ISO NUMS: ", self.iso_nums[0:curr_num_reads]
         print "LOG PSI FRAG: ", self.log_psi_frag
@@ -114,12 +109,36 @@ class TestScores(unittest.TestCase):
 
 
     def test_my_logsumexp(self):
-        v = np.log(np.array([-0.6, -0.6]))
-        manual_result = np.log(np.exp(np.sum(v)))
-        print "Manual result: ", manual_result
-        result = my_logsumexp(v)
-        print "Result: ", result
-           
+        vals_to_test = [np.array([-1462.26, -1 * np.inf]),
+                        np.array([0.1, 0.5])]
+        for v in vals_to_test:
+            scipy_result = scipy.misc.logsumexp(v)
+            result = scores.py_my_logsumexp(v, len(v))
+            assert (self.approx_eq(scipy_result, result)), \
+              "My logsumexp failed."
+
+
+    def ___test_sample_reassignment(self):
+        curr_num_reads = 200
+        subset_reads = self.reads[0:curr_num_reads]
+        psi_frag_numer = \
+          np.array([(self.scaled_lens[0] * self.psi_vector[0]),
+                    (self.scaled_lens[1] * self.psi_vector[1])])
+        psi_frag_denom = np.sum(psi_frag_numer)
+        psi_frag = psi_frag_numer / psi_frag_denom
+        log_psi_frag = np.log(psi_frag)
+        result = scores.sample_reassignments(subset_reads,
+                                             self.psi_vector,
+                                             log_psi_frag,
+                                             self.log_num_reads_possible_per_iso,
+                                             self.scaled_lens,
+                                             self.iso_lens,
+                                             self.num_parts_per_iso,
+                                             self.iso_nums[0:curr_num_reads],
+                                             curr_num_reads,
+                                             self.read_len,
+                                             self.overhang_len)
+        
 
 
 def main():
