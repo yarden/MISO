@@ -105,7 +105,6 @@ class TestScores(unittest.TestCase):
                          np.log(psi_frag[self.iso_nums[1]]))
         assert (self.approx_eq(manual_result, total_log_assignments_prob)), \
           "Failed to score assignments correctly."
-        print "total_log_assignments_prob: ", total_log_assignments_prob
 
 
     def test_my_logsumexp(self):
@@ -115,10 +114,10 @@ class TestScores(unittest.TestCase):
             scipy_result = scipy.misc.logsumexp(v)
             result = scores.py_my_logsumexp(v, len(v))
             assert (self.approx_eq(scipy_result, result)), \
-              "My logsumexp failed."
+              "My logsumexp failed on %s" %(str(v))
 
 
-    def ___test_sample_reassignment(self):
+    def test_sample_reassignment(self):
         curr_num_reads = 200
         subset_reads = self.reads[0:curr_num_reads]
         psi_frag_numer = \

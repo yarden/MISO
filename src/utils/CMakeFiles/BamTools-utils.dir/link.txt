@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../../lib/bamtools-master/lib/libbamtools-utils.a  CMakeFiles/BamTools-utils.dir/bamtools_fasta.cpp.o CMakeFiles/BamTools-utils.dir/bamtools_options.cpp.o CMakeFiles/BamTools-utils.dir/bamtools_pileup_engine.cpp.o CMakeFiles/BamTools-utils.dir/bamtools_utilities.cpp.o
+/usr/bin/ranlib ../../lib/bamtools-master/lib/libbamtools-utils.a

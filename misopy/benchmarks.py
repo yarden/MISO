@@ -68,26 +68,16 @@ def profile_sample_reassignments():
     print scores.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
                                  np.array([0.5, 0.5]))
     print dirichlet_lnpdf(np.array([1, 1]), np.array([0.5, 0.5]))
-    print scores.sample_from_multinomial(np.array([0.1, 0.3, 0.6]),
+    print scores.py_sample_from_multinomial(np.array([0.1, 0.3, 0.6]),
                                          100)
     print "psi vector: ", psi_vector
     print "iso_lens: ", iso_lens
     print "scaled_lens: ", scaled_lens
     print "num parts: ", num_parts_per_isoform
-    log_num_reads_possible_per_iso = np.log(scaled_lens)
-    ###
-    ### TODO: TEST LOG SCORE READS HERE TO MAKE SURE ISO NUMS WORKS
-    ###
     log_psi_frag = np.log(psi_vector) + np.log(scaled_lens)
     log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
-    v= scores.log_score_reads(reads,
-                              isoform_nums,
-                              num_parts_per_isoform,
-                              iso_lens,
-                              log_num_reads_possible_per_iso,
-                              num_reads,
-                              read_len,
-                              overhang_len)
+    log_num_reads_possible_per_iso = np.log(scaled_lens)
+    t1 = time.time()
     result = scores.sample_reassignments(reads,
                                          psi_vector,
                                          log_psi_frag,
@@ -99,92 +89,46 @@ def profile_sample_reassignments():
                                          num_reads,
                                          read_len,
                                          overhang_len)
+    t2 = time.time()
+    print "Took %.2f seconds" %(t2 - t1)
     sys.exit(0)
+
+
+def profile_sample_from_multinomial():
+    p = np.array([0.2, 0.1, 0.5])
+    N = len(p)
+    print "Sampling from multinomial for %d times" %(num_reads)
+    t1 = time.time()
+    for n in range(num_reads):
+        scores.py_sample_from_multinomial(p, N)
+    t2 = time.time()
+    print "Sampling from multinomial took %.2f secs" %(t2 - t1)
+    
     
 
 def profile_log_score_reads():
     t1 = time.time()
+    psi_vector = np.array([0.5, 0.5])
+    scaled_lens = iso_lens - read_len + 1
+    num_calls = num_reads
     print "Profiling log_score_reads for %d calls..." %(num_calls)
+    log_num_reads_possible_per_iso = np.log(scaled_lens)
     for n in xrange(num_calls):
-        scores.log_score_reads(reads,
-                               isoform_nums,
-                               num_parts_per_isoform,
-                               iso_lens,
-                               read_len,
-                               overhang_len,
-                               num_reads)
+        ###
+        ### TODO: TEST LOG SCORE READS HERE TO MAKE SURE ISO NUMS WORKS
+        ###
+        log_psi_frag = np.log(psi_vector) + np.log(scaled_lens)
+        log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
+        v = scores.log_score_reads(reads,
+                                  isoform_nums,
+                                  num_parts_per_isoform,
+                                  iso_lens,
+                                  log_num_reads_possible_per_iso,
+                                  num_reads,
+                                  read_len,
+                                  overhang_len)
     t2 = time.time()
     print "log_score_reads took %.2f seconds per %d calls." %(t2 - t1,
-                                                              num_calls)
-    print "PROFILING LOOP:"
-    t1 = time.time()
-    for n in xrange(num_calls):
-        scores.loop_log_score_reads(reads,
-                                    isoform_nums,
-                                    num_parts_per_isoform,
-                                    iso_lens,
-                                    num_reads,
-                                    read_len,
-                                    overhang_len)
-    t2 = time.time()
-    print "loop log_score_reads took %.2f seconds per %d calls." %(t2 - t1,
-                                                                   num_calls)
-    print "PROFILING LOOP (PRECOMPUTED):"
-    t1 = time.time()
-    num_overhang_excluded = \
-        2*(overhang_len - 1) * (num_parts_per_isoform[isoform_nums] - 1)
-    log_num_reads_possible = \
-        np.log((iso_lens[isoform_nums] - read_len + 1) - num_overhang_excluded)
-    for n in xrange(num_calls):
-        scores.precomputed_loop_log_score_reads(reads,
-                                                isoform_nums,
-                                                num_parts_per_isoform,
-                                                iso_lens,
-                                                num_reads,
-                                                log_num_reads_possible)
-    t2 = time.time()
-    print "loop log_score_reads took %.2f seconds per %d calls." %(t2 - t1,
-                                                                   num_calls)
-    
-    return
-    print "Profiling OUTER version..."
-    t1 = time.time()
-    scores.outer_log_score_reads(num_calls,
-                                 reads,
-                                 isoform_nums,
-                                 num_parts_per_isoform,
-                                 iso_lens,
-                                 read_len,
-                                 overhang_len,
-                                 num_reads)
-    t2 = time.time()
-    print "OUTER version took %.2f seconds" %(t2 - t1)
-    #t1 = time.time()
-    #for n in xrange(num_calls):
-    #    scores.loop_log_score_reads(reads,
-    #                                isoform_nums,
-    #                                num_parts_per_isoform,
-    #                                iso_lens,
-    #                                read_len,
-    #                                overhang_len,
-    #                                num_reads)
-    #t2 = time.time()
-    #print "PYTHON log_score_reads took %.2f seconds per %d calls." %(t2 - t1,
-    #                                                          num_calls)
-    return
-    
-    print "Profiling pure PYTHON version..."
-    t1 = time.time()
-    for n in xrange(num_calls):
-        py_log_score_reads(reads,
-                           isoform_nums,
-                           num_parts_per_isoform,
-                           iso_lens,
-                           read_len,
-                           overhang_len,
-                           num_reads)
-    t2 = time.time()
-    print "PYTHON log_score_reads took %.2f seconds per %d calls." %(t2 - t1,
                                                               num_calls)
     
 
@@ -258,8 +202,9 @@ def profile_log_score_assignments():
 
 
 def main():
+    profile_sample_from_multinomial()
     profile_sample_reassignments()
-    #profile_log_score_reads()
+    profile_log_score_reads()
     #profile_log_score_assignments()
 
 if __name__ == "__main__":

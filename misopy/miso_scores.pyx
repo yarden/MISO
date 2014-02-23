@@ -99,15 +99,15 @@ cdef DTYPE_float_t my_logsumexp(np.ndarray[DTYPE_float_t, ndim=1] log_vector,
     # First find the maximum value first
     cdef DTYPE_float_t max_val = log_vector[0]
     for curr_elt in xrange(vector_len):
-        if (vector_len[curr_elt] > max_val):
-            max_val = vector_len[curr_elt]
+        if (log_vector[curr_elt] > max_val):
+            max_val = log_vector[curr_elt]
     # Subtract maximum value from the rest
     for curr_elt in xrange(vector_len):
         curr_exp_value = exp(log_vector[curr_elt] - max_val)
         sum_of_exps += curr_exp_value
     # Now take log of the sum of exp values and add
     # back the missing value
-    log_sum_of_exps = log(sum_of_exps) + max_exp
+    log_sum_of_exps = log(sum_of_exps) + max_val
     return log_sum_of_exps
 
 
@@ -488,15 +488,12 @@ def log_score_reads(np.ndarray[DTYPE_t, ndim=2] reads,
     possible in each isoform taking into account read length and the
     overhang length constraint.
     """
-    cdef np.ndarray[DTYPE_float_t, ndim=1] log_prob_reads = np.empty(num_reads)
+    cdef np.ndarray[DTYPE_float_t, ndim=1] log_prob_reads = \
+      np.empty(num_reads, dtype=float)
     # Read counter
     cdef int curr_read = 0
     # Isoform counter
     cdef int curr_iso_num = 0
-    # Constant used in probability calculation
-    cdef DTYPE_float_t log_one_val = log(1)
-    print "isoform nums: ", isoform_nums
-    print "log num reads possible per iso: ", log_num_reads_possible_per_iso
     for curr_read in xrange(num_reads):
         # For each isoform assignment, score its probability
         # Get the current isoform's number (0,...,K-1 for K isoforms)
@@ -513,7 +510,7 @@ def log_score_reads(np.ndarray[DTYPE_t, ndim=2] reads,
             #  = log[1/(iso_len - read_len + 1)]
             #  = log(1) - log(iso_len - read_len + 1)
             log_prob_reads[curr_read] = \
-                log_one_val - log_num_reads_possible_per_iso[curr_iso_num]
+                log(1) - log_num_reads_possible_per_iso[curr_iso_num]
     return log_prob_reads
 
 
@@ -563,13 +560,11 @@ def sample_reassignments(np.ndarray[DTYPE_t, ndim=2] reads,
     for curr_read in xrange(num_reads):
         # Compute the probability of assigning each read to every
         # isoform
-        print "Going through read %d" %(curr_read)
         for curr_isoform in xrange(num_isoforms):
             # Copy the current assignment of read to isoform
             old_assignment = iso_nums[curr_isoform]
             # Now consider reassigning this read to the current isoform
             iso_nums[curr_isoform] = <DTYPE_t>curr_isoform
-            print "ISO NUMS: ", iso_nums
             # Score this assignment of reads to isoforms
             total_log_read_prob = sum_log_score_reads(reads,
                                                       iso_nums,
@@ -579,43 +574,33 @@ def sample_reassignments(np.ndarray[DTYPE_t, ndim=2] reads,
                                                       num_reads,
                                                       read_len,
                                                       overhang_len)
-            print "Total log read prob: ", total_log_read_prob
             # Compute probability of assignment
             total_log_assignment_prob = sum_log_score_assignments(iso_nums,
                                                                   log_psi_frag_vector,
                                                                   num_reads)
-            print "Total log assignment prob: ", total_log_assignment_prob
             # Copy the old assignment of the read to the isoform
             iso_nums[curr_isoform] = old_assignment
             # Probability of assigning the read to this isoform
             # is the sum: log(P(reads | assignment)) + log(P(assignment | Psi))
             reassignment_probs[curr_isoform] = \
               total_log_read_prob + total_log_assignment_prob
-            print "reassignment_probs[curr_isoform]"
-            print reassignment_probs[curr_isoform]
         # Normalize the reassignment probabilities
-        print "REASSIGNMENT PROBS:", reassignment_probs
-        print "LOG SUM EXP REASSIGNMENT PROBS: ", my_logsumexp(reassignment_probs,
-                                                               num_isoforms)
         norm_reassignment_probs = \
           norm_log_probs(reassignment_probs, num_isoforms)
-        print "NORM REASSIGNMENT PROBS: ", norm_reassignment_probs
         curr_read_assignment = \
           sample_from_multinomial(norm_reassignment_probs, 1)
         new_assignments[curr_read] = curr_read_assignment
     return new_assignments
 
 
-def norm_log_probs(np.ndarray[DTYPE_float_t, ndim=1] log_probs,
-                   int vector_len):
+cdef np.ndarray[DTYPE_float_t, ndim=1] \
+     norm_log_probs(np.ndarray[DTYPE_float_t, ndim=1] log_probs,
+                    int vector_len):
     """
     Normalize log probabilities to sum to 1. Returns an UNLOGGED
     probability!
     """
     # Normalizing factor
-    print "CALLING MY LOG SUM EXPO: "
-    print log_probs, " log probs"
-    print "EXP: ", exp(-304995.2)
     cdef DTYPE_float_t norm_factor = my_logsumexp(log_probs, vector_len)
     # Normalized probabilities (UNLOGGED)
     cdef np.ndarray[DTYPE_float_t, ndim=1] norm_probs = \
@@ -623,22 +608,19 @@ def norm_log_probs(np.ndarray[DTYPE_float_t, ndim=1] log_probs,
     for curr_entry in xrange(vector_len):
         # If the current log probability is -inf, then
         # record it as 0 (unlogged probability)
-        print log_probs[curr_entry], " centry"
-        print "NORM FACTOR: ", norm_factor
         if log_probs[curr_entry] == NEG_INFINITY:
             norm_prob = 0.0
         else:
             # Otherwise, normalize by normalizing factor
             norm_prob = exp(log_probs[curr_entry] - norm_factor)
-            print "NORM PROB: ", norm_prob
         # Record unlogged probability
         norm_probs[curr_entry] = norm_prob
-    print "RETURNING: ", norm_probs
     return norm_probs
         
 
-def sample_from_multinomial(np.ndarray[double, ndim=1] probs,
-                            int N):
+cdef np.ndarray[DTYPE_float_t, ndim=1] \
+     sample_from_multinomial(np.ndarray[DTYPE_float_t, ndim=1] probs,
+                             int N):
     """
     Sample one element from multinomial probabilities vector.
 
@@ -652,16 +634,17 @@ def sample_from_multinomial(np.ndarray[double, ndim=1] probs,
     """
     cdef int num_elts = probs.shape[0]
     # The samples: indices into probs
-    cdef np.ndarray[double, ndim=1] samples = np.empty(N)
+    cdef np.ndarray[DTYPE_float_t, ndim=1] samples = \
+      np.empty(N, dtype=float)
     # Current random samples
     cdef int random_sample = 0
     # Counters over number of samples and number of
     # elements in probability vector
     cdef int curr_sample = 0
     cdef int curr_elt = 0
-    cdef double rand_val# = rand() / MY_MAX_INT
+    cdef DTYPE_float_t rand_val# = rand() / MY_MAX_INT
     # Get cumulative sum of probability vector
-    cdef np.ndarray[double, ndim=1] cumsum = my_cumsum(probs)
+    cdef np.ndarray[DTYPE_float_t, ndim=1] cumsum = my_cumsum(probs)
     for curr_sample in xrange(N):
         # Draw random number
         rand_val = (rand() % MY_MAX_INT) / MY_MAX_INT
@@ -673,6 +656,12 @@ def sample_from_multinomial(np.ndarray[double, ndim=1] probs,
                 break
         samples[curr_sample] = random_sample
     return samples
+
+
+def py_sample_from_multinomial(np.ndarray[DTYPE_float_t, ndim=1] probs,
+                               int N):
+    return sample_from_multinomial(probs, N)
+  
 
 
 

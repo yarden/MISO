@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../../../lib/bamtools-master/lib/libjsoncpp.a  CMakeFiles/jsoncpp.dir/json_reader.cpp.o CMakeFiles/jsoncpp.dir/json_value.cpp.o CMakeFiles/jsoncpp.dir/json_writer.cpp.o
+/usr/bin/ranlib ../../../lib/bamtools-master/lib/libjsoncpp.a
