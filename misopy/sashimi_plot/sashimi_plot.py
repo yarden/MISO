@@ -261,11 +261,6 @@ def main():
         settings_filename = os.path.abspath(os.path.expanduser(options.plot_insert_len[1]))
         plot_insert_len(insert_len_filename, settings_filename, output_dir)
 
-    if options.plot_posterior != None:
-        miso_filename = os.path.abspath(os.path.expanduser(options.plot_posterior[0]))
-        settings_filename = os.path.abspath(os.path.expanduser(options.plot_posterior[1]))
-        plot_posterior(miso_filename, settings_filename, output_dir)
-
     if options.plot_bf_dist != None:
         bf_filename = os.path.abspath(os.path.expanduser(options.plot_bf_dist[0]))
         settings_filename = os.path.abspath(os.path.expanduser(options.plot_bf_dist[1]))
