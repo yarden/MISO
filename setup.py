@@ -73,7 +73,7 @@ for scheme in INSTALL_SCHEMES.values():
 ##
 ## Definition of the current version
 ##
-MISO_VERSION = "0.5.0"
+MISO_VERSION = "0.5.1"
 
 ##
 ## Generate a __version__.py attribute
