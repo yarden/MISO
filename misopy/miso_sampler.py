@@ -30,7 +30,8 @@ from misopy.py2c_gene import *
 import pysplicing
 
 # Cython interface
-import misopy.miso_scores as miso_scores
+import misopy.miso_scores_single as scores_single
+import misopy.miso_scores_paired as scores_paired
 
 from scipy import *
 from numpy.random.mtrand import dirichlet
@@ -295,16 +296,16 @@ class MISOSampler:
 #                                                self.num_reads,
 #                                                self.log_num_reads_possible_per_iso))
             log_reads_prob = \
-                miso_scores.sum_log_score_reads(reads,
-                                                assignments,
-                                                self.num_parts_per_isoform,
-                                                self.iso_lens,
-                                                self.num_reads,
-                                                self.log_num_reads_possible_per_iso)
+                scores_single.sum_log_score_reads(reads,
+                                                  assignments,
+                                                  self.num_parts_per_isoform,
+                                                  self.iso_lens,
+                                                  self.num_reads,
+                                                  self.log_num_reads_possible_per_iso)
             log_psi_frag = \
-                miso_scores.compute_log_psi_frag(psi_vector,
-                                                 self.scaled_lens_single_end,
-                                                 self.num_isoforms)
+                scores_single.compute_log_psi_frag(psi_vector,
+                                                   self.scaled_lens_single_end,
+                                                   self.num_isoforms)
         else:
             raise Exception, "Paired-end not implemented!"
             log_reads_prob = \
@@ -312,9 +313,9 @@ class MISOSampler:
             log_psi_frag = None
         if not self.paired_end:
             log_assignments_prob = \
-                miso_scores.sum_log_score_assignments(assignments,
-                                                      log_psi_frag,
-                                                      self.num_reads)
+                scores_single.sum_log_score_assignments(assignments,
+                                                        log_psi_frag,
+                                                        self.num_reads)
         else:
             raise Exception, "Paired-end not implemented!"
             log_assignments_prob = \
@@ -324,7 +325,7 @@ class MISOSampler:
         # Score the Psi vector: keep this in Python for now
         #log_psi_prob = self.log_score_psi_vector(psi_vector, hyperparameters)
         log_psi_prob = \
-            miso_scores.log_score_psi_vector(psi_vector, hyperparameters)
+            scores_single.log_score_psi_vector(psi_vector, hyperparameters)
         log_joint_score = log_reads_prob + log_assignments_prob + log_psi_prob
         return log_joint_score
 
@@ -558,17 +559,17 @@ class MISOSampler:
                 # Single-end
                 # Score reads given their assignment
                 read_probs = \
-                    miso_scores.log_score_reads(reads,
-                                                assignment,
-                                                self.num_parts_per_isoform,
-                                                self.iso_lens,
-                                                self.num_reads,
-                                                self.log_num_reads_possible_per_iso)
+                    scores_single.log_score_reads(reads,
+                                                  assignment,
+                                                  self.num_parts_per_isoform,
+                                                  self.iso_lens,
+                                                  self.num_reads,
+                                                  self.log_num_reads_possible_per_iso)
                 # Score the assignments of reads given Psi vector
                 assignment_probs = \
-                    miso_scores.log_score_assignments(assignment,
-                                                      log_psi_frag,
-                                                      self.num_reads)
+                    scores_single.log_score_assignments(assignment,
+                                                        log_psi_frag,
+                                                        self.num_reads)
             else:
                 raise Exception, "Paired-end unimplemented!"
                 # Paired-end

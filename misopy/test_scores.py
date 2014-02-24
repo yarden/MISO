@@ -53,7 +53,7 @@ class TestScores(unittest.TestCase):
         self.log_psi_frag = self.log_psi_frag - scipy.misc.logsumexp(self.log_psi_frag)
 
 
-    def ____test_log_score_reads(self):
+    def test_log_score_reads(self):
         # Take the first two reads
         curr_num_reads = 2
         two_reads = self.reads[0:2]
@@ -86,9 +86,14 @@ class TestScores(unittest.TestCase):
         return (np.abs(p1 - p2) < error)
 
 
-    def __test_log_score_assignments(self):
+    def test_log_score_assignments(self):
         curr_num_reads = 2
         two_reads = self.reads[0:curr_num_reads]
+        psi_frag_numer = \
+          np.array([(self.scaled_lens[0] * self.psi_vector[0]),
+                    (self.scaled_lens[1] * self.psi_vector[1])])
+        psi_frag_denom = np.sum(psi_frag_numer)
+        psi_frag = psi_frag_numer / psi_frag_denom
         assert self.approx_eq(sum(psi_frag), 1.0), "Psi frag does not sum to 1."
         print "ISO NUMS: ", self.iso_nums[0:curr_num_reads]
         print "LOG PSI FRAG: ", self.log_psi_frag
@@ -142,8 +147,9 @@ class TestScores(unittest.TestCase):
 
     def test_init_assignments(self):
         reads = self.reads
-        assignments = scores_single.py_init_assignments()
-        print "ASSIGNMENTS: ", assignments
+        assignments = scores_single.py_init_assignments(self.reads,
+                                                        self.num_reads,
+                                                        2)
         
         
 
