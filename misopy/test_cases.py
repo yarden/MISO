@@ -24,7 +24,7 @@ def get_example_gff_fname(gff_basename):
                         gff_basename)
 
 
-def get_example_bam_Fname(bam_basenamE):
+def get_example_bam_fname(bam_basenamE):
     return os.path.join(BAM_EXAMPLES_DIR,
                         bam_basename)
 
@@ -50,9 +50,6 @@ class MISOTestCase:
         self.gene = gene_utils.load_genes_from_gff(self.gff_fname)
         self.psi_vals = \
           [1/float(self.gene.num_isoforms)] * len(self.gene.num_isoforms)
-
-
-    def generate_reads(self, 
 
         
     def get_reads(self, N):
