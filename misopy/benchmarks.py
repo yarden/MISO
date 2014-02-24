@@ -163,7 +163,7 @@ def profile_sample_reassignments():
                                                 read_len,
                                                 overhang_len)
     t2 = time.time()
-    print "Took %.2f seconds" %(t2 - t1)
+    print "Sampling reassignments took %.2f seconds" %(t2 - t1)
     sys.exit(0)
 
 
@@ -184,7 +184,7 @@ def profile_sample_from_multinomial():
         for x in range(num_calls):
             scores_single.py_sample_from_multinomial(p, N)
     t2 = time.time()
-    print "  - Sampling from multinomial took %.2f seconds" %(t2 - t1)
+    print "Sampling from multinomial took %.2f seconds" %(t2 - t1)
     
     
 
