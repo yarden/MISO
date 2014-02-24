@@ -8,8 +8,10 @@ import scipy
 import scipy.misc 
 from scipy.special import gammaln
 
-import miso_scores_single as scores_single
-import miso_scores_paired as scores_paired
+import misopy
+import misopy.miso_scores_single as scores_single
+import misopy.miso_scores_paired as scores_paired
+import misopy.stat_helpers as stat_helpers
 
 # Global data
 num_inc = 3245
@@ -61,7 +63,7 @@ def profile_lndirichlet():
     iso_nums = get_iso_nums(num_reads)
     # Score dirichlet
     print "Benchmarking lndirichlet functions..."
-    print scores_single.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
+    print stat_helpers.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
                                  np.array([0.5, 0.5]))
     print dirichlet_lnpdf(np.array([1, 1]), np.array([0.5, 0.5]))
 
@@ -85,7 +87,7 @@ def profile_cumsum():
     t1 = time.time()
     cy_result = None
     for n in np.arange(num_calls):
-        cy_result = scores_single.my_cumsum(test_array)
+        cy_result = stat_helpers.my_cumsum(test_array)
     t2 = time.time()
     print "cy result -> ", cy_result
     for n in range(len(np_result)):
@@ -108,7 +110,7 @@ def profile_sample_reassignments():
     iso_nums = get_iso_nums(num_reads)
     # Score dirichlet
     print "Benchmarking lndirichlet functions..."
-    print scores_single.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
+    print stat_helpers.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
                                  np.array([0.5, 0.5]))
     print dirichlet_lnpdf(np.array([1, 1]), np.array([0.5, 0.5]))
     print scores_single.py_sample_from_multinomial(np.array([0.1, 0.3, 0.6]),
