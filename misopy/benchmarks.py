@@ -107,14 +107,20 @@ def profile_init_assignments():
     #num_reads = 2
     #reads = np.array([[1, 0], [0, 1]]) 
     #iso_nums = np.array([0, 1])
-    num_reads = 400
+    num_reads = 1000
     reads = get_reads(num_reads)
     iso_nums = get_iso_nums(num_reads)
     num_isoforms = 2
-    assignments = scores_single.init_assignments(reads,
-                                                 num_reads,
-                                                 num_isoforms)
-    print "Assignments: ", assignments
+    t1 = time.time()
+    print "Calling init assignments for %d calls, %d reads" \
+          %(num_calls,
+            num_reads)
+    for n in range(num_calls):
+        assignments = scores_single.py_init_assignments(reads,
+                                                        num_reads,
+                                                        num_isoforms)
+    t2 = time.time()
+    print "Init assignments took %.2f seconds" %(t2 - t1)
         
 
 def profile_sample_reassignments():
@@ -178,7 +184,7 @@ def profile_sample_from_multinomial():
         for x in range(num_calls):
             scores_single.py_sample_from_multinomial(p, N)
     t2 = time.time()
-    print "  - Sampling from multinomial took %.2f secs" %(t2 - t1)
+    print "  - Sampling from multinomial took %.2f seconds" %(t2 - t1)
     
     
 
@@ -277,6 +283,7 @@ def profile_log_score_assignments():
 
 
 def main():
+    profile_init_assignments()
     # read scoring
     profile_log_score_reads()
     profile_sum_log_score_reads()
@@ -286,7 +293,6 @@ def main():
 
     profile_sample_from_multinomial()
     profile_sample_reassignments()
-    profile_init_assignments()
     
 
 if __name__ == "__main__":
