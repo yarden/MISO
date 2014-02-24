@@ -567,6 +567,12 @@ cdef np.ndarray[DTYPE_t, ndim=1] \
     its current assignment in the probability calculations.
     """
     cdef DTYPE_t num_isoforms = psi_vector.shape[0]
+    # Initial probabilities of assignments given Psi vector
+    cdef np.ndarray[DTYPE_float_t, ndim=1] log_assignment_probs = \
+      np.empty(num_isoforms, dtype=float)
+    # Initial probabilties of reads given assignments
+    cdef np.ndarray[DTYPE_float_t, ndim=1] log_read_probs = \
+      np.empty(num_reads, dtype=float)
     # Probabilities of reassigning current read to each of the isoforms
     cdef np.ndarray[DTYPE_float_t, ndim=1] reassignment_probs = \
       np.empty(num_isoforms, dtype=float)
@@ -601,24 +607,25 @@ cdef np.ndarray[DTYPE_t, ndim=1] \
                                      num_reads,
                                      read_len,
                                      overhang_len)
+    # Also calculate the scores of all current assignments
+    log_assignment_probs = log_score_assignments(iso_nums,
+                                                 log_psi_frag_vector,
+                                                 num_reads)
     # For each read, compute the probability of reassigning it to
     # each of the isoforms and sample a new reassignment
     for curr_read in xrange(num_reads):
         # Copy the current assignment of read probability
         old_read_prob = log_read_probs[curr_read]
+        # Copy the current assignment of read to isoform
+        old_assignment = <DTYPE_t>iso_nums[curr_read]
+        # Copy the current probability of assignment
+        old_assignment_log_prob = log_assignment_probs[curr_read]
         # Compute the probability of assigning the current read
         # to each isoform
         for curr_isoform in xrange(num_isoforms):
-            # Copy the current assignment of read to isoform
-            old_assignment = <DTYPE_t>iso_nums[curr_isoform]
             # Now consider reassigning this read to the current isoform
-            iso_nums[curr_isoform] = <DTYPE_t>curr_isoform
+            iso_nums[curr_read] = <DTYPE_t>curr_isoform
             # Score this assignment of reads to isoforms
-            #####
-            ##### TODO: BIG FIX ME HERE; ONLY NEED TO SCORE NEW
-            ##### ASSIGNMENT; NO POINT RECOMPUTING SCORE FOR ALL
-            ##### OTHER READS HERE!
-            #####
             cand_assignment[0] = curr_isoform
             # Compute probability of candidate assignment. This depends
             # only on the Psi Frag vectors:
@@ -645,13 +652,21 @@ cdef np.ndarray[DTYPE_t, ndim=1] \
                                               overhang_len)[0])
             # Set the new probability of current read
             log_read_probs[curr_read] = cand_read_log_prob
+            # Set the new probability of read's assignment
+            log_assignment_probs[curr_read] = cand_assignment_log_prob
             # Now compute reassignment probabilities
             # Probability of assigning the read to this isoform
             # is the sum: log(P(reads | assignment)) + log(P(assignment | Psi))
+            # P(log(reads | assignment) is the sum of the read scores
+            # vector with the current read's reassignment
             reassignment_probs[curr_isoform] = \
-              cand_assignment_log_prob + cand_read_log_prob
+              sum_array(log_assignment_probs, num_reads) + \
+              sum_array(log_read_probs, num_reads)
+            print " --> is inf?", reassignment_probs[curr_isoform]
             # Copy the old assignment of the read to the isoform
-            iso_nums[curr_isoform] = old_assignment
+            iso_nums[curr_read] = old_assignment
+            # Copy the old assignment probability
+            log_assignment_probs[curr_read] = old_assignment_log_prob
             # Copy the old probability of read given the isoform
             log_read_probs[curr_read] = old_read_prob
         # Normalize the reassignment probabilities

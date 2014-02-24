@@ -99,11 +99,17 @@ def profile_sample_reassignments():
     scaled_lens = iso_lens - read_len + 1
     num_calls = 350
     # Get reads and isoform assignments
-    num_reads = 200
+#    num_reads = 2
 #    reads = np.array([[1, 0], [0, 1]]) 
-#    iso_nums = np.array([0, 1]) 
+#    iso_nums = np.array([0, 1])
+
+    num_reads = 400
     reads = get_reads(num_reads)
     iso_nums = get_iso_nums(num_reads)
+    print "READS: "
+    print reads
+    print "ISOFORM ASSIGNMENTS: "
+    print iso_nums
     # Score dirichlet
     print "Benchmarking lndirichlet functions..."
     print scores.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
