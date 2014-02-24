@@ -2,6 +2,8 @@
 ##
 ## MISO scoring functions in Cython for MCMC sampler
 ##
+### How to pass numpy arrays to C/C++ functions:
+### http://stackoverflow.com/questions/3046305/simple-wrapping-of-c-code-with-cython
 import numpy as np
 cimport numpy as np
 
@@ -342,17 +344,19 @@ def log_score_psi_vector(np.ndarray[DTYPE_float_t, ndim=1] psi_vector,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
-                          np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
-                          int num_reads):
+cdef np.ndarray[DTYPE_float_t, ndim=1] \
+  log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
+                        np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
+                        int num_reads):
     """
     Score an assignment of a set of reads given psi
     and a gene (i.e. a set of isoforms).
     """
-    cdef np.ndarray[DTYPE_float_t, ndim=1] log_scores = np.empty(num_reads)
+    cdef np.ndarray[DTYPE_float_t, ndim=1] log_scores = \
+      np.empty(num_reads, dtype=float)
     cdef DTYPE_float_t curr_log_psi_frag = 0.0
-    cdef int curr_read = 0
-    cdef int curr_iso_num = 0
+    cdef DTYPE_t curr_read = 0
+    cdef DTYPE_t curr_iso_num = 0
     for curr_read in xrange(num_reads):
         curr_iso_num = isoform_nums[curr_read]
         # The score of an assignment to isoform i is the ith entry
@@ -360,6 +364,16 @@ def log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
         curr_log_psi_frag = log_psi_frag_vector[curr_iso_num]
         log_scores[curr_read] = curr_log_psi_frag 
     return log_scores
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def py_log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
+                             np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
+                             int num_reads):
+    return log_score_assignments(isoform_nums,
+                                 log_psi_frag_vector,
+                                 num_reads)
 
 
 @cython.boundscheck(False)
@@ -376,7 +390,7 @@ def sum_log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
         np.empty(num_reads)
     cdef DTYPE_float_t sum_log_scores = 0.0
     cdef DTYPE_float_t curr_assignment_score = 0.0
-    cdef int curr_read = 0
+    cdef DTYPE_t curr_read = 0
     # Get log score of assignments
     assignment_scores = log_score_assignments(isoform_nums,
                                               log_psi_frag_vector,
@@ -402,7 +416,7 @@ def compute_log_psi_frag(np.ndarray[DTYPE_float_t, ndim=1] psi_vector,
     cdef np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag = \
         np.empty(num_isoforms)
     # Isoform counter
-    cdef int curr_isoform = 0
+    cdef DTYPE_t curr_isoform = 0
     for curr_isoform in xrange(num_isoforms):
         log_psi_frag[curr_isoform] = \
             log(psi_vector[curr_isoform]) + log(scaled_lens[curr_isoform])
@@ -433,7 +447,7 @@ def sum_log_score_reads(np.ndarray[DTYPE_t, ndim=2] reads,
     cdef np.ndarray[DTYPE_float_t, ndim=1] vect_log_scores = \
       np.empty(num_reads, dtype=float)
     cdef DTYPE_float_t sum_scores = 0.0
-    cdef int curr_read = 0
+    cdef DTYPE_t curr_read = 0
     # Call log score reads to get vector of scores
     vect_log_scores = log_score_reads(reads,
                                       isoform_nums,
@@ -521,17 +535,18 @@ def log_score_reads(np.ndarray[DTYPE_t, ndim=2] reads,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def sample_reassignments(np.ndarray[DTYPE_t, ndim=2] reads,
-                         np.ndarray[DTYPE_float_t, ndim=1] psi_vector,
-                         np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
-                         np.ndarray[DTYPE_float_t, ndim=1] log_num_reads_possible_per_iso,
-                         np.ndarray[DTYPE_t, ndim=1] scaled_lens,
-                         np.ndarray[DTYPE_t, ndim=1] iso_lens,
-                         np.ndarray[DTYPE_t, ndim=1] num_parts_per_iso,
-                         np.ndarray[DTYPE_t, ndim=1] iso_nums,
-                         np.int_t num_reads,
-                         np.int_t read_len,
-                         np.int_t overhang_len):
+cdef np.ndarray[DTYPE_t, ndim=1] \
+  sample_reassignments(np.ndarray[DTYPE_t, ndim=2] reads,
+                       np.ndarray[DTYPE_float_t, ndim=1] psi_vector,
+                       np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
+                       np.ndarray[DTYPE_float_t, ndim=1] log_num_reads_possible_per_iso,
+                       np.ndarray[DTYPE_t, ndim=1] scaled_lens,
+                       np.ndarray[DTYPE_t, ndim=1] iso_lens,
+                       np.ndarray[DTYPE_t, ndim=1] num_parts_per_iso,
+                       np.ndarray[DTYPE_t, ndim=1] iso_nums,
+                       np.int_t num_reads,
+                       np.int_t read_len,
+                       np.int_t overhang_len):
     """
     Sample a reassignments of reads to isoforms.
     Note that this does not depend on the read's current assignment since
@@ -591,6 +606,35 @@ def sample_reassignments(np.ndarray[DTYPE_t, ndim=2] reads,
           sample_from_multinomial(norm_reassignment_probs, 1)
         new_assignments[curr_read] = curr_read_assignment
     return new_assignments
+
+
+# Sample reassignments
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def py_sample_reassignments(np.ndarray[DTYPE_t, ndim=2] reads,
+                            np.ndarray[DTYPE_float_t, ndim=1] psi_vector,
+                            np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
+                            np.ndarray[DTYPE_float_t, ndim=1] log_num_reads_possible_per_iso,
+                            np.ndarray[DTYPE_t, ndim=1] scaled_lens,
+                            np.ndarray[DTYPE_t, ndim=1] iso_lens,
+                            np.ndarray[DTYPE_t, ndim=1] num_parts_per_iso,
+                            np.ndarray[DTYPE_t, ndim=1] iso_nums,
+                            np.int_t num_reads,
+                            np.int_t read_len,
+                            np.int_t overhang_len):
+    return sample_reassignments(reads,
+                                psi_vector,
+                                log_psi_frag_vector,
+                                log_num_reads_possible_per_iso,
+                                scaled_lens,
+                                iso_lens,
+                                num_parts_per_iso,
+                                iso_nums,
+                                num_reads,
+                                read_len,
+                                overhang_len)
+
 
 
 cdef np.ndarray[DTYPE_float_t, ndim=1] \
