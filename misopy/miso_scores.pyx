@@ -632,7 +632,6 @@ cdef np.ndarray[DTYPE_t, ndim=1] \
             # of the current read, since we changed its assignment
             #    P(R | I)
             curr_read_array = reads[curr_read:curr_read+1]
-            print "CURR READ ARRAY: ", curr_read_array
             # Score probability of current read given candidate
             # assignment
             cand_read_log_prob = \

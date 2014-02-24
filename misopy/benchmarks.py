@@ -99,7 +99,7 @@ def profile_sample_reassignments():
     scaled_lens = iso_lens - read_len + 1
     num_calls = 350
     # Get reads and isoform assignments
-    num_reads = 20
+    num_reads = 200
 #    reads = np.array([[1, 0], [0, 1]]) 
 #    iso_nums = np.array([0, 1]) 
     reads = get_reads(num_reads)
