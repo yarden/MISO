@@ -96,7 +96,30 @@ def profile_cumsum():
     print "CYTHON took %.2f seconds" %(t2 - t1)
 
 
+def profile_init_assignments():
+    print "-" * 20
+    print "Profiling init assignments..."
+    psi_vector = np.array([0.5, 0.5])
+    test_array = np.array([1,2,3,4], dtype=np.float)
+    scaled_lens = iso_lens - read_len + 1
+    num_calls = 350
+    # Get reads and isoform assignments
+    #num_reads = 2
+    #reads = np.array([[1, 0], [0, 1]]) 
+    #iso_nums = np.array([0, 1])
+    num_reads = 400
+    reads = get_reads(num_reads)
+    iso_nums = get_iso_nums(num_reads)
+    num_isoforms = 2
+    assignments = scores_single.init_assignments(reads,
+                                                 num_reads,
+                                                 num_isoforms)
+    print "Assignments: ", assignments
+        
+
 def profile_sample_reassignments():
+    print "-" * 20
+    print "Profiling sample assignments..."
     psi_vector = np.array([0.5, 0.5])
     test_array = np.array([1,2,3,4], dtype=np.float)
     scaled_lens = iso_lens - read_len + 1
@@ -254,14 +277,17 @@ def profile_log_score_assignments():
 
 
 def main():
-    #profile_sample_from_multinomial()
-    profile_sample_reassignments()
     # read scoring
-    #profile_log_score_reads()
-    #profile_sum_log_score_reads()
+    profile_log_score_reads()
+    profile_sum_log_score_reads()
 
     # assignment scoring
     profile_log_score_assignments()
+
+    profile_sample_from_multinomial()
+    profile_sample_reassignments()
+    profile_init_assignments()
+    
 
 if __name__ == "__main__":
     main()

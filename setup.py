@@ -1,6 +1,7 @@
 from distutils.core import setup, Extension
 import distutils.ccompiler
 from Cython.Distutils import build_ext
+from Cython.Build import cythonize
 import glob
 import os
 import sys
@@ -44,12 +45,17 @@ setup(name = 'misopy',
       long_description = long_description,
       author = 'Yarden Katz,Gabor Csardi',
       author_email = 'yarden@mit.edu,gcsardi@stat.harvard.edu',
-        maintainer = 'Yarden Katz',
+       maintainer = 'Yarden Katz',
       maintainer_email = 'yarden@mit.edu',
       url = 'http://genes.mit.edu/burgelab/miso/',
       # Cython extensions
       cmdclass = {'build_ext': build_ext},
-      ext_modules = [Extension("misopy.miso_scores", ["misopy/miso_scores.pyx"])],
+      ext_modules = [Extension("misopy.miso_scores_single",
+                               ["misopy/miso_scores_single.pyx"]),
+                     Extension("misopy.miso_scores_paired",
+                               ["misopy/miso_scores_paired.pyx"]),
+                     Extension("misopy.stat_helpers",
+                               ["misopy/stat_helpers.pyx"])],
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy',

@@ -61,25 +61,6 @@ cdef float MY_MAX_INT = float(10000)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def my_cumsum(np.ndarray[double, ndim=1] input_array):
-    """
-    Return cumulative sum of array.
-    """
-    # Cumulative sum at every position
-    cdef np.ndarray[double, ndim=1] cumsum_array = np.empty_like(input_array)
-    cdef int curr_elt = 0
-    cdef int num_elts = input_array.shape[0]
-    # Current cumulative sum: starts at first element
-    cdef double curr_cumsum = 0.0
-    for curr_elt in xrange(num_elts):
-        cumsum_array[curr_elt] = (input_array[curr_elt] + curr_cumsum)
-        curr_cumsum = cumsum_array[curr_elt]
-    return cumsum_array
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
 cdef DTYPE_float_t \
   sum_array(np.ndarray[DTYPE_float_t, ndim=1] input_array,
             DTYPE_t array_len):
@@ -705,7 +686,8 @@ cdef np.ndarray[DTYPE_float_t, ndim=1] \
     cdef int curr_elt = 0
     cdef DTYPE_float_t rand_val# = rand() / MY_MAX_INT
     # Get cumulative sum of probability vector
-    cdef np.ndarray[DTYPE_float_t, ndim=1] cumsum = my_cumsum(probs)
+    cdef np.ndarray[DTYPE_float_t, ndim=1] cumsum = \
+      stat_helpers.my_cumsum(probs)
     for curr_sample in xrange(N):
         # Draw random number
         rand_val = (rand() % MY_MAX_INT) / MY_MAX_INT
@@ -718,13 +700,44 @@ cdef np.ndarray[DTYPE_float_t, ndim=1] \
         samples[curr_sample] = random_sample
     return samples
 
-
 def py_sample_from_multinomial(np.ndarray[DTYPE_float_t, ndim=1] probs,
                                int N):
     return sample_from_multinomial(probs, N)
-  
 
 
+
+cdef np.ndarray[DTYPE_t, ndim=1] \
+  init_assignments(np.ndarray[DTYPE_t, ndim=2] reads,
+                   int num_reads,
+                   int num_isoforms):
+    """
+    Initialize assignments of reads to isoforms.
+
+    NOTE: This assumes that the reads that are NOT consistent
+    with all the isoforms have been thrown out. If they are
+    present, they will be skipped
+    """
+    # Assignments array to return
+    cdef np.ndarray[DTYPE_t, ndim=1] assignments = \
+      np.empty(num_reads, dtype=int)
+    cdef int curr_read = 0
+    cdef int curr_iso = 0
+    for curr_read in xrange(num_reads):
+        for curr_iso in xrange(num_isoforms):
+            # Assign read to the first isoform it is consistent
+            # with. Note.
+            if reads[curr_read, curr_iso] == 1:
+                assignments[curr_read] = curr_iso
+                break
+    return assignments
+
+def py_init_assignments(np.ndarray[DTYPE_t, ndim=2] reads,
+                        int num_reads,
+                        int num_isoforms):
+    return init_assignments(reads,
+                            num_reads,
+                            num_isoforms)
+        
 
 #     def propose_norm_drift_psi_alpha(self, alpha_vector):
 #         if len(alpha_vector) == 1:

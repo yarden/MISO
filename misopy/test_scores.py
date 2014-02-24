@@ -128,16 +128,23 @@ class TestScores(unittest.TestCase):
         psi_frag = psi_frag_numer / psi_frag_denom
         log_psi_frag = np.log(psi_frag)
         result = scores_single.py_sample_reassignments(subset_reads,
-                                                self.psi_vector,
-                                                log_psi_frag,
-                                                self.log_num_reads_possible_per_iso,
-                                                self.scaled_lens,
-                                                self.iso_lens,
-                                                self.num_parts_per_iso,
-                                                self.iso_nums[0:curr_num_reads],
-                                                curr_num_reads,
-                                                self.read_len,
-                                                self.overhang_len)
+                                                       self.psi_vector,
+                                                       log_psi_frag,
+                                                       self.log_num_reads_possible_per_iso,
+                                                       self.scaled_lens,
+                                                       self.iso_lens,
+                                                       self.num_parts_per_iso,
+                                                       self.iso_nums[0:curr_num_reads],
+                                                       curr_num_reads,
+                                                       self.read_len,
+                                                       self.overhang_len)
+
+
+    def test_init_assignments(self):
+        reads = self.reads
+        assignments = scores_single.py_init_assignments()
+        print "ASSIGNMENTS: ", assignments
+        
         
 
 
