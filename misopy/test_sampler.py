@@ -1,5 +1,6 @@
 import unittest
 
+import os
 import scipy
 import misopy
 import numpy
@@ -20,6 +21,9 @@ import pysplicing
 # Cython interface
 import misopy.miso_scores_single as scores_single
 import misopy.miso_scores_paired as scores_paired
+
+import misopy.miso_sampler as miso_sampler
+import misopy.settings as settings
 
 num_inc = 3245
 num_exc = 22
@@ -56,6 +60,32 @@ class TestSampler(unittest.TestCase):
           np.log(self.psi_vector) + np.log(self.scaled_lens)
         self.log_psi_frag = \
           self.log_psi_frag - scipy.misc.logsumexp(self.log_psi_frag)
+        # Read the params from a file
+        self.params = None
+        self.settings_fname = \
+          os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                       "settings",
+                       "miso_settings.txt")
+        print "Settings filename: %s" %(self.settings_fname)
+        self.settings = settings.load_settings(self.settings_fname)
+        self.params = settings.Settings.get_sampler_params()
+        print self.settings
+        print self.params
+
+
+    def test_sampler1(self):
+        sampler_obj = miso_sampler.MISOSampler(self.params,
+                                               paired_end=False,
+                                               log_dir="./miso_logs/")
+        print "sampler_obj: ", sampler_obj
         
+
+
+def main():
+    unittest.main()
+        
+
+if __name__ == "__main__":
+    main()
         
 

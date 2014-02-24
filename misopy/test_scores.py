@@ -63,20 +63,16 @@ class TestScores(unittest.TestCase):
         # Score the reads given an isoform assignment
         total_log_read_prob = \
           scores_single.sum_log_score_reads(two_reads,
-                                     iso_nums[0:2],
-                                     num_parts_per_iso,
-                                     self.iso_lens,
-                                     self.log_num_reads_possible_per_iso,
-                                     curr_num_reads,
-                                     self.read_len,
-                                     self.overhang_len)
-        print "TOTAL LOG READ PROB: "
-        print total_log_read_prob
+                                            iso_nums[0:2],
+                                            num_parts_per_iso,
+                                            self.iso_lens,
+                                            self.log_num_reads_possible_per_iso,
+                                            curr_num_reads,
+                                            self.read_len,
+                                            self.overhang_len)
         # Compute it by hand: probability of a read is 1 / (# possible positions)
         log_prob_read_1 = np.log(1 / float(self.scaled_lens[iso_nums[0]]))
         log_prob_read_2 = np.log(1 / float(self.scaled_lens[iso_nums[1]]))
-        print "log_prob_read_1: ", log_prob_read_1
-        print "log_prob_read_2: ", log_prob_read_2
         print log_prob_read_1 + log_prob_read_2
         assert (total_log_read_prob == (log_prob_read_1 + log_prob_read_2)), \
            "Failed to score reads correctly."
@@ -95,17 +91,12 @@ class TestScores(unittest.TestCase):
         psi_frag_denom = np.sum(psi_frag_numer)
         psi_frag = psi_frag_numer / psi_frag_denom
         assert self.approx_eq(sum(psi_frag), 1.0), "Psi frag does not sum to 1."
-        print "ISO NUMS: ", self.iso_nums[0:curr_num_reads]
-        print "LOG PSI FRAG: ", self.log_psi_frag
-        print np.log(psi_frag)
         assert (self.approx_eq(self.log_psi_frag[0], np.log(psi_frag)[0])), \
           "Log psi frag not set properly."
         total_log_assignments_prob = \
           scores_single.sum_log_score_assignments(self.iso_nums[0:curr_num_reads],
                                            self.log_psi_frag,
                                            curr_num_reads)
-        print "TOTAL LOG ASSIGNMENTS PROB: "
-        print total_log_assignments_prob
         # Compute the probability of assignments
         manual_result = (np.log(psi_frag[self.iso_nums[0]]) + \
                          np.log(psi_frag[self.iso_nums[1]]))

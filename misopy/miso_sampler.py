@@ -228,7 +228,6 @@ class MISOSampler:
                       "running in sampler on paired-end data."
             self.mean_frag_len = self.params['mean_frag_len']
             self.frag_variance = self.params['frag_variance']
-
         if log_dir != None:
             self.log_dir = os.path.abspath(os.path.expanduser(log_dir))
             self.log_dir = os.path.join(log_dir, 'logs')
@@ -237,6 +236,8 @@ class MISOSampler:
                 os.makedirs(self.log_dir)
             except OSError:
                 pass
+        else:
+            raise Exception, "Need a log directory."
         self.miso_logger = get_logger('miso_logger', self.log_dir)
         self.miso_logger.info("Instantiated sampler.")
         self.gene = None
