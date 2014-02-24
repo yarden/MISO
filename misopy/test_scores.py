@@ -126,17 +126,17 @@ class TestScores(unittest.TestCase):
         psi_frag_denom = np.sum(psi_frag_numer)
         psi_frag = psi_frag_numer / psi_frag_denom
         log_psi_frag = np.log(psi_frag)
-        result = scores.sample_reassignments(subset_reads,
-                                             self.psi_vector,
-                                             log_psi_frag,
-                                             self.log_num_reads_possible_per_iso,
-                                             self.scaled_lens,
-                                             self.iso_lens,
-                                             self.num_parts_per_iso,
-                                             self.iso_nums[0:curr_num_reads],
-                                             curr_num_reads,
-                                             self.read_len,
-                                             self.overhang_len)
+        result = scores.py_sample_reassignments(subset_reads,
+                                                self.psi_vector,
+                                                log_psi_frag,
+                                                self.log_num_reads_possible_per_iso,
+                                                self.scaled_lens,
+                                                self.iso_lens,
+                                                self.num_parts_per_iso,
+                                                self.iso_nums[0:curr_num_reads],
+                                                curr_num_reads,
+                                                self.read_len,
+                                                self.overhang_len)
         
 
 

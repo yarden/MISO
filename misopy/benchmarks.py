@@ -28,6 +28,7 @@ iso_lens = np.array([1253, 1172], dtype=np.int)
 isoform_nums = [0]*3245 + [1]*22 + [0]*19937 + [1]*19937
 isoform_nums = np.array(isoform_nums, dtype=np.int)
 num_reads = len(reads)
+total_reads = num_reads
 num_calls = 2000
 
 
@@ -98,7 +99,9 @@ def profile_sample_reassignments():
     scaled_lens = iso_lens - read_len + 1
     num_calls = 350
     # Get reads and isoform assignments
-    num_reads = 500
+    num_reads = 20
+#    reads = np.array([[1, 0], [0, 1]]) 
+#    iso_nums = np.array([0, 1]) 
     reads = get_reads(num_reads)
     iso_nums = get_iso_nums(num_reads)
     # Score dirichlet
@@ -139,7 +142,7 @@ def profile_sample_from_multinomial():
     print "-" * 20
     p = np.array([0.2, 0.1, 0.5])
     N = len(p)
-    num_calls = 2000
+    num_calls = 1000
     num_reads = 1000
     print "Sampling from multinomial for %d x %d times" %(num_reads,
                                                           num_calls)
@@ -200,34 +203,6 @@ def profile_sum_log_score_reads():
     print "SUM log_score_reads took %.2f seconds per %d calls." %(t2 - t1,
                                                                   num_calls)
     
-    
-
-def py_log_score_reads(reads,
-                       isoform_nums,
-                       num_parts_per_isoform,
-                       iso_lens,
-                       read_len,
-                       overhang_len,
-                       num_reads):
-    """
-    Score a set of reads given their isoform assignments.
-    """
-    # The probability of a read being assigned to an isoform that
-    # could not have generated it (i.e. where the read is not a
-    # substring of the isoform) is zero.  Check for consistency
-    overhang_excluded = \
-        2*(overhang_len - 1)*(num_parts_per_isoform[isoform_nums] - 1)
-    # The number of reads possible is the number of ways a 36 nt long read can be
-    # aligned onto the length of the current isoforms, minus the number of positions
-    # that are ruled out due to overhang constraints.
-    num_reads_possible = \
-        (iso_lens[isoform_nums] - read_len + 1) - overhang_excluded
-    log_prob_reads = np.log(1) - np.log(num_reads_possible)
-    zero_prob_indx = np.nonzero(reads[np.arange(num_reads), isoform_nums] == 0)[0]
-    # Assign probability 0 to reads inconsistent with assignment
-    log_prob_reads[zero_prob_indx] = -1 * np.inf
-    return log_prob_reads
-    
 
 def log_score_assignments(isoform_nums, psi_vector, scaled_lens, num_reads):
     """
@@ -275,8 +250,8 @@ def profile_log_score_assignments():
 
 
 def main():
-    profile_sample_from_multinomial()
-    #profile_sample_reassignments()
+    #profile_sample_from_multinomial()
+    profile_sample_reassignments()
     # read scoring
     #profile_log_score_reads()
     #profile_sum_log_score_reads()

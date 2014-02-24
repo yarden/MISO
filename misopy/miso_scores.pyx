@@ -78,6 +78,19 @@ def my_cumsum(np.ndarray[double, ndim=1] input_array):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+cdef DTYPE_float_t \
+  sum_array(np.ndarray[DTYPE_float_t, ndim=1] input_array,
+            DTYPE_t array_len):
+    cdef DTYPE_t j = 0
+    cdef DTYPE_float_t result = 0.0
+    for j in xrange(array_len):
+        result += input_array[j]
+    return result
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
 cdef DTYPE_float_t my_logsumexp(np.ndarray[DTYPE_float_t, ndim=1] log_vector,
                                 int vector_len):
     """
@@ -556,49 +569,91 @@ cdef np.ndarray[DTYPE_t, ndim=1] \
     cdef DTYPE_t num_isoforms = psi_vector.shape[0]
     # Probabilities of reassigning current read to each of the isoforms
     cdef np.ndarray[DTYPE_float_t, ndim=1] reassignment_probs = \
-        np.empty(num_isoforms)
+      np.empty(num_isoforms, dtype=float)
     # Normalized reassignment probabilities
     cdef np.ndarray[DTYPE_float_t, ndim=1] norm_reassignment_probs = \
-        np.empty(num_isoforms)
-    # Where the new sampled assignment of reads to isoforms is
-    # going to be stored
-    cdef np.ndarray[np.int_t, ndim=1] new_assignments = \
-      np.empty(<np.int_t>num_reads, dtype=np.int)
-    # Prob of reads given assignment
-    cdef double read_probs = 0.0
-    # Probability of having a particular assignment
-    cdef DTYPE_float_t assignment_probs = 0.0
-    # Probability of current read assignment
+      np.empty(num_isoforms)
+    # Array of new assignments to be returned
+    cdef np.ndarray[DTYPE_t, ndim=1] new_assignments = \
+      np.empty(num_reads, dtype=int)
+    # The candidate assignment of current read
+    cdef np.ndarray[np.int_t, ndim=1] cand_assignment = \
+      np.empty(1, dtype=np.int)
+    # Log probability of candidate assignment
+    cdef DTYPE_float_t cand_assignment_log_prob
+    # Array containing a single-read, the current read to be
+    # considered
+    cdef np.ndarray[np.int_t, ndim=2] curr_read_array = \
+       np.zeros([2,2], dtype=np.int)
+    # Log probability of current read given its assignment
+    cdef DTYPE_float_t curr_read_log_prob
+    # The sampled current read assignment
     cdef DTYPE_t curr_read_assignment = 0
+    # Current isoform counter
+    cdef DTYPE_t curr_isoform = 0
+    # First calculate the scores of all the current reads
+    # given their isoform assignment
+    log_read_probs = log_score_reads(reads,
+                                     iso_nums,
+                                     num_parts_per_iso,
+                                     iso_lens,
+                                     log_num_reads_possible_per_iso,
+                                     num_reads,
+                                     read_len,
+                                     overhang_len)
     # For each read, compute the probability of reassigning it to
     # each of the isoforms and sample a new reassignment
     for curr_read in xrange(num_reads):
-        # Compute the probability of assigning each read to every
-        # isoform
+        # Copy the current assignment of read probability
+        old_read_prob = log_read_probs[curr_read]
+        # Compute the probability of assigning the current read
+        # to each isoform
         for curr_isoform in xrange(num_isoforms):
             # Copy the current assignment of read to isoform
-            old_assignment = iso_nums[curr_isoform]
+            old_assignment = <DTYPE_t>iso_nums[curr_isoform]
             # Now consider reassigning this read to the current isoform
             iso_nums[curr_isoform] = <DTYPE_t>curr_isoform
             # Score this assignment of reads to isoforms
-            total_log_read_prob = sum_log_score_reads(reads,
-                                                      iso_nums,
-                                                      num_parts_per_iso,
-                                                      iso_lens,
-                                                      log_num_reads_possible_per_iso,
-                                                      num_reads,
-                                                      read_len,
-                                                      overhang_len)
-            # Compute probability of assignment
-            total_log_assignment_prob = sum_log_score_assignments(iso_nums,
-                                                                  log_psi_frag_vector,
-                                                                  num_reads)
-            # Copy the old assignment of the read to the isoform
-            iso_nums[curr_isoform] = old_assignment
+            #####
+            ##### TODO: BIG FIX ME HERE; ONLY NEED TO SCORE NEW
+            ##### ASSIGNMENT; NO POINT RECOMPUTING SCORE FOR ALL
+            ##### OTHER READS HERE!
+            #####
+            cand_assignment[0] = curr_isoform
+            # Compute probability of candidate assignment. This depends
+            # only on the Psi Frag vectors:
+            #    P(I(j,k) | PsiFrag)
+            cand_assignment_log_prob = \
+              <DTYPE_float_t>(log_score_assignments(cand_assignment,
+                                                    log_psi_frag_vector,
+                                                    1))
+            # Compute the probability of the reads given the current
+            # assignment. The only term that changes is the probability
+            # of the current read, since we changed its assignment
+            #    P(R | I)
+            curr_read_array = reads[curr_read:curr_read+1]
+            # Score probability of current read given candidate
+            # assignment
+            cand_read_log_prob = \
+              <DTYPE_float_t>(log_score_reads(curr_read_array,
+                                              cand_assignment,
+                                              num_parts_per_iso,
+                                              iso_lens,
+                                              log_num_reads_possible_per_iso,
+                                              1,
+                                              read_len,
+                                              overhang_len)[0])
+            # Set the new probability of current read
+            log_read_probs[curr_read] = cand_read_log_prob
+            # Now compute reassignment probabilities
             # Probability of assigning the read to this isoform
             # is the sum: log(P(reads | assignment)) + log(P(assignment | Psi))
             reassignment_probs[curr_isoform] = \
-              total_log_read_prob + total_log_assignment_prob
+              cand_assignment_log_prob + cand_read_log_prob
+            # Copy the old assignment of the read to the isoform
+            iso_nums[curr_isoform] = old_assignment
+            # Copy the old probability of read given the isoform
+            log_read_probs[curr_read] = old_read_prob
         # Normalize the reassignment probabilities
         norm_reassignment_probs = \
           norm_log_probs(reassignment_probs, num_isoforms)
