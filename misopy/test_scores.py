@@ -12,7 +12,8 @@ import scipy
 import scipy.misc 
 from scipy.special import gammaln
 
-import miso_scores as scores
+import miso_scores_single as scores_single
+import miso_scores_paired as scores_paired
 
 num_inc = 3245
 num_exc = 22
@@ -61,7 +62,7 @@ class TestScores(unittest.TestCase):
         assert(np.array_equal(two_reads[1], np.array([1, 0])))
         # Score the reads given an isoform assignment
         total_log_read_prob = \
-          scores.sum_log_score_reads(two_reads,
+          scores_single.sum_log_score_reads(two_reads,
                                      iso_nums[0:2],
                                      num_parts_per_iso,
                                      self.iso_lens,
@@ -95,7 +96,7 @@ class TestScores(unittest.TestCase):
         assert (self.approx_eq(self.log_psi_frag[0], np.log(psi_frag)[0])), \
           "Log psi frag not set properly."
         total_log_assignments_prob = \
-          scores.sum_log_score_assignments(self.iso_nums[0:curr_num_reads],
+          scores_single.sum_log_score_assignments(self.iso_nums[0:curr_num_reads],
                                            self.log_psi_frag,
                                            curr_num_reads)
         print "TOTAL LOG ASSIGNMENTS PROB: "
@@ -112,7 +113,7 @@ class TestScores(unittest.TestCase):
                         np.array([0.1, 0.5])]
         for v in vals_to_test:
             scipy_result = scipy.misc.logsumexp(v)
-            result = scores.py_my_logsumexp(v, len(v))
+            result = scores_single.py_my_logsumexp(v, len(v))
             assert (self.approx_eq(scipy_result, result)), \
               "My logsumexp failed on %s" %(str(v))
 
@@ -126,7 +127,7 @@ class TestScores(unittest.TestCase):
         psi_frag_denom = np.sum(psi_frag_numer)
         psi_frag = psi_frag_numer / psi_frag_denom
         log_psi_frag = np.log(psi_frag)
-        result = scores.py_sample_reassignments(subset_reads,
+        result = scores_single.py_sample_reassignments(subset_reads,
                                                 self.psi_vector,
                                                 log_psi_frag,
                                                 self.log_num_reads_possible_per_iso,

@@ -8,7 +8,8 @@ import scipy
 import scipy.misc 
 from scipy.special import gammaln
 
-import miso_scores as scores
+import miso_scores_single as scores_single
+import miso_scores_paired as scores_paired
 
 # Global data
 num_inc = 3245
@@ -60,7 +61,7 @@ def profile_lndirichlet():
     iso_nums = get_iso_nums(num_reads)
     # Score dirichlet
     print "Benchmarking lndirichlet functions..."
-    print scores.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
+    print scores_single.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
                                  np.array([0.5, 0.5]))
     print dirichlet_lnpdf(np.array([1, 1]), np.array([0.5, 0.5]))
 
@@ -84,7 +85,7 @@ def profile_cumsum():
     t1 = time.time()
     cy_result = None
     for n in np.arange(num_calls):
-        cy_result = scores.my_cumsum(test_array)
+        cy_result = scores_single.my_cumsum(test_array)
     t2 = time.time()
     print "cy result -> ", cy_result
     for n in range(len(np_result)):
@@ -99,23 +100,18 @@ def profile_sample_reassignments():
     scaled_lens = iso_lens - read_len + 1
     num_calls = 350
     # Get reads and isoform assignments
-#    num_reads = 2
-#    reads = np.array([[1, 0], [0, 1]]) 
-#    iso_nums = np.array([0, 1])
-
+    #num_reads = 2
+    #reads = np.array([[1, 0], [0, 1]]) 
+    #iso_nums = np.array([0, 1])
     num_reads = 400
     reads = get_reads(num_reads)
     iso_nums = get_iso_nums(num_reads)
-    print "READS: "
-    print reads
-    print "ISOFORM ASSIGNMENTS: "
-    print iso_nums
     # Score dirichlet
     print "Benchmarking lndirichlet functions..."
-    print scores.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
+    print scores_single.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
                                  np.array([0.5, 0.5]))
     print dirichlet_lnpdf(np.array([1, 1]), np.array([0.5, 0.5]))
-    print scores.py_sample_from_multinomial(np.array([0.1, 0.3, 0.6]),
+    print scores_single.py_sample_from_multinomial(np.array([0.1, 0.3, 0.6]),
                                          100)
     log_psi_frag = np.log(psi_vector) + np.log(scaled_lens)
     log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
@@ -124,7 +120,7 @@ def profile_sample_reassignments():
           "with %d reads" %(num_calls, num_reads)
     t1 = time.time()
     for n in xrange(num_calls):
-        result = scores.py_sample_reassignments(reads,
+        result = scores_single.py_sample_reassignments(reads,
                                                 psi_vector,
                                                 log_psi_frag,
                                                 log_num_reads_possible_per_iso,
@@ -155,7 +151,7 @@ def profile_sample_from_multinomial():
     t1 = time.time()
     for n in range(num_reads):
         for x in range(num_calls):
-            scores.py_sample_from_multinomial(p, N)
+            scores_single.py_sample_from_multinomial(p, N)
     t2 = time.time()
     print "  - Sampling from multinomial took %.2f secs" %(t2 - t1)
     
@@ -172,7 +168,7 @@ def profile_log_score_reads():
     log_psi_frag = np.log(psi_vector) + np.log(scaled_lens)
     log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
     for n in xrange(num_calls):
-        v = scores.log_score_reads(reads,
+        v = scores_single.log_score_reads(reads,
                                   isoform_nums,
                                   num_parts_per_isoform,
                                   iso_lens,
@@ -197,7 +193,7 @@ def profile_sum_log_score_reads():
     log_psi_frag = np.log(psi_vector) + np.log(scaled_lens)
     log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
     for n in xrange(num_calls):
-        v = scores.sum_log_score_reads(reads,
+        v = scores_single.sum_log_score_reads(reads,
                                        isoform_nums,
                                        num_parts_per_isoform,
                                        iso_lens,
@@ -241,7 +237,7 @@ def profile_log_score_assignments():
     log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
     t1 = time.time()
     for n in range(num_calls):
-        v2 = scores.py_log_score_assignments(isoform_nums,
+        v2 = scores_single.py_log_score_assignments(isoform_nums,
                                              log_psi_frag,
                                              num_reads)
     t2 = time.time()
