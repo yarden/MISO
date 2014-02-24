@@ -24,7 +24,7 @@ class TestMISO(unittest.TestCase):
                          "sam-data",
                          "c2c12.Atp2b1.sam")
         self.gff_events_dir = \
-            os.path.join(self.miso_path, "gff-events")
+            os.path.join(self.miso_path, "test-data", "gff-events")
         self.sam_to_bam_script = "sam_to_bam"
         self.index_gff_script = "index_gff"
 

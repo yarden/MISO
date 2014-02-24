@@ -21,6 +21,7 @@ import pysplicing
 # Cython interface
 import misopy.miso_scores_single as scores_single
 import misopy.miso_scores_paired as scores_paired
+import misopy.Gene as gene_utils
 
 import misopy.miso_sampler as miso_sampler
 import misopy.settings as settings
@@ -35,7 +36,7 @@ READS = np.array(READS, dtype=np.int)
 read_len = 40
 overhang_len = 4
 num_parts_per_iso = np.array([3, 2], dtype=np.int)
-iso_lens = np.array([1253, 1172], dtype=np.int)
+iso_lens = np.array([1200, 1000], dtype=np.int)
 # Assignment of reads to isoforms: assign half of
 # the common reads to isoform 0, half to isoform 1
 iso_nums = [0]*3245 + [1]*22 + [0]*19937 + [1]*19937
@@ -54,6 +55,7 @@ class TestSampler(unittest.TestCase):
         self.log_num_reads_possible_per_iso = np.log(self.scaled_lens)
         self.iso_nums = iso_nums
         self.num_reads = len(self.reads)
+        self.num_isoforms = len(self.iso_lens)
         self.psi_vector = np.array([0.8, 0.2])
         # Compute log psi frag
         self.log_psi_frag = \
@@ -71,6 +73,10 @@ class TestSampler(unittest.TestCase):
         self.params = settings.Settings.get_sampler_params()
         print self.settings
         print self.params
+        self.exon_lens = [500, 200, 500]
+        self.isoforms = [[1, 2, 3],
+                         [1, 3]]
+#        self.gene = gene_utils.load_genes_from_gff()
 
 
     def test_sampler1(self):
@@ -78,7 +84,19 @@ class TestSampler(unittest.TestCase):
                                                paired_end=False,
                                                log_dir="./miso_logs/")
         print "sampler_obj: ", sampler_obj
-        
+        output_fname = "./sampler_output"
+        num_iters = 1000
+        reads = self.reads
+        gene = self.gene
+        hyperparameters = np.ones(self.num_isoforms)
+        sampler_obj.run_sampler(self,
+                                num_iters,
+                                reads,
+                                gene,
+                                hyperparameters,
+                                self.params,
+                                output_fname)
+
 
 
 def main():

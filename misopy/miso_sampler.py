@@ -736,6 +736,14 @@ class MISOSampler:
         return assignments
 
 
+    def filter_inconsistent_reads(self, se_reads):
+        """
+        Filter inconsistent single-end reads, i.e.
+        reads that do not match any isoform.
+        """
+        return se_reads[data.any(axis=1)]
+
+
     def filter_improbable_reads(self, reads):
         """
         Filter improbable reads based on fragment lengths, i.e.

@@ -737,6 +737,8 @@ def py_init_assignments(np.ndarray[DTYPE_t, ndim=2] reads,
     return init_assignments(reads,
                             num_reads,
                             num_isoforms)
+
+ 
         
 
 #     def propose_norm_drift_psi_alpha(self, alpha_vector):
