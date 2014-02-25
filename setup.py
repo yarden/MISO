@@ -41,27 +41,28 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 include_dirs = [os.path.join(CURRENT_DIR, "include")] + \
                [np.get_include()]
 
-
 ##
 ## Extension modules
 ##
 # Single-end scoring functions
 single_end_ext = Extension("misopy.pyx.miso_scores_single",
-                           ["misopy/pyx/miso_scores_single.pyx"],
+                           ["misopy/pyx/miso_scores_single.pyx"])
 #                           libraries=["m"],
-                           include_dirs=include_dirs)
+#                           include_dirs=include_dirs)
+
 # Paired-end scoring functions
 paired_end_ext = Extension("misopy.pyx.miso_scores_paired",
-                           ["misopy/pyx/miso_scores_paired.pyx"],
+                           ["misopy/pyx/miso_scores_paired.pyx"])
 #                           libraries=["m"],                           
-                           include_dirs=include_dirs)
+#                           include_dirs=include_dirs)
+
 # Add sampler routine here...
 # ....
 # Statistics functions
 stat_helpers_ext = Extension("misopy.pyx.stat_helpers",
-                             ["misopy/pyx/stat_helpers.pyx"],
+                             ["misopy/pyx/stat_helpers.pyx"])
 #                             libraries=["m"],
-                             include_dirs=include_dirs)
+#                             include_dirs=include_dirs)
 # Lapack functions extension
 cc = distutils.ccompiler.new_compiler()
 defines = []
@@ -126,20 +127,20 @@ print single_end_ext.sources, " << "
 ##
 cmdclass = {}
 from distutils.command.sdist import sdist as _sdist
-print miso_extensions[0].sources, " first"
 class sdist(_sdist):
     """
     Override sdist command to use cython
     """
     def run(self):
+        print "IN SDIST"
         try:
             from Cython.Build import cythonize
         except ImportError:
             raise Exception, "Cannot create source distribution without Cython."
+        print "Cythonizing"
         cythonized_extensions = cythonize(miso_extensions)
         _sdist.run(self)
 cmdclass['sdist'] = sdist
-print cmdclass['sdist']
 
 
 ##
@@ -147,8 +148,6 @@ print cmdclass['sdist']
 ##
 extensions = []
 def no_cythonize(extensions, **_ignore):
-    print "quitting"
-    return
     new_extensions = []
     for extension in extensions:
         # Make copy of extension so we do't modify
@@ -166,8 +165,8 @@ def no_cythonize(extensions, **_ignore):
                     ext = '.cpp'
                 else:
                     ext = '.c'
-                sfile = path + ext
-            sources.append(sfile)
+                new_sfile = path + ext
+            sources.append(new_sfile)
         ext_copy.sources[:] = sources
         new_extensions.append(ext_copy)
     return new_extensions
@@ -184,14 +183,19 @@ except ImportError:
     USE_CYTHON = False
 
 
-## FORCE TO NOT USE CYTHON, EVEN IF AVAILABLE
-USE_CYTHON = False
+## Force to not use Cython, unless we're making
+## a source distribution with 'sdist'
+if sys.argv[1] == "sdist":
+    USE_CYTHON = True
+else:
+    USE_CYTHON = False
 
 if USE_CYTHON:
     print "Using Cython."
     extensions = cythonize(miso_extensions)
     cmdclass.update({'build_ext': build_ext})
 else:
+    print "CALLING NO CYTHONIZE"
     extensions = no_cythonize(miso_extensions)
     from distutils.command import build_ext
     print "Not using Cython."
