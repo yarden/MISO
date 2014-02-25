@@ -5,6 +5,7 @@ from Cython.Build import cythonize
 import glob
 import os
 import sys
+import numpy as np
 
 # Extract long description of MISO from README
 long_description = open('README').read()
@@ -83,23 +84,23 @@ if cc.has_function('double fmin(double, double); fmin(1.0,0.0);rand',
 # Source files
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 c_source_dir = os.path.join(CURRENT_DIR, "src")
-f2c_sources = \
-  glob.glob(os.path.join(c_source_dir, "libf2c", "*.c"))
 lapack_sources = \
   glob.glob(os.path.join(c_source_dir, "lapack", "*.c"))
+f2c_sources = \
+  glob.glob(os.path.join(c_source_dir, "f2c", "*.c"))
 blas_sources = \
   glob.glob(os.path.join(c_source_dir, "blas", "*.c"))
 # Include numpy headers
 all_c_sources = \
-  f2c_sources + lapack_sources + blas_sources 
+  lapack_sources + blas_sources + f2c_sources
 
-include_dirs = [os.path.join(CURRENT_DIR, "include"),
-                os.path.join(c_source_dir, "lapack"),
-                os.path.join(c_source_dir, "libf2c")]
+include_dirs = [os.path.join(CURRENT_DIR, "include")]
+
+
 lapack_ext = Extension("misopy.lapack",
                        all_c_sources + ["misopy/lapack.pyx"],
-                       include_dirs=include_dirs,
-                       define_macros=defines)
+                       include_dirs=include_dirs)
+#                       define_macros=defines)
 setup(name = 'misopy',
       ##
       ## CRITICAL: When changing version, remember
@@ -111,7 +112,7 @@ setup(name = 'misopy',
       long_description = long_description,
       author = 'Yarden Katz,Gabor Csardi',
       author_email = 'yarden@mit.edu,gcsardi@stat.harvard.edu',
-       maintainer = 'Yarden Katz',
+      maintainer = 'Yarden Katz',
       maintainer_email = 'yarden@mit.edu',
       url = 'http://genes.mit.edu/burgelab/miso/',
       # Cython extensions
