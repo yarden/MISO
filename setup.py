@@ -46,19 +46,19 @@ include_dirs = [os.path.join(CURRENT_DIR, "include")] + \
 ## Extension modules
 ##
 # Single-end scoring functions
-single_end_ext = Extension("misopy.miso_scores_single",
+single_end_ext = Extension("misopy.pyx.miso_scores_single",
                            ["misopy/pyx/miso_scores_single.pyx"],
                            libraries=["m"],
                            include_dirs=include_dirs)
 # Paired-end scoring functions
-paired_end_ext = Extension("misopy.miso_scores_paired",
+paired_end_ext = Extension("misopy.pyx.miso_scores_paired",
                            ["misopy/pyx/miso_scores_paired.pyx"],
                            libraries=["m"],                           
                            include_dirs=include_dirs)
 # Add sampler routine here...
 # ....
 # Statistics functions
-stat_helpers_ext = Extension("misopy.stat_helpers",
+stat_helpers_ext = Extension("misopy.pyx.stat_helpers",
                              ["misopy/pyx/stat_helpers.pyx"],
                              libraries=["m"],
                              include_dirs=include_dirs)
@@ -106,7 +106,7 @@ blas_sources = \
 all_c_sources = \
   lapack_sources + blas_sources + f2c_sources
 
-lapack_ext = Extension("misopy.lapack",
+lapack_ext = Extension("misopy.pyx.lapack",
                        all_c_sources + ["misopy/pyx/lapack.pyx"],
                        libraries=["m"],                       
                        include_dirs=include_dirs)
@@ -150,7 +150,7 @@ except ImportError:
 
 
 ## FORCE NOT TO USE CYTHON
-USE_CYTHON = False
+#USE_CYTHON = False
 
 if USE_CYTHON:
     print "Using Cython."
@@ -181,6 +181,7 @@ setup(name = 'misopy',
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy',
+                  'misopy.pyx',
                   'misopy.sashimi_plot',
                   'misopy.sashimi_plot.plot_utils',
                   'pysplicing'],
