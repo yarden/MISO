@@ -26,7 +26,7 @@ for scheme in INSTALL_SCHEMES.values():
 ##
 ## Definition of the current version
 ##
-MISO_VERSION = "0.5.0"
+MISO_VERSION = "0.6.0"
 
 ##
 ## Generate a __version__.py attribute
@@ -48,19 +48,19 @@ include_dirs = [os.path.join(CURRENT_DIR, "include")] + \
 # Single-end scoring functions
 single_end_ext = Extension("misopy.pyx.miso_scores_single",
                            ["misopy/pyx/miso_scores_single.pyx"],
-                           libraries=["m"],
+#                           libraries=["m"],
                            include_dirs=include_dirs)
 # Paired-end scoring functions
 paired_end_ext = Extension("misopy.pyx.miso_scores_paired",
                            ["misopy/pyx/miso_scores_paired.pyx"],
-                           libraries=["m"],                           
+#                           libraries=["m"],                           
                            include_dirs=include_dirs)
 # Add sampler routine here...
 # ....
 # Statistics functions
 stat_helpers_ext = Extension("misopy.pyx.stat_helpers",
                              ["misopy/pyx/stat_helpers.pyx"],
-                             libraries=["m"],
+#                             libraries=["m"],
                              include_dirs=include_dirs)
 # Lapack functions extension
 cc = distutils.ccompiler.new_compiler()
@@ -108,18 +108,58 @@ all_c_sources = \
 
 lapack_ext = Extension("misopy.pyx.lapack",
                        all_c_sources + ["misopy/pyx/lapack.pyx"],
-                       libraries=["m"],                       
+#                       libraries=["m"],                       
                        include_dirs=include_dirs)
 #                       define_macros=defines)
+
+# pyx/c extensions to MISO
+miso_extensions = [single_end_ext,
+                   paired_end_ext,
+                   stat_helpers_ext,
+                   lapack_ext]
+print single_end_ext.sources, " << "
+
+##
+## Handle creation of source distribution. Here we definitely
+## need to use Cython. This creates the *.c files from *.pyx
+## files.
+##
+cmdclass = {}
+from distutils.command.sdist import sdist as _sdist
+print miso_extensions[0].sources, " first"
+class sdist(_sdist):
+    """
+    Override sdist command to use cython
+    """
+    def run(self):
+        try:
+            from Cython.Build import cythonize
+        except ImportError:
+            raise Exception, "Cannot create source distribution without Cython."
+        cythonized_extensions = cythonize(miso_extensions)
+        _sdist.run(self)
+cmdclass['sdist'] = sdist
+print cmdclass['sdist']
+
 
 ##
 ## Handle Cython sources. Determine whether or not to use Cython
 ##
 extensions = []
 def no_cythonize(extensions, **_ignore):
+    print "quitting"
+    return
+    new_extensions = []
     for extension in extensions:
+        # Make copy of extension so we do't modify
+        # it destructively
+        ext_copy = \
+          Extension(extension.name,
+                    extension.sources,
+                    include_dirs=extension.include_dirs,
+                    library_dirs=extension.library_dirs)
         sources = []
-        for sfile in extension.sources:
+        for sfile in ext_copy.sources:
             path, ext = os.path.splitext(sfile)
             if ext in ('.pyx', '.py'):
                 if extension.language == 'c++':
@@ -128,14 +168,10 @@ def no_cythonize(extensions, **_ignore):
                     ext = '.c'
                 sfile = path + ext
             sources.append(sfile)
-        extension.sources[:] = sources
-    return extensions
+        ext_copy.sources[:] = sources
+        new_extensions.append(ext_copy)
+    return new_extensions
 
-# pyx/c extensions to MISO
-miso_extensions = [single_end_ext,
-                   paired_end_ext,
-                   stat_helpers_ext,
-                   lapack_ext]
 
 # Whether or not to use Cython
 USE_CYTHON = False
@@ -148,11 +184,8 @@ except ImportError:
     USE_CYTHON = False
 
 
-
-## FORCE NOT TO USE CYTHON
-#USE_CYTHON = False
-    
-cmdclass = {}
+## FORCE TO NOT USE CYTHON, EVEN IF AVAILABLE
+USE_CYTHON = False
 
 if USE_CYTHON:
     print "Using Cython."
@@ -160,10 +193,9 @@ if USE_CYTHON:
     cmdclass.update({'build_ext': build_ext})
 else:
     extensions = no_cythonize(miso_extensions)
+    from distutils.command import build_ext
     print "Not using Cython."
-    
-      # Cython extensions
-#      cmdclass = {'build_ext': build_ext},
+
 
 setup(name = 'misopy',
       ##

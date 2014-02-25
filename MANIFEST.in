@@ -14,6 +14,6 @@ include misopy/gff-events/mm9/*
 include misopy/gff-events/mm9/genes/*
 include misopy/test-data/sam-data/*
 include misopy/test-data/se-counts/*
-recursive-include misopy/pyx *.pyx
-recursive-include misopy/pyx *
-recursive-include misopy/pyx *
+include misopy/pyx/*.pyx
+include misopy/pyx/*.c
+include misopy/pyx/*.h

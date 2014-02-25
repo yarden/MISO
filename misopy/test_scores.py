@@ -12,8 +12,8 @@ import scipy
 import scipy.misc 
 from scipy.special import gammaln
 
-import miso_scores_single as scores_single
-import miso_scores_paired as scores_paired
+import misopy.pyx.miso_scores_single as scores_single
+import misopy.pyx.miso_scores_paired as scores_paired
 
 num_inc = 3245
 num_exc = 22
