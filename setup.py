@@ -1,3 +1,4 @@
+import distutils
 from distutils.core import setup, Extension
 import distutils.ccompiler
 import glob
