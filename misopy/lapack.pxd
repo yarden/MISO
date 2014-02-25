@@ -10,8 +10,7 @@ cdef extern from "f2c.h":
    ctypedef double doublereal
 
 
-# Import lapack functions. Note that 'doublereal' type is just 'double'
-# when importing.
+# Import lapack functions.
 cdef extern from "clapack.h":
    cdef extern from "f2c.h":
        pass
