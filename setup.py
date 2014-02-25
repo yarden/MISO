@@ -94,8 +94,9 @@ blas_sources = \
 all_c_sources = \
   lapack_sources + blas_sources + f2c_sources
 
-include_dirs = [os.path.join(CURRENT_DIR, "include")]
-
+# Include our headers and numpy's headers
+include_dirs = [os.path.join(CURRENT_DIR, "include")] + \
+               [np.get_include()]
 
 lapack_ext = Extension("misopy.lapack",
                        all_c_sources + ["misopy/lapack.pyx"],
