@@ -34,6 +34,72 @@ MISO_VERSION = "0.5.0"
 with open("./misopy/__init__.py", "w") as version_out:
       version_out.write("__version__ = \"%s\"\n" %(MISO_VERSION))
 
+##
+## Extension modules
+##
+# Single-end scoring functions
+single_end_ext = Extension("misopy.miso_scores_single",
+                           ["misopy/miso_scores_single.pyx"])
+# Paired-end scoring functions
+paired_end_ext = Extension("misopy.miso_scores_paired",
+                           ["misopy/miso_scores_paired.pyx"])
+# Add sampler routine here...
+# ....
+# Statistics functions
+stat_helpers_ext = Extension("misopy.stat_helpers",
+                             ["misopy/stat_helpers.pyx"])
+# Lapack functions extension
+cc = distutils.ccompiler.new_compiler()
+defines = []
+if cc.has_function('rintf(1.0);rand', includes=['math.h', 'stdlib.h'],
+                   libraries=['m']):
+    defines.append(('HAVE_RINTF', '1'))
+if cc.has_function('finite(1.0);rand', includes=['math.h', 'stdlib.h']):
+    defines.append(('HAVE_FINITE', '1'))
+if cc.has_function('expm1(1.0);rand', includes=['math.h', 'stdlib.h'],
+                   libraries=['m']):
+    defines.append(('HAVE_EXPM1', '1'))
+if cc.has_function('rint(1.0);rand', includes=['math.h', 'stdlib.h'], 
+                   libraries=['m']):
+    defines.append(('HAVE_RINT', '1'))
+if cc.has_function('double log2(double) ; log2(1.0);rand', 
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
+    defines.append(('HAVE_LOG2', '1'))
+if cc.has_function('logbl(1.0);rand', includes=['math.h', 'stdlib.h'],
+                   libraries=['m']):
+    defines.append(('HAVE_LOGBL', '1'))
+if cc.has_function('snprintf(0, 0, "");rand', 
+                   includes=['stdio.h', 'stdlib.h']):
+    defines.append(('HAVE_SNPRINTF', '1'))
+if cc.has_function('log1p(1.0);rand', includes=['math.h', 'stdlib.h'],
+                   libraries=['m']):
+    defines.append(('HAVE_LOG1P', '1'))
+if cc.has_function('double round(double) ; round(1.0);rand', 
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
+    defines.append(('HAVE_ROUND', '1'))
+if cc.has_function('double fmin(double, double); fmin(1.0,0.0);rand', 
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
+    defines.append(('HAVE_FMIN', '1'))
+# Source files
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+c_source_dir = os.path.join(CURRENT_DIR, "src")
+f2c_sources = \
+  glob.glob(os.path.join(c_source_dir, "libf2c", "*.c"))
+lapack_sources = \
+  glob.glob(os.path.join(c_source_dir, "lapack", "*.c"))
+blas_sources = \
+  glob.glob(os.path.join(c_source_dir, "blas", "*.c"))
+# Include numpy headers
+all_c_sources = \
+  f2c_sources + lapack_sources + blas_sources 
+
+include_dirs = [os.path.join(CURRENT_DIR, "include"),
+                os.path.join(c_source_dir, "lapack"),
+                os.path.join(c_source_dir, "libf2c")]
+lapack_ext = Extension("misopy.lapack",
+                       all_c_sources + ["misopy/lapack.pyx"],
+                       include_dirs=include_dirs,
+                       define_macros=defines)
 setup(name = 'misopy',
       ##
       ## CRITICAL: When changing version, remember
@@ -50,12 +116,10 @@ setup(name = 'misopy',
       url = 'http://genes.mit.edu/burgelab/miso/',
       # Cython extensions
       cmdclass = {'build_ext': build_ext},
-      ext_modules = [Extension("misopy.miso_scores_single",
-                               ["misopy/miso_scores_single.pyx"]),
-                     Extension("misopy.miso_scores_paired",
-                               ["misopy/miso_scores_paired.pyx"]),
-                     Extension("misopy.stat_helpers",
-                               ["misopy/stat_helpers.pyx"])],
+      ext_modules = [single_end_ext,
+                     paired_end_ext,
+                     stat_helpers_ext,
+                     lapack_ext],
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy',
@@ -90,6 +154,8 @@ setup(name = 'misopy',
                      ['misopy/test-data/sam-data/c2c12.Atp2b1.sam']),
                     ('misopy/gff-events/mm9',
                      ['misopy/gff-events/mm9/SE.mm9.gff']),
+                    ('misopy/gff-events/mm9/se_event.gff',
+                     ['misopy/gff-events/mm9/se_event.gff']),
                     ('misopy/gff-events/mm9/genes',
                      ['misopy/gff-events/mm9/genes/Atp2b1.mm9.gff']),
                     ('misopy/sashimi_plot/test-data', 

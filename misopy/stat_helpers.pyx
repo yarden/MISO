@@ -86,3 +86,85 @@ cdef double dirichlet_log_pdf_raw(
 
     # ...
     return term_a - term_b + term_c
+
+
+##
+## Matrix operations
+##
+from libc.math cimport pow
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef double determinant(double[:, :] M):
+    '''
+    Compute the determinant of a square nxn matrix using
+    the recursive formula:
+ 
+        det(M) = sum_{i=0}^{n-1} (-1^i)*M[0,i]*det(M_minor(0,i))
+
+    where M_minor(0,i) is the (n-1)x(n-1) matrix formed by
+    removing row 0 and column i from M.
+    
+    source: http://nbviewer.ipython.org/github/carljv/cython_testing/blob/master/cython_linalg.ipynb
+    '''
+    assert M.shape[0] == M.shape[1], 'Matrix is not square.'
+    
+    cdef int i, j
+    cdef int n = M.shape[0]
+    cdef double det = 0.0
+    cdef double coef
+    cdef double[:, :] M_minor = np.empty((n-1, n-1))
+    
+    if n == 1:
+        # If M is a scalar (1x1) just return it
+        return M[0, 0]
+    else:
+        # If M is nxn, then get its (n-1)x(n-1) minors
+        # (one for each of M's n columns) and compute 
+        # their determinants and add them to the summation.
+        for j in xrange(n):
+            coef = pow(-1, j) * M[0, j]
+            _get_minor(M, M_minor, 0, j)
+            det += coef * determinant(M_minor)
+        return det
+
+    
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void _get_minor(double[:, :] M, double[:, :] M_minor, 
+                    int row, int col):
+    '''
+    Return the minor of a matrix, by removing a specified
+    row and column
+
+    If M is nxn, then _get_minor(M, row, col) will fill in
+    the (n-1)x(n-1) matrix M_minor by removing row `row` 
+    and column `col` from M.
+    
+    source: http://nbviewer.ipython.org/github/carljv/cython_testing/blob/master/cython_linalg.ipynb
+    '''
+    cdef:
+        int n = M.shape[0]
+        int i_to, j_to, i_from, j_from
+  
+        
+    # _from indicates the index of the original
+    # matrix M, _to, indicates the index of the
+    # result matrix M_minor.
+    i_from = 0
+    for i_to in xrange(n-1):
+        if (i_to == row): 
+            # This is the row to exclude from the
+            # minor, so skip it.
+            i_from += 1
+        j_from = 0
+        for j_to in xrange(n-1):
+            if (j_to == col): 
+            # This is the column to exclude from the
+            # minor, so skip it.
+                j_from += 1
+            
+            M_minor[i_to, j_to] = M[i_from, j_from]
+            j_from += 1
+        
+        i_from += 1
