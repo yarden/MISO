@@ -35,6 +35,8 @@ MISO_VERSION = "0.5.0"
 with open("./misopy/__init__.py", "w") as version_out:
       version_out.write("__version__ = \"%s\"\n" %(MISO_VERSION))
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+      
 # Include our headers and numpy's headers
 include_dirs = [os.path.join(CURRENT_DIR, "include")] + \
                [np.get_include()]
@@ -90,7 +92,6 @@ if cc.has_function('double fmin(double, double); fmin(1.0,0.0);rand',
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_FMIN', '1'))
 # Source files
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 c_source_dir = os.path.join(CURRENT_DIR, "src")
 lapack_sources = \
   glob.glob(os.path.join(c_source_dir, "lapack", "*.c"))
