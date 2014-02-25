@@ -12,7 +12,7 @@ import scipy
 import scipy.misc 
 from scipy.special import gammaln
 
-import misopy.pyx
+import misopy
 import misopy.pyx.miso_scores_single as scores_single
 import misopy.pyx.miso_scores_paired as scores_paired
 

@@ -5,7 +5,7 @@
 ### How to pass numpy arrays to C/C++ functions:
 ### http://stackoverflow.com/questions/3046305/simple-wrapping-of-c-code-with-cython
 import misopy
-import misopy.stat_helpers as stat_helpers
+import misopy.pyx.stat_helpers as stat_helpers
 import numpy as np
 cimport numpy as np
 

@@ -7,6 +7,12 @@ import os.path
 import sys
 import numpy as np
 
+if sys.argv[1] == "clean":
+    print "Cleaning files..."
+    os.system("rm -rf ./build/")
+    os.system("rm -rf misopy/pyx/*.c")
+    os.system("rm -rf misopy/pyx/*.so")
+
 # Extract long description of MISO from README
 long_description = open('README').read()
 
@@ -38,8 +44,7 @@ with open("./misopy/__init__.py", "w") as version_out:
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
       
 # Include our headers and numpy's headers
-include_dirs = [os.path.join(CURRENT_DIR, "include")] + \
-               [np.get_include()]
+include_dirs = [os.path.join(CURRENT_DIR, "include")]
 
 ##
 ## Extension modules
@@ -116,9 +121,8 @@ lapack_ext = Extension("misopy.pyx.lapack",
 # pyx/c extensions to MISO
 miso_extensions = [single_end_ext,
                    paired_end_ext,
-                   stat_helpers_ext,
-                   lapack_ext]
-print single_end_ext.sources, " << "
+                   stat_helpers_ext]
+#                   lapack_ext]
 
 ##
 ## Handle creation of source distribution. Here we definitely
@@ -138,7 +142,7 @@ class sdist(_sdist):
         except ImportError:
             raise Exception, "Cannot create source distribution without Cython."
         print "Cythonizing"
-        cythonized_extensions = cythonize(miso_extensions)
+        extensions = cythonize(miso_extensions)
         _sdist.run(self)
 cmdclass['sdist'] = sdist
 
@@ -217,6 +221,7 @@ setup(name = 'misopy',
       url = 'http://genes.mit.edu/burgelab/miso/',
       cmdclass = cmdclass,
       ext_modules = extensions,
+#      include_dirs = [np.get_include()],
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy',
