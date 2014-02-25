@@ -48,16 +48,19 @@ include_dirs = [os.path.join(CURRENT_DIR, "include")] + \
 # Single-end scoring functions
 single_end_ext = Extension("misopy.miso_scores_single",
                            ["misopy/pyx/miso_scores_single.pyx"],
+                           libraries=["m"],
                            include_dirs=include_dirs)
 # Paired-end scoring functions
 paired_end_ext = Extension("misopy.miso_scores_paired",
                            ["misopy/pyx/miso_scores_paired.pyx"],
+                           libraries=["m"],                           
                            include_dirs=include_dirs)
 # Add sampler routine here...
 # ....
 # Statistics functions
 stat_helpers_ext = Extension("misopy.stat_helpers",
                              ["misopy/pyx/stat_helpers.pyx"],
+                             libraries=["m"],
                              include_dirs=include_dirs)
 # Lapack functions extension
 cc = distutils.ccompiler.new_compiler()
@@ -105,6 +108,7 @@ all_c_sources = \
 
 lapack_ext = Extension("misopy.lapack",
                        all_c_sources + ["misopy/pyx/lapack.pyx"],
+                       libraries=["m"],                       
                        include_dirs=include_dirs)
 #                       define_macros=defines)
 
@@ -155,6 +159,8 @@ else:
     extensions = no_cythonize(miso_extensions)
     print "Not using Cython."
     
+      # Cython extensions
+#      cmdclass = {'build_ext': build_ext},
     
 
 setup(name = 'misopy',
@@ -171,8 +177,6 @@ setup(name = 'misopy',
       maintainer = 'Yarden Katz',
       maintainer_email = 'yarden@mit.edu',
       url = 'http://genes.mit.edu/burgelab/miso/',
-      # Cython extensions
-      cmdclass = {'build_ext': build_ext},
       ext_modules = extensions,
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
