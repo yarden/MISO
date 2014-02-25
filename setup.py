@@ -221,7 +221,7 @@ setup(name = 'misopy',
       url = 'http://genes.mit.edu/burgelab/miso/',
       cmdclass = cmdclass,
       ext_modules = extensions,
-#      include_dirs = [np.get_include()],
+      include_dirs = [np.get_include()],
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy',
