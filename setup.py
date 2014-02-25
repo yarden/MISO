@@ -151,17 +151,19 @@ except ImportError:
 
 ## FORCE NOT TO USE CYTHON
 #USE_CYTHON = False
+    
+cmdclass = {}
 
 if USE_CYTHON:
     print "Using Cython."
     extensions = cythonize(miso_extensions)
+    cmdclass.update({'build_ext': build_ext})
 else:
     extensions = no_cythonize(miso_extensions)
     print "Not using Cython."
     
       # Cython extensions
 #      cmdclass = {'build_ext': build_ext},
-    
 
 setup(name = 'misopy',
       ##
@@ -177,6 +179,7 @@ setup(name = 'misopy',
       maintainer = 'Yarden Katz',
       maintainer_email = 'yarden@mit.edu',
       url = 'http://genes.mit.edu/burgelab/miso/',
+      cmdclass = cmdclass,
       ext_modules = extensions,
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
