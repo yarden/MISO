@@ -12,7 +12,7 @@
 #include "fmt.h"
 #include "fp.h"
 #ifndef VAX
-#include "ctype.h"
+#include "fctype.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -14,7 +14,7 @@ extern double atof();
 
 #include "fmt.h"
 #include "fp.h"
-#include "ctype.h"
+#include "fctype.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

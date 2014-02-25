@@ -23,7 +23,7 @@ int (*f__lioproc)(), (*l_getc)(), (*l_ungetc)();
 
 #include "fmt.h"
 #include "lio.h"
-#include "ctype.h"
+#include "fctype.h"
 #include "fp.h"
 #ifdef __cplusplus
 extern "C" {

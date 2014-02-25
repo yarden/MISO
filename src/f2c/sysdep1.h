@@ -1,5 +1,10 @@
 #ifndef SYSDEP_H_INCLUDED
 #define SYSDEP_H_INCLUDED
+
+#ifdef _MSC_VER
+#define FTRUNCATE chsize
+#endif
+
 #undef USE_LARGEFILE
 #ifndef NO_LONG_LONG
 
@@ -10,11 +15,7 @@
 
 #ifdef __linux__
 #define USE_LARGEFILE
-#ifdef __GLIBC__
 #define OFF_T __off64_t
-#else
-#define OFF_T off_t
-#endif
 #endif
 
 #ifdef _AIX43
