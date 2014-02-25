@@ -199,7 +199,6 @@ if USE_CYTHON:
     extensions = cythonize(miso_extensions)
     cmdclass.update({'build_ext': build_ext})
 else:
-    print "CALLING NO CYTHONIZE"
     extensions = no_cythonize(miso_extensions)
     from distutils.command import build_ext
     print "Not using Cython."
