@@ -1,9 +1,8 @@
 from distutils.core import setup, Extension
 import distutils.ccompiler
-from Cython.Distutils import build_ext
-from Cython.Build import cythonize
 import glob
 import os
+import os.path
 import sys
 import numpy as np
 
@@ -47,17 +46,17 @@ include_dirs = [os.path.join(CURRENT_DIR, "include")] + \
 ##
 # Single-end scoring functions
 single_end_ext = Extension("misopy.miso_scores_single",
-                           ["misopy/miso_scores_single.pyx"],
+                           ["misopy/pyx/miso_scores_single.pyx"],
                            include_dirs=include_dirs)
 # Paired-end scoring functions
 paired_end_ext = Extension("misopy.miso_scores_paired",
-                           ["misopy/miso_scores_paired.pyx"],
+                           ["misopy/pyx/miso_scores_paired.pyx"],
                            include_dirs=include_dirs)
 # Add sampler routine here...
 # ....
 # Statistics functions
 stat_helpers_ext = Extension("misopy.stat_helpers",
-                             ["misopy/stat_helpers.pyx"],
+                             ["misopy/pyx/stat_helpers.pyx"],
                              include_dirs=include_dirs)
 # Lapack functions extension
 cc = distutils.ccompiler.new_compiler()
@@ -104,9 +103,59 @@ all_c_sources = \
   lapack_sources + blas_sources + f2c_sources
 
 lapack_ext = Extension("misopy.lapack",
-                       all_c_sources + ["misopy/lapack.pyx"],
+                       all_c_sources + ["misopy/pyx/lapack.pyx"],
                        include_dirs=include_dirs)
 #                       define_macros=defines)
+
+##
+## Handle Cython sources. Determine whether or not to use Cython
+##
+extensions = []
+def no_cythonize(extensions, **_ignore):
+    for extension in extensions:
+        sources = []
+        for sfile in extension.sources:
+            path, ext = os.path.splitext(sfile)
+            if ext in ('.pyx', '.py'):
+                if extension.language == 'c++':
+                    ext = '.cpp'
+                else:
+                    ext = '.c'
+                sfile = path + ext
+            sources.append(sfile)
+        extension.sources[:] = sources
+    return extensions
+
+# pyx/c extensions to MISO
+miso_extensions = [single_end_ext,
+                   paired_end_ext,
+                   stat_helpers_ext,
+                   lapack_ext]
+
+# Whether or not to use Cython
+USE_CYTHON = False
+
+try:
+    from Cython.Distutils import build_ext
+    from Cython.Build import cythonize
+    USE_CYTHON = True
+except ImportError:
+    USE_CYTHON = False
+
+
+
+## FORCE NOT TO USE CYTHON
+USE_CYTHON = False
+
+if USE_CYTHON:
+    print "Using Cython."
+    extensions = cythonize(miso_extensions)
+else:
+    extensions = no_cythonize(miso_extensions)
+    print "Not using Cython."
+    
+    
+
 setup(name = 'misopy',
       ##
       ## CRITICAL: When changing version, remember
@@ -123,10 +172,7 @@ setup(name = 'misopy',
       url = 'http://genes.mit.edu/burgelab/miso/',
       # Cython extensions
       cmdclass = {'build_ext': build_ext},
-      ext_modules = [single_end_ext,
-                     paired_end_ext,
-                     stat_helpers_ext,
-                     lapack_ext],
+      ext_modules = extensions,
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy',
