@@ -35,20 +35,28 @@ MISO_VERSION = "0.5.0"
 with open("./misopy/__init__.py", "w") as version_out:
       version_out.write("__version__ = \"%s\"\n" %(MISO_VERSION))
 
+# Include our headers and numpy's headers
+include_dirs = [os.path.join(CURRENT_DIR, "include")] + \
+               [np.get_include()]
+
+
 ##
 ## Extension modules
 ##
 # Single-end scoring functions
 single_end_ext = Extension("misopy.miso_scores_single",
-                           ["misopy/miso_scores_single.pyx"])
+                           ["misopy/miso_scores_single.pyx"],
+                           include_dirs=include_dirs)
 # Paired-end scoring functions
 paired_end_ext = Extension("misopy.miso_scores_paired",
-                           ["misopy/miso_scores_paired.pyx"])
+                           ["misopy/miso_scores_paired.pyx"],
+                           include_dirs=include_dirs)
 # Add sampler routine here...
 # ....
 # Statistics functions
 stat_helpers_ext = Extension("misopy.stat_helpers",
-                             ["misopy/stat_helpers.pyx"])
+                             ["misopy/stat_helpers.pyx"],
+                             include_dirs=include_dirs)
 # Lapack functions extension
 cc = distutils.ccompiler.new_compiler()
 defines = []
@@ -93,10 +101,6 @@ blas_sources = \
 # Include numpy headers
 all_c_sources = \
   lapack_sources + blas_sources + f2c_sources
-
-# Include our headers and numpy's headers
-include_dirs = [os.path.join(CURRENT_DIR, "include")] + \
-               [np.get_include()]
 
 lapack_ext = Extension("misopy.lapack",
                        all_c_sources + ["misopy/lapack.pyx"],
