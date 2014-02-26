@@ -164,6 +164,7 @@ def no_cythonize(extensions, **_ignore):
         sources = []
         for sfile in ext_copy.sources:
             path, ext = os.path.splitext(sfile)
+            new_sfile = sfile
             if ext in ('.pyx', '.py'):
                 if extension.language == 'c++':
                     ext = '.cpp'
