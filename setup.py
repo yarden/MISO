@@ -121,8 +121,8 @@ lapack_ext = Extension("misopy.pyx.lapack",
 # pyx/c extensions to MISO
 miso_extensions = [single_end_ext,
                    paired_end_ext,
-                   stat_helpers_ext]
-#                   lapack_ext]
+                   stat_helpers_ext,
+                   lapack_ext]
 
 ##
 ## Handle creation of source distribution. Here we definitely
@@ -136,7 +136,6 @@ class sdist(_sdist):
     Override sdist command to use cython
     """
     def run(self):
-        print "IN SDIST"
         try:
             from Cython.Build import cythonize
         except ImportError:
