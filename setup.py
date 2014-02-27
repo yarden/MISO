@@ -63,9 +63,17 @@ paired_end_ext = Extension("misopy.pyx.miso_scores_paired",
 
 # Add sampler routine here...
 # ....
+
+
 # Statistics functions
 stat_helpers_ext = Extension("misopy.pyx.stat_helpers",
                              ["misopy/pyx/stat_helpers.pyx"])
+
+# Matrix functions
+matrix_utils_ext = Extension("misopy.pyx.matrix_utils",
+                             ["misopy/pyx/matrix_utils.pyx"])
+
+
 #                             libraries=["m"],
 #                             include_dirs=include_dirs)
 # Lapack functions extension
@@ -109,20 +117,23 @@ f2c_sources = \
 blas_sources = \
   glob.glob(os.path.join(c_source_dir, "blas", "*.c"))
 # Include numpy headers
-all_c_sources = \
-  lapack_sources + blas_sources + f2c_sources
+#all_c_sources = \
+#  lapack_sources + blas_sources + f2c_sources
+#all_c_sources 
 
-lapack_ext = Extension("misopy.pyx.lapack",
-                       all_c_sources + ["misopy/pyx/lapack.pyx"],
+#lapack_ext = Extension("misopy.pyx.lapack",
+#                       all_c_sources + ["misopy/pyx/lapack.pyx"],
 #                       libraries=["m"],                       
-                       include_dirs=include_dirs)
+#                       include_dirs=include_dirs)
 #                       define_macros=defines)
 
 # pyx/c extensions to MISO
 miso_extensions = [single_end_ext,
                    paired_end_ext,
                    stat_helpers_ext,
-                   lapack_ext]
+                   matrix_utils_ext]
+
+#                   lapack_ext]
 
 ##
 ## Handle creation of source distribution. Here we definitely
@@ -227,6 +238,7 @@ setup(name = 'misopy',
                   'misopy.pyx',
                   'misopy.sashimi_plot',
                   'misopy.sashimi_plot.plot_utils',
+                  'misopy.internal_tests',
                   'pysplicing'],
       entry_points={
           'console_scripts': [

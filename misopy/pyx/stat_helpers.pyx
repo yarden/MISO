@@ -91,6 +91,8 @@ cdef double dirichlet_log_pdf_raw(
 ##
 ## Matrix operations
 ##
+
+
 # from libc.math cimport pow
 
 # @cython.boundscheck(False)
