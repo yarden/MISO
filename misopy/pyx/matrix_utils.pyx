@@ -6,6 +6,55 @@
 cimport numpy as np
 import numpy as np
 
+from libc.math cimport log
+from libc.math cimport exp
+
+ctypedef np.int_t DTYPE_t
+ctypedef np.float_t DTYPE_float_t
+
+
+##
+## Vector utilities
+##
+cdef np.ndarray[double, ndim=1] \
+  vect_prod(np.ndarray[double, ndim=1] my_vect,
+            int vect_len):
+    """
+    Return vector product.
+    """
+    cdef int i = 0
+    cdef double prod_result = 1.0
+    for i in xrange(my_vect):
+        prod_result = prod_result * my_vect[i]
+    return prod_result
+
+def my_vect_prod(np.ndarray[double, ndim=1] my_vect,
+                 int vect_len):
+    return vect_prod(my_vect, vect_len)
+
+cdef DTYPE_float_t \
+  sum_array(np.ndarray[DTYPE_float_t, ndim=1] input_array,
+            DTYPE_t array_len):
+    cdef DTYPE_t j = 0
+    cdef DTYPE_float_t result = 0.0
+    for j in xrange(array_len):
+        result += input_array[j]
+    return result
+
+cdef np.ndarray[double, ndim=1] \
+  log_vect(np.ndarray[double, ndim=1] my_vect,
+           int vect_len):
+    """
+    Return log of vector
+    """
+    cdef int i = 0
+    cdef np.ndarray[double, ndim=1] log_my_vect = \
+      np.empty(vect_len, dtype=float)
+    for i in xrange(vect_len):
+        log_my_vect[i] = log(my_vect[i])
+    return log_my_vect
+
+
 ##
 ## Matrix multiplication from C++
 ##
@@ -53,6 +102,19 @@ def py_mat_times_mat(np.ndarray[double, ndim=2] A,
     Python interface to mat_times_mat.
     """
     return mat_times_mat(A, m, n, p, B)
+
+##
+## Matrix dot product (for 2d arrays, this is equivalent to
+## matrix multiplication.)
+##
+cdef np.ndarray[double, ndim=2] \
+  mat_dotprod(np.ndarray[double, ndim=2] A,
+              int m,
+              int n,
+              int p,
+              np.ndarray[double, ndim=2] B):
+    return mat_times_mat(A, m, n, p, B)
+
 
 ##
 ## Matrix transpose

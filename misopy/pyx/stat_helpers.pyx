@@ -1,12 +1,19 @@
-import numpy as np
 cimport numpy as np
+import numpy as np
+from numpy import linalg
+import math
 
 np.import_array()
 cimport cython
 
+cimport matrix_utils
+
 from libc.math cimport log
 from libc.math cimport exp
 from libc.stdlib cimport rand
+
+# Math constants
+from libc.math cimport M_PI
 
 ctypedef np.int_t DTYPE_t
 ctypedef np.float_t DTYPE_float_t
@@ -35,8 +42,8 @@ def my_cumsum(np.ndarray[double, ndim=1] input_array):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def dirichlet_lnpdf(np.ndarray[double, ndim=1] alpha,
-                    np.ndarray[double, ndim=1] vector):
+cdef double dirichlet_lnpdf(np.ndarray[double, ndim=1] alpha,
+                            np.ndarray[double, ndim=1] vector):
     """
     Wrapper for dirichlet log pdf scoring function.
     """
@@ -44,6 +51,10 @@ def dirichlet_lnpdf(np.ndarray[double, ndim=1] alpha,
     return dirichlet_log_pdf_raw(D,
                                  &alpha[0], alpha.strides[0],
                                  &vector[0], vector.strides[0])
+
+def py_dirichlet_lnpdf(np.ndarray[double, ndim=1] alpha,
+                       np.ndarray[double, ndim=1] vector):
+    return dirichlet_lnpdf(alpha, vector)
 
 
 # from Borg project
@@ -88,9 +99,95 @@ cdef double dirichlet_log_pdf_raw(
     return term_a - term_b + term_c
 
 
+
+# def logistic_normal_log_pdf(self, theta, mu):
+#     """
+#     The log of the PDF for the multivariate Logistic-Normal distribution.
+#     Written in terms of k-1 dimensions.
+#     """
+#     theta = theta[:-1]
+#     if len(theta) != len(mu):
+#         raise Exception, "len(theta) = %d != len(mu) = %d" \
+#               %(len(theta), len(mu))
+#     theta_last = 1-sum(theta)
+#     sigma = self.params['sigma_proposal']
+#     covar_constant = power(float(la.det(2*math.pi*sigma)), -0.5)
+#     invsigma = la.inv(transpose(sigma))
+#     prod_theta = 1/(float(prod(theta))*theta_last)
+#     first_log = -0.5*transpose(log(theta/theta_last) - mu)
+#     second_log = log(theta/theta_last) - mu
+#     exp_part = dot(dot(first_log, invsigma), second_log)
+#     pdf_value = covar_constant*prod_theta*exp(exp_part)
+#     return log(pdf_value)
+        
+
+cdef double logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
+                                    np.ndarray[double, ndim=1] mu,
+                                    np.ndarray[double, ndim=2] sigma):
+    """
+    The log of the PDF for the multivariate Logistic-Normal distribution.
+    Written in terms of k-1 dimensions.
+
+    theta : k dimensional vector to score
+    mu : mean parameter
+    sigma : covariance matrix (2d array)
+    k : dimension
+    """
+    cdef double result = 0.0
+    # Use k-1 dimensional theta vector
+    theta = theta[:-1]
+    assert theta.shape[0] == mu.shape[0], \
+      "Length of theta and mu do not match."
+    theta_last = 1 - matrix_utils.sum_array(theta, theta.shape[0])
+    covar_constant = np.power(float(linalg.det(2*math.pi*sigma)), -0.5)
+    invsigma = linalg.inv(np.transpose(sigma))
+    prod_theta = 1/(float(np.prod(theta))*theta_last)
+    first_log = -0.5*np.transpose(log(theta/theta_last) - mu)
+    second_log = log(theta/theta_last) - mu
+    exp_part = np.dot(np.dot(first_log, invsigma), second_log)
+    pdf_value = covar_constant*prod_theta*np.exp(exp_part)
+    return np.log(pdf_value)
+
+    
+def py_logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
+                               np.ndarray[double, ndim=1] mu,
+                               np.ndarray[double, ndim=2] sigma):
+    return logistic_normal_log_pdf(theta, mu, sigma)
+   
+
+
+# int splicing_mvplogisnorm(const splicing_vector_t *theta, 
+# 			  const splicing_vector_t *mu, 
+# 			  double sigma, int len, double *score) {
+  
+#   double covarConst = pow(2 * M_PI * sigma, -0.5 * len);
+#   double ltheta=1.0, prodTheta=1.0, expPart=0.0, pdfVal;
+#   int i;
+  
+#   for (i=0; i<len; i++) {
+#     double at=VECTOR(*theta)[i];
+#     ltheta -= at;
+#     prodTheta *= at;
+#   }
+#   prodTheta = 1.0 / prodTheta / ltheta;
+  
+#   for (i=0; i<len; i++) {
+#     double tmp=log(VECTOR(*theta)[i] / ltheta) - VECTOR(*mu)[i];
+#     expPart += (-0.5) * tmp * tmp / sigma;
+#   }
+  
+#   pdfVal = covarConst * prodTheta * exp(expPart);
+
+#   *score = log(pdfVal);
+  
+#   return 0;
+# }
+
+
 ##
 ## Matrix operations
 ##
+
 
 
 # from libc.math cimport pow

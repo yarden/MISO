@@ -51,13 +51,15 @@ include_dirs = [os.path.join(CURRENT_DIR, "include")]
 ##
 # Single-end scoring functions
 single_end_ext = Extension("misopy.pyx.miso_scores_single",
-                           ["misopy/pyx/miso_scores_single.pyx"])
+                           ["misopy/pyx/miso_scores_single.pyx"],
+                           libraries=["m"])
 #                           libraries=["m"],
 #                           include_dirs=include_dirs)
 
 # Paired-end scoring functions
 paired_end_ext = Extension("misopy.pyx.miso_scores_paired",
-                           ["misopy/pyx/miso_scores_paired.pyx"])
+                           ["misopy/pyx/miso_scores_paired.pyx"],
+                           libraries=["m"])
 #                           libraries=["m"],                           
 #                           include_dirs=include_dirs)
 
@@ -67,11 +69,13 @@ paired_end_ext = Extension("misopy.pyx.miso_scores_paired",
 
 # Statistics functions
 stat_helpers_ext = Extension("misopy.pyx.stat_helpers",
-                             ["misopy/pyx/stat_helpers.pyx"])
+                             ["misopy/pyx/stat_helpers.pyx"],
+                             libraries=["m"])
 
 # Matrix functions
 matrix_utils_ext = Extension("misopy.pyx.matrix_utils",
-                             ["misopy/pyx/matrix_utils.pyx"])
+                             ["misopy/pyx/matrix_utils.pyx"],
+                             libraries=["m"])
 
 
 #                             libraries=["m"],

@@ -12,6 +12,8 @@ cimport numpy as np
 np.import_array()
 cimport cython
 
+cimport matrix_utils
+
 from libc.math cimport log
 from libc.math cimport exp
 from libc.stdlib cimport rand
@@ -56,19 +58,6 @@ cdef float MY_MAX_INT = float(10000)
   
 #   return 0;
 # }
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
-cdef DTYPE_float_t \
-  sum_array(np.ndarray[DTYPE_float_t, ndim=1] input_array,
-            DTYPE_t array_len):
-    cdef DTYPE_t j = 0
-    cdef DTYPE_float_t result = 0.0
-    for j in xrange(array_len):
-        result += input_array[j]
-    return result
 
 
 @cython.boundscheck(False)
@@ -589,8 +578,8 @@ cdef np.ndarray[DTYPE_t, ndim=1] \
             # P(log(reads | assignment) is the sum of the read scores
             # vector with the current read's reassignment
             reassignment_probs[curr_isoform] = \
-              (sum_array(log_assignment_probs, num_reads) + \
-               sum_array(log_read_probs, num_reads))
+              (matrix_utils.sum_array(log_assignment_probs, num_reads) + \
+               matrix_utils.sum_array(log_read_probs, num_reads))
             # Copy the old assignment of the read to the isoform
             iso_nums[curr_read] = old_assignment
             # Copy the old assignment probability

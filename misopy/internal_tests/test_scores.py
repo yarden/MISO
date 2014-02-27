@@ -7,15 +7,21 @@ import time
 import unittest
 
 import numpy as np
+import numpy.linalg as linalg
+import math
 
 import scipy
 import scipy.misc 
 from scipy.special import gammaln
 
 import misopy
+import misopy.internal_tests
+import misopy.internal_tests.py_scores as py_scores
+
 import misopy.pyx
 import misopy.pyx.miso_scores_single as scores_single
 import misopy.pyx.miso_scores_paired as scores_paired
+import misopy.pyx.stat_helpers as stat_helpers
 
 num_inc = 3245
 num_exc = 22
@@ -34,6 +40,10 @@ iso_nums = [0]*3245 + [1]*22 + [0]*19937 + [1]*19937
 iso_nums = np.array(iso_nums, dtype=np.int)
 num_reads = len(READS)
 
+def print_test(test_text):
+    print "-" * 10
+    print test_text
+    
 
 class TestScores(unittest.TestCase):
     """
@@ -54,7 +64,7 @@ class TestScores(unittest.TestCase):
         self.log_psi_frag = np.log(self.psi_vector) + np.log(self.scaled_lens)
         self.log_psi_frag = self.log_psi_frag - scipy.misc.logsumexp(self.log_psi_frag)
 
-
+        
     def test_log_score_reads(self):
         # Take the first two reads
         curr_num_reads = 2
@@ -143,8 +153,26 @@ class TestScores(unittest.TestCase):
         assignments = scores_single.py_init_assignments(self.reads,
                                                         self.num_reads,
                                                         2)
-        
-        
+
+
+    def test_logistic_normal_log_pdf(self):
+        print_test("Testing logistic normal log pdf")
+        theta = np.array([0.5, 0.5])
+        mu = np.array([0.8])
+        num_isoforms = 2
+        proposal_diag = 0.05
+        sigma = py_scores.set_diag(np.zeros((num_isoforms-1, num_isoforms-1)),
+                                   proposal_diag)
+        result_pyx = stat_helpers.py_logistic_normal_log_pdf(theta,
+                                                             mu,
+                                                             sigma)
+        print "Logistic normal log pdf Cython: "
+        print result_pyx
+        print "Logistic normal log pdf Python: "
+        result_original = py_scores.original_logistic_normal_log_pdf(theta, mu, sigma)
+        print result_original
+        assert (result_pyx == result_original), \
+          "Error computing logistic normal log pdf."
 
 
 def main():

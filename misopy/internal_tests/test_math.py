@@ -42,7 +42,6 @@ class TestMath(unittest.TestCase):
         B_trans_numpy = B.T
         assert (np.array_equal(B_trans_pyx, B_trans_numpy)), \
           "Matrix transpose failed (2)."
-          
 
 
 def main():
