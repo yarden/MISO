@@ -20,6 +20,7 @@ def set_diag(a, v):
         a[i, i] = v
     return a
 
+
 def dirichlet_lnpdf(alpha, x):
     """
     Substitute for dirichlet_lnpdf of pygsl.
@@ -27,6 +28,10 @@ def dirichlet_lnpdf(alpha, x):
     dir_log_pdf = \
         gammaln(np.sum(alpha)) - sum(gammaln(alpha)) + np.dot((alpha - 1).T, np.log(x).T)
     return dir_log_pdf
+
+
+def approx_eq(p1, p2, error=0.0001):
+    return (np.abs(p1 - p2) < error)
 
 
 def original_logistic_normal_log_pdf(theta, mu, sigma):

@@ -163,15 +163,15 @@ class TestScores(unittest.TestCase):
         proposal_diag = 0.05
         sigma = py_scores.set_diag(np.zeros((num_isoforms-1, num_isoforms-1)),
                                    proposal_diag)
-        result_pyx = stat_helpers.py_logistic_normal_log_pdf(theta,
+        result_pyx = stat_helpers.py_logistic_normal_log_pdf(theta[:-1],
                                                              mu,
-                                                             sigma)
+                                                             proposal_diag)
         print "Logistic normal log pdf Cython: "
         print result_pyx
         print "Logistic normal log pdf Python: "
         result_original = py_scores.original_logistic_normal_log_pdf(theta, mu, sigma)
         print result_original
-        assert (result_pyx == result_original), \
+        assert (py_scores.approx_eq(result_pyx, result_original)), \
           "Error computing logistic normal log pdf."
 
 

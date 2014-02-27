@@ -10,6 +10,7 @@ cimport matrix_utils
 
 from libc.math cimport log
 from libc.math cimport exp
+from libc.math cimport pow
 from libc.stdlib cimport rand
 
 # Math constants
@@ -121,37 +122,74 @@ cdef double dirichlet_log_pdf_raw(
 #     return log(pdf_value)
         
 
+# cdef double logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
+#                                     np.ndarray[double, ndim=1] mu,
+#                                     np.ndarray[double, ndim=2] sigma):
+#     """
+#     The log of the PDF for the multivariate Logistic-Normal distribution.
+#     Written in terms of k-1 dimensions.
+
+#     theta : k dimensional vector to score
+#     mu : mean parameter
+#     sigma : covariance matrix (2d array)
+#     k : dimension
+#     """
+#     cdef double result = 0.0
+#     # Use k-1 dimensional theta vector
+#     theta = theta[:-1]
+#     assert theta.shape[0] == mu.shape[0], \
+#       "Length of theta and mu do not match."
+#     theta_last = 1 - matrix_utils.sum_array(theta, theta.shape[0])
+#     covar_constant = np.power(float(linalg.det(2*math.pi*sigma)), -0.5)
+#     invsigma = linalg.inv(np.transpose(sigma))
+#     prod_theta = 1/(float(np.prod(theta))*theta_last)
+#     first_log = -0.5*np.transpose(log(theta/theta_last) - mu)
+#     second_log = log(theta/theta_last) - mu
+#     exp_part = np.dot(np.dot(first_log, invsigma), second_log)
+#     pdf_value = covar_constant*prod_theta*np.exp(exp_part)
+#     return log(pdf_value)
+
 cdef double logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
                                     np.ndarray[double, ndim=1] mu,
-                                    np.ndarray[double, ndim=2] sigma):
+                                    double sigma):
     """
     The log of the PDF for the multivariate Logistic-Normal distribution.
-    Written in terms of k-1 dimensions.
+    Assumes that Sigma is a diagonal matrix where the diagonal
+    is all set to the constant 'sigma'
 
     theta : k dimensional vector to score
     mu : mean parameter
-    sigma : covariance matrix (2d array)
+    sigma : float value that is the diagonal of Sigma covar matrix
     k : dimension
     """
-    cdef double result = 0.0
-    # Use k-1 dimensional theta vector
-    theta = theta[:-1]
-    assert theta.shape[0] == mu.shape[0], \
-      "Length of theta and mu do not match."
-    theta_last = 1 - matrix_utils.sum_array(theta, theta.shape[0])
-    covar_constant = np.power(float(linalg.det(2*math.pi*sigma)), -0.5)
-    invsigma = linalg.inv(np.transpose(sigma))
-    prod_theta = 1/(float(np.prod(theta))*theta_last)
-    first_log = -0.5*np.transpose(log(theta/theta_last) - mu)
-    second_log = log(theta/theta_last) - mu
-    exp_part = np.dot(np.dot(first_log, invsigma), second_log)
-    pdf_value = covar_constant*prod_theta*np.exp(exp_part)
-    return np.log(pdf_value)
+    cdef double ltheta = 1.0
+    cdef double prodTheta = 1.0
+    cdef double expPart = 0.0
+    cdef double pdfVal
+    cdef int vect_len = theta.shape[0]
+    cdef double covarConst = pow(2 * M_PI * sigma, -0.5 * vect_len)
+    cdef int i
+    cdef double at
+    cdef double tmp
 
-    
+    for i in xrange(vect_len):
+        at = theta[i]
+        ltheta -= at
+        prodTheta *= at
+
+    prodTheta = 1.0 / prodTheta / ltheta;
+
+    for i in xrange(vect_len):
+        tmp = log(theta[i] / ltheta) - mu[i]
+        expPart += (-0.5) * tmp * tmp / sigma
+    pdfVal = covarConst * prodTheta * exp(expPart)
+    score = log(pdfVal)
+    return score
+
+
 def py_logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
                                np.ndarray[double, ndim=1] mu,
-                               np.ndarray[double, ndim=2] sigma):
+                               double sigma):
     return logistic_normal_log_pdf(theta, mu, sigma)
    
 
