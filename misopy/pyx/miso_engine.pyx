@@ -8,5 +8,5 @@ import misopy
 import misopy.matrix_utils as matrix_utils
 
 
-cdef MISOEngine:
+cdef class MISOEngine:
    pass
