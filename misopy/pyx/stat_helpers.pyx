@@ -177,7 +177,7 @@ cdef double logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
         ltheta -= at
         prodTheta *= at
 
-    prodTheta = 1.0 / prodTheta / ltheta;
+    prodTheta = 1.0 / prodTheta / ltheta
 
     for i in xrange(vect_len):
         tmp = log(theta[i] / ltheta) - mu[i]
