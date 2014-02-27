@@ -16,6 +16,7 @@ import misopy
 import misopy.pyx
 import misopy.pyx.matrix_utils as matrix_utils
 
+
 class TestMath(unittest.TestCase):
     """
     Test mathematics functions.
