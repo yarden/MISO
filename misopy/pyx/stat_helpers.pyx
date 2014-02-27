@@ -222,12 +222,6 @@ def py_logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
 # }
 
 
-##
-## Matrix operations
-##
-
-
-
 # from libc.math cimport pow
 
 # @cython.boundscheck(False)
