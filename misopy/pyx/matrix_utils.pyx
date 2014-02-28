@@ -9,6 +9,12 @@ import numpy as np
 from libc.math cimport log
 from libc.math cimport exp
 
+cimport lapack
+
+cdef extern from "f2c.h":
+   ctypedef int integer
+   ctypedef double doublereal
+
 ctypedef np.int_t DTYPE_t
 ctypedef np.float_t DTYPE_float_t
 
@@ -54,6 +60,12 @@ cdef np.ndarray[double, ndim=1] \
         log_my_vect[i] = log(my_vect[i])
     return log_my_vect
 
+
+cdef DTYPE_t array_len(np.ndarray[double, ndim=1] my_array):
+    """
+    Return length of 1d array.
+    """
+    return my_array.shape[0]
 
 ##
 ## Matrix multiplication from C++
@@ -147,4 +159,28 @@ def py_mat_trans(np.ndarray[double, ndim=2] A,
     Python interface to mat_trans.
     """
     return mat_trans(A, m, n)
+
+##
+## Cholesky decomposition 
+##
+cdef np.ndarray[double, ndim=2] \
+  la_cholesky(np.ndarray[double, ndim=2] A):
+    """
+    Cholesky decomposition using CLAPACK.
+
+    Given input matrix A (m x n), find:
+    
+    A = LL'
+
+    Return L. Assumes A and L are 2d double arrays.
+
+    NOTE: Assumes A is a C array (not numpy array!)
+    but returns a numpy array in result.
+    """
+    # CLAPACK takes "integer" types (i.e. a "long int")
+    cdef integer m = <integer>A.shape[0]
+    cdef integer n = <integer>A.shape[1]
+    cdef np.ndarray[double, ndim=2, mode="c"] L = \
+      np.empty((A.shape[0], A.shape[1]), dtype=float)
+    return ;
       

@@ -9,6 +9,9 @@ import time
 
 import numpy as np
 import numpy.linalg as linalg
+from numpy.random import multivariate_normal
+from numpy.random import normal
+
 import math
 
 import scipy
@@ -52,5 +55,49 @@ def original_logistic_normal_log_pdf(theta, mu, sigma):
     exp_part = np.dot(np.dot(first_log, invsigma), second_log)
     pdf_value = covar_constant*prod_theta*np.exp(exp_part)
     return np.log(pdf_value)
+
+
+def propose_norm_drift_psi_alpha(alpha_vector,
+                                 sigma_proposal):
+    if len(alpha_vector) == 1:
+        alpha_vector = alpha_vector[0]
+#            print "proposing from normal with mean: ", alpha_vector, " exp: ", exp(alpha_vector)
+        alpha_next = [normal(alpha_vector, sigma_proposal)]
+#            print "got alpha_next: ", alpha_next, " exp: ", exp(alpha_next)
+        new_psi = logit_inv([alpha_next[0]])[0]
+        new_psi_vector = [new_psi, 1-new_psi]
+    else:
+        alpha_next = multivariate_normal(alpha_vector, sigma_proposal)
+        new_psi = logit_inv(alpha_next)
+        new_psi_vector = np.concatenate((new_psi, array([1-sum(new_psi)])))
+    return (new_psi_vector, alpha_next)
+
+
+def logit_inv(x):
+    """
+    Takes a value on x \in (-inf, inf) and transforms it to a value on (0, 1).
+    """
+    #p = exp(x)/(1+exp(x))
+    denom = np.lib.function_base.append(x, 0)
+    p = np.exp(x)/(np.sum(np.exp(denom)))
+    return p
+
+
+def sample_from_multivar_normal(mu, cov):
+    # Define mean, covariance matrix, and no. of samples required
+    mu = ... # some array of length N
+    cov = ... # some positive-definite NxN matrix
+    Ndraws = 1000
+
+    # Do factorisation (can store this and use it again later)
+    L = np.linalg.cholesky(cov)
+
+    # Get 3*Ndraws Gaussian random variables (mean=0, variance=1)
+    norm = np.random.normal(size=Ndraws*3).reshape(3, Ndraws)
+
+    # Construct final set of random numbers (with correct mean)
+    rand = mean + np.dot(L, norm)
+
+
 
 

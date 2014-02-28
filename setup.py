@@ -66,6 +66,9 @@ paired_end_ext = Extension("misopy.pyx.miso_scores_paired",
 # Add sampler routine here...
 # ....
 
+proposals_ext = Extension("misopy.pyx.miso_proposals",
+                          ["misopy/pyx/miso_proposals.pyx"],
+                          libraries=["m"])
 
 # Statistics functions
 stat_helpers_ext = Extension("misopy.pyx.stat_helpers",
@@ -75,7 +78,8 @@ stat_helpers_ext = Extension("misopy.pyx.stat_helpers",
 # Matrix functions
 matrix_utils_ext = Extension("misopy.pyx.matrix_utils",
                              ["misopy/pyx/matrix_utils.pyx"],
-                             libraries=["m"])
+                             libraries=["m"],
+                             include_dirs=include_dirs)
 
 
 #                             libraries=["m"],
@@ -120,24 +124,23 @@ f2c_sources = \
   glob.glob(os.path.join(c_source_dir, "f2c", "*.c"))
 blas_sources = \
   glob.glob(os.path.join(c_source_dir, "blas", "*.c"))
-# Include numpy headers
-#all_c_sources = \
-#  lapack_sources + blas_sources + f2c_sources
-#all_c_sources 
+all_c_sources = \
+  f2c_sources + lapack_sources + blas_sources 
 
-#lapack_ext = Extension("misopy.pyx.lapack",
-#                       all_c_sources + ["misopy/pyx/lapack.pyx"],
-#                       libraries=["m"],                       
-#                       include_dirs=include_dirs)
+lapack_ext = Extension("misopy.pyx.lapack",
+                       all_c_sources + ["misopy/pyx/lapack.pyx"],
+                       libraries=["m"],                       
+                       include_dirs=include_dirs)
+
 #                       define_macros=defines)
 
 # pyx/c extensions to MISO
 miso_extensions = [single_end_ext,
                    paired_end_ext,
+                   proposals_ext,
                    stat_helpers_ext,
-                   matrix_utils_ext]
-
-#                   lapack_ext]
+                   matrix_utils_ext,
+                   lapack_ext]
 
 ##
 ## Handle creation of source distribution. Here we definitely
