@@ -193,7 +193,6 @@ def py_logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
                                np.ndarray[double, ndim=1] mu,
                                double sigma):
     return logistic_normal_log_pdf(theta, mu, sigma)
-   
 
 
 # int splicing_mvplogisnorm(const splicing_vector_t *theta, 

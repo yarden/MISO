@@ -15,6 +15,7 @@ import misopy.internal_tests.py_scores as py_scores
 import misopy.pyx.miso_scores_single as scores_single
 import misopy.pyx.miso_scores_paired as scores_paired
 import misopy.pyx.stat_helpers as stat_helpers
+import misopy.pyx.sampling_utils as sampling_utils
 
 # Global data
 num_inc = 3245
@@ -298,7 +299,35 @@ def profile_logistic_normal_log_pdf():
     print "Cython logistic normal took %.2f seconds" %(t2 - t1)
 
 
+def profile_rand_normals():
+    num_calls = 25000
+    print "Calling numpy rand normals for %d calls" %(num_calls)
+    t1 = time.time()
+    npy_vals = []
+    for n in xrange(num_calls):
+        npy_vals.append(np.random.normal([0],[1]))
+    t2 = time.time()
+    print "Numpy rand normals took %.2f seconds." %(t2 - t1)
+    print "Calling Cython rand normals for %d calls" %(num_calls)
+    t1 = time.time()
+    cython_vals = []
+    for n in xrange(num_calls):
+        cython_vals.append(sampling_utils.py_rand_normal_boxmuller())
+    t2 = time.time()
+    mean_npy = np.mean(npy_vals)
+    sd_npy = np.std(npy_vals)
+    mean_cython = np.mean(cython_vals)
+    sd_cython = np.std(cython_vals)
+    print "Cython rand normals took %.2f seconds" %(t2 - t1)
+    print "Mean npy values: %.2f" %(mean_npy)
+    print "Sd npy values: %.2f" %(sd_npy)
+    print "--" * 10
+    print "Mean cython values: %.2f" %(mean_cython)
+    print "Sd cython values: %.2f" %(sd_cython)
+
+
 def main():
+    profile_rand_normals()
     profile_logistic_normal_log_pdf()
     
     profile_init_assignments()

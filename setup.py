@@ -124,13 +124,23 @@ matrix_utils_ext = Extension("misopy.pyx.matrix_utils",
                              libraries=["m"])
 #                             include_dirs=include_dirs)
 
-
 lapack_ext = Extension("misopy.pyx.lapack",
                        all_c_sources + ["misopy/pyx/lapack.pyx"],
                        libraries=["m"],                       
                        include_dirs=include_dirs)
 
-#                       define_macros=defines)
+#sampling_helpers = Extension("misopy.pyx.sampling_helpers",
+#                             sampling_c_sources,
+#                             libraries=["m"],
+#                             include_dirs=sampling_include_dirs)
+
+math_utils_ext = Extension("misopy.pyx.math_utils",
+                           ["misopy/pyx/math_utils.pyx"],
+                           libraries=["m"])
+
+sampling_utils_ext = Extension("misopy.pyx.sampling_utils",
+                               ["misopy/pyx/sampling_utils.pyx"],
+                               libraries=["m"])
 
 # pyx/c extensions to MISO
 miso_extensions = [single_end_ext,
@@ -138,7 +148,9 @@ miso_extensions = [single_end_ext,
                    proposals_ext,
                    stat_helpers_ext,
                    matrix_utils_ext,
-                   lapack_ext]
+                   math_utils_ext,
+                   sampling_utils_ext]
+#                   lapack_ext]
 
 ##
 ## Handle creation of source distribution. Here we definitely

@@ -54,11 +54,26 @@ cdef np.ndarray[double, ndim=2] \
     # Return value of functio
     cdef integer info
     dpotrf_(&uplo, &n, &A[0,0], &lda, &info)
+    print info
     if info != 0:
-        # Something went wrong
+        # Something went wrong with Cholesky decomposition
         print "Cholesky decomposition in CLAPACK failed!"
         raise Exception, "CLAPACK failure."
     return A
+
+
+def py_la_cholesky_decomp(np.ndarray[double, ndim=2] A,
+                          int num_rows,
+                          int num_cols):
+    """
+    Python interface to Cholesky decomposition. Makes
+    copy of array before passing it to a function
+    that destructively modifies array to be the
+    Cholesky decomposition.
+    """
+    A_copy = A.copy()
+    la_cholesky_decomp(A_copy, num_rows, num_cols)
+    return A_copy
 
    
 cdef int main():
