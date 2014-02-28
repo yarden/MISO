@@ -1,10 +1,8 @@
 cimport numpy as np
 import numpy as np
-
 ##
 ## Define lapack functions to be used
 ##
-
 cdef extern from "f2c.h":
    ctypedef int integer
    ctypedef double doublereal
@@ -18,6 +16,49 @@ cdef extern from "clapack.h":
                      integer *ldc)
    int dpotrf_(char *uplo, integer *n, doublereal *a,
                integer * lda, integer *info)
+
+cdef np.ndarray[double, ndim=2] \
+  copy_mat(np.ndarray[double, ndim=2] my_mat):
+    """
+    Make copy of a 2d array.
+    """
+    cdef np.ndarray[double, ndim=2] my_new_mat = \
+      np.empty((my_mat.shape[0], my_mat.shape[1]), dtype=float)
+    cdef int i = 0
+    cdef int j = 0
+    for i in xrange(my_mat.shape[0]):
+        for j in xrange(my_mat.shape[1]):
+            my_new_mat[i][j] = my_mat[i][j]
+    return my_new_mat
+
+   
+##
+## Cholesky decomposition
+##
+cdef np.ndarray[double, ndim=2] \
+  la_cholesky_decomp(np.ndarray[double, ndim=2] A,
+                     int num_rows,
+                     int num_cols):
+    """
+    Interface to CLAPACK Cholesky decomposition function.
+
+    NOTE: This function destructively modifies the
+    input array A!
+    """
+    # Always decompose matrix to A = LL'
+    cdef char uplo = 'L'
+    # N is number of columns 
+    cdef integer n = <integer>num_cols
+    # LDA is number of rows
+    cdef integer lda = <integer>num_rows
+    # Return value of functio
+    cdef integer info
+    dpotrf_(&uplo, &n, &A[0,0], &lda, &info)
+    if info != 0:
+        # Something went wrong
+        print "Cholesky decomposition in CLAPACK failed!"
+        raise Exception, "CLAPACK failure."
+    return A
 
    
 cdef int main():

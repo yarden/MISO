@@ -3,17 +3,13 @@
 ##
 ## Yarden Katz <yarden@mit.edu>
 ##
-cimport numpy as np
 import numpy as np
+cimport numpy as np
 
 from libc.math cimport log
 from libc.math cimport exp
 
 cimport lapack
-
-cdef extern from "f2c.h":
-   ctypedef int integer
-   ctypedef double doublereal
 
 ctypedef np.int_t DTYPE_t
 ctypedef np.float_t DTYPE_float_t
@@ -38,6 +34,7 @@ def my_vect_prod(np.ndarray[double, ndim=1] my_vect,
                  int vect_len):
     return vect_prod(my_vect, vect_len)
 
+
 cdef DTYPE_float_t \
   sum_array(np.ndarray[DTYPE_float_t, ndim=1] input_array,
             DTYPE_t array_len):
@@ -46,6 +43,7 @@ cdef DTYPE_float_t \
     for j in xrange(array_len):
         result += input_array[j]
     return result
+
 
 cdef np.ndarray[double, ndim=1] \
   log_vect(np.ndarray[double, ndim=1] my_vect,
@@ -163,24 +161,24 @@ def py_mat_trans(np.ndarray[double, ndim=2] A,
 ##
 ## Cholesky decomposition 
 ##
-cdef np.ndarray[double, ndim=2] \
-  la_cholesky(np.ndarray[double, ndim=2] A):
-    """
-    Cholesky decomposition using CLAPACK.
+# cdef np.ndarray[double, ndim=2] \
+#   la_cholesky(np.ndarray[double, ndim=2] A):
+#     """
+#     Cholesky decomposition using CLAPACK.
 
-    Given input matrix A (m x n), find:
+#     Given input matrix A (m x n), find:
     
-    A = LL'
+#     A = LL'
 
-    Return L. Assumes A and L are 2d double arrays.
+#     Return L. Assumes A and L are 2d double arrays.
 
-    NOTE: Assumes A is a C array (not numpy array!)
-    but returns a numpy array in result.
-    """
-    # CLAPACK takes "integer" types (i.e. a "long int")
-    cdef integer m = <integer>A.shape[0]
-    cdef integer n = <integer>A.shape[1]
-    cdef np.ndarray[double, ndim=2, mode="c"] L = \
-      np.empty((A.shape[0], A.shape[1]), dtype=float)
-    return ;
+#     NOTE: Assumes A is a C array (not numpy array!)
+#     but returns a numpy array in result.
+#     """
+#     # CLAPACK takes "integer" types (i.e. a "long int")
+#     cdef long int m = <long int>A.shape[0]
+#     cdef long int n = <long int>A.shape[1]
+#     cdef np.ndarray[double, ndim=2, mode="c"] L = \
+#       np.empty((A.shape[0], A.shape[1]), dtype=float)
+#     return ;
       

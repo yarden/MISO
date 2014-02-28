@@ -24,7 +24,9 @@ cdef float MY_MAX_INT = float(10000)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def my_cumsum(np.ndarray[double, ndim=1] input_array):
+
+cdef np.ndarray[double, ndim=1] \
+  my_cumsum(np.ndarray[double, ndim=1] input_array):
     """
     Return cumulative sum of array.
     """

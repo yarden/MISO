@@ -75,15 +75,6 @@ stat_helpers_ext = Extension("misopy.pyx.stat_helpers",
                              ["misopy/pyx/stat_helpers.pyx"],
                              libraries=["m"])
 
-# Matrix functions
-matrix_utils_ext = Extension("misopy.pyx.matrix_utils",
-                             ["misopy/pyx/matrix_utils.pyx"],
-                             libraries=["m"],
-                             include_dirs=include_dirs)
-
-
-#                             libraries=["m"],
-#                             include_dirs=include_dirs)
 # Lapack functions extension
 cc = distutils.ccompiler.new_compiler()
 defines = []
@@ -125,7 +116,14 @@ f2c_sources = \
 blas_sources = \
   glob.glob(os.path.join(c_source_dir, "blas", "*.c"))
 all_c_sources = \
-  f2c_sources + lapack_sources + blas_sources 
+  f2c_sources + lapack_sources + blas_sources
+
+# Matrix functions
+matrix_utils_ext = Extension("misopy.pyx.matrix_utils",
+                             ["misopy/pyx/matrix_utils.pyx"],
+                             libraries=["m"])
+#                             include_dirs=include_dirs)
+
 
 lapack_ext = Extension("misopy.pyx.lapack",
                        all_c_sources + ["misopy/pyx/lapack.pyx"],

@@ -14,4 +14,4 @@ cdef double dirichlet_log_pdf_raw(
 
 cdef double dirichlet_lnpdf(np.ndarray[double, ndim=1] alpha,
                             np.ndarray[double, ndim=1] vector)
-
+cdef np.ndarray[double, ndim=1] my_cumsum(np.ndarray[double, ndim=1] input_array)

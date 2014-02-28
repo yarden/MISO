@@ -85,8 +85,6 @@ def logit_inv(x):
 
 def sample_from_multivar_normal(mu, cov):
     # Define mean, covariance matrix, and no. of samples required
-    mu = ... # some array of length N
-    cov = ... # some positive-definite NxN matrix
     Ndraws = 1000
 
     # Do factorisation (can store this and use it again later)

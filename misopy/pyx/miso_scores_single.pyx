@@ -4,15 +4,12 @@
 ##
 ### How to pass numpy arrays to C/C++ functions:
 ### http://stackoverflow.com/questions/3046305/simple-wrapping-of-c-code-with-cython
-import misopy
-import misopy.pyx.stat_helpers as stat_helpers
-import numpy as np
 cimport numpy as np
-
 np.import_array()
 cimport cython
 
 cimport matrix_utils
+cimport stat_helpers
 
 from libc.math cimport log
 from libc.math cimport exp
@@ -23,6 +20,10 @@ ctypedef np.float_t DTYPE_float_t
 
 cdef float MY_MAX_INT = float(10000)
 
+
+import misopy
+#import misopy.pyx.stat_helpers as stat_helpers
+import numpy as np
 
 ##
 ## Statistics helper functions (TODO: remove to separate module)
