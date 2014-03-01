@@ -7,10 +7,15 @@
 import numpy as np
 cimport numpy as np
 np.import_array()
-cimport cython
 
-cimport matrix_utils
+cimport cython
+from cython.view cimport array as cvarray
+from cpython.array cimport array, clone
+cdef double[:] DOUBLE_ARRAY = array("d")
+cdef double[:, :] DOUBLE_ARRAY_2D
+
 cimport stat_helpers
+cimport matrix_utils
 
 from libc.math cimport log
 from libc.math cimport exp
@@ -552,7 +557,8 @@ cdef np.ndarray[DTYPE_t, ndim=1] \
         norm_reassignment_probs = \
           norm_log_probs(reassignment_probs, num_isoforms)
         curr_read_assignment = \
-          sample_from_multinomial(norm_reassignment_probs, 1)
+          sample_from_multinomial(norm_reassignment_probs, 1,
+                                  curr_read_assignment)
         new_assignments[curr_read] = curr_read_assignment
     return new_assignments
 
@@ -613,7 +619,8 @@ cdef np.ndarray[DTYPE_float_t, ndim=1] \
 
 cdef np.ndarray[DTYPE_float_t, ndim=1] \
      sample_from_multinomial(np.ndarray[DTYPE_float_t, ndim=1] probs,
-                             int N):
+                             int N,
+                             np.ndarray[DTYPE_float_t, ndim=1] samples):
     """
     Sample one element from multinomial probabilities vector.
 
@@ -627,8 +634,8 @@ cdef np.ndarray[DTYPE_float_t, ndim=1] \
     """
     cdef int num_elts = probs.shape[0]
     # The samples: indices into probs
-    cdef np.ndarray[DTYPE_float_t, ndim=1] samples = \
-      np.empty(N, dtype=float)
+    #cdef np.ndarray[DTYPE_float_t, ndim=1] samples = \
+    #  np.empty(N, dtype=float)
     # Current random samples
     cdef int random_sample = 0
     # Counters over number of samples and number of
@@ -652,12 +659,51 @@ cdef np.ndarray[DTYPE_float_t, ndim=1] \
     return samples
 
 def py_sample_from_multinomial(np.ndarray[DTYPE_float_t, ndim=1] probs,
-                               int N):
-    return sample_from_multinomial(probs, N)
+                               int N,
+                               np.ndarray[DTYPE_float_t, ndim=1] samples):
+    return sample_from_multinomial(probs, N, samples)
+
+
+cpdef double[:] \
+     pure_sample_from_multinomial(double[:] probs,
+                                  int N,
+                                  double[:] samples):
+    """
+    Sample one element from multinomial probabilities vector.
+
+    Assumes that the probabilities sum to 1.
+
+    Parameters:
+    -----------
+
+    probs : array, vector of probabilities
+    N : int, number of samples to draw
+    """
+    cdef int num_elts = probs.shape[0]
+    # Current random samples
+    cdef int random_sample = 0
+    # Counters over number of samples and number of
+    # elements in probability vector
+    cdef int curr_sample = 0
+    cdef int curr_elt = 0
+    cdef double rand_val# = rand() / MY_MAX_INT
+    # Get cumulative sum of probability vector
+    cdef double[:] cumsum = stat_helpers.pure_my_cumsum(probs)
+    for curr_sample in xrange(N):
+        # Draw random number
+        rand_val = (rand() % MY_MAX_INT) / MY_MAX_INT
+        for curr_elt in xrange(num_elts):
+            # If the current cumulative sum is greater than the
+            # random number, assign it the index
+            if cumsum[curr_elt] >= rand_val:
+                random_sample = curr_elt
+                break
+        samples[curr_sample] = random_sample
+    return samples
 
 
 
-cdef np.ndarray[DTYPE_t, ndim=1] \
+cpdef np.ndarray[DTYPE_t, ndim=1] \
   init_assignments(np.ndarray[DTYPE_t, ndim=2] reads,
                    int num_reads,
                    int num_isoforms):
@@ -676,19 +722,37 @@ cdef np.ndarray[DTYPE_t, ndim=1] \
     for curr_read in xrange(num_reads):
         for curr_iso in xrange(num_isoforms):
             # Assign read to the first isoform it is consistent
-            # with. Note.
+            # with. 
             if reads[curr_read, curr_iso] == 1:
                 assignments[curr_read] = curr_iso
                 break
     return assignments
 
-def py_init_assignments(np.ndarray[DTYPE_t, ndim=2] reads,
+
+cpdef int[:] \
+  pure_init_assignments(int[:, :] reads,
                         int num_reads,
                         int num_isoforms):
-    return init_assignments(reads,
-                            num_reads,
-                            num_isoforms)
+    """
+    Initialize assignments of reads to isoforms.
 
+    NOTE: This assumes that the reads that are NOT consistent
+    with all the isoforms have been thrown out. If they are
+    present, they will be skipped
+    """
+    # Assignments array to return
+    cdef int[:] assignments = \
+      cvarray(shape=(num_reads,), itemsize=sizeof(int), format="i")
+    cdef int curr_read = 0
+    cdef int curr_iso = 0
+    for curr_read in xrange(num_reads):
+        for curr_iso in xrange(num_isoforms):
+            # Assign read to the first isoform it is consistent
+            # with. 
+            if reads[curr_read, curr_iso] == 1:
+                assignments[curr_read] = curr_iso
+                break
+    return assignments
  
         
 

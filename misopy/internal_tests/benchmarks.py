@@ -95,14 +95,14 @@ def profile_init_assignments():
     print "-" * 20
     print "Profiling init assignments..."
     psi_vector = np.array([0.5, 0.5])
-    test_array = np.array([1,2,3,4], dtype=np.float)
+    test_array = np.array([1,2,3,4], dtype=float)
     scaled_lens = iso_lens - read_len + 1
-    num_calls = 350
+    num_calls = 10000
     # Get reads and isoform assignments
     #num_reads = 2
     #reads = np.array([[1, 0], [0, 1]]) 
     #iso_nums = np.array([0, 1])
-    num_reads = 1000
+    num_reads = 2000
     reads = get_reads(num_reads)
     iso_nums = get_iso_nums(num_reads)
     num_isoforms = 2
@@ -111,11 +111,24 @@ def profile_init_assignments():
           %(num_calls,
             num_reads)
     for n in range(num_calls):
-        assignments = scores_single.py_init_assignments(reads,
-                                                        num_reads,
-                                                        num_isoforms)
+        assignments = scores_single.init_assignments(reads,
+                                                     num_reads,
+                                                     num_isoforms)
     t2 = time.time()
     print "Init assignments took %.2f seconds" %(t2 - t1)
+    # Profile pure Cython version
+    t1 = time.time()
+    print "Profiling PURE init assignments..."
+    reads = np.array(reads, dtype=np.dtype("i"))
+    print "Reads: ", reads
+    print reads.shape
+    for n in range(num_calls):
+        assignments = scores_single.pure_init_assignments(reads,
+                                                          num_reads,
+                                                          num_isoforms)
+    t2 = time.time()
+    print "PURE init assignments took %.2f seconds" %(t2 - t1)
+    
         
 
 def profile_sample_reassignments():
@@ -137,8 +150,10 @@ def profile_sample_reassignments():
     print stat_helpers.py_dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
                                           np.array([0.5, 0.5]))
     print py_scores.dirichlet_lnpdf(np.array([1, 1]), np.array([0.5, 0.5]))
+    samples = np.zeros(3, dtype=float)
     print scores_single.py_sample_from_multinomial(np.array([0.1, 0.3, 0.6]),
-                                         100)
+                                         100,
+                                         samples)
     log_psi_frag = np.log(psi_vector) + np.log(scaled_lens)
     log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
     log_num_reads_possible_per_iso = np.log(scaled_lens)
@@ -174,12 +189,20 @@ def profile_sample_from_multinomial():
     num_reads = 1000
     print "Sampling from multinomial for %d x %d times" %(num_reads,
                                                           num_calls)
+    results = np.zeros(N, dtype=float)
     t1 = time.time()
     for n in range(num_reads):
         for x in range(num_calls):
-            scores_single.py_sample_from_multinomial(p, N)
+            scores_single.py_sample_from_multinomial(p, N, results)
     t2 = time.time()
     print "Sampling from multinomial took %.2f seconds" %(t2 - t1)
+    print "PURE Cython version: "
+    t1 = time.time()
+    for n in range(num_reads):
+        for x in range(num_calls):
+            scores_single.pure_sample_from_multinomial(p, N, results)
+    t2 = time.time()
+    print "Pure version took %.2f seconds" %(t2 - t1)
     
     
 
@@ -327,10 +350,12 @@ def profile_rand_normals():
 
 
 def main():
-    profile_rand_normals()
-    profile_logistic_normal_log_pdf()
+    #profile_rand_normals()
+    #profile_logistic_normal_log_pdf()
     
     profile_init_assignments()
+    profile_sample_from_multinomial()
+    raise Exception, "Test"
     # read scoring
     profile_log_score_reads()
     profile_sum_log_score_reads()
@@ -338,7 +363,6 @@ def main():
     # assignment scoring
     profile_log_score_assignments()
 
-    profile_sample_from_multinomial()
     profile_sample_reassignments()
     
 

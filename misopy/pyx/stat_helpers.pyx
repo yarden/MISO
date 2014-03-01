@@ -5,6 +5,9 @@ import math
 
 np.import_array()
 cimport cython
+from cython.view cimport array as cvarray
+from cpython.array cimport array, clone
+DOUBLE_ARRAY = array("d")
 
 cimport matrix_utils
 
@@ -40,6 +43,23 @@ cdef np.ndarray[double, ndim=1] \
         cumsum_array[curr_elt] = (input_array[curr_elt] + curr_cumsum)
         curr_cumsum = cumsum_array[curr_elt]
     return cumsum_array
+
+cdef double[:] \
+  pure_my_cumsum(double[:] input_array):
+    """
+    Return cumulative sum of array.
+    """
+    cdef int num_elts = input_array.shape[0]
+    # Cumulative sum at every position
+    cdef double[:] cumsum_array = clone(DOUBLE_ARRAY, num_elts, False)
+    cdef int curr_elt = 0
+    # Current cumulative sum: starts at first element
+    cdef double curr_cumsum = 0.0
+    for curr_elt in xrange(num_elts):
+        cumsum_array[curr_elt] = (input_array[curr_elt] + curr_cumsum)
+        curr_cumsum = cumsum_array[curr_elt]
+    return cumsum_array
+
 
 
 @cython.boundscheck(False)
@@ -254,7 +274,7 @@ def py_logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
 #         # If M is nxn, then get its (n-1)x(n-1) minors
 #         # (one for each of M's n columns) and compute 
 #         # their determinants and add them to the summation.
-#         for j in xrange(n):
+#         for j in xrange(n):a
 #             coef = pow(-1, j) * M[0, j]
 #             _get_minor(M, M_minor, 0, j)
 #             det += coef * determinant(M_minor)
