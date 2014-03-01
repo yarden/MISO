@@ -117,4 +117,11 @@ cdef np.ndarray[double, ndim=1] \
                                   mu, 1, k)
     return S
 
+
+def py_sample_multivar_normal(np.ndarray[double, ndim=1] mu,
+                              np.ndarray[double, ndim=2] L,
+                              int k):
+    return sample_multivar_normal(mu, L, k)
+
+
     

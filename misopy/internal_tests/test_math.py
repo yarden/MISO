@@ -15,6 +15,7 @@ from scipy.special import gammaln
 import misopy
 import misopy.pyx
 import misopy.pyx.matrix_utils as matrix_utils
+import misopy.pyx.sampling_utils as sampling_utils
 
 
 class TestMath(unittest.TestCase):
@@ -89,7 +90,7 @@ class TestMath(unittest.TestCase):
 
 
     def test_sample_multivar_normal(self):
-        mu = np.array([1.1], dtype=float)
+        mu = np.array([1.1, 1.0], dtype=float)
         sigma = np.array([[0.05, 0],
                           [0, 0.05]], dtype=float)
         # Get Cholesky decomposition L of Sigma covar matrix
