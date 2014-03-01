@@ -21,6 +21,10 @@ ctypedef np.float_t DTYPE_float_t
 
 cdef float MY_MAX_INT = float(10000)
 
+cdef extern from *:
+    import_umath()
+
+
 import misopy
 
 ##
