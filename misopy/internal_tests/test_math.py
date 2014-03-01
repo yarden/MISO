@@ -24,6 +24,7 @@ class TestMath(unittest.TestCase):
     def setUp(self):
         pass
 
+    
     def test_mat_trans(self):
         """
         Test matrix transpose.
@@ -42,6 +43,23 @@ class TestMath(unittest.TestCase):
         B_trans_numpy = B.T
         assert (np.array_equal(B_trans_pyx, B_trans_numpy)), \
           "Matrix transpose failed (2)."
+
+          
+    def test_mat_times_mat(self):
+        A = np.array([[1, 2, 3],
+                      [4, 5, 6]], dtype=float)
+        B = np.array([[10, 20],
+                      [40, 50],
+                      [0, 1]], dtype=float)
+        pyx_A_times_B = \
+          matrix_utils.py_mat_times_mat(A, 
+                                        A.shape[0],
+                                        A.shape[1],
+                                        B.shape[1],
+                                        B)
+        numpy_A_times_B = np.matrix(A) * np.matrix(B)
+        assert (pyx_A_times_B, numpy_A_times_B), \
+          "Matrix multiplication failed."
 
 
 def main():

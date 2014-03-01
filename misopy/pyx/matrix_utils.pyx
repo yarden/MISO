@@ -123,7 +123,15 @@ cdef np.ndarray[double, ndim=2] \
               int n,
               int p,
               np.ndarray[double, ndim=2] B):
+    """
+    Dot product of matrix A x matrix B.
+    """
     return mat_times_mat(A, m, n, p, B)
+
+##
+## Matrix times column vector
+##
+# ...
 
 
 ##
@@ -158,27 +166,5 @@ def py_mat_trans(np.ndarray[double, ndim=2] A,
     """
     return mat_trans(A, m, n)
 
-##
-## Cholesky decomposition 
-##
-# cdef np.ndarray[double, ndim=2] \
-#   la_cholesky(np.ndarray[double, ndim=2] A):
-#     """
-#     Cholesky decomposition using CLAPACK.
 
-#     Given input matrix A (m x n), find:
-    
-#     A = LL'
-
-#     Return L. Assumes A and L are 2d double arrays.
-
-#     NOTE: Assumes A is a C array (not numpy array!)
-#     but returns a numpy array in result.
-#     """
-#     # CLAPACK takes "integer" types (i.e. a "long int")
-#     cdef long int m = <long int>A.shape[0]
-#     cdef long int n = <long int>A.shape[1]
-#     cdef np.ndarray[double, ndim=2, mode="c"] L = \
-#       np.empty((A.shape[0], A.shape[1]), dtype=float)
-#     return ;
       
