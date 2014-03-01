@@ -11,10 +11,6 @@ from libc.math cimport exp
 
 cimport lapack
 
-ctypedef np.int_t DTYPE_t
-ctypedef np.float_t DTYPE_float_t
-
-
 ##
 ## Vector utilities
 ##
@@ -106,6 +102,24 @@ def py_mat_plus_mat(np.ndarray[double, ndim=2] A,
     Python interface to mat_plus_mat.
     """
     return mat_plus_mat(A, m, n, B, p, q)
+
+
+cdef np.ndarray[double, ndim=2] \
+  row_to_col_vect(np.ndarray[double, ndim=1] row_vect,
+                  int k):
+    """
+    Convert row vector (1d) to column vector (2d).
+
+    This takes a 1d np.ndarray of length k and converts it
+    to a 2d matrix of (k x 1).
+    """
+    cdef int i = 0
+    cdef np.ndarray[double, ndim=2] col_vect = \
+      np.empty((k, 1), dtype=float)
+    for i in xrange(k):
+        col_vect[i][0] = row_vect[i]
+    return col_vect
+    
 
 ##
 ## Matrix multiplication
