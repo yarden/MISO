@@ -94,7 +94,9 @@ cdef np.ndarray[double, ndim=1] \
      (i) The argument L to this function is *not* the
     covariance matrix, but the Cholesky decomposition of it.
 
-     (ii) mu must be a *column* vector! 
+     (ii) mu must be a *column* vector!
+
+     (iii) The function returns a *row* vector, S'
     """
     cdef int L_num_rows = L.shape[0]
     cdef int L_num_cols = L.shape[1]
@@ -112,17 +114,13 @@ cdef np.ndarray[double, ndim=1] \
     Y = matrix_utils.row_to_col_vect(sample_indep_unit_normals(k), k)
     # Generate the samples S = LY + mu
     # First compute S = LY
-    print "MULTIPLYING: "
-    print L
-    print "with"
-    print Y
     S = \
       matrix_utils.mat_times_mat(L, L_num_rows, L_num_cols,
-                                 k, Y)
+                                 1, Y)
     # Now add mu: S = S + mu
-    S = matrix_utils.mat_plus_mat(S, 2, k,
-                                  mu, 2, k)
-    return S
+    S = matrix_utils.mat_plus_mat(S, k, 1,
+                                  mu, k, 1)
+    return matrix_utils.mat_trans(S, k, 1)
 
 
 def py_sample_multivar_normal(np.ndarray[double, ndim=2] mu,
