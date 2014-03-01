@@ -88,6 +88,22 @@ class TestMath(unittest.TestCase):
           "Matrix multiplication by vector column failed."
 
 
+    def test_sample_multivar_normal(self):
+        mu = np.array([1.1], dtype=float)
+        sigma = np.array([[0.05, 0],
+                          [0, 0.05]], dtype=float)
+        # Get Cholesky decomposition L of Sigma covar matrix
+        L = np.linalg.cholesky(sigma)
+        k = mu.shape[0]
+        npy_samples = np.random.multivariate_normal(mu, sigma)
+        pyx_samples = sampling_utils.py_sample_multivar_normal(mu, L, k)
+        print "Numpy samples:"
+        print npy_samples
+        print "Cython samples:"
+        print pyx_samples
+        
+
+
 def main():
     unittest.main()
 
