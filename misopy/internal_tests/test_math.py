@@ -29,6 +29,7 @@ class TestMath(unittest.TestCase):
         """
         Test matrix transpose.
         """
+        print "Testing matrix transpose"
         A = np.array([[1,2],
                       [3,4],
                       [5,6]], dtype=float)
@@ -46,6 +47,7 @@ class TestMath(unittest.TestCase):
 
 
     def test_mat_plus_mat(self):
+        print "Testing matrix addition"
         A = np.array([[1, 2, 3],
                       [4, 5, 6]], dtype=float)
         B = np.array([[10, 100, 1000],
@@ -58,22 +60,32 @@ class TestMath(unittest.TestCase):
 
           
     def test_mat_times_mat(self):
+        print "Testing matrix multiplication"
         A = np.array([[1, 2, 3],
                       [4, 5, 6]], dtype=float)
         B = np.array([[10, 20],
                       [40, 50],
                       [0, 1]], dtype=float)
+        numpy_A_times_B = np.matrix(A) * np.matrix(B)
         pyx_A_times_B = \
           matrix_utils.py_mat_times_mat(A, 
                                         A.shape[0],
                                         A.shape[1],
                                         B.shape[1],
                                         B)
-        numpy_A_times_B = np.matrix(A) * np.matrix(B)
-        print pyx_A_times_B
-        print numpy_A_times_B
         assert (np.array_equal(pyx_A_times_B, numpy_A_times_B)), \
           "Matrix multiplication failed."
+        # Multiply a matrix by a column vector
+        A = np.matrix(np.array([[1,2,3],
+                                [4,5,6],
+                                [7,8,9]]), dtype=float)
+        c = np.matrix(np.array([1,2,3], dtype=float)).T
+        pyx_A_times_c = A * c
+        numpy_A_times_c = \
+          matrix_utils.py_mat_times_mat(A, A.shape[0], A.shape[1],
+                                        c.shape[1], c)
+        assert (np.array_equal(pyx_A_times_c, numpy_A_times_c)), \
+          "Matrix multiplication by vector column failed."
 
 
 def main():
