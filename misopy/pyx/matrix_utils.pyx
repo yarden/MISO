@@ -5,6 +5,7 @@
 ##
 import numpy as np
 cimport numpy as np
+np.import_array()
 
 from libc.math cimport log
 from libc.math cimport exp

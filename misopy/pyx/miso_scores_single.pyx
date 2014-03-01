@@ -4,8 +4,8 @@
 ##
 ### How to pass numpy arrays to C/C++ functions:
 ### http://stackoverflow.com/questions/3046305/simple-wrapping-of-c-code-with-cython
-cimport numpy as np
 import numpy as np
+cimport numpy as np
 np.import_array()
 cimport cython
 

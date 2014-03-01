@@ -3,8 +3,9 @@
 ##
 ## Yarden Katz <yarden@mit.edu>
 ##
-cimport numpy as np
 import numpy as np
+cimport numpy as np
+np.import_array()
 
 cimport cython
 
@@ -112,6 +113,7 @@ cdef np.ndarray[double, ndim=1] \
     cdef int i = 0
     # Draw K-many independent samples from unit normal
     Y = matrix_utils.row_to_col_vect(sample_indep_unit_normals(k), k)
+    print "Y: ", Y
     # Generate the samples S = LY + mu
     # First compute S = LY
     S = \

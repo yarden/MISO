@@ -3,8 +3,9 @@
 ##
 ## Yarden Katz <yarden@mit.edu>
 ##
-cimport numpy as np
 import numpy as np
+cimport numpy as np
+np.import_array()
 
 cimport stat_helpers
 cimport matrix_utils
