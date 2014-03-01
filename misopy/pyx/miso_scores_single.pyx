@@ -20,48 +20,7 @@ ctypedef np.int_t DTYPE_t
 ctypedef np.float_t DTYPE_float_t
 
 cdef float MY_MAX_INT = float(10000)
-
-cdef extern from *:
-    import_umath()
-
-
 import misopy
-
-##
-## Statistics helper functions (TODO: remove to separate module)
-##
-
-# /* We only handle a special case here, where sigma is a diagonal
-#    matrix with identical elements. In this case it is easy to 
-#    invert it, or calculate its determinant. */
-
-# int splicing_mvplogisnorm(const splicing_vector_t *theta, 
-# 			  const splicing_vector_t *mu, 
-# 			  double sigma, int len, double *score) {
-  
-#   double covarConst = pow(2 * M_PI * sigma, -0.5 * len);
-#   double ltheta=1.0, prodTheta=1.0, expPart=0.0, pdfVal;
-#   int i;
-  
-#   for (i=0; i<len; i++) {
-#     double at=VECTOR(*theta)[i];
-#     ltheta -= at;
-#     prodTheta *= at;
-#   }
-#   prodTheta = 1.0 / prodTheta / ltheta;
-  
-#   for (i=0; i<len; i++) {
-#     double tmp=log(VECTOR(*theta)[i] / ltheta) - VECTOR(*mu)[i];
-#     expPart += (-0.5) * tmp * tmp / sigma;
-#   }
-  
-#   pdfVal = covarConst * prodTheta * exp(expPart);
-
-#   *score = log(pdfVal);
-  
-#   return 0;
-# }
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
