@@ -72,6 +72,41 @@ cdef DTYPE_t array_len(np.ndarray[double, ndim=1] my_array):
 #   void matrix_mult(double *A, int m, int n, int p, double *B, double *C)
 #   void test_mat(double *A, int m, int n)
 
+
+##
+## Matrix addition
+##
+cdef np.ndarray[double, ndim=2] \
+  mat_plus_mat(np.ndarray[double, ndim=2] A,
+               int m,
+               int n,
+               np.ndarray[double, ndim=2] B,
+               int p,
+               int q):
+    """
+    Add two matrices together. Adds matrix A (m x n)
+    with matrix B (p x q).
+    """
+    cdef np.ndarray[double, ndim=2] added_mat = \
+      np.empty((m, n), dtype=float)
+    cdef int i = 0
+    cdef int j = 0
+    for i in xrange(m):
+        for j in xrange(n):
+            added_mat[i][j] = A[i][j] + B[i][j]
+    return added_mat
+
+def py_mat_plus_mat(np.ndarray[double, ndim=2] A,
+                    int m,
+                    int n,
+                    np.ndarray[double, ndim=2] B,
+                    int p,
+                    int q):
+    """
+    Python interface to mat_plus_mat.
+    """
+    return mat_plus_mat(A, m, n, B, p, q)
+
 ##
 ## Matrix multiplication
 ##
@@ -86,8 +121,8 @@ cdef np.ndarray[double, ndim=2] \
     """
     Matrix x matrix multiplication.
 
-    A : (n x m) matrix
-    B : (m x p) matrix
+    A : (m x n) matriax
+    B : (n x p) matrix
 
     return C, an (n x p) matrix.
     """
@@ -96,11 +131,11 @@ cdef np.ndarray[double, ndim=2] \
     cdef int k = 0
     # Result matrix
     cdef np.ndarray[double, ndim=2] C = \
-      np.zeros((n, p), dtype=float)
+      np.zeros((m, p), dtype=float)
     for i in xrange(m):
-        for j in xrange(p):
-            for k in xrange(n):
-                C[i, j] += A[i, k] * B[k, j]
+        for j in xrange(n):
+            for k in xrange(p):
+                C[i, k] += A[i, j] * B[j, k]
     return C
 
 def py_mat_times_mat(np.ndarray[double, ndim=2] A,

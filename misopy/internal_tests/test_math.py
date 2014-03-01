@@ -44,6 +44,18 @@ class TestMath(unittest.TestCase):
         assert (np.array_equal(B_trans_pyx, B_trans_numpy)), \
           "Matrix transpose failed (2)."
 
+
+    def test_mat_plus_mat(self):
+        A = np.array([[1, 2, 3],
+                      [4, 5, 6]], dtype=float)
+        B = np.array([[10, 100, 1000],
+                      [1, 1, 1]], dtype=float)
+        numpy_C = np.array(np.matrix(A) + np.matrix(B))
+        pyx_C = matrix_utils.py_mat_plus_mat(A, A.shape[0], A.shape[1],
+                                             B, B.shape[0], B.shape[1])
+        assert (np.array_equal(numpy_C, pyx_C)), \
+          "Matrix addition failed."
+
           
     def test_mat_times_mat(self):
         A = np.array([[1, 2, 3],
@@ -58,7 +70,9 @@ class TestMath(unittest.TestCase):
                                         B.shape[1],
                                         B)
         numpy_A_times_B = np.matrix(A) * np.matrix(B)
-        assert (pyx_A_times_B, numpy_A_times_B), \
+        print pyx_A_times_B
+        print numpy_A_times_B
+        assert (np.array_equal(pyx_A_times_B, numpy_A_times_B)), \
           "Matrix multiplication failed."
 
 
