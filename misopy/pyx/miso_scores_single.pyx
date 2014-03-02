@@ -25,9 +25,9 @@ NEG_INFINITY = (-1 * INFINITY)
 import misopy
 
 
-#@cython.boundscheck(False)
-#@cython.wraparound(False)
-#@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
 cpdef double my_logsumexp(double[:] log_vector,
                          int vector_len):
     """

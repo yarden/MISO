@@ -163,7 +163,6 @@ def profile_sample_reassignments():
                                            new_assignments)
     t2 = time.time()
     print "Sampling reassignments took %.2f seconds" %(t2 - t1)
-    sys.exit(0)
 
 
 def profile_sample_from_multinomial():
@@ -338,7 +337,7 @@ def profile_rand_normals():
 
 def main():
     profile_rand_normals()
-    profile_logistic_normal_log_pdf()
+    profile_sample_reassignments()
     
     profile_init_assignments()
     profile_sample_from_multinomial()
@@ -348,7 +347,7 @@ def main():
 
     # assignment scoring
     profile_log_score_assignments()
-    profile_sample_reassignments()
+    profile_logistic_normal_log_pdf()
     
 
 if __name__ == "__main__":

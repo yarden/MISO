@@ -44,7 +44,7 @@ with open("./misopy/__init__.py", "w") as version_out:
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
       
 # Include our headers and numpy's headers
-include_dirs = [os.path.join(CURRENT_DIR, "include")]
+#include_dirs = [os.path.join(CURRENT_DIR, "include")]
 
 ##
 ## Extension modules
@@ -124,10 +124,10 @@ matrix_utils_ext = Extension("misopy.pyx.matrix_utils",
                              libraries=["m"])
 #                             include_dirs=include_dirs)
 
-lapack_ext = Extension("misopy.pyx.lapack",
-                       all_c_sources + ["misopy/pyx/lapack.pyx"],
-                       libraries=["m"],                       
-                       include_dirs=include_dirs)
+#lapack_ext = Extension("misopy.pyx.lapack",
+#                       all_c_sources + ["misopy/pyx/lapack.pyx"],
+#                       libraries=["m"],                       
+#                       include_dirs=include_dirs)
 
 #sampling_helpers = Extension("misopy.pyx.sampling_helpers",
 #                             sampling_c_sources,
@@ -253,7 +253,7 @@ setup(name = 'misopy',
       url = 'http://genes.mit.edu/burgelab/miso/',
       cmdclass = cmdclass,
       ext_modules = extensions,
-      include_dirs = [np.get_include()],
+      #include_dirs = [np.get_include()],
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy',

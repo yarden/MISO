@@ -16,6 +16,7 @@ import misopy
 import misopy.pyx
 import misopy.pyx.matrix_utils as matrix_utils
 import misopy.pyx.sampling_utils as sampling_utils
+import misopy.internal_tests.py_scores as py_scores
 
 
 class TestMath(unittest.TestCase):
@@ -101,26 +102,43 @@ class TestMath(unittest.TestCase):
 
 
     def test_sample_multivar_normal(self):
+        print "Testing sampling from multivariate normal"
         mu = np.array([2.05, 0.55], dtype=float)
         sigma = np.matrix(np.array([[0.05, 0],
                                     [0, 0.05]], dtype=float))
         # Get Cholesky decomposition L of Sigma covar matrix
         L = np.linalg.cholesky(sigma)
-        print "Cholesky L: "
-        print L
         k = mu.shape[0]
-        print "mu_col: ", mu
-        for n in range(10):
+        all_numpy_samples = []
+        all_pyx_samples = []
+        # Compile a list of all the samples
+        num_iter = 1000
+        for n in range(num_iter):
             npy_samples = np.random.multivariate_normal(mu, sigma)
+            all_numpy_samples.append(npy_samples)
             # Cython interface expects mu as a *column* vector
             mu_col = np.matrix(mu).T
-            print "Sample %d" %(n)
             pyx_samples = sampling_utils.sample_multivar_normal(mu_col, L, k)
-            pyx_samples = np.asarray(pyx_samples)
-            print "Numpy samples:"
-            print npy_samples
-            print "Cython samples:"
-            print pyx_samples
+            pyx_samples = list(np.asarray(pyx_samples))
+            all_pyx_samples.append(pyx_samples)
+        # The means should equal the mean we started with
+        all_numpy_samples = np.array(all_numpy_samples)
+        all_pyx_samples = np.array(all_pyx_samples)
+        print "Numpy mean across %d iterations" %(num_iter)
+        numpy_mean = np.mean(all_numpy_samples, axis=0)
+        print numpy_mean
+        print "Cython mean across %d iterations" %(num_iter)
+        pyx_mean = np.mean(all_pyx_samples, axis=0)
+        print pyx_mean
+        # The two methods should yield very similar means
+        error_range = 0.025
+        assert (py_scores.approx_eq(numpy_mean[0],
+                                    pyx_mean[0],
+                                    error=error_range) and \
+                py_scores.approx_eq(numpy_mean[1],
+                                    pyx_mean[1],
+                                    error=error_range)), \
+                "Numpy and Cython average values of sampled normals are different."
 
 
 def main():

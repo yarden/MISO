@@ -12,14 +12,14 @@ cimport math_utils
 cimport sampling_utils
 
 
-cdef class MISOEngine_PairedEnd:
+cdef class MISO_PairedEnd:
   """
   MISO paired-end engine.
   """
   cdef int[:, :] reads
 
   
-cdef class MISOEngine_SingleEnd:
+cdef class MISO_SingleEnd:
   """
   MISO single-end engine.
   """
