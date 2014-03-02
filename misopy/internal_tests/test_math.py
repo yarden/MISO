@@ -195,32 +195,36 @@ class TestMath(unittest.TestCase):
           "Logit inverse failed."
 
 
-    # def test_propose_norm_drift_psi_alpha(self):
-    #     print "Test norm drift proposal"
-    #     # Different alpha vectors to have as initial alpha
-    #     alpha_vectors = [np.array([1], dtype=float),
-    #                      np.array([0.5], dtype=float),
-    #                      np.array([0.8, 0.99], dtype=float),
-    #                      np.array([1, 0.5, 0.5], dtype=float),
-    #                      np.array([0.5, 0.6, 0.8], dtype=float)]
-    #     sigma = 0.05
-    #     for curr_alpha_vector in alpha_vectors:
-    #         # Alpha vector has k-1 dimensions, where k is
-    #         # the number of isoforms
-    #         num_isoforms = curr_alpha_vector.shape[0] + 1
-    #         covar_mat = py_scores.get_diag_covar_mat(num_isoforms, sigma)
-    #         # Get Cholesky decomposition of covar matrix
-    #         L = np.linalg.cholesky(covar_mat)
-    #         # Sample new psi and alpha vectors
-    #         print "Sampling new psi and alpha vectors..."
-    #         new_psi, new_alpha = \
-    #           miso_proposals.propose_norm_drift_psi_alpha(curr_alpha_vector,
-    #                                                       covar_mat,
-    #                                                       L)
-    #         new_psi = np.asarray(new_psi)
-    #         new_alpha = np.asarray(new_alpha)
-    #         print "--> new_alpha ", new_alpha
-    #         print "--> new_psi: ", new_psi
+    def test_propose_norm_drift_psi_alpha(self):
+        print "Test norm drift proposal"
+        # Different alpha vectors to have as initial alpha
+        alpha_vectors = [np.array([1], dtype=float),
+                         np.array([0.5], dtype=float),
+                         np.array([0.8, 0.99], dtype=float),
+                         np.array([1, 0.5, 0.5], dtype=float),
+                         np.array([0.5, 0.6, 0.8], dtype=float)]
+        sigma = 0.05
+        for curr_alpha_vector in alpha_vectors:
+            # Alpha vector has k-1 dimensions, where k is
+            # the number of isoforms
+            num_isoforms = curr_alpha_vector.shape[0] + 1
+            covar_mat = py_scores.get_diag_covar_mat(num_isoforms-1, sigma)
+            # Get Cholesky decomposition of covar matrix
+            L = np.linalg.cholesky(covar_mat)
+            # Sample new psi and alpha vectors
+            print "Sampling new psi and alpha vectors..."
+            print "Passing in: "
+            print curr_alpha_vector
+            print covar_mat
+            print L
+            new_psi, new_alpha = \
+              miso_proposals.propose_norm_drift_psi_alpha(curr_alpha_vector,
+                                                          covar_mat,
+                                                          L)
+            new_psi = np.asarray(new_psi)
+            new_alpha = np.asarray(new_alpha)
+            print "--> new_alpha ", new_alpha
+            print "--> new_psi: ", new_psi
         
 
 def main():

@@ -56,7 +56,7 @@ def propose_norm_drift_psi_alpha(double[:] alpha_vector,
     # Do the inverse logit transform to get a set of Psi vectors of
     # dimension k - 1, where k is number of isoforms (i.e. missing the
     # last entry)
-    new_partial_psi = sampling_utils.logit_inv(new_alpha, alpha_vect_len)
+    new_partial_psi = math_utils.logit_inv(new_alpha, alpha_vect_len)
     partial_psi_sum = array_utils.sum_array(new_partial_psi, alpha_vect_len)
     # Set entries of the new psi vector to be that of
     # the Psi values we get for the first k-1 entries
