@@ -23,4 +23,4 @@ cdef class MISOEngine_SingleEnd:
   """
   MISO single-end engine.
   """
-  cdef [:, :] reads
+  cdef int[:, :] reads
