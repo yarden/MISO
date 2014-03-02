@@ -162,7 +162,8 @@ cpdef double[:, :] \
 cpdef double[:, :] \
   mat_trans(double[:, :] A,
             int m,
-            int n):
+            int n,
+            double[:, :] A_trans):
     """
     Matrix transpose.
  
@@ -172,7 +173,6 @@ cpdef double[:, :] \
     """
     cdef int i = 0
     cdef int j = 0
-    cdef np.ndarray[double, ndim=2] A_trans = np.empty((n, m), dtype=float)
     # By row
     for i in xrange(m):
         # By column

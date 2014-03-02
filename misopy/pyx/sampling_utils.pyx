@@ -107,6 +107,8 @@ cdef np.ndarray[double, ndim=1] \
     # Column vector S of samples to be generated and returned
     cdef np.ndarray[double, ndim=2] S = \
       np.empty((k, 1), dtype=float)
+    cdef np.ndarray[double, ndim=2] S_trans = \
+      np.empty((1, k), dtype=float)
     # Column vector Y of independent random samples
     cdef np.ndarray[double, ndim=2] Y = \
       np.empty((k, 1), dtype=float)
@@ -122,7 +124,7 @@ cdef np.ndarray[double, ndim=1] \
     # Now add mu: S = S + mu
     S = matrix_utils.mat_plus_mat(S, k, 1,
                                   mu, k, 1)
-    return matrix_utils.mat_trans(S, k, 1)
+    return matrix_utils.mat_trans(S, k, 1, S_trans)
 
 
 def py_sample_multivar_normal(np.ndarray[double, ndim=2] mu,
