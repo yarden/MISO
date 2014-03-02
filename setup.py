@@ -142,6 +142,10 @@ sampling_utils_ext = Extension("misopy.pyx.sampling_utils",
                                ["misopy/pyx/sampling_utils.pyx"],
                                libraries=["m"])
 
+array_utils_ext = Extension("misopy.pyx.array_utils",
+                            ["misopy/pyx/array_utils.pyx"],
+                            libraries=["m"])
+
 # pyx/c extensions to MISO
 miso_extensions = [single_end_ext,
                    paired_end_ext,
@@ -149,7 +153,8 @@ miso_extensions = [single_end_ext,
                    stat_helpers_ext,
                    matrix_utils_ext,
                    math_utils_ext,
-                   sampling_utils_ext]
+                   sampling_utils_ext,
+                   array_utils_ext]
 #                   lapack_ext]
 
 ##

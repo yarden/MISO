@@ -24,16 +24,16 @@ num_com = 39874
 reads = [[1,0]] * num_inc + \
         [[0,1]] * num_exc + \
         [[1,1]] * num_com
-reads = np.array(reads, dtype=np.int)
+reads = np.array(reads, dtype=np.dtype("i"))
 isoform_nums = []
 read_len = 40
 overhang_len = 4
-num_parts_per_isoform = np.array([3, 2], dtype=np.int)
+num_parts_per_isoform = np.array([3, 2], dtype=np.dtype("i"))
 iso_lens = np.array([1253, 1172], dtype=np.int)
 # Assignment of reads to isoforms: assign half of
 # the common reads to isoform 0, half to isoform 1
 isoform_nums = [0]*3245 + [1]*22 + [0]*19937 + [1]*19937
-isoform_nums = np.array(isoform_nums, dtype=np.int)
+isoform_nums = np.array(isoform_nums, dtype=np.dtype("i"))
 num_reads = len(reads)
 total_reads = num_reads
 num_calls = 2000
@@ -58,8 +58,8 @@ def profile_lndirichlet():
     iso_nums = get_iso_nums(num_reads)
     # Score dirichlet
     print "Benchmarking lndirichlet functions..."
-    print stat_helpers.py_dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
-                                          np.array([0.5, 0.5]))
+    print stat_helpers.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
+                                       np.array([0.5, 0.5]))
     print py_scores.dirichlet_lnpdf(np.array([1, 1]), np.array([0.5, 0.5]))
 
 
@@ -151,27 +151,29 @@ def profile_sample_reassignments():
                                           np.array([0.5, 0.5]))
     print py_scores.dirichlet_lnpdf(np.array([1, 1]), np.array([0.5, 0.5]))
     samples = np.zeros(3, dtype=float)
-    print scores_single.py_sample_from_multinomial(np.array([0.1, 0.3, 0.6]),
-                                         100,
-                                         samples)
+    print scores_single.sample_from_multinomial(np.array([0.1, 0.3, 0.6]),
+                                                100,
+                                                samples)
     log_psi_frag = np.log(psi_vector) + np.log(scaled_lens)
     log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
     log_num_reads_possible_per_iso = np.log(scaled_lens)
     print "Calling sample reassignments %d times " \
           "with %d reads" %(num_calls, num_reads)
+    new_assignments = np.empty(num_reads, dtype=np.dtype("i"))
     t1 = time.time()
     for n in xrange(num_calls):
-        result = scores_single.py_sample_reassignments(reads,
-                                                psi_vector,
-                                                log_psi_frag,
-                                                log_num_reads_possible_per_iso,
-                                                scaled_lens,
-                                                iso_lens,
-                                                num_parts_per_isoform,
-                                                iso_nums,
-                                                num_reads,
-                                                read_len,
-                                                overhang_len)
+        result = scores_single.sample_reassignments(reads,
+                                                    psi_vector,
+                                                    log_psi_frag,
+                                                    log_num_reads_possible_per_iso,
+                                                    scaled_lens,
+                                                    iso_lens,
+                                                    num_parts_per_isoform,
+                                                    iso_nums,
+                                                    num_reads,
+                                                    read_len,
+                                                    overhang_len,
+                                                    new_assignments)
     t2 = time.time()
     print "Sampling reassignments took %.2f seconds" %(t2 - t1)
     sys.exit(0)
@@ -189,11 +191,11 @@ def profile_sample_from_multinomial():
     num_reads = 1000
     print "Sampling from multinomial for %d x %d times" %(num_reads,
                                                           num_calls)
-    results = np.zeros(N, dtype=float)
+    results = np.zeros(N, dtype=np.dtype("i"))
     t1 = time.time()
     for n in range(num_reads):
         for x in range(num_calls):
-            scores_single.py_sample_from_multinomial(p, N, results)
+            scores_single.sample_from_multinomial(p, N, results)
     t2 = time.time()
     print "Sampling from multinomial took %.2f seconds" %(t2 - t1)
     print "PURE Cython version: "

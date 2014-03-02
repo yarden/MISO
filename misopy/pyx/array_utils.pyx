@@ -1,14 +1,17 @@
 ##
-## Utilities for working with arrays
+## Utilities for working with Cython arrays
 ##
-# Templates for creating fast Cython arrays
-# with clone()
+## Yarden Katz <yarden@mit.edu>
+##
 cimport cython
 from cython.view cimport array as cvarray
 from cpython.array cimport array, clone
 
+# Templates for creating fast Cython arrays
+# with clone()
 DOUBLE_ARRAY_1D = array("d")
 INT_ARRAY_1D = array("i")
+
 
 cpdef array[double] get_double_array(int arr_size):
     """

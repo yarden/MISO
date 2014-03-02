@@ -1,3 +1,5 @@
+cimport cython
+
 from cython.view cimport array as cvarray
 from cpython.array cimport array, clone
 
@@ -13,9 +15,7 @@ from libc.math cimport M_PI
 
 cdef float MY_MAX_INT = float(10000)
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
+
 cpdef double[:] \
   my_cumsum(double[:] input_array,
             double[:] cumsum_array):
@@ -33,11 +33,8 @@ cpdef double[:] \
     return cumsum_array
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
 cpdef double dirichlet_lnpdf(double[:] alpha,
-                            double[:] vector):
+                             double[:] vector):
     """
     Wrapper for dirichlet log pdf scoring function.
     """
@@ -48,13 +45,12 @@ cpdef double dirichlet_lnpdf(double[:] alpha,
 
 # from Borg project
 @cython.infer_types(True)
-cdef double dirichlet_log_pdf_raw(
-    int D,
-    double* alpha, int alpha_stride,
-    double* vector, int vector_stride,
-    ):
+cdef double dirichlet_log_pdf_raw(int D,
+                                  double* alpha,
+                                  int alpha_stride,
+                                  double* vector,
+                                  int vector_stride,):
     """Compute the log of the Dirichlet PDF evaluated at one vector."""
-
     cdef void* alpha_p = alpha
     cdef void* vector_p = vector
 
