@@ -302,9 +302,9 @@ def profile_logistic_normal_log_pdf():
     print "Python logistic normal took %.2f seconds" %(t2 - t1)
     t1 = time.time()
     for n in range(num_calls):
-        result_pyx = stat_helpers.py_logistic_normal_log_pdf(theta[:-1],
-                                                             mu,
-                                                             proposal_diag)
+        result_pyx = stat_helpers.logistic_normal_log_pdf(theta[:-1],
+                                                          mu,
+                                                          proposal_diag)
     t2 = time.time()
     print "Cython logistic normal took %.2f seconds" %(t2 - t1)
 
@@ -337,18 +337,17 @@ def profile_rand_normals():
 
 
 def main():
-    #profile_rand_normals()
-    #profile_logistic_normal_log_pdf()
+    profile_rand_normals()
+    profile_logistic_normal_log_pdf()
     
-    #profile_init_assignments()
-    #profile_sample_from_multinomial()
+    profile_init_assignments()
+    profile_sample_from_multinomial()
     # read scoring
-    #profile_log_score_reads()
-    #profile_sum_log_score_reads()
+    profile_log_score_reads()
+    profile_sum_log_score_reads()
 
     # assignment scoring
-    #profile_log_score_assignments()
-
+    profile_log_score_assignments()
     profile_sample_reassignments()
     
 

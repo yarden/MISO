@@ -29,15 +29,15 @@ num_com = 39874
 READS = [[1,0]] * num_inc + \
         [[0,1]] * num_exc + \
         [[1,1]] * num_com
-READS = np.array(READS, dtype=np.int)
+READS = np.array(READS, dtype=np.dtype("i"))
 read_len = 40
 overhang_len = 4
-num_parts_per_iso = np.array([3, 2], dtype=np.int)
-iso_lens = np.array([1253, 1172], dtype=np.int)
+num_parts_per_iso = np.array([3, 2], dtype=np.dtype("i"))
+iso_lens = np.array([1253, 1172], dtype=np.dtype("i"))
 # Assignment of reads to isoforms: assign half of
 # the common reads to isoform 0, half to isoform 1
 iso_nums = [0]*3245 + [1]*22 + [0]*19937 + [1]*19937
-iso_nums = np.array(iso_nums, dtype=np.int)
+iso_nums = np.array(iso_nums, dtype=np.dtype("i"))
 num_reads = len(READS)
 
 def print_test(test_text):
@@ -105,10 +105,12 @@ class TestScores(unittest.TestCase):
         assert self.approx_eq(sum(psi_frag), 1.0), "Psi frag does not sum to 1."
         assert (self.approx_eq(self.log_psi_frag[0], np.log(psi_frag)[0])), \
           "Log psi frag not set properly."
+        log_assignments_prob = np.empty(2, dtype=float)
         total_log_assignments_prob = \
           scores_single.sum_log_score_assignments(self.iso_nums[0:curr_num_reads],
-                                           self.log_psi_frag,
-                                           curr_num_reads)
+                                                  self.log_psi_frag,
+                                                  curr_num_reads,
+                                                  log_assignments_prob)
         # Compute the probability of assignments
         manual_result = (np.log(psi_frag[self.iso_nums[0]]) + \
                          np.log(psi_frag[self.iso_nums[1]]))
@@ -121,7 +123,7 @@ class TestScores(unittest.TestCase):
                         np.array([0.1, 0.5])]
         for v in vals_to_test:
             scipy_result = scipy.misc.logsumexp(v)
-            result = scores_single.py_my_logsumexp(v, len(v))
+            result = scores_single.my_logsumexp(v, len(v))
             assert (self.approx_eq(scipy_result, result)), \
               "My logsumexp failed on %s" %(str(v))
 
@@ -135,24 +137,26 @@ class TestScores(unittest.TestCase):
         psi_frag_denom = np.sum(psi_frag_numer)
         psi_frag = psi_frag_numer / psi_frag_denom
         log_psi_frag = np.log(psi_frag)
-        result = scores_single.py_sample_reassignments(subset_reads,
-                                                       self.psi_vector,
-                                                       log_psi_frag,
-                                                       self.log_num_reads_possible_per_iso,
-                                                       self.scaled_lens,
-                                                       self.iso_lens,
-                                                       self.num_parts_per_iso,
-                                                       self.iso_nums[0:curr_num_reads],
-                                                       curr_num_reads,
-                                                       self.read_len,
-                                                       self.overhang_len)
+        result = np.empty(curr_num_reads, dtype=np.dtype("i"))
+        result = scores_single.sample_reassignments(subset_reads,
+                                                    self.psi_vector,
+                                                    log_psi_frag,
+                                                    self.log_num_reads_possible_per_iso,
+                                                    self.scaled_lens,
+                                                    self.iso_lens,
+                                                    self.num_parts_per_iso,
+                                                    self.iso_nums[0:curr_num_reads],
+                                                    curr_num_reads,
+                                                    self.read_len,
+                                                    self.overhang_len,
+                                                    result)
 
 
     def test_init_assignments(self):
         reads = self.reads
-        assignments = scores_single.py_init_assignments(self.reads,
-                                                        self.num_reads,
-                                                        2)
+        assignments = scores_single.init_assignments(self.reads,
+                                                     self.num_reads,
+                                                     2)
 
 
     def test_logistic_normal_log_pdf(self):
@@ -163,9 +167,9 @@ class TestScores(unittest.TestCase):
         proposal_diag = 0.05
         sigma = py_scores.set_diag(np.zeros((num_isoforms-1, num_isoforms-1)),
                                    proposal_diag)
-        result_pyx = stat_helpers.py_logistic_normal_log_pdf(theta[:-1],
-                                                             mu,
-                                                             proposal_diag)
+        result_pyx = stat_helpers.logistic_normal_log_pdf(theta[:-1],
+                                                          mu,
+                                                          proposal_diag)
         print "Logistic normal log pdf Cython: "
         print result_pyx
         print "Logistic normal log pdf Python: "
