@@ -26,3 +26,26 @@ cpdef array[int] get_int_array(int arr_size):
     INT_ARRAY_1D = array("i")
     arr = clone(INT_ARRAY_1D, arr_size, False)
     return arr
+
+
+cpdef double \
+  sum_array(double[:] input_array,
+            int array_len):
+    """
+    Compute sum of elements of doubles array.
+    
+    Args:
+      input_array: double array (1d)
+
+      array_len: Length of array
+      
+    Returns:
+      Sum of array
+    """
+    cdef int j = 0
+    cdef double result = 0.0
+    for j in xrange(array_len):
+        result += input_array[j]
+    return result
+
+

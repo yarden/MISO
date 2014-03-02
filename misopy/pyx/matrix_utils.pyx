@@ -27,16 +27,6 @@ cpdef double \
     return prod_result
 
 
-cpdef double \
-  sum_array(double[:] input_array,
-            int array_len):
-    cdef int j = 0
-    cdef double result = 0.0
-    for j in xrange(array_len):
-        result += input_array[j]
-    return result
-
-
 cpdef double[:] \
   log_vect(double[:] my_vect,
            int vect_len):

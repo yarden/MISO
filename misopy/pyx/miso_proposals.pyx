@@ -46,6 +46,20 @@ cpdef propose_norm_drift_psi_alpha(double[:] alpha_vector,
     else:
         pass
     return new_psi_vector, new_alpha
+
+
+    # def propose_norm_drift_psi_alpha(self, alpha_vector):
+    #     if len(alpha_vector) == 1:
+    #         alpha_vector = alpha_vector[0]
+    #         alpha_next = [normal(alpha_vector, self.params['sigma_proposal'])]
+    #         new_psi = logit_inv([alpha_next[0]])[0]
+    #         new_psi_vector = [new_psi, 1-new_psi]
+    #     else:
+    #         alpha_next = multivariate_normal(alpha_vector, self.params['sigma_proposal'])
+    #         new_psi = logit_inv(alpha_next)
+    #         new_psi_vector = concatenate((new_psi, array([1-sum(new_psi)])))
+    #     return (new_psi_vector, alpha_next)
+
         
     
     

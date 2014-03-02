@@ -141,6 +141,11 @@ class TestMath(unittest.TestCase):
                 "Numpy and Cython average values of sampled normals are different."
 
 
+    def test_logit(self):
+        print "Testing logit / inverse logit transforms"
+        math_utils.logit([])
+        
+
 def main():
     unittest.main()
 

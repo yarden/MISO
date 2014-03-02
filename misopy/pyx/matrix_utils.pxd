@@ -1,5 +1,4 @@
 cimport cython
-cpdef double sum_array(double[:] input_array, int array_len)
 cpdef double vect_prod(double[:] my_vect, int vect_len)
 cpdef double[:] log_vect(double[:] my_vect, int vect_len)
 cpdef int array_len(double[:] my_array)

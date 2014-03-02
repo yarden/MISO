@@ -44,9 +44,6 @@ cdef double rand_normal_boxmuller():
     phase = 1 - phase
     return Z
 
-def py_rand_normal_boxmuller():
-    return rand_normal_boxmuller()
-
 
 ##
 ## Generate samples from N independent unit normal distributions
@@ -126,7 +123,7 @@ cpdef double[:] \
     S_final = matrix_utils.mat_plus_mat(S_prod, k, 1,
                                         mu, k, 1,
                                         S_final)
-    # Return as a 1d vector
+    # Return as a 1d vector 
     return matrix_utils.mat_trans(S_final, k, 1, S_trans)[0, :]
 
     

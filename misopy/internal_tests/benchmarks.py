@@ -346,7 +346,7 @@ def profile_rand_normals():
     t1 = time.time()
     cython_vals = []
     for n in xrange(num_calls):
-        cython_vals.append(sampling_utils.py_rand_normal_boxmuller())
+        cython_vals.append(sampling_utils.rand_normal_boxmuller())
     t2 = time.time()
     mean_npy = np.mean(npy_vals)
     sd_npy = np.std(npy_vals)

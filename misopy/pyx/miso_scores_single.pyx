@@ -10,6 +10,7 @@ from cpython.array cimport array, clone
 cimport stat_helpers
 cimport matrix_utils
 cimport array_utils
+cimport math_utils
 
 from libc.math cimport log
 from libc.math cimport exp
@@ -23,44 +24,6 @@ cdef extern from "math.h":
 NEG_INFINITY = (-1 * INFINITY)
 
 import misopy
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
-cpdef double my_logsumexp(double[:] log_vector,
-                         int vector_len):
-    """
-    Log sum exp.
-
-    Parameters:
-    -----------
-
-    log_vector : array of floats corresponding to log values.
-    vector_len : int, length of vector.
-
-    Returns:
-    --------
-
-    Result of log(sum(exp(log_vector)))
-    """
-    cdef double curr_exp_value = 0.0
-    cdef double sum_of_exps = 0.0
-    cdef double log_sum_of_exps = 0.0
-    cdef int curr_elt = 0
-    # First find the maximum value first
-    cdef double max_val = log_vector[0]
-    for curr_elt in xrange(vector_len):
-        if (log_vector[curr_elt] > max_val):
-            max_val = log_vector[curr_elt]
-    # Subtract maximum value from the rest
-    for curr_elt in xrange(vector_len):
-        curr_exp_value = exp(log_vector[curr_elt] - max_val)
-        sum_of_exps += curr_exp_value
-    # Now take log of the sum of exp values and add
-    # back the missing value
-    log_sum_of_exps = log(sum_of_exps) + max_val
-    return log_sum_of_exps
 
 
 ##
@@ -299,7 +262,7 @@ cpdef double[:] compute_log_psi_frag(double[:] psi_vector,
             log(psi_vector[curr_isoform]) + log(scaled_lens[curr_isoform])
     # Normalize scaled Psi values to sum to 1
     log_psi_frag = \
-        log_psi_frag - my_logsumexp(log_psi_frag, num_isoforms)
+        log_psi_frag - math_utils.my_logsumexp(log_psi_frag, num_isoforms)
     return log_psi_frag
 
 
@@ -552,7 +515,7 @@ cdef double[:] \
     probability!
     """
     # Normalizing factor
-    cdef double norm_factor = my_logsumexp(log_probs, vector_len)
+    cdef double norm_factor = math_utils.my_logsumexp(log_probs, vector_len)
     # Normalized probabilities (UNLOGGED)
     cdef double[:] norm_probs = array_utils.get_double_array(vector_len)
     for curr_entry in xrange(vector_len):
