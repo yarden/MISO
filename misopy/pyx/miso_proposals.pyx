@@ -8,11 +8,12 @@ cimport cython
 cimport stat_helpers
 cimport matrix_utils
 cimport math_utils
+cimport sampling_utils
 cimport array_utils
 
-cpdef propose_norm_drift_psi_alpha(double[:] alpha_vector,
-                                   double[:, :] sigma_mat,
-                                   double[:, :] L):
+def propose_norm_drift_psi_alpha(double[:] alpha_vector,
+                                 double[:, :] sigma_mat,
+                                 double[:, :] L):
     """
     Propose a new alpha vector (parameters to Beta/Dirichlet distribution)
     and Psi vector (drawn from a Beta with those alpha vector)
@@ -37,30 +38,35 @@ cpdef propose_norm_drift_psi_alpha(double[:] alpha_vector,
     and alpha vector is of length k-1
     """
     cdef int alpha_vect_len = alpha_vector.shape[0]
+    # Psi vector without last entry (k-1 dimensions)
+    cdef double[:] new_partial_psi = \
+      array_utils.get_double_array(alpha_vect_len)
+    cdef double partial_psi_sum = 0.0
+    # Complete Psi vector
     cdef double[:] new_psi_vector = \
       array_utils.get_double_array(alpha_vect_len + 1)
     cdef double[:] new_alpha = \
       array_utils.get_double_array(alpha_vect_len)
-    if alpha_vect_len == 1:
-        pass
-    else:
-        pass
+    cdef int n = 0
+    # First entry in covariance matrix
+    #cdef double covar_first_entry = sigma_mat[0, 0]
+    # Sample new alpha vector
+    new_alpha = \
+      sampling_utils.sample_multivar_normal(alpha_vector, L, alpha_vect_len)
+    # Do the inverse logit transform to get a set of Psi vectors of
+    # dimension k - 1, where k is number of isoforms (i.e. missing the
+    # last entry)
+    new_partial_psi = sampling_utils.logit_inv(new_alpha, alpha_vect_len)
+    partial_psi_sum = array_utils.sum_array(new_partial_psi, alpha_vect_len)
+    # Set entries of the new psi vector to be that of
+    # the Psi values we get for the first k-1 entries
+    # through the inverse logit transform
+    for n in xrange(alpha_vect_len):
+        new_psi_vector[n] = new_partial_psi[n]
+    # Set the last entry of vector to be 1 - sum(partial_psi)
+    new_psi_vector[alpha_vect_len + 1] = 1 - partial_psi_sum
     return new_psi_vector, new_alpha
 
-
-    # def propose_norm_drift_psi_alpha(self, alpha_vector):
-    #     if len(alpha_vector) == 1:
-    #         alpha_vector = alpha_vector[0]
-    #         alpha_next = [normal(alpha_vector, self.params['sigma_proposal'])]
-    #         new_psi = logit_inv([alpha_next[0]])[0]
-    #         new_psi_vector = [new_psi, 1-new_psi]
-    #     else:
-    #         alpha_next = multivariate_normal(alpha_vector, self.params['sigma_proposal'])
-    #         new_psi = logit_inv(alpha_next)
-    #         new_psi_vector = concatenate((new_psi, array([1-sum(new_psi)])))
-    #     return (new_psi_vector, alpha_next)
-
-        
     
     
     

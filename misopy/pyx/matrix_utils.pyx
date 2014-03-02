@@ -78,6 +78,24 @@ cpdef double[:, :] \
     return added_mat
 
 
+##
+## Matrix plus 1d vector addition
+##
+cpdef double[:] \
+  vect_plus_vect(double[:] v1,
+                 double[:] v2,
+                 int vect_len,
+                 double[:] added_vect):
+    """
+    Add matrix A to column vector c, return A+c.
+    """
+    cdef int i = 0
+    cdef int j = 0
+    for i in xrange(vect_len):
+        added_vect[i] = v1[i] + v2[i]
+    return added_vect
+
+
 cpdef double[:, :] \
   row_to_col_vect(double[:] row_vect,
                   int k):
@@ -134,7 +152,37 @@ cpdef double[:, :] \
 ##
 ## Matrix times column vector
 ##
-# ...
+cpdef double[:] \
+  mat_times_col_vect(double[:, :] A,
+                     int m,
+                     int n,
+                     double[:] v,
+                     int vect_len,
+                     double[:] C):
+    """
+    Matrix x column vector multiplication.
+
+    Args:
+      A: (m x n) matrix
+      m: number of rows
+      n: number of cols
+      v: column vector (vect_len, 1)
+      vect_len: length of vector
+
+    return results in a (m x 1) column vector 
+
+    NOTE: C *must* be a zeros column.
+    """
+    cdef int i = 0
+    cdef int j = 0
+    cdef int k = 0
+    # Ensure C is zero
+    for k in xrange(vect_len):
+        C[k] = 0.0
+    for i in xrange(m):
+        for j in xrange(n):
+            C[i] += A[i, j] * v[j]
+    return C
 
 
 ##

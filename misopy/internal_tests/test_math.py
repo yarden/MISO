@@ -17,6 +17,7 @@ import misopy.pyx
 import misopy.pyx.math_utils as math_utils
 import misopy.pyx.matrix_utils as matrix_utils
 import misopy.pyx.sampling_utils as sampling_utils
+import misopy.pyx.miso_proposals as miso_proposals
 import misopy.internal_tests.py_scores as py_scores
 
 
@@ -102,6 +103,32 @@ class TestMath(unittest.TestCase):
           "Matrix multiplication by vector column failed."
 
 
+    def test_mat_times_col_vect(self):
+        print "Testing matrix multiplication times column vector"
+        # Multiply a matrix by a column vector
+        A = np.matrix(np.array([[1,2,3],
+                                [4,5,6],
+                                [7,8,9]]), dtype=float)
+        # Interpreted as a column vector by Cython code
+        c = np.array([1,2,3], dtype=float)
+        pyx_A_times_c = np.empty(A.shape[0], dtype=float)
+        numpy_A_times_c = A * np.matrix(c).T
+        # Convert to flat 1d array
+        numpy_A_times_c = np.squeeze(np.asarray(numpy_A_times_c))
+        pyx_A_times_c = \
+          matrix_utils.mat_times_col_vect(A, A.shape[0], A.shape[1],
+                                          c,
+                                          len(c),
+                                          pyx_A_times_c)
+        pyx_A_times_c = np.asarray(pyx_A_times_c)
+        print "numpy result: "
+        print numpy_A_times_c
+        print "pyx result: "
+        print pyx_A_times_c
+        assert (np.array_equal(pyx_A_times_c, numpy_A_times_c)), \
+          "Matrix multiplication by 1d vector column failed."
+
+
     def test_sample_multivar_normal(self):
         print "Testing sampling from multivariate normal"
         mu = np.array([2.05, 0.55], dtype=float)
@@ -117,9 +144,7 @@ class TestMath(unittest.TestCase):
         for n in range(num_iter):
             npy_samples = np.random.multivariate_normal(mu, sigma)
             all_numpy_samples.append(npy_samples)
-            # Cython interface expects mu as a *column* vector
-            mu_col = np.matrix(mu).T
-            pyx_samples = sampling_utils.sample_multivar_normal(mu_col, L, k)
+            pyx_samples = sampling_utils.sample_multivar_normal(mu, L, k)
             pyx_samples = list(np.asarray(pyx_samples))
             all_pyx_samples.append(pyx_samples)
         # The means should equal the mean we started with
@@ -168,8 +193,34 @@ class TestMath(unittest.TestCase):
         print pyx_logit_inv
         assert (np.array_equal(numpy_logit_inv, pyx_logit_inv)), \
           "Logit inverse failed."
-        
-        
+
+
+    # def test_propose_norm_drift_psi_alpha(self):
+    #     print "Test norm drift proposal"
+    #     # Different alpha vectors to have as initial alpha
+    #     alpha_vectors = [np.array([1], dtype=float),
+    #                      np.array([0.5], dtype=float),
+    #                      np.array([0.8, 0.99], dtype=float),
+    #                      np.array([1, 0.5, 0.5], dtype=float),
+    #                      np.array([0.5, 0.6, 0.8], dtype=float)]
+    #     sigma = 0.05
+    #     for curr_alpha_vector in alpha_vectors:
+    #         # Alpha vector has k-1 dimensions, where k is
+    #         # the number of isoforms
+    #         num_isoforms = curr_alpha_vector.shape[0] + 1
+    #         covar_mat = py_scores.get_diag_covar_mat(num_isoforms, sigma)
+    #         # Get Cholesky decomposition of covar matrix
+    #         L = np.linalg.cholesky(covar_mat)
+    #         # Sample new psi and alpha vectors
+    #         print "Sampling new psi and alpha vectors..."
+    #         new_psi, new_alpha = \
+    #           miso_proposals.propose_norm_drift_psi_alpha(curr_alpha_vector,
+    #                                                       covar_mat,
+    #                                                       L)
+    #         new_psi = np.asarray(new_psi)
+    #         new_alpha = np.asarray(new_alpha)
+    #         print "--> new_alpha ", new_alpha
+    #         print "--> new_psi: ", new_psi
         
 
 def main():

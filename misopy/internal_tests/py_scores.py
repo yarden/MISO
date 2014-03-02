@@ -61,9 +61,7 @@ def propose_norm_drift_psi_alpha(alpha_vector,
                                  sigma_proposal):
     if len(alpha_vector) == 1:
         alpha_vector = alpha_vector[0]
-#            print "proposing from normal with mean: ", alpha_vector, " exp: ", exp(alpha_vector)
         alpha_next = [normal(alpha_vector, sigma_proposal)]
-#            print "got alpha_next: ", alpha_next, " exp: ", exp(alpha_next)
         new_psi = logit_inv([alpha_next[0]])[0]
         new_psi_vector = [new_psi, 1-new_psi]
     else:
@@ -71,6 +69,16 @@ def propose_norm_drift_psi_alpha(alpha_vector,
         new_psi = logit_inv(alpha_next)
         new_psi_vector = np.concatenate((new_psi, array([1-sum(new_psi)])))
     return (new_psi_vector, alpha_next)
+
+
+def get_diag_covar_mat(k, sigma):
+    """
+    Return diagonal (k x k) covariance matrix
+    with diagonals all set to sigma.
+    """
+    covar_mat = np.zeros((k, k), dtype=float)
+    covar_mat = set_diag(covar_mat, sigma)
+    return covar_mat
 
 
 def logit(p):

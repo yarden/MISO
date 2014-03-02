@@ -25,7 +25,7 @@ cimport math_utils
 ## Generate samples from a unit normal distribution:
 ##   X ~ N(mu=0, sigma=1)
 ##
-cdef double rand_normal_boxmuller():
+cpdef double rand_normal_boxmuller():
     """
     Generate random sample from a unit normal, N(0, 1).
     Uses the non-polar form of Box-Muller transform.
@@ -66,7 +66,7 @@ cdef double[:] \
 ## Generate sample from a multivariate normal distribution
 ##
 cpdef double[:] \
-  sample_multivar_normal(double[:, :] mu,
+  sample_multivar_normal(double[:] mu,
                          double[:, :] L,
                          int k):
     """
@@ -100,31 +100,29 @@ cpdef double[:] \
     # Check that L is a square matrix
     if (L_num_rows != L_num_cols):
         print "Error: Cholesky decomposition matrix L must be square!"
-    cdef double[:, :] S_prod = \
-      cvarray(shape=(k, 1), itemsize=sizeof(double), format="d")
+    cdef double[:] S_prod = \
+      array_utils.get_double_array(k)
     # Column vector S_prod of samples to be generated and returned
-    cdef double[:, :] S_final = \
-      cvarray(shape=(k, 1), itemsize=sizeof(double), format="d")
-      
-    cdef double[:, :] S_trans = \
-      cvarray(shape=(1, k), itemsize=sizeof(double), format="d")
+    cdef double[:] S_final = \
+      array_utils.get_double_array(k)
     # Column vector Y of independent random samples
-    cdef double[:, :] Y = \
-      cvarray(shape=(k, 1), itemsize=sizeof(double), format="d")
+    cdef double[:] Y = \
+      array_utils.get_double_array(k)
     cdef int i = 0
     # Draw K-many independent samples from unit normal
-    Y = matrix_utils.row_to_col_vect(sample_indep_unit_normals(k), k)
+    Y = sample_indep_unit_normals(k)
     # Generate the samples S = LY + mu
-    # First compute S = LY
+    # First compute S = LY, get result as 1d array
     S_prod = \
-      matrix_utils.mat_times_mat(L, L_num_rows, L_num_cols,
-                                 1, Y, S_prod)
-    # Now add mu: S = S + mu
-    S_final = matrix_utils.mat_plus_mat(S_prod, k, 1,
-                                        mu, k, 1,
-                                        S_final)
-    # Return as a 1d vector 
-    return matrix_utils.mat_trans(S_final, k, 1, S_trans)[0, :]
+      matrix_utils.mat_times_col_vect(L,
+                                      L_num_rows,
+                                      L_num_cols,
+                                      Y,
+                                      k,
+                                      S_prod)
+    # Now add mu: LY + mu
+    S_final = matrix_utils.vect_plus_vect(S_prod, mu, k, S_final)
+    return S_final
 
     
 

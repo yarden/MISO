@@ -102,10 +102,6 @@ cpdef double[:] logit_inv(double[:] p,
     Takes a vector with values \in (-inf, inf) and transforms each
     to a value \in (0, 1).
     """
-    # original python code
-    #denom = append(x, 0)
-    #p = exp(x)/(sum(exp(denom)))
-    ##########
     cdef double[:] logit_inv_vals = array_utils.get_double_array(p_len)
     # The denominator is sum(exp(x)) + exp(0)
     cdef double denom = exp(0)
