@@ -101,7 +101,7 @@ class TestMath(unittest.TestCase):
 
 
     def test_sample_multivar_normal(self):
-        mu = np.array([2, 0.5], dtype=float)
+        mu = np.array([2.05, 0.55], dtype=float)
         sigma = np.matrix(np.array([[0.05, 0],
                                     [0, 0.05]], dtype=float))
         # Get Cholesky decomposition L of Sigma covar matrix
@@ -109,19 +109,22 @@ class TestMath(unittest.TestCase):
         print "Cholesky L: "
         print L
         k = mu.shape[0]
-        npy_samples = np.random.multivariate_normal(mu, sigma)
-        # Cython interface expects mu as a *column* vector
-        mu_col = np.matrix(mu).T
         print "mu_col: ", mu
         print "mu_col: ", mu_col
         print "Passing L: ", L
         print "mu_col: ", mu_col.shape
-        pyx_samples = sampling_utils.sample_multivar_normal(mu_col, L, k)
-        pyx_samples = np.asarray(pyx_samples)
-        print "Numpy samples:"
-        print npy_samples
-        print "Cython samples:"
-        print pyx_samples
+        
+        for n in range(10):
+            npy_samples = np.random.multivariate_normal(mu, sigma)
+            # Cython interface expects mu as a *column* vector
+            mu_col = np.matrix(mu).T
+            print "Sample %d" %(n)
+            pyx_samples = sampling_utils.sample_multivar_normal(mu_col, L, k)
+            pyx_samples = np.asarray(pyx_samples)
+            print "Numpy samples:"
+            print npy_samples
+            print "Cython samples:"
+            print pyx_samples
 
 
 def main():

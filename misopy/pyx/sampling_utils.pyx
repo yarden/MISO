@@ -124,7 +124,7 @@ cpdef double[:] \
       matrix_utils.mat_times_mat(L, L_num_rows, L_num_cols,
                                  1, Y, S_prod)
     # Now add mu: S = S + mu
-    S_final = matrix_utils.mat_plus_mat(S_final, k, 1,
+    S_final = matrix_utils.mat_plus_mat(S_prod, k, 1,
                                         mu, k, 1,
                                         S_final)
     # Return as a 1d vector
