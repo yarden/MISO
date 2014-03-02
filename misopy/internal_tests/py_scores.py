@@ -37,6 +37,16 @@ def approx_eq(p1, p2, error=0.0001):
     return (np.abs(p1 - p2) < error)
 
 
+def approx_eq_arrays(a1, a2, error=0.0001):
+    """
+    See if each element is approximately equal to every other element
+    in the array.
+    """
+    assert (len(a1) == len(a2)), "Arrays not equal in size."
+    result = np.all([approx_eq(x, y, error=error) for x,y in zip(a1, a2)])
+    return result
+
+
 def original_logistic_normal_log_pdf(theta, mu, sigma):
     """
     The log of the PDF for the multivariate Logistic-Normal distribution.
@@ -67,7 +77,7 @@ def propose_norm_drift_psi_alpha(alpha_vector,
     else:
         alpha_next = multivariate_normal(alpha_vector, sigma_proposal)
         new_psi = logit_inv(alpha_next)
-        new_psi_vector = np.concatenate((new_psi, array([1-sum(new_psi)])))
+        new_psi_vector = np.concatenate((new_psi, np.array([1-sum(new_psi)])))
     return (new_psi_vector, alpha_next)
 
 

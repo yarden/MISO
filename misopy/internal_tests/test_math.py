@@ -213,18 +213,42 @@ class TestMath(unittest.TestCase):
             L = np.linalg.cholesky(covar_mat)
             # Sample new psi and alpha vectors
             print "Sampling new psi and alpha vectors..."
-            print "Passing in: "
+            print "Input alpha vector: "
             print curr_alpha_vector
+            print "Input covar matrix: "
             print covar_mat
+            print "Input Cholesky: "
             print L
-            new_psi, new_alpha = \
-              miso_proposals.propose_norm_drift_psi_alpha(curr_alpha_vector,
-                                                          covar_mat,
-                                                          L)
-            new_psi = np.asarray(new_psi)
-            new_alpha = np.asarray(new_alpha)
-            print "--> new_alpha ", new_alpha
-            print "--> new_psi: ", new_psi
+            num_iters = 10000
+            numpy_psi_vals = []
+            pyx_psi_vals = []
+            for n in range(num_iters):
+                # Calculate with Python
+                numpy_new_psi, numpy_new_alpha = \
+                  py_scores.propose_norm_drift_psi_alpha(curr_alpha_vector,
+                                                         covar_mat)
+                # Calculate with Cython
+                pyx_new_psi, pyx_new_alpha = \
+                  miso_proposals.propose_norm_drift_psi_alpha(curr_alpha_vector,
+                                                              covar_mat,
+                                                              L)
+                pyx_new_psi = np.asarray(pyx_new_psi)
+                pyx_new_alpha = np.asarray(pyx_new_alpha)
+                numpy_psi_vals.append(numpy_new_psi)
+                pyx_psi_vals.append(pyx_new_psi)
+            # Compare the mean sampled values across all iterations
+            numpy_psi_vals = np.mean(np.array(numpy_psi_vals), axis=0)
+            pyx_psi_vals = np.mean(np.array(pyx_psi_vals), axis=0)
+            print "Mean values from %d iterations" %(num_iters)
+            print "numpy_psi_vals: ", numpy_psi_vals
+            print "pyx_psi_vals: ", pyx_psi_vals
+            # Check that values are close
+            error_val = 0.025
+            assert (py_scores.approx_eq_arrays(numpy_psi_vals,
+                                               pyx_psi_vals,
+                                               error=error_val)), \
+                "Cython and Numpy sampled Psi values disagree."
+            
         
 
 def main():

@@ -64,7 +64,7 @@ def propose_norm_drift_psi_alpha(double[:] alpha_vector,
     for n in xrange(alpha_vect_len):
         new_psi_vector[n] = new_partial_psi[n]
     # Set the last entry of vector to be 1 - sum(partial_psi)
-    new_psi_vector[alpha_vect_len + 1] = 1 - partial_psi_sum
+    new_psi_vector[alpha_vect_len] = 1 - partial_psi_sum
     return new_psi_vector, new_alpha
 
     
