@@ -184,7 +184,32 @@ def profile_sample_from_multinomial():
             scores_single.sample_from_multinomial(p, N, results)
     t2 = time.time()
     print "Sampling from multinomial took %.2f seconds" %(t2 - t1)
-    
+
+
+def profile_sample_from_normal():
+    print "Profiling sampling from multivariate normal"
+    mu = np.array([2.05, 0.55], dtype=float)
+    sigma = np.matrix(np.array([[0.05, 0],
+                                [0, 0.05]], dtype=float))
+    # Get Cholesky decomposition L of Sigma covar matrix
+    L = np.linalg.cholesky(sigma)
+    k = mu.shape[0]
+    all_numpy_samples = []
+    all_pyx_samples = []
+    # Compile a list of all the samples
+    num_iter = 10000
+    t1 = time.time()
+    for n in range(num_iter):
+        npy_samples = np.random.multivariate_normal(mu, sigma)
+    t2 = time.time()
+    print "Numpy sampling took %.2f seconds" %(t2 - t1)
+    # Cython interface expects mu as a *column* vector
+    mu_col = np.matrix(mu).T
+    t1 = time.time()
+    for n in range(num_iter):
+        pyx_samples = sampling_utils.sample_multivar_normal(mu_col, L, k)
+    t2 = time.time()
+    print "Cython sampling took %.2f seconds" %(t2 - t1)
     
 
 def profile_log_score_reads():
@@ -336,6 +361,7 @@ def profile_rand_normals():
 
 
 def main():
+    profile_sample_from_normal()
     profile_rand_normals()
     profile_sample_reassignments()
     
