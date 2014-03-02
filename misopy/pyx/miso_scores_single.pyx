@@ -632,32 +632,6 @@ cpdef int[:] \
     return assignments
 
 
-cpdef int[:] \
-  pure_init_assignments(int[:, :] reads,
-                        int num_reads,
-                        int num_isoforms):
-    """
-    Initialize assignments of reads to isoforms.
-
-    NOTE: This assumes that the reads that are NOT consistent
-    with all the isoforms have been thrown out. If they are
-    present, they will be skipped
-    """
-    # Assignments array to return
-    cdef int[:] assignments = array_utils.get_int_array(num_reads)
-    cdef int curr_read = 0
-    cdef int curr_iso = 0
-    for curr_read in xrange(num_reads):
-        for curr_iso in xrange(num_isoforms):
-            # Assign read to the first isoform it is consistent
-            # with. 
-            if reads[curr_read, curr_iso] == 1:
-                assignments[curr_read] = curr_iso
-                break
-    return assignments
- 
-        
-
 #     def propose_norm_drift_psi_alpha(self, alpha_vector):
 #         if len(alpha_vector) == 1:
 #             alpha_vector = alpha_vector[0]

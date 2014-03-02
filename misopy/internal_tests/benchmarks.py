@@ -116,19 +116,6 @@ def profile_init_assignments():
                                                      num_isoforms)
     t2 = time.time()
     print "Init assignments took %.2f seconds" %(t2 - t1)
-    # Profile pure Cython version
-    t1 = time.time()
-    print "Profiling PURE init assignments..."
-    reads = np.array(reads, dtype=np.dtype("i"))
-    print "Reads: ", reads
-    print reads.shape
-    for n in range(num_calls):
-        assignments = scores_single.pure_init_assignments(reads,
-                                                          num_reads,
-                                                          num_isoforms)
-    t2 = time.time()
-    print "PURE init assignments took %.2f seconds" %(t2 - t1)
-    
         
 
 def profile_sample_reassignments():
@@ -198,13 +185,6 @@ def profile_sample_from_multinomial():
             scores_single.sample_from_multinomial(p, N, results)
     t2 = time.time()
     print "Sampling from multinomial took %.2f seconds" %(t2 - t1)
-    print "PURE Cython version: "
-    t1 = time.time()
-    for n in range(num_reads):
-        for x in range(num_calls):
-            scores_single.pure_sample_from_multinomial(p, N, results)
-    t2 = time.time()
-    print "Pure version took %.2f seconds" %(t2 - t1)
     
     
 
