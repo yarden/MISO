@@ -488,8 +488,8 @@ cpdef int[:] \
             # P(log(reads | assignment) is the sum of the read scores
             # vector with the current read's reassignment
             reassignment_probs[curr_isoform] = \
-              (matrix_utils.sum_array(log_assignment_probs, num_reads) + \
-               matrix_utils.sum_array(log_read_probs, num_reads))
+              (array_utils.sum_array(log_assignment_probs, num_reads) + \
+               array_utils.sum_array(log_read_probs, num_reads))
             # Copy the old assignment of the read to the isoform
             iso_nums[curr_read] = old_assignment
             # Copy the old assignment probability
