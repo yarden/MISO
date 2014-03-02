@@ -22,6 +22,8 @@ import misopy.pyx
 import misopy.pyx.miso_scores_single as scores_single
 import misopy.pyx.miso_scores_paired as scores_paired
 import misopy.pyx.stat_helpers as stat_helpers
+import misopy.pyx.math_utils as math_utils
+
 
 num_inc = 3245
 num_exc = 22
@@ -123,7 +125,7 @@ class TestScores(unittest.TestCase):
                         np.array([0.1, 0.5])]
         for v in vals_to_test:
             scipy_result = scipy.misc.logsumexp(v)
-            result = scores_single.my_logsumexp(v, len(v))
+            result = math_utils.my_logsumexp(v, len(v))
             assert (self.approx_eq(scipy_result, result)), \
               "My logsumexp failed on %s" %(str(v))
 
