@@ -1,4 +1,3 @@
-cimport numpy as np
 cimport libc.math
 
 cdef extern from "math.h":
@@ -12,7 +11,5 @@ cdef double dirichlet_log_pdf_raw(
     double* vector, int vector_stride,
     )
 
-cdef double dirichlet_lnpdf(np.ndarray[double, ndim=1] alpha,
-                            np.ndarray[double, ndim=1] vector)
-cdef np.ndarray[double, ndim=1] my_cumsum(np.ndarray[double, ndim=1] input_array)
-cdef double[:] pure_my_cumsum(double[:] input_array)
+cpdef double dirichlet_lnpdf(double[:] alpha, double[:] vector)
+cpdef double[:] my_cumsum(double[:] input_array, double[:] cumsum_array)

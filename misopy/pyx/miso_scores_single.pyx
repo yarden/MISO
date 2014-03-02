@@ -1,19 +1,11 @@
-#-*- mode: python-mode -*-
 ##
 ## MISO scoring functions in Cython for MCMC sampler
 ##
-### How to pass numpy arrays to C/C++ functions:
-### http://stackoverflow.com/questions/3046305/simple-wrapping-of-c-code-with-cython
-import numpy as np
-cimport numpy as np
-np.import_array()
-
+## Yarden Katz <yarden@mit.edu>
+##
 cimport cython
 from cython.view cimport array as cvarray
 from cpython.array cimport array, clone
-cdef double[:] DOUBLE_ARRAY = array("d")
-cdef double[:, :] DOUBLE_ARRAY_2D
-
 cimport stat_helpers
 cimport matrix_utils
 
@@ -21,17 +13,14 @@ from libc.math cimport log
 from libc.math cimport exp
 from libc.stdlib cimport rand
 
-ctypedef np.int_t DTYPE_t
-ctypedef np.float_t DTYPE_float_t
-
 cdef float MY_MAX_INT = float(10000)
 import misopy
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cdef DTYPE_float_t my_logsumexp(np.ndarray[DTYPE_float_t, ndim=1] log_vector,
-                                int vector_len):
+cpdef double my_logsumexp(double[:] log_vector,
+                         int vector_len):
     """
     Log sum exp.
 
@@ -46,12 +35,12 @@ cdef DTYPE_float_t my_logsumexp(np.ndarray[DTYPE_float_t, ndim=1] log_vector,
 
     Result of log(sum(exp(log_vector)))
     """
-    cdef DTYPE_float_t curr_exp_value = 0.0
-    cdef DTYPE_float_t sum_of_exps = 0.0
-    cdef DTYPE_float_t log_sum_of_exps = 0.0
+    cdef double curr_exp_value = 0.0
+    cdef double sum_of_exps = 0.0
+    cdef double log_sum_of_exps = 0.0
     cdef int curr_elt = 0
     # First find the maximum value first
-    cdef DTYPE_float_t max_val = log_vector[0]
+    cdef double max_val = log_vector[0]
     for curr_elt in xrange(vector_len):
         if (log_vector[curr_elt] > max_val):
             max_val = log_vector[curr_elt]
@@ -63,14 +52,6 @@ cdef DTYPE_float_t my_logsumexp(np.ndarray[DTYPE_float_t, ndim=1] log_vector,
     # back the missing value
     log_sum_of_exps = log(sum_of_exps) + max_val
     return log_sum_of_exps
-
-
-def py_my_logsumexp(np.ndarray[DTYPE_float_t, ndim=1] log_vector,
-                    int vector_len):
-    """
-    Version of my_logsumexp that is callable from Python.
-    """
-    return my_logsumexp(log_vector, vector_len)
 
 
 ##
@@ -234,24 +215,23 @@ def py_my_logsumexp(np.ndarray[DTYPE_float_t, ndim=1] log_vector,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def log_score_psi_vector(np.ndarray[DTYPE_float_t, ndim=1] psi_vector,
-                         np.ndarray[DTYPE_float_t, ndim=1] hyperparameters):
+cpdef double log_score_psi_vector(double[:] psi_vector,
+                                  double[:] hyperparameters):
     return stat_helpers.dirichlet_lnpdf(hyperparameters, psi_vector)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cdef np.ndarray[DTYPE_float_t, ndim=1] \
-  log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
-                        np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
-                        int num_reads):
+cdef double[:] \
+  log_score_assignments(int[:] isoform_nums,
+                        double[:] log_psi_frag_vector,
+                        int num_reads,
+                        double[:] log_scores):
     """
     Score an assignment of a set of reads given psi
     and a gene (i.e. a set of isoforms).
     """
-    cdef np.ndarray[DTYPE_float_t, ndim=1] log_scores = \
-      np.empty(num_reads, dtype=float)
     cdef DTYPE_float_t curr_log_psi_frag = 0.0
     cdef DTYPE_t curr_read = 0
     cdef DTYPE_t curr_iso_num = 0
@@ -263,36 +243,27 @@ cdef np.ndarray[DTYPE_float_t, ndim=1] \
         log_scores[curr_read] = curr_log_psi_frag 
     return log_scores
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
-def py_log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
-                             np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
-                             int num_reads):
-    return log_score_assignments(isoform_nums,
-                                 log_psi_frag_vector,
-                                 num_reads)
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def sum_log_score_assignments(np.ndarray[DTYPE_t, ndim=1] isoform_nums,
-                              np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
-                              int num_reads):
+cpdef double \
+  sum_log_score_assignments(int[:] isoform_nums,
+                            double[:] log_psi_frag_vector,
+                            int num_reads,
+                            double[:] assignment_scores):
     """
     Score an assignment of a set of reads given psi
     and a gene (i.e. a set of isoforms).
     """
-    cdef np.ndarray[DTYPE_float_t, ndim=1] assignment_scores = \
-        np.empty(num_reads)
-    cdef DTYPE_float_t sum_log_scores = 0.0
-    cdef DTYPE_float_t curr_assignment_score = 0.0
-    cdef DTYPE_t curr_read = 0
+    cdef double sum_log_scores = 0.0
+    cdef double curr_assignment_score = 0.0
+    cdef int curr_read = 0
     # Get log score of assignments
     assignment_scores = log_score_assignments(isoform_nums,
                                               log_psi_frag_vector,
-                                              num_reads)
+                                              num_reads,
+                                              assignment_scores)
     for curr_read in xrange(num_reads):
         curr_assignment_score = assignment_scores[curr_read]
         sum_log_scores += curr_assignment_score
@@ -433,28 +404,31 @@ def log_score_reads(np.ndarray[DTYPE_t, ndim=2] reads,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cdef np.ndarray[DTYPE_t, ndim=1] \
-  sample_reassignments(np.ndarray[DTYPE_t, ndim=2] reads,
-                       np.ndarray[DTYPE_float_t, ndim=1] psi_vector,
-                       np.ndarray[DTYPE_float_t, ndim=1] log_psi_frag_vector,
-                       np.ndarray[DTYPE_float_t, ndim=1] log_num_reads_possible_per_iso,
-                       np.ndarray[DTYPE_t, ndim=1] scaled_lens,
-                       np.ndarray[DTYPE_t, ndim=1] iso_lens,
-                       np.ndarray[DTYPE_t, ndim=1] num_parts_per_iso,
-                       np.ndarray[DTYPE_t, ndim=1] iso_nums,
-                       np.int_t num_reads,
-                       np.int_t read_len,
-                       np.int_t overhang_len):
+cdef int[:] \
+  sample_reassignments(int[:] reads,
+                       double[:] psi_vector,
+                       double[:] log_psi_frag_vector,
+                       double[:] log_num_reads_possible_per_iso,
+                       int[:] scaled_lens,
+                       int[:] iso_lens,
+                       int[:] num_parts_per_iso,
+                       int[:] iso_nums,
+                       int num_reads,
+                       int read_len,
+                       int overhang_len,
+                       int[:] new_assignments):
     """
     Sample a reassignments of reads to isoforms.
     Note that this does not depend on the read's current assignment since
     we're already considering the possibility of 'reassigning' the read to
     its current assignment in the probability calculations.
+
+    - log_assignment_probs
     """
-    cdef DTYPE_t num_isoforms = psi_vector.shape[0]
+    cdef int num_isoforms = psi_vector.shape[0]
     # Initial probabilities of assignments given Psi vector
-    cdef np.ndarray[DTYPE_float_t, ndim=1] log_assignment_probs = \
-      np.empty(num_isoforms, dtype=float)
+    cdef double[:] log_assignment_probs = \
+      clone.empty(num_isoforms, dtype=float)
     # Initial probabilties of reads given assignments
     cdef np.ndarray[DTYPE_float_t, ndim=1] log_read_probs = \
       np.empty(num_reads, dtype=float)
@@ -495,7 +469,8 @@ cdef np.ndarray[DTYPE_t, ndim=1] \
     # Also calculate the scores of all current assignments
     log_assignment_probs = log_score_assignments(iso_nums,
                                                  log_psi_frag_vector,
-                                                 num_reads)
+                                                 num_reads,
+                                                 log_assignment_probs)
     # For each read, compute the probability of reassigning it to
     # each of the isoforms and sample a new reassignment
     for curr_read in xrange(num_reads):
@@ -620,7 +595,8 @@ cdef np.ndarray[DTYPE_float_t, ndim=1] \
 cdef np.ndarray[DTYPE_float_t, ndim=1] \
      sample_from_multinomial(np.ndarray[DTYPE_float_t, ndim=1] probs,
                              int N,
-                             np.ndarray[DTYPE_float_t, ndim=1] samples):
+                             np.ndarray[DTYPE_float_t, ndim=1] samples,
+                             np.ndarray[DTYPE_float_t, ndim=1] cumsum):
     """
     Sample one element from multinomial probabilities vector.
 
@@ -644,8 +620,7 @@ cdef np.ndarray[DTYPE_float_t, ndim=1] \
     cdef int curr_elt = 0
     cdef DTYPE_float_t rand_val# = rand() / MY_MAX_INT
     # Get cumulative sum of probability vector
-    cdef np.ndarray[DTYPE_float_t, ndim=1] cumsum = \
-      stat_helpers.my_cumsum(probs)
+    cumsum = stat_helpers.my_cumsum(probs, cumsum)
     for curr_sample in xrange(N):
         # Draw random number
         rand_val = (rand() % MY_MAX_INT) / MY_MAX_INT
@@ -667,7 +642,8 @@ def py_sample_from_multinomial(np.ndarray[DTYPE_float_t, ndim=1] probs,
 cpdef double[:] \
      pure_sample_from_multinomial(double[:] probs,
                                   int N,
-                                  double[:] samples):
+                                  double[:] samples,
+                                  double[:] cumsum):
     """
     Sample one element from multinomial probabilities vector.
 
@@ -688,7 +664,7 @@ cpdef double[:] \
     cdef int curr_elt = 0
     cdef double rand_val# = rand() / MY_MAX_INT
     # Get cumulative sum of probability vector
-    cdef double[:] cumsum = stat_helpers.pure_my_cumsum(probs)
+    cumsum = stat_helpers.pure_my_cumsum(probs, cumsum)
     for curr_sample in xrange(N):
         # Draw random number
         rand_val = (rand() % MY_MAX_INT) / MY_MAX_INT

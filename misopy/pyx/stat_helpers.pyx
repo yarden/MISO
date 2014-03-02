@@ -1,13 +1,5 @@
-cimport numpy as np
-import numpy as np
-from numpy import linalg
-import math
-
-np.import_array()
-cimport cython
 from cython.view cimport array as cvarray
 from cpython.array cimport array, clone
-DOUBLE_ARRAY = array("d")
 
 cimport matrix_utils
 
@@ -19,39 +11,19 @@ from libc.stdlib cimport rand
 # Math constants
 from libc.math cimport M_PI
 
-ctypedef np.int_t DTYPE_t
-ctypedef np.float_t DTYPE_float_t
-
 cdef float MY_MAX_INT = float(10000)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-
-cdef np.ndarray[double, ndim=1] \
-  my_cumsum(np.ndarray[double, ndim=1] input_array):
-    """
-    Return cumulative sum of array.
-    """
-    # Cumulative sum at every position
-    cdef np.ndarray[double, ndim=1] cumsum_array = np.empty_like(input_array)
-    cdef int curr_elt = 0
-    cdef int num_elts = input_array.shape[0]
-    # Current cumulative sum: starts at first element
-    cdef double curr_cumsum = 0.0
-    for curr_elt in xrange(num_elts):
-        cumsum_array[curr_elt] = (input_array[curr_elt] + curr_cumsum)
-        curr_cumsum = cumsum_array[curr_elt]
-    return cumsum_array
-
-cdef double[:] \
-  pure_my_cumsum(double[:] input_array):
+cpdef double[:] \
+  my_cumsum(double[:] input_array,
+            double[:] cumsum_array):
     """
     Return cumulative sum of array.
     """
     cdef int num_elts = input_array.shape[0]
     # Cumulative sum at every position
-    cdef double[:] cumsum_array = clone(DOUBLE_ARRAY, num_elts, False)
     cdef int curr_elt = 0
     # Current cumulative sum: starts at first element
     cdef double curr_cumsum = 0.0
@@ -59,14 +31,13 @@ cdef double[:] \
         cumsum_array[curr_elt] = (input_array[curr_elt] + curr_cumsum)
         curr_cumsum = cumsum_array[curr_elt]
     return cumsum_array
-
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cdef double dirichlet_lnpdf(np.ndarray[double, ndim=1] alpha,
-                            np.ndarray[double, ndim=1] vector):
+cpdef double dirichlet_lnpdf(double[:] alpha,
+                            double[:] vector):
     """
     Wrapper for dirichlet log pdf scoring function.
     """
@@ -74,11 +45,6 @@ cdef double dirichlet_lnpdf(np.ndarray[double, ndim=1] alpha,
     return dirichlet_log_pdf_raw(D,
                                  &alpha[0], alpha.strides[0],
                                  &vector[0], vector.strides[0])
-
-def py_dirichlet_lnpdf(np.ndarray[double, ndim=1] alpha,
-                       np.ndarray[double, ndim=1] vector):
-    return dirichlet_lnpdf(alpha, vector)
-
 
 # from Borg project
 @cython.infer_types(True)
@@ -171,9 +137,9 @@ cdef double dirichlet_log_pdf_raw(
 #     pdf_value = covar_constant*prod_theta*np.exp(exp_part)
 #     return log(pdf_value)
 
-cdef double logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
-                                    np.ndarray[double, ndim=1] mu,
-                                    double sigma):
+cpdef double logistic_normal_log_pdf(double[:] theta,
+                                     double[:] mu,
+                                     double sigma):
     """
     The log of the PDF for the multivariate Logistic-Normal distribution.
     Assumes that Sigma is a diagonal matrix where the diagonal
@@ -207,12 +173,6 @@ cdef double logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
     pdfVal = covarConst * prodTheta * exp(expPart)
     score = log(pdfVal)
     return score
-
-
-def py_logistic_normal_log_pdf(np.ndarray[double, ndim=1] theta,
-                               np.ndarray[double, ndim=1] mu,
-                               double sigma):
-    return logistic_normal_log_pdf(theta, mu, sigma)
 
 
 # int splicing_mvplogisnorm(const splicing_vector_t *theta, 
