@@ -11,6 +11,7 @@ cimport stat_helpers
 cimport matrix_utils
 cimport math_utils
 
+
 def propose_norm_drift_psi_alpha(np.ndarray[double, ndim=1] alpha_vector,
                                  np.ndarray[double, ndim=2] sigma_mat):
     """

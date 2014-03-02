@@ -1,6 +1,8 @@
 ##
 ## MISO engine
 ##
+## Yarden Katz <yarden@mit.edu>
+##
 cimport numpy as np
 import numpy as np
 

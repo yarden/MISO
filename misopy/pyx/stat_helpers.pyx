@@ -1,3 +1,8 @@
+##
+## Statistics utilities
+##
+## Yarden Katz <yarden@mit.edu>
+##
 cimport cython
 
 from cython.view cimport array as cvarray
@@ -50,7 +55,9 @@ cdef double dirichlet_log_pdf_raw(int D,
                                   int alpha_stride,
                                   double* vector,
                                   int vector_stride,):
-    """Compute the log of the Dirichlet PDF evaluated at one vector."""
+    """
+    Compute the log of the Dirichlet PDF evaluated at one vector.
+    """
     cdef void* alpha_p = alpha
     cdef void* vector_p = vector
 

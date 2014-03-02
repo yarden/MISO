@@ -1,3 +1,8 @@
+##
+## Math utilities
+##
+## Yarden Katz <yarden@mit.edu>
+##
 import numpy as np
 cimport numpy as np
 
