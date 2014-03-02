@@ -36,7 +36,7 @@ cdef class MISO_SingleEnd:
   # Covariance matrix of proposal distribution
   cdef double[:, :] covar_mat
   # Cholesky decomposition of covar matrix
-  def double[:, :] covar_L
+  cdef double[:, :] covar_L
   
   def __cinit__(self):
       """
