@@ -3,10 +3,6 @@
 ##
 ## Yarden Katz <yarden@mit.edu>
 ##
-import numpy as np
-cimport numpy as np
-np.import_array()
-
 cimport cython
 
 from libc.math cimport cos
@@ -17,7 +13,10 @@ from libc.math cimport M_PI as PI
 from libc.stdlib cimport RAND_MAX
 from libc.stdlib cimport rand
 
+from cython.view cimport array as cvarray
+
 cimport stat_helpers
+cimport array_utils
 cimport matrix_utils
 cimport math_utils
 
@@ -52,14 +51,14 @@ def py_rand_normal_boxmuller():
 ##
 ## Generate samples from N independent unit normal distributions
 ##
-cdef np.ndarray[double, ndim=1] \
+cdef double[:] \
   sample_indep_unit_normals(int N):
     """
     Draw a row vector of N independent normal variables
     with mean = 0 and unit variance (sigma^2 = 1).
     """
-    cdef np.ndarray[double, ndim=1] samples = \
-      np.empty(N, dtype=float)
+    cdef double[:] samples = \
+      array_utils.get_double_array(N)
     cdef int i = 0
     for i in xrange(N):
         samples[i] = rand_normal_boxmuller()
@@ -69,9 +68,9 @@ cdef np.ndarray[double, ndim=1] \
 ##
 ## Generate sample from a multivariate normal distribution
 ##
-cdef np.ndarray[double, ndim=1] \
-  sample_multivar_normal(np.ndarray[double, ndim=2] mu,
-                         np.ndarray[double, ndim=2] L,
+cpdef double[:] \
+  sample_multivar_normal(double[:, :] mu,
+                         double[:, :] L,
                          int k):
     """
     Draw a sample (vector) from a multivariate normal distribution
@@ -104,33 +103,35 @@ cdef np.ndarray[double, ndim=1] \
     # Check that L is a square matrix
     if (L_num_rows != L_num_cols):
         print "Error: Cholesky decomposition matrix L must be square!"
-    # Column vector S of samples to be generated and returned
-    cdef np.ndarray[double, ndim=2] S = \
-      np.empty((k, 1), dtype=float)
-    cdef np.ndarray[double, ndim=2] S_trans = \
-      np.empty((1, k), dtype=float)
+    cdef double[:, :] S_prod = \
+      cvarray(shape=(k, 1), itemsize=sizeof(double), format="d")
+    # Column vector S_prod of samples to be generated and returned
+    cdef double[:, :] S_final = \
+      cvarray(shape=(k, 1), itemsize=sizeof(double), format="d")
+      
+    cdef double[:, :] S_trans = \
+      cvarray(shape=(1, k), itemsize=sizeof(double), format="d")
     # Column vector Y of independent random samples
-    cdef np.ndarray[double, ndim=2] Y = \
-      np.empty((k, 1), dtype=float)
+    cdef double[:, :] Y = \
+      cvarray(shape=(k, 1), itemsize=sizeof(double), format="d")
     cdef int i = 0
     # Draw K-many independent samples from unit normal
     Y = matrix_utils.row_to_col_vect(sample_indep_unit_normals(k), k)
     print "Y: ", Y
     # Generate the samples S = LY + mu
     # First compute S = LY
-    S = \
+    S_prod = \
       matrix_utils.mat_times_mat(L, L_num_rows, L_num_cols,
-                                 1, Y)
+                                 1, Y, S_prod)
     # Now add mu: S = S + mu
-    S = matrix_utils.mat_plus_mat(S, k, 1,
-                                  mu, k, 1)
-    return matrix_utils.mat_trans(S, k, 1, S_trans)
+    S_final = matrix_utils.mat_plus_mat(S_final, k, 1,
+                                        mu, k, 1,
+                                        S_final)
+    # Return as a 1d vector
+    return matrix_utils.mat_trans(S_final, k, 1, S_trans)[0, :]
 
+    
 
-def py_sample_multivar_normal(np.ndarray[double, ndim=2] mu,
-                              np.ndarray[double, ndim=2] L,
-                              int k):
-    return sample_multivar_normal(mu, L, k)
 
 
     

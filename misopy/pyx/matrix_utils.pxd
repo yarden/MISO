@@ -1,6 +1,4 @@
 cimport cython
-cimport numpy as np
-import numpy as np
 cpdef double sum_array(double[:] input_array, int array_len)
 cpdef double vect_prod(double[:] my_vect, int vect_len)
 cpdef double[:] log_vect(double[:] my_vect, int vect_len)
@@ -9,20 +7,16 @@ cpdef double[:, :] mat_times_mat(double[:, :] A,
                                  int m,
                                  int n,
                                  int p,
-                                 double[:, :] B)
-cpdef double[:, :] \
-  mat_dotprod(double[:, :] A,
-              int m,
-              int n,
-              int p,
-              double[:, :] B)
+                                 double[:, :] B,
+                                 double[:, :] C)
 cpdef double[:, :] \
   mat_plus_mat(double[:, :] A,
                int m,
                int n,
                double[:, :] B,
                int p,
-               int q)
+               int q,
+               double[:, :] added_mat)
 cpdef double[:, :] \
   row_to_col_vect(double[:] row_vect,
                   int k)

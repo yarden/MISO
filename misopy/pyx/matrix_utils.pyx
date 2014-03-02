@@ -6,7 +6,10 @@
 from libc.math cimport log
 from libc.math cimport exp
 
-cimport lapack
+from cython.view cimport array as cvarray
+
+cimport array_utils
+
 
 ##
 ## Vector utilities
@@ -41,8 +44,8 @@ cpdef double[:] \
     Return log of vector
     """
     cdef int i = 0
-    cdef np.ndarray[double, ndim=1] log_my_vect = \
-      np.empty(vect_len, dtype=float)
+    cdef double[:] log_my_vect = \
+      array_utils.get_double_array(vect_len)
     for i in xrange(vect_len):
         log_my_vect[i] = log(my_vect[i])
     return log_my_vect
@@ -71,13 +74,12 @@ cpdef double[:, :] \
                int n,
                double[:, :] B,
                int p,
-               int q):
+               int q,
+               double[:, :] added_mat):
     """
     Add two matrices together. Adds matrix A (m x n)
     with matrix B (p x q).
     """
-    cdef np.ndarray[double, ndim=2] added_mat = \
-      np.empty((m, n), dtype=float)
     cdef int i = 0
     cdef int j = 0
     for i in xrange(m):
@@ -92,12 +94,12 @@ cpdef double[:, :] \
     """
     Convert row vector (1d) to column vector (2d).
 
-    This takes a 1d np.ndarray of length k and converts it
+    This takes a 1d array of length k and converts it
     to a 2d matrix of (k x 1).
     """
     cdef int i = 0
-    cdef np.ndarray[double, ndim=2] col_vect = \
-      np.empty((k, 1), dtype=float)
+    cdef double[:, :] col_vect = \
+      cvarray(shape=(k, 1), itemsize=sizeof(double), format="d")
     for i in xrange(k):
         col_vect[i][0] = row_vect[i]
     return col_vect
@@ -113,42 +115,31 @@ cpdef double[:, :] \
                 int m,
                 int n,
                 int p,
-                double[:, :] B):
+                double[:, :] B,
+                double[:, :] C):
     """
     Matrix x matrix multiplication.
 
-    A : (m x n) matriax
+    A : (m x n) matrix
     B : (n x p) matrix
 
-    return C, an (n x p) matrix.
+    return results in C, an (n x p) matrix.
+
+    NOTE: C *must* be a zeros matrix.
     """
     cdef int i = 0
     cdef int j = 0
     cdef int k = 0
-    # Result matrix
-    cdef np.ndarray[double, ndim=2] C = \
-      np.zeros((m, p), dtype=float)
+    # Ensure C is zero
+    for k in xrange(m):
+        for l in xrange(p):
+            C[k, l] = 0.0
     for i in xrange(m):
         for j in xrange(n):
             for k in xrange(p):
                 C[i, k] += A[i, j] * B[j, k]
     return C
 
-
-##
-## Matrix dot product (for 2d arrays, this is equivalent to
-## matrix multiplication.)
-##
-cpdef double[:, :] \
-  mat_dotprod(double[:, :] A,
-              int m,
-              int n,
-              int p,
-              double[:, :] B):
-    """
-    Dot product of matrix A x matrix B.
-    """
-    return mat_times_mat(A, m, n, p, B)
 
 ##
 ## Matrix times column vector
