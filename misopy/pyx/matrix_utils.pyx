@@ -3,10 +3,6 @@
 ##
 ## Yarden Katz <yarden@mit.edu>
 ##
-import numpy as np
-cimport numpy as np
-np.import_array()
-
 from libc.math cimport log
 from libc.math cimport exp
 
@@ -15,35 +11,31 @@ cimport lapack
 ##
 ## Vector utilities
 ##
-cdef np.ndarray[double, ndim=1] \
-  vect_prod(np.ndarray[double, ndim=1] my_vect,
+cpdef double \
+  vect_prod(double[:] my_vect,
             int vect_len):
     """
     Return vector product.
     """
     cdef int i = 0
     cdef double prod_result = 1.0
-    for i in xrange(my_vect):
+    for i in xrange(my_vect.shape[0]):
         prod_result = prod_result * my_vect[i]
     return prod_result
 
-def my_vect_prod(np.ndarray[double, ndim=1] my_vect,
-                 int vect_len):
-    return vect_prod(my_vect, vect_len)
 
-
-cdef DTYPE_float_t \
-  sum_array(np.ndarray[DTYPE_float_t, ndim=1] input_array,
-            DTYPE_t array_len):
-    cdef DTYPE_t j = 0
-    cdef DTYPE_float_t result = 0.0
+cpdef double \
+  sum_array(double[:] input_array,
+            int array_len):
+    cdef int j = 0
+    cdef double result = 0.0
     for j in xrange(array_len):
         result += input_array[j]
     return result
 
 
-cdef np.ndarray[double, ndim=1] \
-  log_vect(np.ndarray[double, ndim=1] my_vect,
+cpdef double[:] \
+  log_vect(double[:] my_vect,
            int vect_len):
     """
     Return log of vector
@@ -56,7 +48,7 @@ cdef np.ndarray[double, ndim=1] \
     return log_my_vect
 
 
-cdef DTYPE_t array_len(np.ndarray[double, ndim=1] my_array):
+cpdef int array_len(double[:] my_array):
     """
     Return length of 1d array.
     """
@@ -73,11 +65,11 @@ cdef DTYPE_t array_len(np.ndarray[double, ndim=1] my_array):
 ##
 ## Matrix addition
 ##
-cdef np.ndarray[double, ndim=2] \
-  mat_plus_mat(np.ndarray[double, ndim=2] A,
+cpdef double[:, :] \
+  mat_plus_mat(double[:, :] A,
                int m,
                int n,
-               np.ndarray[double, ndim=2] B,
+               double[:, :] B,
                int p,
                int q):
     """
@@ -93,20 +85,9 @@ cdef np.ndarray[double, ndim=2] \
             added_mat[i][j] = A[i][j] + B[i][j]
     return added_mat
 
-def py_mat_plus_mat(np.ndarray[double, ndim=2] A,
-                    int m,
-                    int n,
-                    np.ndarray[double, ndim=2] B,
-                    int p,
-                    int q):
-    """
-    Python interface to mat_plus_mat.
-    """
-    return mat_plus_mat(A, m, n, B, p, q)
 
-
-cdef np.ndarray[double, ndim=2] \
-  row_to_col_vect(np.ndarray[double, ndim=1] row_vect,
+cpdef double[:, :] \
+  row_to_col_vect(double[:] row_vect,
                   int k):
     """
     Convert row vector (1d) to column vector (2d).
@@ -127,12 +108,12 @@ cdef np.ndarray[double, ndim=2] \
 ##
 #@cython.boundscheck(False)
 #@cython.wraparound(False)
-cdef np.ndarray[double, ndim=2] \
-  mat_times_mat(np.ndarray[double, ndim=2] A,
+cpdef double[:, :] \
+  mat_times_mat(double[:, :] A,
                 int m,
                 int n,
                 int p,
-                np.ndarray[double, ndim=2] B):
+                double[:, :] B):
     """
     Matrix x matrix multiplication.
 
@@ -153,26 +134,17 @@ cdef np.ndarray[double, ndim=2] \
                 C[i, k] += A[i, j] * B[j, k]
     return C
 
-def py_mat_times_mat(np.ndarray[double, ndim=2] A,
-                     int m,
-                     int n,
-                     int p,
-                     np.ndarray[double, ndim=2] B):
-    """
-    Python interface to mat_times_mat.
-    """
-    return mat_times_mat(A, m, n, p, B)
 
 ##
 ## Matrix dot product (for 2d arrays, this is equivalent to
 ## matrix multiplication.)
 ##
-cdef np.ndarray[double, ndim=2] \
-  mat_dotprod(np.ndarray[double, ndim=2] A,
+cpdef double[:, :] \
+  mat_dotprod(double[:, :] A,
               int m,
               int n,
               int p,
-              np.ndarray[double, ndim=2] B):
+              double[:, :] B):
     """
     Dot product of matrix A x matrix B.
     """
@@ -187,8 +159,8 @@ cdef np.ndarray[double, ndim=2] \
 ##
 ## Matrix transpose
 ##
-cdef np.ndarray[double, ndim=2] \
-  mat_trans(np.ndarray[double, ndim=2] A,
+cpdef double[:, :] \
+  mat_trans(double[:, :] A,
             int m,
             int n):
     """
@@ -207,14 +179,5 @@ cdef np.ndarray[double, ndim=2] \
         for j in xrange(n):
             A_trans[j, i] = A[i, j]
     return A_trans
-
-def py_mat_trans(np.ndarray[double, ndim=2] A,
-                 int m,
-                 int n):
-    """
-    Python interface to mat_trans.
-    """
-    return mat_trans(A, m, n)
-
 
       

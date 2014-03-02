@@ -29,7 +29,7 @@ isoform_nums = []
 read_len = 40
 overhang_len = 4
 num_parts_per_isoform = np.array([3, 2], dtype=np.dtype("i"))
-iso_lens = np.array([1253, 1172], dtype=np.int)
+iso_lens = np.array([1253, 1172], dtype=np.dtype("i"))
 # Assignment of reads to isoforms: assign half of
 # the common reads to isoform 0, half to isoform 1
 isoform_nums = [0]*3245 + [1]*22 + [0]*19937 + [1]*19937
@@ -134,13 +134,13 @@ def profile_sample_reassignments():
     iso_nums = get_iso_nums(num_reads)
     # Score dirichlet
     print "Benchmarking lndirichlet functions..."
-    print stat_helpers.py_dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
+    print stat_helpers.dirichlet_lnpdf(np.array([1, 1], dtype=np.float),
                                           np.array([0.5, 0.5]))
     print py_scores.dirichlet_lnpdf(np.array([1, 1]), np.array([0.5, 0.5]))
-    samples = np.zeros(3, dtype=float)
-    print scores_single.sample_from_multinomial(np.array([0.1, 0.3, 0.6]),
-                                                100,
-                                                samples)
+    samples = np.zeros(100, dtype=np.dtype("i"))
+    scores_single.sample_from_multinomial(np.array([0.1, 0.3, 0.6]),
+                                                   100,
+                                                   samples)
     log_psi_frag = np.log(psi_vector) + np.log(scaled_lens)
     log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
     log_num_reads_possible_per_iso = np.log(scaled_lens)
@@ -149,18 +149,18 @@ def profile_sample_reassignments():
     new_assignments = np.empty(num_reads, dtype=np.dtype("i"))
     t1 = time.time()
     for n in xrange(num_calls):
-        result = scores_single.sample_reassignments(reads,
-                                                    psi_vector,
-                                                    log_psi_frag,
-                                                    log_num_reads_possible_per_iso,
-                                                    scaled_lens,
-                                                    iso_lens,
-                                                    num_parts_per_isoform,
-                                                    iso_nums,
-                                                    num_reads,
-                                                    read_len,
-                                                    overhang_len,
-                                                    new_assignments)
+        scores_single.sample_reassignments(reads,
+                                           psi_vector,
+                                           log_psi_frag,
+                                           log_num_reads_possible_per_iso,
+                                           scaled_lens,
+                                           iso_lens,
+                                           num_parts_per_isoform,
+                                           iso_nums,
+                                           num_reads,
+                                           read_len,
+                                           overhang_len,
+                                           new_assignments)
     t2 = time.time()
     print "Sampling reassignments took %.2f seconds" %(t2 - t1)
     sys.exit(0)
@@ -198,18 +198,21 @@ def profile_log_score_reads():
     log_num_reads_possible_per_iso = np.log(scaled_lens)
     log_psi_frag = np.log(psi_vector) + np.log(scaled_lens)
     log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
+    results = np.empty(num_reads, dtype=float)
     for n in xrange(num_calls):
         v = scores_single.log_score_reads(reads,
-                                  isoform_nums,
-                                  num_parts_per_isoform,
-                                  iso_lens,
-                                  log_num_reads_possible_per_iso,
-                                  num_reads,
-                                  read_len,
-                                  overhang_len)
+                                          isoform_nums,
+                                          num_parts_per_isoform,
+                                          iso_lens,
+                                          log_num_reads_possible_per_iso,
+                                          num_reads,
+                                          read_len,
+                                          overhang_len,
+                                          results)
     t2 = time.time()
     print "log_score_reads took %.2f seconds per %d calls." %(t2 - t1,
                                                               num_calls)
+
 
     
 def profile_sum_log_score_reads():
@@ -267,10 +270,12 @@ def profile_log_score_assignments():
     log_psi_frag = np.log(psi_vector) + np.log(scaled_lens)
     log_psi_frag = log_psi_frag - scipy.misc.logsumexp(log_psi_frag)
     t1 = time.time()
+    results = np.empty(num_reads, dtype=float)
     for n in range(num_calls):
-        v2 = scores_single.py_log_score_assignments(isoform_nums,
-                                             log_psi_frag,
-                                             num_reads)
+        v2 = scores_single.log_score_assignments(isoform_nums,
+                                                 log_psi_frag,
+                                                 num_reads,
+                                                 results)
     t2 = time.time()
     print "Cython took %.2f seconds" %(t2 - t1)
     print "RESULTS"
@@ -335,15 +340,14 @@ def main():
     #profile_rand_normals()
     #profile_logistic_normal_log_pdf()
     
-    profile_init_assignments()
-    profile_sample_from_multinomial()
-    raise Exception, "Test"
+    #profile_init_assignments()
+    #profile_sample_from_multinomial()
     # read scoring
-    profile_log_score_reads()
-    profile_sum_log_score_reads()
+    #profile_log_score_reads()
+    #profile_sum_log_score_reads()
 
     # assignment scoring
-    profile_log_score_assignments()
+    #profile_log_score_assignments()
 
     profile_sample_reassignments()
     

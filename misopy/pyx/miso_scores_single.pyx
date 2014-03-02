@@ -25,9 +25,9 @@ NEG_INFINITY = (-1 * INFINITY)
 import misopy
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.nonecheck(False)
 cpdef double my_logsumexp(double[:] log_vector,
                          int vector_len):
     """
@@ -229,10 +229,10 @@ cpdef double log_score_psi_vector(double[:] psi_vector,
     return stat_helpers.dirichlet_lnpdf(hyperparameters, psi_vector)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
-cdef double[:] \
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.nonecheck(False)
+cpdef double[:] \
   log_score_assignments(int[:] isoform_nums,
                         double[:] log_psi_frag_vector,
                         int num_reads,
@@ -253,9 +253,9 @@ cdef double[:] \
     return log_scores
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.nonecheck(False)
 cpdef double \
   sum_log_score_assignments(int[:] isoform_nums,
                             double[:] log_psi_frag_vector,
@@ -303,9 +303,9 @@ cpdef double[:] compute_log_psi_frag(double[:] psi_vector,
     return log_psi_frag
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.nonecheck(False)
 cpdef double sum_log_score_reads(int[:, :] reads,
                                  int[:] isoform_nums,
                                  int[:] num_parts_per_isoform,
@@ -344,9 +344,9 @@ cpdef double sum_log_score_reads(int[:, :] reads,
 
 
     
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.nonecheck(False)
 cpdef double[:] log_score_reads(int[:, :] reads,
                                 int[:] isoform_nums,
                                 int[:] num_parts_per_isoform,
@@ -399,9 +399,10 @@ cpdef double[:] log_score_reads(int[:, :] reads,
 ## Sampling functions
 ##
 # Sample reassignments
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.nonecheck(False)
+#int[:, :] reads,
 cpdef int[:] \
   sample_reassignments(int[:, :] reads,
                        double[:] psi_vector,
@@ -424,7 +425,7 @@ cpdef int[:] \
     cdef int num_isoforms = psi_vector.shape[0]
     # Initial probabilities of assignments given Psi vector
     cdef double[:] log_assignment_probs = \
-      array_utils.get_double_array(num_isoforms)
+      array_utils.get_double_array(num_reads)
     # Initial probabilties of reads given assignments
     cdef double[:] log_read_probs = \
       array_utils.get_double_array(num_reads)
@@ -443,14 +444,14 @@ cpdef int[:] \
     # considered
     ##### TODO: Optimize
     cdef int[:, :] curr_read_array = \
-       cvarray(shape=(2,2), size=sizeof(int), format="i")
+      cvarray(shape=(2,2), itemsize=sizeof(int), format="i")
     # Temporary vector to score assignment log probs 
     cdef double[:] temp_assignment_log_prob = \
       array_utils.get_double_array(1)
+    cdef double[:] temp_reads_log_prob = \
+      array_utils.get_double_array(1)
     cdef int[:] temp_curr_read_assignment = \
       array_utils.get_int_array(1)
-    cdef double[:] temp_reads_log_prob = \
-      array_utils.get_double_array(num_reads)
     # The sampled current read assignment
     cdef int curr_read_assignment = 0
     # Current isoform counter
@@ -479,24 +480,24 @@ cpdef int[:] \
         # Copy the current assignment of read probability
         old_read_prob = log_read_probs[curr_read]
         # Copy the current assignment of read to isoform
-        old_assignment = <int>iso_nums[curr_read]
+        old_assignment = iso_nums[curr_read]
         # Copy the current probability of assignment
         old_assignment_log_prob = log_assignment_probs[curr_read]
         # Compute the probability of assigning the current read
         # to each isoform
         for curr_isoform in xrange(num_isoforms):
             # Now consider reassigning this read to the current isoform
-            iso_nums[curr_read] = <int>curr_isoform
+            iso_nums[curr_read] = curr_isoform
             # Score this assignment of reads to isoforms
             cand_assignment[0] = curr_isoform
             # Compute probability of candidate assignment. This depends
             # only on the Psi Frag vectors:
             #    P(I(j,k) | PsiFrag)
             cand_assignment_log_prob = \
-              <double>(log_score_assignments(cand_assignment,
-                                             log_psi_frag_vector,
-                                             1,
-                                             temp_assignment_log_prob)[0])
+              log_score_assignments(cand_assignment,
+                                    log_psi_frag_vector,
+                                    1,
+                                    temp_assignment_log_prob)[0]
             # Compute the probability of the reads given the current
             # assignment. The only term that changes is the probability
             # of the current read, since we changed its assignment
@@ -505,15 +506,15 @@ cpdef int[:] \
             # Score probability of current read given candidate
             # assignment
             cand_read_log_prob = \
-              <double>(log_score_reads(curr_read_array,
-                                       cand_assignment,
-                                       num_parts_per_iso,
-                                       iso_lens,
-                                       log_num_reads_possible_per_iso,
-                                       1,
-                                       read_len,
-                                       overhang_len,
-                                       temp_reads_log_prob)[0])
+              log_score_reads(curr_read_array,
+                              cand_assignment,
+                              num_parts_per_iso,
+                              iso_lens,
+                              log_num_reads_possible_per_iso,
+                              1,
+                              read_len,
+                              overhang_len,
+                              temp_reads_log_prob)[0]
             # Set the new probability of current read
             log_read_probs[curr_read] = cand_read_log_prob
             # Set the new probability of read's assignment
