@@ -110,10 +110,6 @@ class TestMath(unittest.TestCase):
         print L
         k = mu.shape[0]
         print "mu_col: ", mu
-        print "mu_col: ", mu_col
-        print "Passing L: ", L
-        print "mu_col: ", mu_col.shape
-        
         for n in range(10):
             npy_samples = np.random.multivariate_normal(mu, sigma)
             # Cython interface expects mu as a *column* vector
