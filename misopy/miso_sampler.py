@@ -109,7 +109,7 @@ def logit_inv(x):
     Takes a value on x \in (-inf, inf) and transforms it to a value on (0, 1).
     """
     #p = exp(x)/(1+exp(x))
-    denom = np.append(x, 0)
+    denom = append(x, 0)
     p = exp(x)/(sum(exp(denom)))
     return p
 

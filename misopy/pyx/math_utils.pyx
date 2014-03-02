@@ -14,21 +14,43 @@ cimport array_utils
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+cpdef double max_val(double m, double n):
+    """
+    Return max(m, n).
+    """
+    if m >= n:
+        return m
+    else:
+        return n
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+cpdef double min_val(double m, double n):
+    """
+    Returns min(m, n).
+    """
+    if m <= n:
+        return m
+    else:
+        return n
+    
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
 cpdef double my_logsumexp(double[:] log_vector,
                          int vector_len):
     """
     Log sum exp.
 
-    Parameters:
-    -----------
-
-    log_vector : array of floats corresponding to log values.
-    vector_len : int, length of vector.
+    Args:
+      log_vector: array of floats corresponding to log values.
+      vector_len: int, length of vector.
 
     Returns:
-    --------
-
-    Result of log(sum(exp(log_vector)))
+      Result of log(sum(exp(log_vector)))
     """
     cdef double curr_exp_value = 0.0
     cdef double sum_of_exps = 0.0
@@ -59,8 +81,16 @@ cpdef double[:] logit(double[:] p,
     """
     cdef double[:] logit_vals = array_utils.get_double_array(p_len)
     cdef int i = 0
+    cdef double upper_bound = 0.999
+    cdef double lower_bound = 0.0000001
+    cdef double denom = 0.0
     for i in xrange(p_len):
-        logit_vals[i] = log(p[i] / (1-p[i]))
+        # Handle case where 1-p[i] is 0, i.e. when
+        # p[i] is 1 (use upper_bound value instead in that case)
+        # and case where 1-p[i] is 1, i.e. when p[i] is 0
+        # (use lower_bound value in that case)
+        denom = max_val(min_val(1-p[i], upper_bound), lower_bound)
+        logit_vals[i] = log(p[i] / denom)
     return logit_vals
 
 
@@ -68,10 +98,14 @@ cpdef double[:] logit_inv(double[:] p,
                           int p_len):
     """
     Inverse Logit transform (logit-1()).
+
+    Takes a vector with values \in (-inf, inf) and transforms each
+    to a value \in (0, 1).
     """
     # original python code
     #denom = append(x, 0)
     #p = exp(x)/(sum(exp(denom)))
+    ##########
     cdef double[:] logit_inv_vals = array_utils.get_double_array(p_len)
     # The denominator is sum(exp(x)) + exp(0)
     cdef double denom = exp(0)

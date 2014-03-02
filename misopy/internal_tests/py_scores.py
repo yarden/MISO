@@ -73,6 +73,14 @@ def propose_norm_drift_psi_alpha(alpha_vector,
     return (new_psi_vector, alpha_next)
 
 
+def logit(p):
+    """
+    Takes a value p \in (0, 1) and transforms it to (-inf, inf).
+    """
+    x = np.log(p/(1-p))
+    return x
+
+
 def logit_inv(x):
     """
     Takes a value on x \in (-inf, inf) and transforms it to a value on (0, 1).

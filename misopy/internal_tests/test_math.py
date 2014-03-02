@@ -14,6 +14,7 @@ from scipy.special import gammaln
 
 import misopy
 import misopy.pyx
+import misopy.pyx.math_utils as math_utils
 import misopy.pyx.matrix_utils as matrix_utils
 import misopy.pyx.sampling_utils as sampling_utils
 import misopy.internal_tests.py_scores as py_scores
@@ -142,8 +143,33 @@ class TestMath(unittest.TestCase):
 
 
     def test_logit(self):
-        print "Testing logit / inverse logit transforms"
-        math_utils.logit([])
+        print "Testing logit transform"
+        x = np.array([0.5, 0.6, 0.01, 0.001, 0.9999, 0, 0.99],
+                     dtype=float)
+        numpy_logit = py_scores.logit(x)
+        pyx_logit = np.asarray(math_utils.logit(x, x.shape[0]))
+        print "Numpy logit: "
+        print numpy_logit
+        print "Pyx logit: "
+        print pyx_logit
+        assert (np.array_equal(numpy_logit, pyx_logit)), \
+          "Logit failed."
+
+          
+    def test_logit_inv(self):
+        print "Testing inverse logit transform"
+        x = np.array([-100, 100, 0.5, 0.6, -0.58, 0.8, 1, 0],
+                     dtype=float)
+        numpy_logit_inv = py_scores.logit_inv(x)
+        pyx_logit_inv = np.asarray(math_utils.logit_inv(x, x.shape[0]))
+        print "Numpy logit inv: "
+        print numpy_logit_inv
+        print "Pyx logit inv: "
+        print pyx_logit_inv
+        assert (np.array_equal(numpy_logit_inv, pyx_logit_inv)), \
+          "Logit inverse failed."
+        
+        
         
 
 def main():
