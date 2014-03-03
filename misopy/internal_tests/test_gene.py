@@ -24,9 +24,9 @@ import misopy.pyx.math_utils as math_utils
 import misopy.pyx.gene_class as gene_class
 
 
-class TestScores(unittest.TestCase):
+class TestGene(unittest.TestCase):
     """
-    Test MISO scoring functions.
+    Test gene.
     """
     def setUp(self):
         pass
