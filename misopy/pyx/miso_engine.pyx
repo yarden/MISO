@@ -123,8 +123,11 @@ cdef class SingleEndEngine:
           if (n_iter == (self.burn_in - 1)):
               print "Counting %d as start of post burn in" %(n_iter)
               track_lag = 1
+          # Calculate the MH ratio here
+          # ...
           # Keep sample and reset counter
           if (lag_counter == self.lag):
+              # Store samples and their log scores
               psi_samples[kept_samples] = 0.0
               log_scores[kept_samples] = 1.0
               kept_samples += 1
