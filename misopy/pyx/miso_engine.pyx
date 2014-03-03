@@ -69,8 +69,11 @@ cdef class SingleEndEngine:
       # Calculate the number of samples to generate, 
       # incorporating burn-in and lag
       self.num_samples = \
-        ((self.num_iters - self.burn_in) / self.lag) * self.num_chains
+        <int>((self.num_iters - self.burn_in) / self.lag) 
+      # Multiply by the number of chains
+      self.num_samples = self.num_chains * self.num_samples
 
+      
   def filter_reads(self):
       """
       Filter reads.
@@ -90,10 +93,10 @@ cdef class SingleEndEngine:
       """
       cdef int n_iter = 0
       cdef int lag_counter = 0
-      # Whether or not to record samples
-      cdef int record_samples = 0
-      # Whether or not we passed burn in phase
-      cdef int past_burn_in = 0
+      # Whether or not to keep a sample
+      cdef int keep_sample = 0
+      # Number of kept samples
+      cdef int kept_samples = 0
       # Whether or not to track lag
       cdef int track_lag = 0
       # Proposals statistics
@@ -112,17 +115,17 @@ cdef class SingleEndEngine:
         array_utils.get_double_array(self.num_samples)
       # Log scores to return
       cdef double[:] log_scores = \
-        array_utisl.get_double_array(self.num_samples)
+        array_utils.get_double_array(self.num_samples)
       print "Running sampler from within"
       # First filter reads
       self.filter_reads()
       for n_iter in xrange(self.num_iters):
-          if (n_iter == self.burn_in):
-              print "Counting %d as start of burn in" %(n_iter)
-              past_burn_in = 1
+          if (n_iter == (self.burn_in - 1)):
+              print "Counting %d as start of post burn in" %(n_iter)
               track_lag = 1
-          # Reset lag if needed
-          if (lag_counter == (self.lag - 1)):
+          # Reset lag counter
+          if (lag_counter == self.lag):
+              kept_samples += 1
               print "Resetting lag on %d" %(n_iter)
               lag_counter = 0
           # Advance lag if we're supposed to keep track of lag,
@@ -130,6 +133,8 @@ cdef class SingleEndEngine:
           if (track_lag == 1):
               print "Tracking lag on iteration %d" %(n_iter)
               lag_counter += 1
+      print "Kept samples: %d" %(kept_samples)
+      print "Num samples calculated: %d" %(self.num_samples)
 
 
 #     def run_sampler(self, num_iters, reads, gene, hyperparameters, params,
