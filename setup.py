@@ -63,8 +63,9 @@ paired_end_ext = Extension("misopy.pyx.miso_scores_paired",
 #                           libraries=["m"],                           
 #                           include_dirs=include_dirs)
 
-# Add sampler routine here...
-# ....
+miso_engine_ext = Extension("misopy.pyx.miso_engine",
+                            ["misopy/pyx/miso_engine.pyx"],
+                            libraries=["m"])
 
 proposals_ext = Extension("misopy.pyx.miso_proposals",
                           ["misopy/pyx/miso_proposals.pyx"],
@@ -149,6 +150,7 @@ array_utils_ext = Extension("misopy.pyx.array_utils",
 # pyx/c extensions to MISO
 miso_extensions = [single_end_ext,
                    paired_end_ext,
+                   miso_engine_ext,
                    proposals_ext,
                    stat_helpers_ext,
                    matrix_utils_ext,
