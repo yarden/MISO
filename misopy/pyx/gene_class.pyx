@@ -17,7 +17,7 @@ cdef class Interval:
     cdef public char* strand
     cdef public int start
     cdef public int end
-    cdef public         int len
+    cdef public int len
     def __init__(self, label, chrom, strand, start, end):
         self.label = label
         self.chrom = chrom
@@ -59,7 +59,7 @@ cdef class Part(Interval):
     """
     MISO part.
     """
-    cdef public char* parent_gene_label
+    cdef public object parent_gene_label
     cdef public object rec
     cdef public object parent_rec
     cdef public char* seq
@@ -70,33 +70,23 @@ cdef class Part(Interval):
         Interval.__init__(self, label, chrom, strand, start, end)
         self.label = label
         self.chrom = chrom
+        print "SETTING PART TO BE: %d" %(start)
+        print "SETTIGN PART TO BE: %d end" %(end)
         self.start = start
         self.end = end
         self.seq = seq
         self.parent_gene_label = parent_gene_label
-        if from_gff_record != None:
+        if from_gff_record is not None:
             # Load information from a GFF record
             self.load_from_gff_record(from_gff_record)
 
             
-    def load_from_gff_record(self, gff_record):
-        """
-        Load exon information from given GFF exon record.
-        """
-        self.rec = gff_record['record']
-        self.parent_rec = gff_record['parent']
-        self.start = self.rec.start
-        self.end = self.rec.end
-        # Use first ID in list
-        self.label = self.rec.attributes['ID'][0]
-        # Set the parent gene label
-        # NOTE: we must assign the output of get_id()
-        # to an intermediate variable before we can
-        # get a pointer (char*) to point to it
-        curr_label = self.parent_rec.get_id()
-        self.parent_gene_label = curr_label
+    def __copy__(self):
+        part_copy = Part(self.label, self.chrom, self.strand, self.start, self.end)
+        part_copy.parent_gene_label = self.parent_gene_label
+        return part_copy
 
-        
+    
     def __repr__(self):
         return "Exon([%d, %d], id = %s, seq = %s)(ParentGene = %s)" \
           %(self.start, self.end,
@@ -106,6 +96,14 @@ cdef class Part(Interval):
     
     def __richcmp__(self, Part other, int op):
         if op == 2:
+            print "COMPARING PARTS: "
+            print other
+            print "with self: "
+            print self.start
+            print self.end
+            print self.parent_gene_label
+            print "OTHER GENE LABEL: "
+            print other.parent_gene_label
             if other is None:
                 return False
             # Two records are the same if they have the same start/end
@@ -117,6 +115,24 @@ cdef class Part(Interval):
             raise Exception, "Error: op %d not implemented." %(op)
         return False
 
+
+    def load_from_gff_record(self, gff_record):
+        """
+        Load exon information from given GFF exon record.
+        """
+        print "LOADING PART INFO FROM GFF RECORD"
+        self.rec = gff_record['record']
+        self.parent_rec = gff_record['parent']
+        self.start = int(self.rec.start)
+        self.end = int(self.rec.end)
+        # Use first ID in list
+        self.label = self.rec.attributes['ID'][0]
+        # Set the parent gene label
+        # NOTE: we must assign the output of get_id()
+        # to an intermediate variable before we can
+        # get a pointer (char*) to point to it
+        curr_label = self.parent_rec.get_id()
+        self.parent_gene_label = curr_label
 
     
 
@@ -247,6 +263,19 @@ cdef class Transcript:
         self.end = self.parts[-1].end
 
 
+    def __copy__(self):
+        return Transcript(self.label, self.chrom, self.strand, self.parts)
+
+
+    def has_part(self, Part part):
+        """
+        Return True if part is in the transcript.
+        """
+        if part in self.parts:
+            return True
+        return False
+
+
 cdef class Gene:
     """
     A lightweight representation of a gene and its isoforms.
@@ -269,6 +298,14 @@ cdef class Gene:
         self.strand = strand
         self.start = start
         self.end = end
+
+
+    def __copy__(self):
+        gene_copy = Gene(self.label, self.chrom, self.strand, self.start, self.end)
+        gene_copy.transcripts = self.transcripts
+        gene_copy.num_iso = self.num_iso
+        gene_copy.iso_lens = self.iso_lens
+        return gene_copy
 
 
     def from_gff_recs(self, gene_hierarchy, gene_records):
@@ -335,15 +372,16 @@ cdef class Gene:
             all_exons.extend(transcript.parts)
         self.parts = all_exons
 
-#     def isoform_has_part(self, isoform, part):
-#         """
-#         Return True if isoform has part, otherwise False.
-#         """
-#         for iso_part in isoform.parts:
-#             if iso_part.start == part.start and \
-#                iso_part.end == part.end:
-#                 return True
-#         return False
+        
+    def isoform_has_part(self, isoform, part):
+        """
+        Return True if isoform has part, otherwise False.
+        """
+        for iso_part in isoform.parts:
+            if iso_part.start == part.start and \
+               iso_part.end == part.end:
+                return True
+        return False
 
 #     def get_const_parts(self):
 #         """
