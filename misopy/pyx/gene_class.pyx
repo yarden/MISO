@@ -239,8 +239,6 @@ cdef class Gene:
         self.label = label
         self.chrom = chrom
         self.strand = strand
-#        self.parts = parts
-#        self.iso_lens = array_utils.get_int_array(self.num_iso)
 
 
     def from_gff_recs(self, gene_hierarchy, gene_records):
