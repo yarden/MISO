@@ -48,7 +48,6 @@ class TestGene(unittest.TestCase):
         exons = [gene_utils.Exon(10,20), gene_utils.Exon(30,40), gene_utils.Exon(100,200)]
         gene_obj = gene_class.Gene(label, chrom, strand, 10, 20)
         print "Gene obj: ", gene_obj
-
         # Make gene from GFF
         gff_fname = test_cases.get_gene_gff("Atp2b1")
         gff_db = gff_utils.GFFDatabase(gff_fname)

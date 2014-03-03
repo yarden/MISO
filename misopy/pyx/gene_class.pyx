@@ -361,19 +361,53 @@ cdef class Gene:
             all_exons.extend(transcript.parts)
         self.parts = all_exons
 
-        
-    def from_json(self, json_fname, gene_id):
+
+    def get_json_gene_as_dict(json_fname, gene_id=None):
         """
-        Populate gene information from JSON file.
+        Return the JSON information for a gene
+        as a dictionary.
+
+        Args:
+          json_fname: JSON filename (string)
+
+        Kwargs:
+          gene_id: gene ID to retrieve. if None, picks a single
+          gene at random from the JSON file. Meant to be None
+          when there is only one gene in the JSON file.
         """
         # Load the JSON information as object
+        gene_dict = {}
         with open(json_fname, "r") as json_in:
             genes_dict = convert_unicode_to_str(json.load(json_in))
+            if not gene_dict:
+                # No genes were found in the JSON file
+                raise Exception, "No genes in %s" %(json_fname)
+            if gene_id is None:
+                genes_dict.itervalues()
             if gene_id not in genes_dict:
                 print "Cannot find gene %s" %(gene_id)
                 return None
-            gene = genes_dict[gene_id]
-            return gene
+        return gene_dict
+
+        
+    def from_json(self, json_fname, gene_id=None):
+        """
+        Populate gene information from JSON file.
+        """
+        gene_dict = get_json_gene_as_dict(json_fname,
+                                          gene_id=gene_id)
+        if gene_dict is not None:
+            # Gene cannot be found so quitting
+            return
+        # Populate the current gene object with these fields
+        # Create a set of parts
+        cdef list parts = []
+        cdef list transcripts = []
+        # Gene information
+        self.gene_id = gene_dict["gene_id"]
+        self.chrom = gene_dict["chrom"]
+        self.start = gene_dict["start"]
+        self.gene.end = gene_dict["end"]
 
 
     def save_json(self, json_fname):
