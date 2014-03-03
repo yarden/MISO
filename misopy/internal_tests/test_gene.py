@@ -68,7 +68,7 @@ class TestGene(unittest.TestCase):
         assert (gene_obj.transcripts[0].has_part(part_copy)), \
           "Cannot find part copy in transcript."
         for transcript in gene_obj.transcripts:
-            print "Transcript:" , transcript
+            print "Transcript:" , transcript.label
         
         # print gene_obj.label
         # print gene_obj.isoform_desc

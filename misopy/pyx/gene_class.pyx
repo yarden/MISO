@@ -70,8 +70,6 @@ cdef class Part(Interval):
         Interval.__init__(self, label, chrom, strand, start, end)
         self.label = label
         self.chrom = chrom
-        print "SETTING PART TO BE: %d" %(start)
-        print "SETTIGN PART TO BE: %d end" %(end)
         self.start = start
         self.end = end
         self.seq = seq
