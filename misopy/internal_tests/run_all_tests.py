@@ -10,6 +10,8 @@ import misopy.internal_tests as internal_tests
 
 test_modules = ["test_scores",
                 "test_lapack",
+                "test_engine",
+                "test_gene",
                 "test_math"]
 for test_mod in test_modules:
     print "Testing %s" %(test_mod)
