@@ -14,6 +14,7 @@ cdef class SingleEndEngine:
   """
   MISO single-end engine.
   """
+  cdef char* sampler_type
   ## Gene information
   # Number of isoforms
   cdef int num_iso
@@ -43,7 +44,8 @@ cdef class SingleEndEngine:
       """
       Initialize variables prior to Python.
       """
-      pass
+      self.sampler_type = "single-end"
+      
   
   def __init__(self, reads, iso_lens, read_len, covar_mat, covar_L,
                overhang_len=1,
@@ -93,8 +95,6 @@ cdef class SingleEndEngine:
       """
       cdef int n_iter = 0
       cdef int lag_counter = 0
-      # Whether or not to keep a sample
-      cdef int keep_sample = 0
       # Number of kept samples
       cdef int kept_samples = 0
       # Whether or not to track lag
@@ -116,15 +116,17 @@ cdef class SingleEndEngine:
       # Log scores to return
       cdef double[:] log_scores = \
         array_utils.get_double_array(self.num_samples)
-      print "Running sampler from within"
+      print "Running %s" %(self.sampler_type)
       # First filter reads
       self.filter_reads()
       for n_iter in xrange(self.num_iters):
           if (n_iter == (self.burn_in - 1)):
               print "Counting %d as start of post burn in" %(n_iter)
               track_lag = 1
-          # Reset lag counter
+          # Keep sample and reset counter
           if (lag_counter == self.lag):
+              psi_samples[kept_samples] = 0.0
+              log_scores[kept_samples] = 1.0
               kept_samples += 1
               print "Resetting lag on %d" %(n_iter)
               lag_counter = 0
@@ -133,6 +135,8 @@ cdef class SingleEndEngine:
           if (track_lag == 1):
               print "Tracking lag on iteration %d" %(n_iter)
               lag_counter += 1
+          # Reset keeping sample
+          keep_sample = 0
       print "Kept samples: %d" %(kept_samples)
       print "Num samples calculated: %d" %(self.num_samples)
 
