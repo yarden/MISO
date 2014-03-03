@@ -71,8 +71,16 @@ class TestGene(unittest.TestCase):
             print "Transcript:" , transcript.label
         # Test retrieval of constitutive parts
         const_parts = gene_obj.get_const_parts()
-        print "Const parts: "
-        print const_parts
+        assert (len(const_parts) == 10), "Failed to get all constitutive exons."
+        ##
+        ## Test gene serialization
+        ##
+        # Serialize as JSON
+        gene_obj.save_json("./__gene.json")
+        # Read gene back from JSON
+        new_gene_dict = gene_obj.from_json("./__gene.json", gene_obj.label)
+        print "new gene dict: "
+        print new_gene_dict
         
         # print gene_obj.label
         # print gene_obj.isoform_desc

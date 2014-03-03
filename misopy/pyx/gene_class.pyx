@@ -7,6 +7,9 @@ cimport cython
 cimport array_utils
 cimport math_utils
 
+import os
+import json
+
     
 cdef class Interval:
     """
@@ -60,13 +63,15 @@ cdef class Part(Interval):
     MISO part.
     """
     cdef public object parent_gene_label
+    cdef public object parent_mRNA_label
+    
     cdef public object rec
     cdef public object parent_rec
     cdef public char* seq
     def __init__(self, label, chrom, strand, start, end,
                  parent_gene_label="",
-                 seq="",
-                 from_gff_record=None):
+                 parent_mRNA_label="",
+                 seq=""):
         Interval.__init__(self, label, chrom, strand, start, end)
         self.label = label
         self.chrom = chrom
@@ -74,11 +79,9 @@ cdef class Part(Interval):
         self.end = end
         self.seq = seq
         self.parent_gene_label = parent_gene_label
-        if from_gff_record is not None:
-            # Load information from a GFF record
-            self.load_from_gff_record(from_gff_record)
+        self.parent_mRNA_label = parent_mRNA_label
 
-            
+        
     def __copy__(self):
         part_copy = Part(self.label, self.chrom, self.strand, self.start, self.end)
         part_copy.parent_gene_label = self.parent_gene_label
@@ -98,35 +101,15 @@ cdef class Part(Interval):
                 return False
             # Two records are the same if they have the same start/end
             # and if they have the same parent gene
-            if (self.start == other.start) and (self.end == other.end) \
-               and (self.parent_gene_label == other.parent_gene_label):
+            if (self.start == other.start) and (self.end == other.end) and \
+               (self.chrom == other.chrom) and (self.strand == other.strand) and \
+               (self.parent_gene_label == other.parent_gene_label):
                 return True
         else:
             raise Exception, "Error: op %d not implemented." %(op)
         return False
 
-
-    def load_from_gff_record(self, gff_record):
-        """
-        Load exon information from given GFF exon record.
-        """
-        print "LOADING PART INFO FROM GFF RECORD"
-        self.rec = gff_record['record']
-        self.parent_rec = gff_record['parent']
-        self.start = int(self.rec.start)
-        self.end = int(self.rec.end)
-        # Use first ID in list
-        self.label = self.rec.attributes['ID'][0]
-        # Set the parent gene label
-        # NOTE: we must assign the output of get_id()
-        # to an intermediate variable before we can
-        # get a pointer (char*) to point to it
-        curr_label = self.parent_rec.get_id()
-        self.parent_gene_label = curr_label
-
     
-
-
 # def make_gene_from_gff_records(gene_label,
 #                                gene_hierarchy,
 #                                gene_records):
@@ -266,6 +249,23 @@ cdef class Transcript:
         return False
 
 
+def convert_unicode_to_str(input):
+    """
+    Convert JSON object from unicode to plain string
+    whenever possible.
+    """
+    if isinstance(input, dict):
+        return {convert_unicode_to_str(key):
+                convert_unicode_to_str(value) \
+                for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [convert_unicode_to_str(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
+    
+    
 cdef class Gene:
     """
     A lightweight representation of a gene and its isoforms.
@@ -299,7 +299,7 @@ cdef class Gene:
         return gene_copy
 
 
-    def from_gff_recs(self, gene_hierarchy, gene_records):
+    def from_gff_recs(self, gene_hierarchy, gene_records, gene_label=""):
         """
         Populate gene information from gene hierarchy and gene records.
         """
@@ -339,10 +339,8 @@ cdef class Gene:
                             strand,
                             exon_rec.start,
                             exon_rec.end,
-                            from_gff_record={'record':
-                                             exon_rec,
-                                             'parent':
-                                             transcript_rec})
+                            parent_mRNA_label=transcript_id,
+                            parent_gene_label=gene_label)
                 exons.append(exon)
             # Sort exons by their start coordinate
             exons = sorted(exons, key=lambda e: e.start)
@@ -363,6 +361,68 @@ cdef class Gene:
             all_exons.extend(transcript.parts)
         self.parts = all_exons
 
+        
+    def from_json(self, json_fname, gene_id):
+        """
+        Populate gene information from JSON file.
+        """
+        # Load the JSON information as object
+        with open(json_fname, "r") as json_in:
+            genes_dict = convert_unicode_to_str(json.load(json_in))
+            if gene_id not in genes_dict:
+                print "Cannot find gene %s" %(gene_id)
+                return None
+            gene = genes_dict[gene_id]
+            return gene
+
+
+    def save_json(self, json_fname):
+        """
+        Save gene information as JSON file. This creates
+        a dictionary of dictionaries, where each dictionary corresponds
+        to a gene indexed by its name.
+        The dictionary is a simple text that can be used to
+        reconstruct the Gene object later.
+        """
+        gene = {"gene_id": self.label,
+                "chrom": self.chrom,
+                "strand": self.strand,
+                "start": self.start,
+                "end": self.end}
+        with open(json_fname, "w") as json_out:
+            mRNA_ids = [trans.label for trans in self.transcripts]
+            exon_ids = [e.label for e in self.parts]
+            gene["mRNA_ids"] = mRNA_ids
+            gene["exon_ids"] = exon_ids
+            # mRNAs is a list of dictionaries
+            gene["mRNAs"] = []
+            for mRNA in self.transcripts:
+                # Record mRNA
+                mRNA_entry = {"mRNA_id": mRNA.label,
+                              "parent_id": gene["gene_id"],
+                              "chrom": mRNA.chrom,
+                              "strand": mRNA.strand,
+                              "start": mRNA.start,
+                              "end": mRNA.end}
+                mRNA_entry["exons"] = []
+                # Record each of its exons
+                for exon in mRNA.parts:
+                    exon = {"exon_id": exon.label,
+                            "chrom": exon.chrom,
+                            "strand": exon.strand,
+                            "start": exon.start,
+                            "end": exon.end,
+                            "gene_id": gene["gene_id"],
+                            "parent_id": mRNA_entry["mRNA_id"]}
+                    mRNA_entry["exons"].append(exon)
+                # Save mRNA entry to gene
+                gene["mRNAs"].append(mRNA_entry)
+            # Serialize the gene as a list containing the gene dictionary,
+            # so that this can generalize to a JSON file containing more
+            # than one gene
+            genes = {gene["gene_id"]: gene}
+            json.dump(genes, json_out)
+            
 
     def get_const_parts(self):
         """
@@ -372,8 +432,9 @@ cdef class Gene:
         cdef list const_parts = []
         for part in self.parts:
             add_part = True
-            for isoform in self.trancripts:
-                if not isoform.has_part(part)
+            for isoform in self.transcripts:
+                if not isoform.has_part(part):
+                    print "part: ", part, " not in ", isoform.label
                     add_part = False
             if add_part:
                 const_parts.append(part)
