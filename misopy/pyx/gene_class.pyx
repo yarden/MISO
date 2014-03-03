@@ -295,6 +295,7 @@ cdef class Gene:
         gene_copy.transcripts = self.transcripts
         gene_copy.num_iso = self.num_iso
         gene_copy.iso_lens = self.iso_lens
+        gene_copy.isoform_desc = self.isoform_desc
         return gene_copy
 
 
@@ -362,34 +363,21 @@ cdef class Gene:
             all_exons.extend(transcript.parts)
         self.parts = all_exons
 
-        
-    def isoform_has_part(self, isoform, part):
-        """
-        Return True if isoform has part, otherwise False.
-        """
-        for iso_part in isoform.parts:
-            if iso_part.start == part.start and \
-               iso_part.end == part.end:
-                return True
-        return False
 
-#     def get_const_parts(self):
-#         """
-#         Return all of the gene's constitutive parts, i.e. regions that are shared across all isoforms.
-#         """
-#         const_parts = []
-#         for part in self.parts:
-#             add_part = True
-#             for isoform in self.isoforms:
-#                 if not self.isoform_has_part(isoform, part):
-#                     add_part = False
-# #               if part not in isoform.parts:
-# #                   add_part = False
-#             if add_part:
-#                 const_parts.append(part)
-# #       if len(const_parts) == 0:
-# #           raise Exception, "Gene %s has no constitutive parts!" %(str(self))
-#         return const_parts
+    def get_const_parts(self):
+        """
+        Return all of the gene's constitutive parts,
+        i.e. regions that are shared across all isoforms.
+        """
+        cdef list const_parts = []
+        for part in self.parts:
+            add_part = True
+            for isoform in self.trancripts:
+                if not isoform.has_part(part)
+                    add_part = False
+            if add_part:
+                const_parts.append(part)
+        return const_parts
 
 #     def get_alternative_parts(self):
 #         """

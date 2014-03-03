@@ -69,6 +69,10 @@ class TestGene(unittest.TestCase):
           "Cannot find part copy in transcript."
         for transcript in gene_obj.transcripts:
             print "Transcript:" , transcript.label
+        # Test retrieval of constitutive parts
+        const_parts = gene_obj.get_const_parts()
+        print "Const parts: "
+        print const_parts
         
         # print gene_obj.label
         # print gene_obj.isoform_desc
