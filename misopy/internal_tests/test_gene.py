@@ -23,6 +23,8 @@ import misopy.pyx.stat_helpers as stat_helpers
 import misopy.pyx.math_utils as math_utils
 import misopy.pyx.gene_class as gene_class
 
+import misopy.Gene as gene_utils
+
 
 class TestGene(unittest.TestCase):
     """
@@ -37,16 +39,21 @@ class TestGene(unittest.TestCase):
         chrom = "chr22"
         strand = "+"
         isoform_desc = [["A", "B", "C"], ["A", "C"]]
-        exons = [["A", 100], ["B", 50], ["C", 120]]
-        gene_obj = gene_class.MISOGene(label, chrom, strand, isoform_desc, exons)
+        #exons = [["A", 100], ["B", 50], ["C", 120]]
+        exons = [gene_utils.Exon(10,20), gene_utils.Exon(30,40), gene_utils.Exon(100,200)]
+        gene_obj = gene_class.Gene(label, chrom, strand, isoform_desc, exons)
         print "Gene obj: ", gene_obj
         print gene_obj.label
         print gene_obj.isoform_desc
         for iso in gene_obj.isoform_desc:
             print "Isoform: ", iso
-        for exon in gene_obj.exons:
+        for exon in gene_obj.parts:
             print "Exon: ", exon
-            print exon[0], exon[1]
+        # Overwrite exons
+        new_exons = [gene_utils.Exon(5,20)]
+        gene_obj.parts = new_exons
+        print "Resetting exons: "
+        print gene_obj.parts
 
 
 

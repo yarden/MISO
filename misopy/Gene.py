@@ -87,6 +87,7 @@ class Exon(Interval):
         #    return True
         return False
 
+    
 class Intron(Interval):
     def __init__(self, start, end, label=None, gene=None, seq=""):
         Interval.__init__(self, start, end)

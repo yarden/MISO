@@ -7,22 +7,223 @@ cimport cython
 cimport array_utils
 cimport math_utils
 
-
-cdef class MISOPart:
-    """
-    MISO part.
-    """
-    pass
-
-
-cdef class MISOInterval:
+    
+cdef class Interval:
     """
     MISO interval.
     """
-    pass
+    cdef char* label
+    cdef char* chrom
+    cdef char* strand
+    cdef int start
+    cdef int end
+    cdef int len
+    def __init__(self, label, chrom, strand, start, end):
+        self.label = label
+        self.chrom = chrom
+        self.strand = strand
+        self.start = start
+        self.end = end
 
 
-cdef class MISOGene:
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+        assert(self.start <= self.end)
+        self.len = self.end - self.start + 1
+        assert(self.len >= 1)
+
+    def __repr__(self):
+        return "Interval([%d, %d])" %(self.start, self.end)
+
+    def __richcmp__(self, Interval interval, int op):
+        """
+        When op is 2 that means '=='
+        """
+        if op == 2:
+            if interval == None: return False
+            return (self.start == interval.start) and \
+                   (self.end == interval.end)
+        else:
+            print "Error: op given not implemented."
+            return False
+
+    def contains(self, start, end):
+        if self.start <= start and self.end >= end:
+            return True
+        return False
+
+    def intersects(self, other):
+        if (self.start < other.end
+            and self.end > other.start):
+            return True
+        return False
+        
+
+cdef class Part(Interval):
+    """
+    MISO part.
+    """
+    cdef char* parent_gene_label
+    cdef object rec
+    cdef object parent_rec
+    cdef char* seq
+
+    def __init__(self, label, chrom, strand, start, end,
+                 parent_gene_label="",
+                 seq="",
+                 from_gff_record=None):
+        Interval.__init__(self, label, chrom, strand, start, end)
+        self.label = label
+        self.chrom = chrom
+        self.start = start
+        self.end = end
+        self.seq = seq
+        self.parent_gene_label = parent_gene_label
+        if from_gff_record != None:
+            # Load information from a GFF record
+            self.load_from_gff_record(from_gff_record)
+
+            
+    def load_from_gff_record(self, gff_record):
+        """
+        Load exon information from given GFF exon record.
+        """
+        self.rec = gff_record['record']
+        self.parent_rec = gff_record['parent']
+        self.start = self.rec.start
+        self.end = self.rec.end
+        # Use first ID in list
+        self.label = self.rec.attributes['ID'][0]
+        # Set the parent gene label
+        self.parent_gene_label = self.parent_rec.id
+
+        
+    def __repr__(self):
+        return "Exon([%d, %d], id = %s, seq = %s)(ParentGene = %s)" \
+          %(self.start, self.end,
+            self.label, self.seq,
+            self.parent_gene_label)
+
+    
+    def __richcmp__(self, Part other, int op):
+        if op == 2:
+            if other is None:
+                return False
+            # Two records are the same if they have the same start/end
+            # and if they have the same parent gene
+            if (self.start == other.start) and (self.end == other.end) \
+               and (self.parent_gene_label == other.parent_gene_label):
+                return True
+        else:
+            print "Error: Operator not defined."
+            return False
+        return False
+
+
+    
+
+
+# def make_gene_from_gff_records(gene_label,
+#                                gene_hierarchy,
+#                                gene_records):
+#     """
+#     Make a gene from a gene hierarchy.
+#     """
+#     mRNAs = gene_hierarchy['mRNAs']
+
+#     # Each transcript is a set of exons
+#     transcripts = []
+#     isoform_desc = []
+
+#     chrom = None
+#     strand = "NA"
+
+#     # Iterate through mRNAs in the order in which they were given in the
+#     # GFF file
+#     transcript_ids = [rec.get_id() for rec in gene_records \
+#                       if (rec.type == "mRNA" or rec.type == "transcript")]
+
+#     if len(transcript_ids) == 0:
+#         raise Exception, "Error: %s has no transcripts..." \
+#               %(gene_label)
+
+#     num_transcripts_with_exons = 0
+
+#     used_transcript_ids = []
+
+#     for transcript_id in transcript_ids:
+#         transcript_info = mRNAs[transcript_id]
+#         transcript_rec = transcript_info['record']
+
+#         chrom = transcript_rec.seqid
+#         strand = transcript_rec.strand
+#         transcript_exons = transcript_info['exons']
+#         exons = []
+
+#         if len(transcript_exons) == 0:
+#             print "%s has no exons" %(transcript_id)
+#             continue
+
+#         # Record how many transcripts we have with exons children
+#         # (i.e., usable transcripts)
+#         num_transcripts_with_exons += 1
+
+#         for exon_id, exon_info in transcript_exons.iteritems():
+#             exon_rec = exon_info['record']
+
+#             exon = Exon(exon_rec.start, exon_rec.end, from_gff_record={'record':
+#                                                                        exon_rec,
+#                                                                        'parent':
+#                                                                        transcript_rec})
+#             exons.append(exon)
+
+#         # Sort exons by their start coordinate
+#         exons = sorted(exons, key=lambda e: e.start)
+
+#         # Exons that make up a transcript
+#         transcripts.append(exons)
+
+#         # Get exon labels to make transcript's description
+#         exon_labels = [exon.label for exon in exons]
+
+#         # Delimiter for internal representation of isoforms
+#         #iso_delim = "_"
+
+#         # The transcript's description
+#         #for label in exon_labels:
+#         #    if iso_delim in label:
+#         #        raise Exception, "Cannot use %s in naming exons (%s) in GFF." %(iso_delim,
+#         #                                                                        label)
+
+#         #desc = iso_delim.join(exon_labels)
+#         isoform_desc.append(exon_labels)
+#         # Record transcript ids that are not skipped
+#         used_transcript_ids.append(transcript_id)
+
+#     #if num_transcripts_with_exons < 2:
+#     #    print "WARNING: %s does not have at least two mRNA/transcript entries " \
+#     #          "with exons. Skipping over..." %(gene_label)
+#     #    return None
+
+#     # Compile all exons used in all transcripts
+#     all_exons = []
+#     [all_exons.extend(transcript) for transcript in transcripts]
+
+#     # Prefix chromosome with "chr" if it does not have it already
+#     #if not chrom.startswith("chr"):
+#     #    chrom = "chr%s" %(chrom)
+
+#     gene = Gene(isoform_desc, all_exons,
+#                 label=gene_label,
+#                 chrom=chrom,
+#                 strand=strand,
+#                 transcript_ids=used_transcript_ids)
+
+#     return gene
+
+
+cdef class Gene:
     """
     A lightweight representation of a gene and its isoforms.
     """
@@ -30,20 +231,83 @@ cdef class MISOGene:
     cdef public char* chrom
     cdef public char* strand
     cdef public list isoform_desc
-    cdef public list exons
+    cdef public list parts
     cdef int num_iso 
     cdef int[:] iso_lens
     
-    def __init__(self, label, chrom, strand, isoform_desc, exons):
+    def __init__(self, label, chrom, strand):
         self.label = label
         self.chrom = chrom
         self.strand = strand
-        self.num_iso = len(isoform_desc)
-        self.isoform_desc = isoform_desc
-        self.exons = exons
-        self.iso_lens = array_utils.get_int_array(self.num_iso)
+#        self.parts = parts
+#        self.iso_lens = array_utils.get_int_array(self.num_iso)
+
+
+    def from_gff_recs(self, gene_hierarchy, gene_records):
+        """
+        Populate gene information from gene hierarchy and gene records.
+        """
+        mRNAs = gene_hierarchy['mRNAs']
+        # Each transcript is a set of exons
+        cdef list transcripts = []
+        cdef list isoform_desc = []
+        cdef list transcript_ids = []
+        cdef list used_transcript_ids = []
+        cdef list exons = []
+        cdef int num_transcripts_with_exons = 0
+        cdef char* chrom = ""
+        cdef char* strand = "NA"
+
+        # Iterate through mRNAs in the order in which they were given in the
+        # GFF file
+        transcript_ids = [rec.get_id() for rec in gene_records \
+                          if (rec.type == "mRNA" or rec.type == "transcript")]
+        if len(transcript_ids) == 0:
+            raise Exception, "Error: %s has no transcripts..." \
+                  %(self.label)
+        for transcript_id in transcript_ids:
+            transcript_info = mRNAs[transcript_id]
+            transcript_rec = transcript_info['record']
+            chrom = transcript_rec.seqid
+            strand = transcript_rec.strand
+            transcript_exons = transcript_info['exons']
+            exons = []
+            if len(transcript_exons) == 0:
+                print "%s has no exons" %(transcript_id)
+                continue
+            # Record how many transcripts we have with exons children
+            # (i.e., usable transcripts)
+            num_transcripts_with_exons += 1
+            for exon_id, exon_info in transcript_exons.iteritems():
+                exon_rec = exon_info['record']
+                exon = Part(exon_rec.start,
+                            exon_rec.end,
+                            from_gff_record={'record':
+                                             exon_rec,
+                                             'parent':
+                                             transcript_rec})
+                exons.append(exon)
+            # Sort exons by their start coordinate
+            exons = sorted(exons, key=lambda e: e.start)
+            # Exons that make up a transcript
+            transcripts.append(exons)
+            # Get exon labels to make transcript's description
+            exon_labels = [exon.label for exon in exons]
+            isoform_desc.append(exon_labels)
+            # Record transcript ids that are not skipped
+            used_transcript_ids.append(transcript_id)
+        # Compile all exons used in all transcripts
+        all_exons = []
+        [all_exons.extend(transcript) for transcript in transcripts]
+        # gene = Gene(isoform_desc, all_exons,
+        #             label=gene_label,
+        #             chrom=chrom,
+        #             strand=strand,
+        #             transcript_ids=used_transcript_ids)
+
+        # return gene
         
-        # self.parts = self.create_parts(parts)
+        
         # self.isoforms = []
         # self.num_parts = len(self.parts)
         # self.chrom = chrom
@@ -825,103 +1089,6 @@ cdef class MISOGene:
 #     return gff_genes
 
 
-# def make_gene_from_gff_records(gene_label,
-#                                gene_hierarchy,
-#                                gene_records):
-#     """
-#     Make a gene from a gene hierarchy.
-#     """
-#     mRNAs = gene_hierarchy['mRNAs']
-
-#     # Each transcript is a set of exons
-#     transcripts = []
-#     isoform_desc = []
-
-#     chrom = None
-#     strand = "NA"
-
-#     # Iterate through mRNAs in the order in which they were given in the
-#     # GFF file
-#     transcript_ids = [rec.get_id() for rec in gene_records \
-#                       if (rec.type == "mRNA" or rec.type == "transcript")]
-
-#     if len(transcript_ids) == 0:
-#         raise Exception, "Error: %s has no transcripts..." \
-#               %(gene_label)
-
-#     num_transcripts_with_exons = 0
-
-#     used_transcript_ids = []
-
-#     for transcript_id in transcript_ids:
-#         transcript_info = mRNAs[transcript_id]
-#         transcript_rec = transcript_info['record']
-
-#         chrom = transcript_rec.seqid
-#         strand = transcript_rec.strand
-#         transcript_exons = transcript_info['exons']
-#         exons = []
-
-#         if len(transcript_exons) == 0:
-#             print "%s has no exons" %(transcript_id)
-#             continue
-
-#         # Record how many transcripts we have with exons children
-#         # (i.e., usable transcripts)
-#         num_transcripts_with_exons += 1
-
-#         for exon_id, exon_info in transcript_exons.iteritems():
-#             exon_rec = exon_info['record']
-
-#             exon = Exon(exon_rec.start, exon_rec.end, from_gff_record={'record':
-#                                                                        exon_rec,
-#                                                                        'parent':
-#                                                                        transcript_rec})
-#             exons.append(exon)
-
-#         # Sort exons by their start coordinate
-#         exons = sorted(exons, key=lambda e: e.start)
-
-#         # Exons that make up a transcript
-#         transcripts.append(exons)
-
-#         # Get exon labels to make transcript's description
-#         exon_labels = [exon.label for exon in exons]
-
-#         # Delimiter for internal representation of isoforms
-#         #iso_delim = "_"
-
-#         # The transcript's description
-#         #for label in exon_labels:
-#         #    if iso_delim in label:
-#         #        raise Exception, "Cannot use %s in naming exons (%s) in GFF." %(iso_delim,
-#         #                                                                        label)
-
-#         #desc = iso_delim.join(exon_labels)
-#         isoform_desc.append(exon_labels)
-#         # Record transcript ids that are not skipped
-#         used_transcript_ids.append(transcript_id)
-
-#     #if num_transcripts_with_exons < 2:
-#     #    print "WARNING: %s does not have at least two mRNA/transcript entries " \
-#     #          "with exons. Skipping over..." %(gene_label)
-#     #    return None
-
-#     # Compile all exons used in all transcripts
-#     all_exons = []
-#     [all_exons.extend(transcript) for transcript in transcripts]
-
-#     # Prefix chromosome with "chr" if it does not have it already
-#     #if not chrom.startswith("chr"):
-#     #    chrom = "chr%s" %(chrom)
-
-#     gene = Gene(isoform_desc, all_exons,
-#                 label=gene_label,
-#                 chrom=chrom,
-#                 strand=strand,
-#                 transcript_ids=used_transcript_ids)
-
-#     return gene
 
 
 # def make_gene(parts_lens, isoforms, chrom=None):
