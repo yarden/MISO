@@ -96,14 +96,6 @@ cdef class Part(Interval):
     
     def __richcmp__(self, Part other, int op):
         if op == 2:
-            print "COMPARING PARTS: "
-            print other
-            print "with self: "
-            print self.start
-            print self.end
-            print self.parent_gene_label
-            print "OTHER GENE LABEL: "
-            print other.parent_gene_label
             if other is None:
                 return False
             # Two records are the same if they have the same start/end
