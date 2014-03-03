@@ -56,7 +56,7 @@ class TestGene(unittest.TestCase):
         results = gff_db.get_genes_records([gene_id])
         gene_recs = results[0]
         gene_hierarchy = results[1][gene_id]
-        print "LOADING FROM GFF"
+        print "Loading gene from GFF"
         gene_obj.from_gff_recs(gene_hierarchy, gene_recs)
         # Take first part of first transcript
         part = gene_obj.transcripts[0].parts[0]
@@ -67,7 +67,8 @@ class TestGene(unittest.TestCase):
         part_copy = copy.copy(part)
         assert (gene_obj.transcripts[0].has_part(part_copy)), \
           "Cannot find part copy in transcript."
-        
+        for transcript in gene_obj.transcripts:
+            print "Transcript:" , transcript
         
         # print gene_obj.label
         # print gene_obj.isoform_desc
