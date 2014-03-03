@@ -26,6 +26,24 @@ iso_nums = [0]*3245 + [1]*22 + [0]*19937 + [1]*19937
 iso_nums = np.array(iso_nums, dtype=np.dtype("i"))
 num_reads = len(READS)
 
+def get_test_data_dir():
+    test_data_dir = os.path.abspath(os.path.join(__file__, "..",
+                                                 "..", "test-data"))
+    return test_data_dir
+
+
+def get_gene_gff(example_name):
+    print "Getting gene GFF for %s" %(example_name)
+    data_dir = get_test_data_dir()
+    fname = None
+    if example_name == "Atp2b1":
+        fname = os.path.join(data_dir, "gff-events", "mm9", 
+                             "genes", "%s.mm9.gff" %(example_name))
+    else:
+        raise Exception, "Cannot find example %s" %(example_name)
+    return fname
+    
+
 
 
 

@@ -37,20 +37,6 @@ from urllib import quote as url_quote, unquote as url_unquote
 
 from collections import defaultdict
 
-#__all__ = ["GFF", "GFFDatabase", "Reader", "Writer", "FormatError",
-#           "Metadatum", "SequenceRegion"]
-
-# def get_gene_record_ids(gff_filename, version="3"):
-#     """
-#     Pull all the gene IDs from a GFF.
-#     """
-#     FILE = open(gff_filename, "r")
-#     gff = Reader(FILE, version)
-
-#     gene_records = [record for record in gff \
-#                     if record.type == "gene"]
-
-#     return gene_records
 
 def load_indexed_gff_file(indexed_gff_filename):
     """
@@ -176,6 +162,7 @@ class GFFDatabase:
         self.__entries = []
         self.from_filename = from_filename
         self.suppress_warnings = suppress_warnings
+        self.gene_ids_to_gene_recs = {}
 
         ## Indexed representation of GFFs
         self.mRNAs_by_gene = defaultdict(list)
@@ -202,6 +189,7 @@ class GFFDatabase:
         reader = Reader(FILE, version)
         for record in reader.read_recs(reverse_recs=reverse_recs):
             if record.type == "gene":
+                self.gene_ids_to_gene_recs[record.get_id()] = record
                 self.genes.append(record)
             # Allow "transcript"
             elif record.type == "mRNA" or record.type == "transcript":
@@ -223,9 +211,20 @@ class GFFDatabase:
         self.from_filename = filename
         FILE.close()
 
-    def get_genes_records(self, genes):
+    def get_genes_records(self, genes, with_gene_recs=False):
         """
-        Return all the relevant records for a set of genes.
+        Get all the relevant records for a set of genes and
+        a gene hierarchy represented as a nested dictionary.
+
+        Args:
+          genes: list of gene IDs
+
+        Kwargs:
+          with_gene_rec: if True, return the 'gene' record as well as
+          first record in list
+        
+        Returns:
+          a tuple (gene_recs, gene_hierarchy)
         """
         recs = []
         gene_hierarchy = {}
@@ -280,8 +279,12 @@ class GFFDatabase:
                           %(gene, self.from_filename)
                 # Remove from gene hierarchy
                 del gene_hierarchy[gene]
-#               raise Exception, "No entries found for gene %s in GFF: %s" %(gene,
-#                                                                             self.from_filename)
+            # If asked, add the gene record as first record
+            if with_gene_recs:
+                if gene_id in self.gene_ids_to_gene_recs:
+                    # Add record if we can find its records
+                    gene_rec = self.gene_ids_to_gene_recs[gene_id]
+                    recs = [gene_rec] + recs
             # add mRNAs
             recs.extend(mRNAs)
             # add exons
@@ -673,14 +676,14 @@ class Reader:
 
         try:
             return GFF(seqid=fields[0],
-                          source=fields[1],
-                          type=fields[2],
-                          start=int(fields[3]),
-                          end=int(fields[4]),
-                          score=float(fields[5]),
-                          strand=parse_maybe_empty(fields[6]),
-                          phase=parse_maybe_empty(fields[7], int),
-                          attributes=attributes)
+                       source=fields[1],
+                       type=fields[2],
+                       start=int(fields[3]),
+                       end=int(fields[4]),
+                       score=float(fields[5]),
+                       strand=parse_maybe_empty(fields[6]),
+                       phase=parse_maybe_empty(fields[7], int),
+                       attributes=attributes)
         except ValueError, e:
             raise FormatError, "GFF field format error: " + e.message
 
@@ -696,14 +699,14 @@ class Reader:
 
         try:
             return GFF(seqid=fields[0],
-                          source=fields[1],
-                          type=fields[2],
-                          start=int(fields[3]),
-                          end=int(fields[4]),
-                          score=parse_maybe_empty(fields[5], float),
-                          strand=parse_maybe_empty(fields[6]),
-                          phase=parse_maybe_empty(fields[7], int),
-                          attributes=self._parse_attributes_v2(attributes_string))
+                       source=fields[1],
+                       type=fields[2],
+                       start=int(fields[3]),
+                       end=int(fields[4]),
+                       score=parse_maybe_empty(fields[5], float),
+                       strand=parse_maybe_empty(fields[6]),
+                       phase=parse_maybe_empty(fields[7], int),
+                       attributes=self._parse_attributes_v2(attributes_string))
         except ValueError, e:
             raise FormatError, "GFF field format error: " + e.message
 
@@ -720,14 +723,14 @@ class Reader:
 
         try:
             return GFF(seqid=url_unquote(fields[0]),
-                          source=url_unquote(fields[1]),
-                          type=url_unquote(fields[2]),
-                          start=int(fields[3]),
-                          end=int(fields[4]),
-                          score=parse_maybe_empty(fields[5], float),
-                          strand=parse_maybe_empty(fields[6]),
-                          phase=parse_maybe_empty(fields[7], int),
-                          attributes=self._parse_attributes_v3(fields[8]))
+                       source=url_unquote(fields[1]),
+                       type=url_unquote(fields[2]),
+                       start=int(fields[3]),
+                       end=int(fields[4]),
+                       score=parse_maybe_empty(fields[5], float),
+                       strand=parse_maybe_empty(fields[6]),
+                       phase=parse_maybe_empty(fields[7], int),
+                       attributes=self._parse_attributes_v3(fields[8]))
         except ValueError, e:
             raise FormatError, "GFF field format error: " + e.message
 

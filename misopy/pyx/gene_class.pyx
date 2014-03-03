@@ -12,25 +12,20 @@ cdef class Interval:
     """
     MISO interval.
     """
-    cdef char* label
-    cdef char* chrom
-    cdef char* strand
-    cdef int start
-    cdef int end
-    cdef int len
+    cdef public char* label
+    cdef public char* chrom
+    cdef public char* strand
+    cdef public int start
+    cdef public int end
+    cdef public         int len
     def __init__(self, label, chrom, strand, start, end):
         self.label = label
         self.chrom = chrom
         self.strand = strand
         self.start = start
         self.end = end
-
-
-    def __init__(self, start, end):
-        self.start = start
-        self.end = end
-        assert(self.start <= self.end)
         self.len = self.end - self.start + 1
+        assert(self.start <= self.end)
         assert(self.len >= 1)
 
     def __repr__(self):
@@ -38,15 +33,15 @@ cdef class Interval:
 
     def __richcmp__(self, Interval interval, int op):
         """
-        When op is 2 that means '=='
+        When op equals 2 that means '=='
         """
         if op == 2:
             if interval == None: return False
             return (self.start == interval.start) and \
                    (self.end == interval.end)
         else:
-            print "Error: op given not implemented."
-            return False
+            # Not handling other rich comparisons
+            raise Exception, "Error: op %d not implemented." %(op)
 
     def contains(self, start, end):
         if self.start <= start and self.end >= end:
@@ -64,11 +59,10 @@ cdef class Part(Interval):
     """
     MISO part.
     """
-    cdef char* parent_gene_label
-    cdef object rec
-    cdef object parent_rec
-    cdef char* seq
-
+    cdef public char* parent_gene_label
+    cdef public object rec
+    cdef public object parent_rec
+    cdef public char* seq
     def __init__(self, label, chrom, strand, start, end,
                  parent_gene_label="",
                  seq="",
@@ -96,7 +90,11 @@ cdef class Part(Interval):
         # Use first ID in list
         self.label = self.rec.attributes['ID'][0]
         # Set the parent gene label
-        self.parent_gene_label = self.parent_rec.id
+        # NOTE: we must assign the output of get_id()
+        # to an intermediate variable before we can
+        # get a pointer (char*) to point to it
+        curr_label = self.parent_rec.get_id()
+        self.parent_gene_label = curr_label
 
         
     def __repr__(self):
@@ -116,8 +114,7 @@ cdef class Part(Interval):
                and (self.parent_gene_label == other.parent_gene_label):
                 return True
         else:
-            print "Error: Operator not defined."
-            return False
+            raise Exception, "Error: op %d not implemented." %(op)
         return False
 
 
@@ -223,6 +220,33 @@ cdef class Part(Interval):
 #     return gene
 
 
+cdef class Transcript:
+    """
+    A transcript (list of parts).
+    """
+    cdef public char* label
+    cdef public char* chrom
+    cdef public char* strand
+    cdef public list parts
+    cdef public int start
+    cdef public int end
+    cdef public int num_parts
+    
+    def __init__(self, label, chrom, strand, parts):
+        self.label = label
+        self.chrom = chrom
+        self.strand = strand
+        # Always sort exons by their start coordinate
+        self.parts = sorted(parts, key=lambda e: e.start)
+        self.num_parts = len(self.parts)
+        if self.num_parts == 0:
+            raise Exception, "Cannot make empty transcript."
+        # Start of transcript is start of first exon
+        self.start = self.parts[0].start
+        # End of transcript is end of last exon
+        self.end = self.parts[-1].end
+
+
 cdef class Gene:
     """
     A lightweight representation of a gene and its isoforms.
@@ -232,13 +256,19 @@ cdef class Gene:
     cdef public char* strand
     cdef public list isoform_desc
     cdef public list parts
-    cdef int num_iso 
-    cdef int[:] iso_lens
+    cdef public int start
+    cdef public int end
+    # A list of transcripts
+    cdef public list transcripts
+    cdef public int num_iso 
+    cdef public int[:] iso_lens
     
-    def __init__(self, label, chrom, strand):
+    def __init__(self, label, chrom, strand, start, end):
         self.label = label
         self.chrom = chrom
         self.strand = strand
+        self.start = start
+        self.end = end
 
 
     def from_gff_recs(self, gene_hierarchy, gene_records):
@@ -253,8 +283,6 @@ cdef class Gene:
         cdef list used_transcript_ids = []
         cdef list exons = []
         cdef int num_transcripts_with_exons = 0
-        cdef char* chrom = ""
-        cdef char* strand = "NA"
 
         # Iterate through mRNAs in the order in which they were given in the
         # GFF file
@@ -266,8 +294,8 @@ cdef class Gene:
         for transcript_id in transcript_ids:
             transcript_info = mRNAs[transcript_id]
             transcript_rec = transcript_info['record']
-            chrom = transcript_rec.seqid
-            strand = transcript_rec.strand
+            chrom = str(transcript_rec.seqid)
+            strand = str(transcript_rec.strand)
             transcript_exons = transcript_info['exons']
             exons = []
             if len(transcript_exons) == 0:
@@ -278,7 +306,10 @@ cdef class Gene:
             num_transcripts_with_exons += 1
             for exon_id, exon_info in transcript_exons.iteritems():
                 exon_rec = exon_info['record']
-                exon = Part(exon_rec.start,
+                exon = Part(exon_id,
+                            chrom,
+                            strand,
+                            exon_rec.start,
                             exon_rec.end,
                             from_gff_record={'record':
                                              exon_rec,
@@ -288,39 +319,21 @@ cdef class Gene:
             # Sort exons by their start coordinate
             exons = sorted(exons, key=lambda e: e.start)
             # Exons that make up a transcript
-            transcripts.append(exons)
+            transcript_obj = Transcript(transcript_id, chrom, strand,
+                                        exons)
+            transcripts.append(transcript_obj)
             # Get exon labels to make transcript's description
             exon_labels = [exon.label for exon in exons]
             isoform_desc.append(exon_labels)
-            # Record transcript ids that are not skipped
-            used_transcript_ids.append(transcript_id)
+        # Set gene chrom/strand
+        self.chrom = chrom
+        self.strand = strand
+        self.transcripts = transcripts
         # Compile all exons used in all transcripts
         all_exons = []
-        [all_exons.extend(transcript) for transcript in transcripts]
-        # gene = Gene(isoform_desc, all_exons,
-        #             label=gene_label,
-        #             chrom=chrom,
-        #             strand=strand,
-        #             transcript_ids=used_transcript_ids)
-
-        # return gene
-        
-        
-        # self.isoforms = []
-        # self.num_parts = len(self.parts)
-        # self.chrom = chrom
-        # self.strand = strand
-        # self.transcript_ids = transcript_ids
-
-        # # create a set of isoforms
-        # self.create_isoforms()
-
-        # # Use transcript ids if given
-        # self.assign_transcript_ids()
-
-        # # The number of exons in each isoform
-        # self.num_parts_per_isoform = array([iso.num_parts for iso in self.isoforms])
-        
+        for transcript in self.transcripts:
+            all_exons.extend(transcript.parts)
+        self.parts = all_exons
 
 #     def isoform_has_part(self, isoform, part):
 #         """
