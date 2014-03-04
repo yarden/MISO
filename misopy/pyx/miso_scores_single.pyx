@@ -27,161 +27,60 @@ import misopy
 
 
 ##
-## MCMC proposal functions
-## 
-# cdef propose_psi_vector(cnp.ndarray[DTYPE_float_t, ndim=1] alpha_vector):
-#     """
-#     Propose a new Psi vector.  Depends only on the alpha_vector
-#     of parameters of the Dirichlet distribution from which the
-#     current Psi vector was drawn.
-#     """
-#     cdef:
-#         cnp.ndarray[DTYPE_float_t, ndim=1] proposed_psi_vector
-#         cnp.ndarray[DTYPE_float_t, ndim=1] proposed_alpha_vector
-#     proposed_psi_vector, proposed_alpha_vector = \
-#         propose_norm_drift_psi_alpha(alpha_vector)
-#     return (proposed_psi_vector, proposed_alpha_vector)
-
-
-##
-## MCMC sampler logic functions
-##
-# def compute_metropolis_ratio(self, reads, assignments, proposed_psi_vector,
-#                              proposed_alpha_vector,
-#                              curr_psi_vector, curr_alpha_vector,
-#                              hyperparameters,
-#                              full_metropolis):
-#     """
-#     Compute the Metropolis-Hastings ratio:
-
-#         P(psi_next)Q(psi; psi_next)
-#         ---------------------------
-#         P(psi)Q(psi_next; psi)
-
-#     Parameters:
-#     -----------
-#     reads : array, reads to be processed
-#     assignments : array, assignments of reads to isoforms
-#     proposed_psi_vector : array, proposed Psi vector
-#     proposed_alpha_vector : array, proposed alpha vector (parameter to Dirichlet)
-#     from which the Psi value vector was drawn
-#     curr_psi_vector : array, current Psi vector
-#     curr_alpha_vector : array, current alpha vector (parameter to Dirichlet)
-#     hyperparameters : array, hyperparameters for scoring
-#     full_metropolis : int, if 1 then compute full MH ratio, otherwise not
-#     """
-#     # Compute acceptance ratio: the joint score for proposed Psi divided
-#     # by joint score given current Psi
-#     # P(Psi', ...)
-#     proposed_joint_score = \
-#         self.log_score_joint(reads, assignments, proposed_psi_vector,
-#                              gene, hyperparameters)
-#     # P(Psi, ...)
-#     curr_joint_score = \
-#         self.log_score_joint(reads, assignments, curr_psi_vector,
-#                              gene, hyperparameters)
-#     if curr_joint_score == -inf:
-#         self.miso_logger.error("Joint score of current state is negative infinity!")
-#         self.miso_logger.error("  - assignments: " + str(assignments))
-#         self.miso_logger.error("  - psi vector: " + str(curr_psi_vector))
-#         self.miso_logger.error("  - reads: " + str(reads))
-#         raise Exception, "curr_joint_score is negative."
-#     # Q(x; x'), the probability of proposing to move back to current state from
-#     # proposed state x'
-#     mh_ratio = None
-#     proposal_to_curr_score = \
-#         log_score_psi_vector_transition(curr_psi_vector, proposed_alpha_vector)
-#     # Q(x'; x), the probability of proposing to move to the proposed state x' from
-#     # the current state
-#     curr_to_proposal_score = \
-#         log_score_psi_vector_transition(proposed_psi_vector, curr_alpha_vector)
-#     # Computing full Metropolis-Hastings ratio
-#     if full_metropolis == 0:
-#         # Not full MH; just ratio of proposed to current joint score
-#         mh_ratio = (proposed_joint_score - curr_joint_score)
-#     else:
-#         # Full MH ratio
-#         mh_ratio = (proposed_joint_score + proposal_to_curr_score) - \
-#                    (curr_joint_score + curr_to_proposal_score)
-#     if curr_to_proposal_score == (-1 * INFINITY):
-#         self.miso_logger.error("curr to proposal is -inf")
-#         raise Exception, "curr to proposal is -Inf"
-#     if proposed_joint_score == (-1 * INFINITY):
-#         self.miso_logger.debug("Proposing to move to impossible state!")	    
-#         raise Exception, "Proposing to move to impossible state!"
-#     if abs(mh_ratio) == Inf:
-#         self.miso_logger.debug("MH ratio is Inf!")
-#         raise Exception, "MH ratio is Inf!"
-#     return (exp(mh_ratio), curr_joint_score, proposed_joint_score)    
-
-    
-
-##
 ## Sampler scoring functions
 ##
+def log_score_joint_single_end(int[:, :] reads,
+                               int[:, :] isoform_nums,
+                               double[:] psi_vector,
+                               double[:] log_psi_frag,
+                               double[:] assignment_scores,
+                               int[:] num_parts_per_isoform,
+                               int[:] iso_lens,
+                               double[:] log_num_reads_possible_per_iso,
+                               int read_len,
+                               int num_reads,
+                               double[:] hyperparameters,
+                               int overhang_len=1):
+    """
+    Return a log score for the joint distribution for single-end reads.
 
-# def log_score_joint_single_end(np.ndarray[DTYPE_t, ndim=1] reads,
-#                                np.ndarray[DTYPE_t, ndim=1] assignments,
-#                                np.ndarray[DTYPE_float_t, ndim=1] psi_vector,
-#                                DTYPE_float_t log_score_psi_vector,
-#                                int num_reads):
-#     """
-#     Return a log score for the joint distribution for single-end reads.
+    The joint score requires scoring:
 
-#     Parameters:
-#     -----------
+      P(reads|assignments) x P(assignments|Psi) x P(Psi)
 
-#     reads : array, array of reads
-#     assignments : assignments of reads to isoforms
-#     psi_vector : array, Psi vector in current state
-#     log_score_psi_vector : float, the log score of Psi vector (computed
-#     from Python)
-#     num_reads : int, number of reads
-#     """
-#     # Get the logged Psi frag vector
-#     # ....
-#     # Score the read
-#     if not self.paired_end:
-# #            log_reads_prob = \
-# #                sum(self.log_score_reads(reads, assignments, gene))
-# #	    log_reads_prob = \
-# #                sum(miso_scores.log_score_reads(reads,
-# #                                                assignments,
-# #                                                self.num_parts_per_isoform,
-# #                                                self.iso_lens,
-# #                                                self.num_reads,
-# #                                                self.log_num_reads_possible_per_iso))
-#         log_reads_prob = \
-#             miso_scores.sum_log_score_reads(reads,
-#                                             assignments,
-#                                             self.num_parts_per_isoform,
-#                                             self.iso_lens,
-#                                             self.num_reads,
-#                                             self.log_num_reads_possible_per_iso)
-#         log_psi_frag = \
-#             miso_scores.compute_log_psi_frag(psi_vector,
-#                                              self.scaled_lens_single_end,
-#                                              self.num_isoforms)
-#     else:
-#         raise Exception, "Paired-end not implemented!"
-#         log_reads_prob = \
-#             sum(self.log_score_paired_end_reads(reads, assignments, gene))
-#         log_psi_frag = None
-#     if not self.paired_end:
-#         log_assignments_prob = \
-#             miso_scores.sum_log_score_assignments(assignments,
-#                                                   log_psi_frag,
-#                                                   self.num_reads)
-#     else:
-#         raise Exception, "Paired-end not implemented!"
-#         log_assignments_prob = \
-#             sum(self.log_score_paired_end_assignment(assignments,
-#                                                      psi_vector,
-#                                                      gene))
-#     # Score the Psi vector: keep this in Python for now
-#     log_psi_prob = self.log_score_psi_vector(psi_vector, hyperparameters)
-#     log_joint_score = log_reads_prob + log_assignments_prob + log_psi_prob
-#     return log_joint_score
+    This computes the sum of log scores of these:
+
+      logP(reads|assignments) + logP(assignments|Psi) + logP(psi)
+    
+    Args:
+      reads: the read alignments (2d, int array)
+      isoform_nums: the assignments of reads to isoforms
+      psi_vector: the psi vector to consider 
+      num_reads: number of reads
+
+    Returns:
+      log probability score
+    """
+    cdef double log_reads_prob
+    cdef double lpog_assignments_prob
+    cdef double log_psi_prob
+    cdef double log_joint_score
+    # log P(reads|assignments)
+    log_reads_prob = \
+      sum_log_score_reads(reads, isoform_nums, num_parts_per_isoform,
+                          iso_lens, log_num_reads_possible_per_iso,
+                          num_reads, read_len, overhang_len)
+    # log P(assignments|Psi)
+    log_assignments_prob = \
+      sum_log_score_assignments(isoform_nums,
+                                log_psi_frag_vector,
+                                num_reads,
+                                assignment_scores)
+    # log P(Psi)
+    log_psi_prob = log_score_psi_vector(psi_vector, hyperparameters)
+    # Joint score
+    log_joint_score = log_reads_prob + log_assignments_prob + log_psi_prob
+    return log_joint_score
 
 
 @cython.boundscheck(False)

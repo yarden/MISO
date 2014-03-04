@@ -1,15 +1,27 @@
 ##
-## Proposal functions for Metropolis-Hastings sampler
+## Proposal functions and related functions for Metropolis-Hastings sampler
 ##
 ## Yarden Katz <yarden@mit.edu>
 ##
 cimport cython
+
+from libc.math cimport log
+from libc.math cimport exp
+from libc.stdlib cimport rand
+
+cdef float MY_MAX_INT = float(10000)
+# Define infinity
+cdef extern from "math.h":
+    float INFINITY
+
+NEG_INFINITY = (-1 * INFINITY)
 
 cimport stat_helpers
 cimport matrix_utils
 cimport math_utils
 cimport sampling_utils
 cimport array_utils
+
 
 def propose_norm_drift_psi_alpha(double[:] alpha_vector,
                                  double[:, :] sigma_mat,
@@ -67,6 +79,69 @@ def propose_norm_drift_psi_alpha(double[:] alpha_vector,
     new_psi_vector[alpha_vect_len] = 1 - partial_psi_sum
     return new_psi_vector, new_alpha
 
+
+
+cdef double compute_mh_ratio(reads, assignments,
+                             paired_end=False,
+                             full_metropolis=True):
+    """
+    Compute the Metropolis-Hastings ratios.
+
+        P(psi_next)Q(psi; psi_next)
+        ---------------------------
+        P(psi)Q(psi_next; psi)
+
+    Args:
+      ...
+
+    Kwargs:
+      ...
+
+    Returns:
+      ...
+    """
+    ###
+    ### TODO: Handle paired_end parameter here!
+    ###
+    # Compute acceptance ratio: the joint score for proposed Psi divided
+    # by joint score given current Psi
+    # P(Psi', ...)
+    proposed_joint_score = \
+        scores_single.log_score_joint(reads, assignments, proposed_psi_vector,
+                                      gene, hyperparameters)
+    # P(Psi, ...)
+    curr_joint_score = \
+        scores_single.log_score_joint(reads, assignments, curr_psi_vector,
+                                      gene, hyperparameters)
+    # if curr_joint_score == -inf:
+    #     self.miso_logger.error("Joint score of current state is negative infinity!")
+    #     self.miso_logger.error("  - assignments: " + str(assignments))
+    #     self.miso_logger.error("  - psi vector: " + str(curr_psi_vector))
+    #     self.miso_logger.error("  - reads: " + str(reads))
+    #     raise Exception, "curr_joint_score is negative."
+    # Q(x; x'), the probability of proposing to move back to current state from
+    # proposed state x'
+    mh_ratio = None
+    # Score logistic normal here
+    proposal_to_curr_score = \
+        proposal_score_func(curr_psi_vector, proposed_alpha_vector)
+    # Q(x'; x), the probability of proposing to move to the proposed 
+    # state x' from the current state
+    curr_to_proposal_score = \
+        proposal_score_func(proposed_psi_vector, curr_alpha_vector)
+    # Computing full Metropolis-Hastings ratio
+    if not full_metropolis:
+        mh_ratio = (proposed_joint_score - curr_joint_score)
+    else:
+        mh_ratio = (proposed_joint_score + proposal_to_curr_score) - \
+                   (curr_joint_score + curr_to_proposal_score)
+    if curr_to_proposal_score == NEG_INFINITY:
+        raise Exception, "curr to proposal is -Inf"
+    if proposed_joint_score == NEG_INFINITY:
+        raise Exception, "Proposing to move to impossible state!"
+    if abs(mh_ratio) == INFINITY:
+        raise Exception, "MH ratio is Inf!"
+    return (exp(mh_ratio), curr_joint_score, proposed_joint_score)
     
     
     

@@ -125,11 +125,18 @@ cdef class SingleEndEngine:
               track_lag = 1
           # Calculate the MH ratio here
           # ...
+
+          miso_proposals.compute_mh_ratio(reads, assignments,
+                                          new_psi_vector, new_alpha_vector,
+                                          curr_psi_vector, curr_alpha_vector,
+                                          gene,
+                                          proposal_type="norm_drift",
+                                          hyperparams=hyperparams)
           # Keep sample and reset counter
           if (lag_counter == self.lag):
               # Store samples and their log scores
-              psi_samples[kept_samples] = 0.0
-              log_scores[kept_samples] = 1.0
+              psi_samples[kept_samples] = curr_psi
+              log_scores[kept_samples] = curr_log_score
               kept_samples += 1
               print "Resetting lag on %d" %(n_iter)
               lag_counter = 0
@@ -140,8 +147,6 @@ cdef class SingleEndEngine:
               lag_counter += 1
           # Reset keeping sample
           keep_sample = 0
-      print "Kept samples: %d" %(kept_samples)
-      print "Num samples calculated: %d" %(self.num_samples)
 
 
 #     def run_sampler(self, num_iters, reads, gene, hyperparameters, params,
