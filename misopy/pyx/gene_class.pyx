@@ -307,6 +307,7 @@ cdef class Gene:
                       %(from_json_fname)
         self.num_iso = len(self.transcripts)
 
+
     def __str__(self):
         return "Gene(chrom=%s, start=%d, end=%d, strand=%s, num_iso=%d)" \
                %(self.chrom, self.start, self.end, self.strand,
@@ -338,7 +339,8 @@ cdef class Gene:
         
 
     def __copy__(self):
-        gene_copy = Gene(self.label, self.chrom, self.strand, self.start, self.end)
+        gene_copy = Gene(self.label, self.chrom, self.strand,
+                         self.start, self.end)
         gene_copy.transcripts = self.transcripts
         gene_copy.num_iso = self.num_iso
         gene_copy.iso_lens = self.iso_lens

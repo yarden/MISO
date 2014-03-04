@@ -86,6 +86,20 @@ class TestGene(unittest.TestCase):
         assert (new_gene_obj == gene_obj), "New gene copy not equal to old."
 
 
+    def test_alignments(self):
+        """
+        Test alignments of reads to genes.
+        """
+        pass
+
+
+    def test_pairing(self):
+        """
+        Test pairing of reads.
+        """
+        pass
+
+
 def main():
     unittest.main()
 
