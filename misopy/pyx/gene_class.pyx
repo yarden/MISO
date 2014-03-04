@@ -14,9 +14,12 @@ cdef extern from "math.h":
 NEG_INFINITY = (-1 * INFINITY)
 
 
-
 import os
 import json
+
+import misopy
+import misopy.gff_utils as gff_utils
+
 
     
 cdef class Interval:
@@ -308,17 +311,27 @@ cdef class Gene:
     cdef public int[:] iso_lens
     
     def __init__(self, label="", chrom="", strand="", start=-1, end=-1,
+                 from_gff_fname=None,
                  from_json_fname=None,
-                 json_gene_id=None):
+                 requested_gene_id=None):
         self.transcripts = []
         self.label = label
         self.chrom = chrom
         self.strand = strand
         self.start = start
         self.end = end
-        if from_json_fname is not None:
+        # Check that we're not asked to load from both
+        # GFF and JSON sources
+        if (from_json_fname is not None) and (from_gff_fname is not None):
+            raise Exception, "Cannot load gene from both GFF and JSON sources."
+        if (from_gff_fname is not None):
+            # Load gene from GFF
+            status = self.from_gff(from_gff_fname,
+                                   gene_id=requested_gene_id)
+        elif (from_json_fname is not None):
             # Load gene from JSON
-            status = self.from_json(from_json_fname, gene_id=json_gene_id)
+            status = self.from_json(from_json_fname,
+                                    gene_id=requested_gene_id)
             if status is None:
                 raise Exception, "Could not make gene from %s" \
                       %(from_json_fname)
@@ -365,7 +378,28 @@ cdef class Gene:
         return gene_copy
 
 
-    def from_gff_recs(self, gene_hierarchy, gene_records, gene_label=""):
+    def from_gff(self, gff_fname, gene_id=None):
+        """
+        Populate gene information from JSON file.
+        """
+        gff_db = gff_utils.GFFDatabase(gff_fname)
+        gff_gene_id = gene_id
+        if gff_gene_id is None:
+            # Get any gene from the GFF. Only makes sense
+            # when there's a single gene in the GFF file
+            gff_gene_id = gff_db.genes[0].get_id()
+        results = gff_db.get_genes_records([gff_gene_id])
+        if (not results[0]) or (not results[1]):
+            raise Exception, "Failed to load gene from GFF %s" %(gff_fname)
+        gene_recs = results[0]
+        gene_hierarchy = results[1][gff_gene_id]
+        self.load_from_gff_recs(gene_hierarchy,
+                                gene_recs,
+                                gene_label=gff_gene_id)
+        
+        
+    def load_from_gff_recs(self, gene_hierarchy, gene_records,
+                           gene_label=""):
         """
         Populate gene information from gene hierarchy and gene records.
         """

@@ -33,9 +33,8 @@ def get_test_data_dir():
     return test_data_dir
 
 
-def get_bam_dir()
-    data_dir = get_test_data_dir()
-    return os.path.join(data_dir, "bam-data")
+def get_examples_dir():
+    return os.path.join(get_test_data_dir(), "examples")
 
 
 def get_gene_gff(example_name):
@@ -50,13 +49,32 @@ def get_gene_gff(example_name):
     return fname
 
 
-def get_bam_example(example_name):
+def get_example(example_name):
     """
     Return an example of a gene/event GFF and an associated
     BAM file.
+
+    Each example directory structure is:
+
+      example_name/
+        event.gff        # annotation
+        sample1.bam      # BAM file to be used
+        sample1.bam.bai  # BAM file index
+        # ...potentially more BAM samples, sample2, ...,sample2 here
     """
-    bam_dir = get_bam_dir()
-    
+    example_dir = os.path.join(get_examples_dir(), example_name)
+    if not os.path.isdir(example_dir):
+        raise Exception, "Cannot find example %s in %s" %(example_name,
+                                                          example_dir)
+    bam_fname = os.path.join(example_dir, "sample1.bam")
+    gff_fname = os.path.join(example_dir, "event.gff")
+    if not os.path.isfile(bam_fname):
+        raise Exception, "Cannot find BAM for %s" %(example_name)
+    if not os.path.isfile(gff_fname):
+        raise Exception, "Cannot find GFF for %s" %(gff_fname)
+    example = {"bam": bam_fname,
+               "gff": gff_fname}
+    return example
     
 
 

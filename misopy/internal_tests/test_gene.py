@@ -39,7 +39,7 @@ class TestGene(unittest.TestCase):
         self.test_data_dir = test_cases.get_test_data_dir()
 
 
-    def test_gene_class(self):
+    def test_a_gene_class(self):
         label = "mygene"
         chrom = "chr22"
         strand = "+"
@@ -50,13 +50,13 @@ class TestGene(unittest.TestCase):
         print "Gene obj: ", gene_obj
         # Make gene from GFF
         gff_fname = test_cases.get_gene_gff("Atp2b1")
-        gff_db = gff_utils.GFFDatabase(gff_fname)
-        gene_id = gff_db.genes[0].get_id()
-        results = gff_db.get_genes_records([gene_id])
-        gene_recs = results[0]
-        gene_hierarchy = results[1][gene_id]
+        ##
+        ## Test gene loading directly from GFF
+        ##
         print "Loading gene from GFF"
-        gene_obj.from_gff_recs(gene_hierarchy, gene_recs)
+        gene_obj.from_gff(gff_fname)
+        # Now load it with a name parameter
+        gene_obj.from_gff(gff_fname, gene_id="ENSMUSG00000019943")
         # Take first part of first transcript
         part = gene_obj.transcripts[0].parts[0]
         # Check that first transcript has that part
@@ -79,18 +79,22 @@ class TestGene(unittest.TestCase):
         # Read gene back from JSON
         new_gene_dict = gene_obj.from_json("./__gene.json")
         assert (new_gene_dict is not None), \
-          "Cannot retriev dicitonary from JSON"
+          "Cannot retrieve dicitonary from JSON"
         # Create new gene object with same properties
         new_gene_obj = gene_class.Gene(from_json_fname="./__gene.json")
         print "New gene made from JSON"
         assert (new_gene_obj == gene_obj), "New gene copy not equal to old."
+        # ...
 
 
-    def test_alignments(self):
+    def test_b_alignments(self):
         """
         Test alignments of reads to genes.
         """
-        pass
+        # Example of an SE event from mm9
+        example = test_cases.get_example("mm9_se_example")
+        # First load the GFF as a Gene object
+        
 
 
     def test_pairing(self):
