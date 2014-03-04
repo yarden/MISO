@@ -362,7 +362,7 @@ cdef class Gene:
         self.parts = all_exons
 
 
-    def get_json_gene_as_dict(json_fname, gene_id=None):
+    def get_json_gene_as_dict(self, json_fname, gene_id=None):
         """
         Return the JSON information for a gene
         as a dictionary.
@@ -376,39 +376,69 @@ cdef class Gene:
           when there is only one gene in the JSON file.
         """
         # Load the JSON information as object
-        gene_dict = {}
+        genes_dict = {}
         with open(json_fname, "r") as json_in:
-            genes_dict = convert_unicode_to_str(json.load(json_in))
-            if not gene_dict:
+            json_obj = json.load(json_in)
+            genes_dict = convert_unicode_to_str(json_obj)
+            if not genes_dict:
                 # No genes were found in the JSON file
                 raise Exception, "No genes in %s" %(json_fname)
             if gene_id is None:
-                genes_dict.itervalues()
+                # Return any entry from the genes dictionary
+                # This only makes sense where there's one gene
+                # in the JSON file
+                return next(genes_dict.itervalues())
             if gene_id not in genes_dict:
                 print "Cannot find gene %s" %(gene_id)
                 return None
-        return gene_dict
+        return genes_dict
 
         
     def from_json(self, json_fname, gene_id=None):
         """
         Populate gene information from JSON file.
         """
-        gene_dict = get_json_gene_as_dict(json_fname,
-                                          gene_id=gene_id)
+        gene_dict = self.get_json_gene_as_dict(json_fname,
+                                               gene_id=gene_id)
         if gene_dict is not None:
             # Gene cannot be found so quitting
             return
         # Populate the current gene object with these fields
         # Create a set of parts
-        cdef list parts = []
+        cdef list all_parts = []
         cdef list transcripts = []
+        cdef list curr_exons = []
         # Gene information
         self.gene_id = gene_dict["gene_id"]
         self.chrom = gene_dict["chrom"]
         self.start = gene_dict["start"]
         self.gene.end = gene_dict["end"]
-
+        for mRNA_id in gene_dict["mRNAs"]:
+            mRNA_entry = gene_dict["mRNAs"][mRNA_id]
+            mRNA_exons = mRNA_entry["exons"]
+            curr_exons = []
+            for exon_entry in mRNA_exons:
+                exon_obj = Part(exon_entry["exon_id"],
+                                exon_entry["chrom"],
+                                exon_entry["strand"],
+                                exon_entry["start"],
+                                exon_entry["end"],
+                                parent_gene_label=exon_entry["gene_id"],
+                                parent_mRNA_label=exon_entry["parent_id"])
+                curr_exons.append(exon_obj)
+            # Make transcript object
+            transcript_obj = Transcript(mRNA_id,
+                                        mRNA_entry["chrom"],
+                                        mRNA_entry["strand"],
+                                        curr_exons)
+            transcripts.append(transcript_obj)
+            all_parts.extend(curr_exons)
+        # Save transcripts to gene
+        self.transcripts = transcripts
+        # Save all parts to gene, sorted by start
+        self.parts = sorted(all_parts, key=lambda e: e.start)
+        return gene_dict
+        
 
     def save_json(self, json_fname):
         """
@@ -468,7 +498,6 @@ cdef class Gene:
             add_part = True
             for isoform in self.transcripts:
                 if not isoform.has_part(part):
-                    print "part: ", part, " not in ", isoform.label
                     add_part = False
             if add_part:
                 const_parts.append(part)
