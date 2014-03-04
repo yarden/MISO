@@ -39,9 +39,11 @@ cdef class Interval:
         assert(self.start <= self.end)
         assert(self.len >= 1)
 
+        
     def __repr__(self):
         return "Interval([%d, %d])" %(self.start, self.end)
 
+    
     def __richcmp__(self, Interval interval, int op):
         """
         When op equals 2 that means '=='
@@ -53,11 +55,13 @@ cdef class Interval:
         else:
             raise Exception, "Error: op %d not implemented." %(op)
 
+        
     def contains(self, start, end):
         if self.start <= start and self.end >= end:
             return True
         return False
 
+    
     def intersects(self, other):
         if (self.start < other.end
             and self.end > other.start):
@@ -67,7 +71,8 @@ cdef class Interval:
 
 cdef class Part(Interval):
     """
-    MISO part.
+    Part of a Transcript. Typically an exon, but could
+    also be used to represent introns in some cases.
     """
     cdef public object parent_gene_label
     cdef public object parent_mRNA_label
@@ -225,7 +230,7 @@ cdef class Part(Interval):
 
 cdef class Transcript:
     """
-    A transcript (list of parts).
+    A transcript (list of Parts). 
     """
     cdef public char* label
     cdef public char* chrom
@@ -234,6 +239,7 @@ cdef class Transcript:
     cdef public int start
     cdef public int end
     cdef public int num_parts
+    cdef public int len
     
     def __init__(self, label, chrom, strand, parts):
         self.label = label
@@ -248,6 +254,11 @@ cdef class Transcript:
         self.start = self.parts[0].start
         # End of transcript is end of last exon
         self.end = self.parts[-1].end
+        # Get the length of a transcript, which is the sum of the lengths
+        # of its parts
+        self.len = 0
+        for p in self.parts:
+            self.len += p.len
 
 
     def __copy__(self):

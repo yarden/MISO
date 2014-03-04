@@ -26,10 +26,16 @@ iso_nums = [0]*3245 + [1]*22 + [0]*19937 + [1]*19937
 iso_nums = np.array(iso_nums, dtype=np.dtype("i"))
 num_reads = len(READS)
 
+
 def get_test_data_dir():
     test_data_dir = os.path.abspath(os.path.join(__file__, "..",
                                                  "..", "test-data"))
     return test_data_dir
+
+
+def get_bam_dir()
+    data_dir = get_test_data_dir()
+    return os.path.join(data_dir, "bam-data")
 
 
 def get_gene_gff(example_name):
@@ -42,6 +48,15 @@ def get_gene_gff(example_name):
     else:
         raise Exception, "Cannot find example %s" %(example_name)
     return fname
+
+
+def get_bam_example(example_name):
+    """
+    Return an example of a gene/event GFF and an associated
+    BAM file.
+    """
+    bam_dir = get_bam_dir()
+    
     
 
 
