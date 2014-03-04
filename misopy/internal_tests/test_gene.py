@@ -72,7 +72,7 @@ class TestGene(unittest.TestCase):
         const_parts = gene_obj.get_const_parts()
         assert (len(const_parts) == 10), "Failed to get all constitutive exons."
         ##
-        ## Test gene serialization
+        ## Test gene serialization and retrieval with JSON
         ##
         # Serialize as JSON
         gene_obj.save_json("./__gene.json")
