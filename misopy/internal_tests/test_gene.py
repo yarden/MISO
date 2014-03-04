@@ -80,6 +80,12 @@ class TestGene(unittest.TestCase):
         new_gene_dict = gene_obj.from_json("./__gene.json")
         print "new gene dict: "
         print new_gene_dict
+        # Create new gene object with same properties
+        new_gene_obj = gene_class.Gene(from_json_fname="./__gene.json")
+        print "New gene made from JSON"
+        print new_gene_obj
+
+        
         
         # print gene_obj.label
         # print gene_obj.isoform_desc

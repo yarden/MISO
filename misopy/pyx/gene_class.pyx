@@ -285,6 +285,7 @@ cdef class Gene:
     def __init__(self, label="", chrom="", strand="", start=-1, end=-1,
                  from_json_fname=None,
                  json_gene_id=None):
+        self.transcripts = []
         self.label = label
         self.chrom = chrom
         self.strand = strand
@@ -296,6 +297,16 @@ cdef class Gene:
             if status is None:
                 raise Exception, "Could not make gene from %s" \
                       %(from_json_fname)
+        self.num_iso = len(self.transcripts)
+
+    def __str__(self):
+        return "Gene(chrom=%s, start=%d, end=%d, strand=%s, num_iso=%d)" \
+               %(self.chrom, self.start, self.end, self.strand,
+                 self.num_iso)
+
+
+    def __repr__(self):
+        return self.__str__()
 
 
     def __copy__(self):
@@ -422,6 +433,7 @@ cdef class Gene:
         # Gene information
         self.label = gene_dict["gene_id"]
         self.chrom = gene_dict["chrom"]
+        self.strand = gene_dict["strand"]
         self.start = gene_dict["start"]
         self.end = gene_dict["end"]
         for mRNA_id in gene_dict["mRNA_ids"]:
@@ -448,6 +460,7 @@ cdef class Gene:
         self.transcripts = transcripts
         # Save all parts to gene, sorted by start
         self.parts = sorted(all_parts, key=lambda e: e.start)
+        self.num_iso = len(self.transcripts)
         return gene_dict
         
 
