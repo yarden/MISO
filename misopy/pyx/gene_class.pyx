@@ -96,11 +96,15 @@ cdef class Part(Interval):
         return part_copy
 
     
+    def __str__(self):
+        return "Part([%d, %d], id = %s, seq = %s)(ParentGene = %s)" \
+               %(self.start, self.end,
+                 self.label, self.seq,
+                 self.parent_gene_label)
+
+    
     def __repr__(self):
-        return "Exon([%d, %d], id = %s, seq = %s)(ParentGene = %s)" \
-          %(self.start, self.end,
-            self.label, self.seq,
-            self.parent_gene_label)
+        return self.__str__()
 
     
     def __richcmp__(self, Part other, int op):
@@ -109,8 +113,10 @@ cdef class Part(Interval):
                 return False
             # Two records are the same if they have the same start/end
             # and if they have the same parent gene
-            if (self.start == other.start) and (self.end == other.end) and \
-               (self.chrom == other.chrom) and (self.strand == other.strand) and \
+            if (self.start == other.start) and \
+               (self.end == other.end) and \
+               (self.chrom == other.chrom) and \
+               (self.strand == other.strand) and \
                (self.parent_gene_label == other.parent_gene_label):
                 return True
         else:
@@ -631,7 +637,7 @@ cdef class Gene:
         start_part_num = self.parts.index(start_part)
         end_part_num = self.parts.index(end_part)
         # find parts crossed in between start and end
-        parts_crossed = range(start_part_num + 1, end_part_num)
+        parts_crossed = list(range(start_part_num + 1, end_part_num))
         if read_len != None:
             if (end - start) <= read_len:
                 return parts_crossed
