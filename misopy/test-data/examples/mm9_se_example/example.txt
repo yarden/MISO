@@ -1,0 +1,1 @@
+Example of mm9 genome SE event. 'sample1.bam' is 'heartWT1' from the Sashimi plot test data.

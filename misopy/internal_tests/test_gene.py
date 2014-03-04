@@ -19,6 +19,8 @@ import misopy.internal_tests.py_scores as py_scores
 import misopy.internal_tests.test_cases as test_cases
 
 import misopy.gff_utils as gff_utils
+import misopy.sam_utils as sam_utils
+import misopy.reads_utils as reads_utils
 
 import misopy.pyx
 import misopy.pyx.miso_scores_single as scores_single
@@ -97,6 +99,30 @@ class TestGene(unittest.TestCase):
         gene_obj = gene_class.Gene(from_gff_fname=gff_fname)
         print "Gene obj: ", gene_obj
         bam_fname = example["bam"]
+        # Load BAM file
+        bamfile = sam_utils.load_bam_reads(bam_fname)
+        # Fetch reads in gene
+        bam_reads = sam_utils.fetch_bam_reads_in_gene(bamfile, gene_obj.chrom,
+                                                      gene_obj.start,
+                                                      gene_obj.end)
+        read_len = 48
+        overhang_len = 1
+        alignments = gene_obj.align_single_end_reads(bam_reads, read_len,
+                                                     overhang_len=overhang_len)
+        # Expected counts for 'sample1' are: counts=(0,1):1,(1,0):21,(1,1):23
+        expected_counts = {(0, 1): 1,
+                           (1, 0): 21,
+                           (1, 1): 23}
+        read_class_counts = reads_utils.count_aligned_reads(alignments)
+        read_class_counts = dict(read_class_counts)
+        for counts_class in expected_counts:
+            assert (read_class_counts[counts_class] == \
+                    expected_counts[counts_class]), \
+                    "Failed to get right number for %s. Got %d, expected " \
+                    "%d." %(counts_class,
+                            read_class_counts[counts_class],
+                            expected_counts[counts_class])
+        
         
 
 

@@ -21,6 +21,52 @@ import misopy
 import misopy.gff_utils as gff_utils
 
 
+def convert_unicode_to_str(input):
+    """
+    Convert JSON object from unicode to plain string
+    whenever possible.
+    """
+    if isinstance(input, dict):
+        return {convert_unicode_to_str(key):
+                convert_unicode_to_str(value) \
+                for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [convert_unicode_to_str(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
+
+
+##
+## Misc read cigar string related functions
+##
+def cigar_overhang_met(cigar, int overhang_len):
+    """
+    Check that the overhang constraint is met in each
+    match condition of the read.
+    """
+    overhang_met = True
+    for c in cigar:
+        # If it's the match (M) part of the cigar
+        # and the match length is less than the overhang
+        # constraint, then the constraint is violated
+        if (c[0] == 0) and (c[1] < overhang_len):
+            return False
+    return overhang_met
+    
+
+def cigar_to_end_coord(int start, cigar):
+    """
+    Compute the end coordinate based on the CIGAR string.
+    Assumes the coordinate is 1-based.
+
+    [This is here to avoid calling sam_utils]
+    """
+    offset = sum([cigar_part[1] for cigar_part in cigar])
+    end = start + offset - 1
+    return end
+
     
 cdef class Interval:
     """
@@ -277,23 +323,59 @@ cdef class Transcript:
         return False
 
 
-def convert_unicode_to_str(input):
-    """
-    Convert JSON object from unicode to plain string
-    whenever possible.
-    """
-    if isinstance(input, dict):
-        return {convert_unicode_to_str(key):
-                convert_unicode_to_str(value) \
-                for key, value in input.iteritems()}
-    elif isinstance(input, list):
-        return [convert_unicode_to_str(element) for element in input]
-    elif isinstance(input, unicode):
-        return input.encode('utf-8')
-    else:
-        return input
+    def get_local_cigar(self, start, read_len):
+        """
+        Calculate a CIGAR string for a hypothetical read at a given start
+        position, with a given read length.
+        """
+        cdef list cigar = []
+        cdef int rl = read_len
+        cdef int st = start
+        # If the read starts before or after the isoform, then it does not fit
+        if start < self.parts[0].start or self.parts[-1].end < start:
+            return None
+        # Look for the exon where the read starts
+        found = None
+        for i, p in enumerate(self.parts):
+            if p.start <= start and start <= p.end:
+                found = i
+                break
+        if found == None:
+            return None
+        # Create CIGAR string
+        cigar = []
+        for i in range(found, len(self.parts)):
+            # the rest is on this exon?
+            if rl <= self.parts[i].end - st + 1:
+                cigar.append((0, rl))
+                return cigar
+            # the next exon is needed as well
+            else:
+                # is there a next exon?
+                if i+1 == len(self.parts):
+                    return None
+                cigar.append((0, self.parts[i].end - st + 1))
+                cigar.append((3, self.parts[i+1].start - self.parts[i].end - 1))
+                rl = rl - (self.parts[i].end - st + 1)
+                st = self.parts[i+1].start
+        return cigar
+
     
+    def part_coord_to_isoform(self, int part_start):
+        """
+        Get the isoform coordinate that the
+        *given part_start coordinate* lands in.
+        """
+        cdef int isoform_interval_start = 0
+        isoform_coord = None
+        for part in self.parts:
+            if part.contains(part_start, part_start):
+                isoform_coord = isoform_interval_start + (part_start - part.start)
+                return isoform_coord
+            isoform_interval_start += part.len
+        return isoform_coord
     
+
 cdef class Gene:
     """
     A lightweight representation of a gene and its isoforms.
@@ -731,8 +813,6 @@ cdef class Gene:
         """
         Get isoform coords and return genomic coords.
         """
-        cdef int isoform_start
-        cdef int isoform_end
         if isoform not in self.transcripts:
             raise Exception, "Transcript %s not found" %(isoform.label)
         # Ensure that the parts the coordinates map to are in the isoform
@@ -779,17 +859,17 @@ cdef class Gene:
         return (alignment, iso_frag_lens)
 
     
-    def align_read_to_isoforms_with_cigar(self, cigar, genomic_read_start,
-                                          genomic_read_end, read_len,
-                                          overhang_len):
+    def align_se_read_to_isoforms_with_cigar(self, cigar, genomic_read_start,
+                                             genomic_read_end, read_len,
+                                             overhang_len):
         """
         Align a single-end read to all of the gene's isoforms.
         Use the cigar string of the read to determine whether an
         isoform matches the read.
         """
-        alignment = []
-        isoform_coords = []
-        for isoform in self.isoforms:
+        cdef list alignment = []
+        cdef list isoform_coords = []
+        for isoform in self.transcripts:
             iso_read_start, iso_read_end = \
               self.genomic_coords_to_isoform(isoform,
                                              genomic_read_start,
@@ -798,7 +878,7 @@ cdef class Gene:
             # Check that read is consistent with isoform and that the overhang
             # constraint is met
             if (isocigar and isocigar == cigar) and \
-               isoform.cigar_overhang_met(isocigar, overhang_len):
+               cigar_overhang_met(isocigar, overhang_len):
                 alignment.append(1)
                 isoform_coords.append((iso_read_start, iso_read_end))
             else:
@@ -806,6 +886,45 @@ cdef class Gene:
                 isoform_coords.append(None)
         return (alignment, isoform_coords)
 
+
+    def align_single_end_reads(self, reads, int read_len,
+                               int overhang_len=1):
+        """
+        Align single-end reads to the current gene and return
+        alignments.
+        """
+        cdef int num_reads = 0
+        cdef int num_skipped = 0
+        cdef list alignments = []
+        cdef int start
+        cdef int end
+        for read in reads:
+            start = read.pos + 1
+            end = cigar_to_end_coord(start, read.cigar)
+            # Get the alignment
+            results = \
+              self.align_se_read_to_isoforms_with_cigar(read.cigar,
+                                                        start,
+                                                        end,
+                                                        read_len,
+                                                        overhang_len)
+            alignment = results[0]
+            isoform_coords = results[1]
+            if start >= end:
+                print "WARNING: Found read with start >= end: %s" %(read.qname)
+                continue
+            if 1 in alignment:
+                # If the read aligns to at least one of the isoforms, keep it
+                alignments.append(alignment)
+                num_reads += 1
+            else:
+                num_skipped += 1
+        print "Skipped total of %d reads inconsistent with isoforms." \
+              %(num_skipped)
+        return alignments
+            
+    
+        
     
 
 # #     def align_read_pair(self, genomic_left_read_start, genomic_left_read_end,
@@ -1177,54 +1296,7 @@ cdef class Gene:
 #         # find parts crossed in between start and end
 #         return range(start_part_num + 1, end_part_num)
 
-#     def cigar_overhang_met(self, cigar, overhang_len):
-#         """
-#         Check that the overhang constraint is met in each
-#         match condition of the read.
-#         """
-#         overhang_met = True
-#         for c in cigar:
-#             # If it's the match (M) part of the cigar
-#             # and the match length is less than the overhang
-#             # constraint, then the constraint is violated
-#             if (c[0] == 0) and (c[1] < overhang_len):
-#                 return False
-#         return overhang_met
 
-#     def get_local_cigar(self, start, read_len):
-#         """
-#         Calculate a CIGAR string for a hypothetical read at a given start position, with a given read length"""
-#         # If the read starts before or after the isoform, then it does not fit
-#         if start < self.parts[0].start or self.parts[-1].end < start:
-#             return None
-#         # Look for the exon where the read starts
-#         found = None
-#         for i, p in enumerate(self.parts):
-#             if p.start <= start and start <= p.end:
-#                 found = i
-#                 break
-#         if found == None:
-#             return None
-
-#         # Create CIGAR string
-#         cigar = []
-#         rl = read_len
-#         st = start
-#         for i in range(found, len(self.parts)):
-#             # the rest is on this exon?
-#             if rl <= self.parts[i].end - st + 1:
-#                 cigar.append((0, rl))
-#                 return cigar
-#             # the next exon is needed as well
-#             else:
-#                 # is there a next exon?
-#                 if i+1 == len(self.parts):
-#                     return None
-#                 cigar.append((0, self.parts[i].end - st + 1))
-#                 cigar.append((3, self.parts[i+1].start - self.parts[i].end - 1))
-#                 rl = rl - (self.parts[i].end - st + 1)
-#                 st = self.parts[i+1].start
-#         return cigar
 
 #     def part_coord_to_isoform(self, part_start):
 #         """

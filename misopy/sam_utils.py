@@ -41,6 +41,7 @@ def cigar_to_end_coord(start, cigar):
     end = start + offset - 1
     return end
 
+
 def single_end_read_to_isoforms(read, gene, read_len, overhang_len=1):
     """
     Align single-end SAM read to gene's isoforms.
