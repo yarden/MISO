@@ -78,27 +78,13 @@ class TestGene(unittest.TestCase):
         gene_obj.save_json("./__gene.json")
         # Read gene back from JSON
         new_gene_dict = gene_obj.from_json("./__gene.json")
-        print "new gene dict: "
-        print new_gene_dict
+        assert (new_gene_dict is not None), \
+          "Cannot retriev dicitonary from JSON"
         # Create new gene object with same properties
         new_gene_obj = gene_class.Gene(from_json_fname="./__gene.json")
         print "New gene made from JSON"
         print new_gene_obj
-
-        
-        
-        # print gene_obj.label
-        # print gene_obj.isoform_desc
-        # for iso in gene_obj.isoform_desc:
-        #     print "Isoform: ", iso
-        # for exon in gene_obj.parts:
-        #     print "Exon: ", exon
-        # # Overwrite exons
-        # new_exons = [gene_utils.Exon(5,20)]
-        # gene_obj.parts = new_exons
-        # print "Resetting exons: "
-        # print gene_obj.parts
-
+        assert (new_gene_obj == gene_obj), "New gene copy not equal to old."
 
 
 def main():

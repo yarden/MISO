@@ -7,6 +7,14 @@ cimport cython
 cimport array_utils
 cimport math_utils
 
+# Define infinity
+cdef extern from "math.h":
+    float INFINITY
+
+NEG_INFINITY = (-1 * INFINITY)
+
+
+
 import os
 import json
 
@@ -43,7 +51,6 @@ cdef class Interval:
             return (self.start == interval.start) and \
                    (self.end == interval.end)
         else:
-            # Not handling other rich comparisons
             raise Exception, "Error: op %d not implemented." %(op)
 
     def contains(self, start, end):
@@ -83,7 +90,8 @@ cdef class Part(Interval):
 
         
     def __copy__(self):
-        part_copy = Part(self.label, self.chrom, self.strand, self.start, self.end)
+        part_copy = Part(self.label, self.chrom, self.strand,
+                         self.start, self.end)
         part_copy.parent_gene_label = self.parent_gene_label
         return part_copy
 
@@ -309,6 +317,26 @@ cdef class Gene:
         return self.__str__()
 
 
+    def __richcmp__(self, Gene other, int op):
+        """
+        A gene is equal to another gene if they have
+        the same basic information (chrom, strand, etc.) and
+        the same transcripts.
+        """
+        if op == 2:
+            if (self.chrom == other.chrom) and \
+               (self.strand == other.strand) and \
+               (self.start == other.start) and \
+               (self.end == other.end) and \
+               (self.label == other.label) and \
+               (self.parts == other.parts):
+               # Gene is equal
+               return True
+            return False
+        else:
+            raise Exception, "Error: op %d not implemented." %(op)
+        
+
     def __copy__(self):
         gene_copy = Gene(self.label, self.chrom, self.strand, self.start, self.end)
         gene_copy.transcripts = self.transcripts
@@ -533,190 +561,190 @@ cdef class Gene:
                 const_parts.append(part)
         return const_parts
 
-#     def get_alternative_parts(self):
-#         """
-#         Return all of the gene's alternative parts, i.e. non-constitutive regions.
-#         """
-#         const_parts = self.get_const_parts()
-#         alternative_parts = []
-#         for part in self.parts:
-#             if part not in const_parts:
-#                 alternative_parts.append(part)
-#         return alternative_parts
+    
+    def get_alternative_parts(self):
+        """
+        Return all of the gene's alternative parts,
+         i.e. non-constitutive parts.
+        """
+        cdef list const_parts = self.get_const_parts()
+        cdef list alternative_parts = []
+        for part in self.parts:
+            if part not in const_parts:
+                alternative_parts.append(part)
+        return alternative_parts
 
-#     def get_rand_id(self, len):
-#         rand_id = 'G' + "".join([pyrand.choice('abcdefghijklmnopqrstuvwxyz') for n in range(len)])
-#         return rand_id
 
-#     def get_parts_before(self, part):
-#         """
-#         Return all the parts the given part in the gene.
-#         """
-#         parts_before = []
-#         for p in self.parts:
-#             if p == None:
-#                 raise Exception, "Attempting to reference a None part in %s, (part = %s)" \
-#                       %(str(self), str(part))
-#             if p.end < part.start:
-#                 parts_before.append(p)
-#             else:
-#                 return parts_before
-#         return parts_before
+    def get_parts_before(self, Part part):
+        """
+        Return all the parts the given part in the gene.
+        """
+        cdef list parts_before = []
+        for p in self.parts:
+            if p is None:
+                raise Exception, "Attempting to reference a None " \
+                                 "part in %s, (part = %s)" \
+                                 %(str(self), str(part))
+            if p.end < part.start:
+                parts_before.append(p)
+            else:
+                return parts_before
+        return parts_before
 
-#     def get_part_number(self, part):
-#         """
-#         Return a part's position (i.e. its number) in the list of parts (0-based).
-#         """
-#         return self.parts.index(part)
+    
+    def get_part_by_label(self, part_label):
+        for part in self.parts:
+            if part_label == part.label:
+                return part
+        return None
+    
 
-#     def get_genomic_parts_crossed(self, start, end, read_len=None):
-#         """
-#         Return all parts (by number!) that are crossed in the genomic interval [start, end],
-#         not including the parts where start and end land.
+    def get_part_number(self, Part part):
+        """
+        Return a part's position (i.e. its number) in
+        the list of parts (0-based).
+        """
+        return self.parts.index(part)
 
-#         If read_len is given, take that into account when considering whether a part was crossed.
-#         """
-#         # find the part where the first coordinate is
-#         start_part = self.get_part_by_coord(start)
-#         end_part = self.get_part_by_coord(end)
+    
+    def get_genomic_parts_crossed(self, int start, int end,
+                                  read_len=None):
+        """
+        Return all parts (by number!) that are crossed in the
+        genomic interval [start, end], not including the
+        parts where start and end land.
 
-#         ##
-#         ## NEW: Reads that do not cross any parts might be
-#         ## intronic reads
-#         ##
-#         if start_part == None or end_part == None:
-#             return []
+        If read_len is given, take that into account when
+        considering whether a part was crossed.
+        """
+        cdef int start_part_num
+        cdef int end_part_num
+        # Find the part where the first coordinate is
+        start_part = self.get_part_by_coord(start)
+        end_part = self.get_part_by_coord(end)
 
-#         start_part_num = self.parts.index(start_part)
-#         end_part_num = self.parts.index(end_part)
-#         # find parts crossed in between start and end
-#         parts_crossed = range(start_part_num + 1, end_part_num)
-#         if read_len != None:
-#             if (end - start) <= read_len:
-#                 return parts_crossed
-#         return parts_crossed
+        # Reads that do not cross any parts might be
+        if (start_part is None) or (end_part is None):
+            return []
+        start_part_num = self.parts.index(start_part)
+        end_part_num = self.parts.index(end_part)
+        # find parts crossed in between start and end
+        parts_crossed = range(start_part_num + 1, end_part_num)
+        if read_len != None:
+            if (end - start) <= read_len:
+                return parts_crossed
+        return parts_crossed
 
-#     def get_part_by_label(self, part_label):
-#         for part in self.parts:
-#             if part_label == part.label:
-#                 return part
-#         return None
+    
+    def part_coords_to_genomic(self, part, part_start, part_end=None):
+        """
+        Map the coordinates (start, end) inside part into their
+        corresponding genomic coordinates.
+        The end coordinate is optional.
 
-#     def part_coords_to_genomic(self, part, part_start, part_end=None):
-#         """
-#         Map the coordinates (start, end) inside part into their corresponding genomic coordinates.
-#         The end coordinate is optional.
+        If the given part is the first part in the gene, then
+        these two coordinate systems are equivalent.
+        """
+        # find parts before the given part and sum their coordinates
+        parts_before_len = sum([p.len for p in self.get_parts_before(part)])
+        genomic_start = parts_before_len + part_start
+        if part_end:
+            genomic_end = parts_before_len + part_end
+            return (genomic_start, genomic_end)
+        return genomic_start
+    
+    
+    def get_part_by_coord(self, int genomic_start):
+        """
+        Return the part that contains the given genomic start coordinate.
+        """
+        for part in self.parts:
+            if part.start <= genomic_start and genomic_start <= part.end:
+                return part
+        return None
 
-#         If the given part is the first part in the gene, then these two coordinate systems
-#         are equivalent.
-#         """
-#         # find parts before the given part and sum their coordinates
-#         parts_before_len = sum([p.len for p in self.get_parts_before(part)])
-#         genomic_start = parts_before_len + part_start
-#         if part_end:
-#             genomic_end = parts_before_len + part_end
-#             return (genomic_start, genomic_end)
-#         return genomic_start
+    
+    def genomic_coords_to_isoform(self, Transcript isoform,
+                                  int genomic_start, int genomic_end):
+        """
+        Get isoform coords and return genomic coords.
+        """
+        cdef int isoform_start
+        cdef int isoform_end
+        if isoform not in self.transcripts:
+            raise Exception, "Transcript %s not found" %(isoform.label)
+        # Ensure that the parts the coordinates map to are in the isoform
+        start_part = self.get_part_by_coord(genomic_start)
+        end_part = self.get_part_by_coord(genomic_end)
 
-#     def get_part_by_coord(self, genomic_start):
-#         """
-#         Return the part that contains the given genomic start coordinate.
-#         """
-#         for part in self.parts:
-#             if part.start <= genomic_start and genomic_start <= part.end:
-#                 return part
-#         return None
+        if (start_part is None) or (end_part is None):
+            return None, None
+        # Find the isoform coordinates of the corresponding parts
+        isoform_start = isoform.part_coord_to_isoform(genomic_start)
+        isoform_end = isoform.part_coord_to_isoform(genomic_end)
+        return (isoform_start, isoform_end)
 
-#     def genomic_coords_to_isoform(self, isoform, genomic_start, genomic_end):
-#         """
-#         Get isoform coords and return genomic coords.
-#         """
-#         assert(isoform in self.isoforms)
-#         # ensure that the parts the coordinates map to are in the isoform
-#         start_part = self.get_part_by_coord(genomic_start)
-#         end_part = self.get_part_by_coord(genomic_end)
 
-#         if start_part == None or end_part == None:
-#             return None, None
-#         # find the isoform coordinates of the corresponding parts
-#         isoform_start = isoform.part_coord_to_isoform(genomic_start)
-#         isoform_end = isoform.part_coord_to_isoform(genomic_end)
+    def align_read_pair_with_cigar(self, left_cigar, genomic_left_read_start,
+                                   genomic_left_read_end, right_cigar,
+                                   genomic_right_read_start,
+                                   genomic_right_read_end, read_len,
+                                   overhang=1):
+        """
+        Align read pairs to the gene.
+        """
+        cdef list alignment = []
+        cdef list iso_frag_lens = []
+        left = \
+          self.align_read_to_isoforms_with_cigar(left_cigar,
+                                                 genomic_left_read_start,
+                                                 genomic_left_read_end,
+                                                 read_len,
+                                                 overhang)
+        right = \
+          self.align_read_to_isoforms_with_cigar(right_cigar,
+                                                 genomic_right_read_start,
+                                                 genomic_right_read_end,
+                                                 read_len,
+                                                 overhang)
+        for lal, lco, ral, rco in zip(left[0], left[1], right[0], right[1]):
+            if lal and ral:
+                alignment.append(1)
+                iso_frag_lens.append(rco[1]-lco[0]+1)
+            else:
+                alignment.append(0)
+                iso_frag_lens.append(NEG_INFINITY)
+        return (alignment, iso_frag_lens)
 
-#         return (isoform_start, isoform_end)
+    
+    def align_read_to_isoforms_with_cigar(self, cigar, genomic_read_start,
+                                          genomic_read_end, read_len,
+                                          overhang_len):
+        """
+        Align a single-end read to all of the gene's isoforms.
+        Use the cigar string of the read to determine whether an
+        isoform matches the read.
+        """
+        alignment = []
+        isoform_coords = []
+        for isoform in self.isoforms:
+            iso_read_start, iso_read_end = \
+              self.genomic_coords_to_isoform(isoform,
+                                             genomic_read_start,
+                                             genomic_read_end)
+            isocigar = isoform.get_local_cigar(genomic_read_start, read_len)
+            # Check that read is consistent with isoform and that the overhang
+            # constraint is met
+            if (isocigar and isocigar == cigar) and \
+               isoform.cigar_overhang_met(isocigar, overhang_len):
+                alignment.append(1)
+                isoform_coords.append((iso_read_start, iso_read_end))
+            else:
+                alignment.append(0)
+                isoform_coords.append(None)
+        return (alignment, isoform_coords)
 
-#     def create_parts(self, parts):
-#         part_counter = 0
-#         gene_parts = []
-#         for part in parts:
-#             gene_part = part
-
-#             gene_part.gene = self
-#             gene_parts.append(gene_part)
-#             part_counter += 1
-#         return gene_parts
-
-#     def create_isoforms(self):
-#         self.isoforms = []
-#         for iso in self.isoform_desc:
-#             isoform_parts = []
-#             isoform_seq = ""
-#             for part_label in iso:
-#                 # retrieve part
-#                 part = self.get_part_by_label(part_label)
-#                 if not part:
-#                     raise Exception, "Invalid description of isoforms: refers to undefined part %s, %s, gene: %s" \
-#                           %(part, part_label, self.label)
-#                 isoform_parts.append(part)
-#                 isoform_seq += part.seq
-#             # make isoform with the given parts
-#             isoform = Isoform(self, isoform_parts, seq=isoform_seq)
-#             isoform.desc = iso
-#             self.isoforms.append(isoform)
-#             self.iso_lens.append(isoform.len)
-#         self.iso_lens = array(self.iso_lens)
-
-#     def assign_transcript_ids(self):
-#         """
-#         Assign transcript IDs to isoforms.
-#         """
-#         if self.transcript_ids != None:
-#             if len(self.transcript_ids) != len(self.isoforms):
-#                 raise Exception, "Transcript IDs do not match number of isoforms."
-#             for iso_num, iso in enumerate(self.isoforms):
-#                 curr_iso = self.isoforms[iso_num]
-#                 curr_iso.label = self.transcript_ids[iso_num]
-
-#     def set_sequence(self, exon_id, seq):
-#         """
-#         Set the sequence of the passed in exons to be the given sequence.
-#         """
-#         return Exception, "Unimplemented method."
-
-#     def align_read_pair_with_cigar(self, left_cigar, genomic_left_read_start,
-#                                    genomic_left_read_end, right_cigar,
-#                                    genomic_right_read_start,
-#                                    genomic_right_read_end, read_len,
-#                                    overhang=1):
-
-#         alignment = []
-#         iso_frag_lens = []
-
-#         left = self.align_read_to_isoforms_with_cigar(
-#             left_cigar, genomic_left_read_start, genomic_left_read_end,
-#             read_len, overhang)
-#         right = self.align_read_to_isoforms_with_cigar(
-#             right_cigar, genomic_right_read_start, genomic_right_read_end,
-#             read_len, overhang)
-
-#         for lal, lco, ral, rco in zip(left[0], left[1], right[0], right[1]):
-#             if lal and ral:
-#                 alignment.append(1)
-#                 iso_frag_lens.append(rco[1]-lco[0]+1)
-#             else:
-#                 alignment.append(0)
-#                 iso_frag_lens.append(-Inf)
-
-#         return (alignment, iso_frag_lens)
+    
 
 # #     def align_read_pair(self, genomic_left_read_start, genomic_left_read_end,
 # #                       genomic_right_read_start, genomic_right_read_end, overhang=1,
@@ -780,33 +808,6 @@ cdef class Gene:
 #             alignments.append(alignment)
 #             isoforms_coords.append(isoform_coords)
 #         return (array(alignments), isoforms_coords)
-
-#     def align_read_to_isoforms_with_cigar(self, cigar, genomic_read_start,
-#                                           genomic_read_end, read_len, overhang_len):
-#         """
-#         Align a single-end read to all of the gene's isoforms.
-#         Use the cigar string of the read to determine whether an
-#         isoform matches
-#         """
-#         alignment = []
-#         isoform_coords = []
-#         for isoform in self.isoforms:
-#             iso_read_start, iso_read_end = self.genomic_coords_to_isoform(isoform,
-#                                                                           genomic_read_start,
-#                                                                           genomic_read_end)
-#             isocigar = isoform.get_local_cigar(genomic_read_start, read_len)
-
-#             # Check that read is consistent with isoform and that the overhang
-#             # constraint is met
-#             if (isocigar and isocigar == cigar) and \
-#                    isoform.cigar_overhang_met(isocigar, overhang_len):
-#                 alignment.append(1)
-#                 isoform_coords.append((iso_read_start, iso_read_end))
-#             else:
-#                 alignment.append(0)
-#                 isoform_coords.append(None)
-
-#         return (alignment, isoform_coords)
 
 
 # #     def align_read_to_isoforms(self, genomic_read_start, genomic_read_end, overhang=1, read_len=36):
