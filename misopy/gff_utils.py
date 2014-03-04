@@ -279,18 +279,18 @@ class GFFDatabase:
                           %(gene, self.from_filename)
                 # Remove from gene hierarchy
                 del gene_hierarchy[gene]
-            # If asked, add the gene record as first record
-            if with_gene_recs:
-                if gene_id in self.gene_ids_to_gene_recs:
-                    # Add record if we can find its records
-                    gene_rec = self.gene_ids_to_gene_recs[gene_id]
-                    recs = [gene_rec] + recs
             # add mRNAs
             recs.extend(mRNAs)
             # add exons
             recs.extend(exons)
             # add cdss
             recs.extend(cdss)
+            # If asked, add the gene record as first record
+            if with_gene_recs:
+                if gene in self.gene_ids_to_gene_recs:
+                    # Add record if we can find its records
+                    gene_rec = self.gene_ids_to_gene_recs[gene]
+                    recs = [gene_rec] + recs
         return recs, gene_hierarchy
 
 

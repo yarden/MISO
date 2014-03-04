@@ -84,7 +84,6 @@ class TestGene(unittest.TestCase):
         new_gene_obj = gene_class.Gene(from_json_fname="./__gene.json")
         print "New gene made from JSON"
         assert (new_gene_obj == gene_obj), "New gene copy not equal to old."
-        # ...
 
 
     def test_b_alignments(self):
@@ -94,6 +93,10 @@ class TestGene(unittest.TestCase):
         # Example of an SE event from mm9
         example = test_cases.get_example("mm9_se_example")
         # First load the GFF as a Gene object
+        gff_fname = example["gff"]
+        gene_obj = gene_class.Gene(from_gff_fname=gff_fname)
+        print "Gene obj: ", gene_obj
+        bam_fname = example["bam"]
         
 
 

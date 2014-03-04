@@ -388,10 +388,19 @@ cdef class Gene:
             # Get any gene from the GFF. Only makes sense
             # when there's a single gene in the GFF file
             gff_gene_id = gff_db.genes[0].get_id()
-        results = gff_db.get_genes_records([gff_gene_id])
+        results = gff_db.get_genes_records([gff_gene_id], with_gene_recs=True)
         if (not results[0]) or (not results[1]):
             raise Exception, "Failed to load gene from GFF %s" %(gff_fname)
         gene_recs = results[0]
+        # The gene record itself determines the start / end of Gene
+        gene_type_rec = gene_recs[0]
+        if gene_type_rec.type == "gene":
+            # Use the start/end of record as Gene start/end
+            self.start = gene_type_rec.start
+            self.end = gene_type_rec.end
+        else:
+            print "WARNING: Could not find \'gene\' record for %s" \
+                  %(gff_gene_id)
         gene_hierarchy = results[1][gff_gene_id]
         self.load_from_gff_recs(gene_hierarchy,
                                 gene_recs,
