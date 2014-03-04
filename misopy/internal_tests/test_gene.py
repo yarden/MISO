@@ -83,7 +83,6 @@ class TestGene(unittest.TestCase):
         # Create new gene object with same properties
         new_gene_obj = gene_class.Gene(from_json_fname="./__gene.json")
         print "New gene made from JSON"
-        print new_gene_obj
         assert (new_gene_obj == gene_obj), "New gene copy not equal to old."
 
 
