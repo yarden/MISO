@@ -282,12 +282,20 @@ cdef class Gene:
     cdef public int num_iso 
     cdef public int[:] iso_lens
     
-    def __init__(self, label, chrom, strand, start, end):
+    def __init__(self, label="", chrom="", strand="", start=-1, end=-1,
+                 from_json_fname=None,
+                 json_gene_id=None):
         self.label = label
         self.chrom = chrom
         self.strand = strand
         self.start = start
         self.end = end
+        if from_json_fname is not None:
+            # Load gene from JSON
+            status = self.from_json(from_json_fname, gene_id=json_gene_id)
+            if status is None:
+                raise Exception, "Could not make gene from %s" \
+                      %(from_json_fname)
 
 
     def __copy__(self):
@@ -387,7 +395,8 @@ cdef class Gene:
                 # Return any entry from the genes dictionary
                 # This only makes sense where there's one gene
                 # in the JSON file
-                return next(genes_dict.itervalues())
+                curr_gene_dict = next(genes_dict.itervalues())
+                return curr_gene_dict
             if gene_id not in genes_dict:
                 print "Cannot find gene %s" %(gene_id)
                 return None
@@ -398,22 +407,24 @@ cdef class Gene:
         """
         Populate gene information from JSON file.
         """
+        if not os.path.isfile(json_fname):
+            return None
         gene_dict = self.get_json_gene_as_dict(json_fname,
                                                gene_id=gene_id)
-        if gene_dict is not None:
+        if gene_dict is None:
             # Gene cannot be found so quitting
-            return
+            return None
         # Populate the current gene object with these fields
         # Create a set of parts
         cdef list all_parts = []
         cdef list transcripts = []
         cdef list curr_exons = []
         # Gene information
-        self.gene_id = gene_dict["gene_id"]
+        self.label = gene_dict["gene_id"]
         self.chrom = gene_dict["chrom"]
         self.start = gene_dict["start"]
-        self.gene.end = gene_dict["end"]
-        for mRNA_id in gene_dict["mRNAs"]:
+        self.end = gene_dict["end"]
+        for mRNA_id in gene_dict["mRNA_ids"]:
             mRNA_entry = gene_dict["mRNAs"][mRNA_id]
             mRNA_exons = mRNA_entry["exons"]
             curr_exons = []
@@ -456,10 +467,12 @@ cdef class Gene:
         with open(json_fname, "w") as json_out:
             mRNA_ids = [trans.label for trans in self.transcripts]
             exon_ids = [e.label for e in self.parts]
+            # This encodes the mRNAs in the order in which they appear
+            # in the GFF
             gene["mRNA_ids"] = mRNA_ids
             gene["exon_ids"] = exon_ids
             # mRNAs is a list of dictionaries
-            gene["mRNAs"] = []
+            gene["mRNAs"] = {}
             for mRNA in self.transcripts:
                 # Record mRNA
                 mRNA_entry = {"mRNA_id": mRNA.label,
@@ -480,7 +493,11 @@ cdef class Gene:
                             "parent_id": mRNA_entry["mRNA_id"]}
                     mRNA_entry["exons"].append(exon)
                 # Save mRNA entry to gene
-                gene["mRNAs"].append(mRNA_entry)
+                if mRNA.label in gene["mRNAs"]:
+                    print "WARNING: %s mRNA already seen in file, skipping..." \
+                      %(mRNA)
+                    continue
+                gene["mRNAs"][mRNA.label] = mRNA_entry
             # Serialize the gene as a list containing the gene dictionary,
             # so that this can generalize to a JSON file containing more
             # than one gene

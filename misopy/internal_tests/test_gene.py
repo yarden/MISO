@@ -77,7 +77,7 @@ class TestGene(unittest.TestCase):
         # Serialize as JSON
         gene_obj.save_json("./__gene.json")
         # Read gene back from JSON
-        new_gene_dict = gene_obj.from_json("./__gene.json", gene_obj.label)
+        new_gene_dict = gene_obj.from_json("./__gene.json")
         print "new gene dict: "
         print new_gene_dict
         
