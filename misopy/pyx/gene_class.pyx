@@ -125,7 +125,6 @@ cdef class Part(Interval):
     """
     cdef public object parent_gene_label
     cdef public object parent_mRNA_label
-    
     cdef public object rec
     cdef public object parent_rec
     cdef public char* seq

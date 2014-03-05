@@ -21,7 +21,7 @@ cimport matrix_utils
 cimport math_utils
 cimport sampling_utils
 cimport array_utils
-
+cimport miso_scores_single as scores_single
 
 def propose_norm_drift_psi_alpha(double[:] alpha_vector,
                                  double[:, :] sigma_mat,
@@ -80,10 +80,25 @@ def propose_norm_drift_psi_alpha(double[:] alpha_vector,
     return new_psi_vector, new_alpha
 
 
-
-cdef double compute_mh_ratio(reads, assignments,
-                             paired_end=False,
-                             full_metropolis=True):
+cdef double compute_mh_ratio(int[:, :] reads,
+                             int[:] frag_lens,
+                             int[:] curr_assignments,
+                             int[:] new_assignments,
+                             double[:] curr_psi_vector,
+                             double[:] new_psi_vector,
+                             double[:] curr_log_psi_frag,
+                             double[:] new_log_psi_frag,
+                             double[:] curr_assignment_scores,
+                             double[:] new_assignment_scores,
+                             int[:] num_parts_per_isoform,
+                             int[:] iso_lens,
+                             double[:] log_num_reads_possible_per_iso,
+                             int read_len,
+                             int num_reads,
+                             double[:] hyperparameters,
+                             int overhang_len,
+                             int paired_end,
+                             int full_metropolis):
     """
     Compute the Metropolis-Hastings ratios.
 
@@ -107,12 +122,32 @@ cdef double compute_mh_ratio(reads, assignments,
     # by joint score given current Psi
     # P(Psi', ...)
     proposed_joint_score = \
-        scores_single.log_score_joint(reads, assignments, proposed_psi_vector,
-                                      gene, hyperparameters)
+      scores_single.log_score_joint_single_end(reads,
+                                               curr_assignments,
+                                               curr_psi_vector,
+                                               curr_log_psi_frag,
+                                               curr_assignment_scores,
+                                               num_parts_per_isoform,
+                                               iso_lens,
+                                               log_num_reads_possible_per_iso,
+                                               read_len,
+                                               num_reads,
+                                               hyperparameters,
+                                               overhang_len)      
     # P(Psi, ...)
     curr_joint_score = \
-        scores_single.log_score_joint(reads, assignments, curr_psi_vector,
-                                      gene, hyperparameters)
+        scores_single.log_score_joint(reads,
+                                      new_assignments,
+                                      new_psi_vector,
+                                      new_log_psi_frag,
+                                      new_assignment_scores,
+                                      num_parts_per_isoform,
+                                      iso_lens,
+                                      log_num_reads_possible_per_iso,
+                                      read_len,
+                                      num_reads,
+                                      hyperparameters,
+                                      overhang_len)      
     # if curr_joint_score == -inf:
     #     self.miso_logger.error("Joint score of current state is negative infinity!")
     #     self.miso_logger.error("  - assignments: " + str(assignments))
@@ -123,12 +158,10 @@ cdef double compute_mh_ratio(reads, assignments,
     # proposed state x'
     mh_ratio = None
     # Score logistic normal here
-    proposal_to_curr_score = \
-        proposal_score_func(curr_psi_vector, proposed_alpha_vector)
+    proposal_to_curr_score = 0.0
     # Q(x'; x), the probability of proposing to move to the proposed 
     # state x' from the current state
-    curr_to_proposal_score = \
-        proposal_score_func(proposed_psi_vector, curr_alpha_vector)
+    curr_to_proposal_score = 0.0
     # Computing full Metropolis-Hastings ratio
     if not full_metropolis:
         mh_ratio = (proposed_joint_score - curr_joint_score)
@@ -142,7 +175,3 @@ cdef double compute_mh_ratio(reads, assignments,
     if abs(mh_ratio) == INFINITY:
         raise Exception, "MH ratio is Inf!"
     return (exp(mh_ratio), curr_joint_score, proposed_joint_score)
-    
-    
-    
-

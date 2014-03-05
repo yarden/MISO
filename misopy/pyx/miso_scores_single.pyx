@@ -29,18 +29,18 @@ import misopy
 ##
 ## Sampler scoring functions
 ##
-def log_score_joint_single_end(int[:, :] reads,
-                               int[:, :] isoform_nums,
-                               double[:] psi_vector,
-                               double[:] log_psi_frag,
-                               double[:] assignment_scores,
-                               int[:] num_parts_per_isoform,
-                               int[:] iso_lens,
-                               double[:] log_num_reads_possible_per_iso,
-                               int read_len,
-                               int num_reads,
-                               double[:] hyperparameters,
-                               int overhang_len=1):
+cpdef double log_score_joint_single_end(int[:, :] reads,
+                                        int[:] isoform_nums,
+                                        double[:] psi_vector,
+                                        double[:] log_psi_frag,
+                                        double[:] assignment_scores,
+                                        int[:] num_parts_per_isoform,
+                                        int[:] iso_lens,
+                                        double[:] log_num_reads_possible_per_iso,
+                                        int read_len,
+                                        int num_reads,
+                                        double[:] hyperparameters,
+                                        int overhang_len):
     """
     Return a log score for the joint distribution for single-end reads.
 
@@ -62,7 +62,7 @@ def log_score_joint_single_end(int[:, :] reads,
       log probability score
     """
     cdef double log_reads_prob
-    cdef double lpog_assignments_prob
+    cdef double log_assignments_prob
     cdef double log_psi_prob
     cdef double log_joint_score
     # log P(reads|assignments)
@@ -73,7 +73,7 @@ def log_score_joint_single_end(int[:, :] reads,
     # log P(assignments|Psi)
     log_assignments_prob = \
       sum_log_score_assignments(isoform_nums,
-                                log_psi_frag_vector,
+                                log_psi_frag,
                                 num_reads,
                                 assignment_scores)
     # log P(Psi)

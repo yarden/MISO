@@ -48,6 +48,7 @@ cdef class SingleEndEngine:
       
   
   def __init__(self, reads, iso_lens, read_len, covar_mat, covar_L,
+               psi_samples,
                overhang_len=1,
                num_iters=2500,
                burn_in=500,
@@ -61,6 +62,8 @@ cdef class SingleEndEngine:
       self.num_iso = iso_lens.shape[0]
       self.covar_mat = covar_mat
       self.covar_L = covar_L
+      # Where Psi samples will be stored (2d double array)
+      self.psi_samples = psi_samples
       self.overhang_len = overhang_len
       self.num_iters = num_iters
       self.burn_in = burn_in
@@ -110,9 +113,6 @@ cdef class SingleEndEngine:
       cdef double[:] init_alpha_vector = \
         array_utils.get_double_array(self.num_iso - 1)
       init_alpha_vector[:] = 1/(<double>self.num_iso)
-      # Psi samples to return
-      cdef double[:] psi_samples = \
-        array_utils.get_double_array(self.num_samples)
       # Log scores to return
       cdef double[:] log_scores = \
         array_utils.get_double_array(self.num_samples)
@@ -126,17 +126,19 @@ cdef class SingleEndEngine:
           # Calculate the MH ratio here
           # ...
 
-          miso_proposals.compute_mh_ratio(reads, assignments,
-                                          new_psi_vector, new_alpha_vector,
-                                          curr_psi_vector, curr_alpha_vector,
-                                          gene,
-                                          proposal_type="norm_drift",
-                                          hyperparams=hyperparams)
+          # miso_proposals.compute_mh_ratio(reads, assignments,
+          #                                 new_psi_vector, new_alpha_vector,
+          #                                 curr_psi_vector, curr_alpha_vector,
+          #                                 gene,
+          #                                 proposal_type="norm_drift",
+          #                                 hyperparams=hyperparams)
+          curr_psi = 0.0
+          curr_alpha = 0.0
           # Keep sample and reset counter
           if (lag_counter == self.lag):
               # Store samples and their log scores
-              psi_samples[kept_samples] = curr_psi
-              log_scores[kept_samples] = curr_log_score
+              #psi_samples[kept_samples] = curr_psi
+              #log_scores[kept_samples] = curr_log_score
               kept_samples += 1
               print "Resetting lag on %d" %(n_iter)
               lag_counter = 0

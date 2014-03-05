@@ -1,1 +1,12 @@
-
+cpdef double log_score_joint_single_end(int[:, :] reads,
+                                        int[:] isoform_nums,
+                                        double[:] psi_vector,
+                                        double[:] log_psi_frag,
+                                        double[:] assignment_scores,
+                                        int[:] num_parts_per_isoform,
+                                        int[:] iso_lens,
+                                        double[:] log_num_reads_possible_per_iso,
+                                        int read_len,
+                                        int num_reads,
+                                        double[:] hyperparameters,
+                                        int overhang_len)

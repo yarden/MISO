@@ -21,6 +21,7 @@ import misopy.internal_tests.py_scores as py_scores
 import misopy.pyx
 import misopy.pyx.miso_scores_single as scores_single
 import misopy.pyx.miso_scores_paired as scores_paired
+import misopy.pyx.miso_proposals as miso_proposals
 import misopy.pyx.stat_helpers as stat_helpers
 import misopy.pyx.math_utils as math_utils
 
@@ -65,6 +66,7 @@ class TestScores(unittest.TestCase):
         # Compute log psi frag
         self.log_psi_frag = np.log(self.psi_vector) + np.log(self.scaled_lens)
         self.log_psi_frag = self.log_psi_frag - scipy.misc.logsumexp(self.log_psi_frag)
+        self.num_parts_per_iso = num_parts_per_iso
 
         
     def test_log_score_reads(self):
@@ -179,6 +181,49 @@ class TestScores(unittest.TestCase):
         print result_original
         assert (py_scores.approx_eq(result_pyx, result_original)), \
           "Error computing logistic normal log pdf."
+
+
+    def test_single_end_joint_score(self):
+        """
+        Test single-end joint score.
+        """
+        curr_num_reads = 2
+        two_reads = self.reads[0:curr_num_reads]
+        psi_frag_numer = \
+          np.array([(self.scaled_lens[0] * self.psi_vector[0]),
+                    (self.scaled_lens[1] * self.psi_vector[1])])
+        psi_frag_denom = np.sum(psi_frag_numer)
+        psi_frag = psi_frag_numer / psi_frag_denom
+        assert self.approx_eq(sum(psi_frag), 1.0), "Psi frag does not sum to 1."
+        assert (self.approx_eq(self.log_psi_frag[0], np.log(psi_frag)[0])), \
+          "Log psi frag not set properly."
+        log_assignments_prob = np.empty(2, dtype=float)
+        num_reads = len(self.reads)
+        assignment_scores = np.empty(num_reads, dtype=float)
+        num_isoforms = len(self.psi_vector)
+        hyperparameters = np.array([1] * num_isoforms, dtype=float)
+        overhang_len = 1
+        # assignments set A: consistent set of reads to isoform
+        # assignments
+        iso_nums_A = self.iso_nums
+        joint_score_A = \
+          scores_single.log_score_joint_single_end(self.reads,
+                                                   iso_nums_A,
+                                                   self.psi_vector,
+                                                   self.log_psi_frag,
+                                                   assignment_scores,
+                                                   num_parts_per_isoform,
+                                                   iso_lens,
+                                                   log_num_reads_possible_per_iso,
+                                                   self.read_len,
+                                                   num_reads,
+                                                   hyperparameters,
+                                                   overhang_len=overhang_len)
+        # assignments set B: inconsistent set of reads to isoform
+        # assignments
+        joint_score_B = None
+        # Here compare joint_A to joint_B ...
+        # ...
 
 
 def main():
