@@ -204,14 +204,13 @@ cpdef double sum_log_score_reads(int[:, :] reads,
         sum_scores += vect_log_scores[curr_read]
     return sum_scores
 
-
     
 #@cython.boundscheck(False)
 #@cython.wraparound(False)
 #@cython.nonecheck(False)
 cpdef double[:] log_score_reads(int[:, :] reads,
                                 int[:] isoform_nums,
-                                int[:] num_parts_per_isoform,
+                                int[:] num_parts_per_iso,
                                 int[:] iso_lens,
                                 double[:] log_num_reads_possible_per_iso,
                                 int num_reads,
@@ -226,7 +225,7 @@ cpdef double[:] log_score_reads(int[:, :] reads,
     reads : 2-d array, representation of reads
     isoform_nums : 1-d np.array, assignment of each read to isoform. ith entry
                    is the assignment of ith read.
-    num_parts_per_isoform : 1-d array, number of parts (exons) in each isoform
+    num_parts_per_iso : 1-d array, number of parts (exons) in each isoform
     iso_lens : 1-d array, lengths of each isoform
     num_reads : int, number of reads to process
     log_num_reads_possible_per_iso : 1-d array, the log'd number of reads

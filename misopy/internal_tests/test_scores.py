@@ -212,18 +212,36 @@ class TestScores(unittest.TestCase):
                                                    self.psi_vector,
                                                    self.log_psi_frag,
                                                    assignment_scores,
-                                                   num_parts_per_isoform,
+                                                   num_parts_per_iso,
                                                    iso_lens,
-                                                   log_num_reads_possible_per_iso,
+                                                   self.log_num_reads_possible_per_iso,
                                                    self.read_len,
                                                    num_reads,
                                                    hyperparameters,
-                                                   overhang_len=overhang_len)
+                                                   overhang_len)
+        print "joint score A: %.4f" %(joint_score_A)
         # assignments set B: inconsistent set of reads to isoform
         # assignments
-        joint_score_B = None
-        # Here compare joint_A to joint_B ...
-        # ...
+        iso_nums_B = np.array([0] * num_reads, dtype=np.dtype("i"))
+        joint_score_B = \
+          scores_single.log_score_joint_single_end(self.reads,
+                                                   iso_nums_B,
+                                                   self.psi_vector,
+                                                   self.log_psi_frag,
+                                                   assignment_scores,
+                                                   num_parts_per_iso,
+                                                   iso_lens,
+                                                   self.log_num_reads_possible_per_iso,
+                                                   self.read_len,
+                                                   num_reads,
+                                                   hyperparameters,
+                                                   overhang_len)
+        print "joint score B: %.4f" %(joint_score_B)
+        # Here compare joint_A to joint_B
+        assert (joint_score_A > joint_score_B), \
+               "Inferior isoform assignment scores higher."
+        assert (joint_score_B == (-1 * np.inf)), \
+               "Impossible assignment should have a -Inf score."
 
 
 def main():
