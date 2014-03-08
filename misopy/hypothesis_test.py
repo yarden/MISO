@@ -89,6 +89,7 @@ def compute_prior_proportion_diff(num_samples):
 def compute_delta_densities(samples1_results,
                             samples2_results,
                             diff_range,
+                            event_name="",
                             sample1_label="",
                             sample2_label="",
                             smoothing_param=0.3):
@@ -154,8 +155,10 @@ def compute_delta_densities(samples1_results,
         all_same_diff = all(posterior_diff - posterior_diff[0] == 0)
 
         if all_same_diff and not warning_outputted:
-            print "Warning: %s or %s were not properly sampled." \
-                  %(sample1_label, sample2_label)
+            print "Warning: Event %s was not sampled properly in %s or %s" \
+                  %(event_name,
+                    sample1_label,
+                    sample2_label)
             warning_outputted = True
 
         if mean_abs_posterior_diff <= .009 or all_same_diff:
@@ -266,6 +269,7 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
           compute_delta_densities(sample1_results,
                                   sample2_results,
                                   diff_range,
+                                  event_name=event_name,
                                   sample1_label=sample1_label,
                                   sample2_label=sample2_label)
         bf = delta_densities['bayes_factor']
