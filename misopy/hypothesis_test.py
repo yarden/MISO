@@ -89,6 +89,8 @@ def compute_prior_proportion_diff(num_samples):
 def compute_delta_densities(samples1_results,
                             samples2_results,
                             diff_range,
+                            sample1_label="",
+                            sample2_label="",
                             smoothing_param=0.3):
     """
     Compute the Gaussian kernel density fitted distributions
@@ -153,7 +155,7 @@ def compute_delta_densities(samples1_results,
 
         if all_same_diff and not warning_outputted:
             print "Warning: %s or %s were not properly sampled." \
-                  %(samples1_filename, samples2_filename)
+                  %(sample1_label, sample2_label)
             warning_outputted = True
 
         if mean_abs_posterior_diff <= .009 or all_same_diff:
@@ -263,7 +265,9 @@ def output_samples_comparison(sample1_dir, sample2_dir, output_dir,
         delta_densities = \
           compute_delta_densities(sample1_results,
                                   sample2_results,
-                                  diff_range)
+                                  diff_range,
+                                  sample1_label=sample1_label,
+                                  sample2_label=sample2_label)
         bf = delta_densities['bayes_factor']
         num_isoforms = shape(delta_densities['samples1'])[1]
         sample1_posterior_mean = mean(delta_densities['samples1'], 0)
