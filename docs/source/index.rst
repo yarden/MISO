@@ -1135,6 +1135,8 @@ Updates
 
 **2014**
 
+* **Tue, Mar 11**: Released ``0.5.2``, which fixes an error reporting bug. Thanks to John Tobias and Sabine Dietmann.
+
 * **Sun, Feb 23**: Fixed Sashimi plot bug.
 
 * **Fri, Feb 21**: Fixed critical bug in ``miso_pack`` handling of Ensembl chromosomes in ``0.5.0`` release. Please update your release. 
@@ -1508,6 +1510,8 @@ for suggesting many improvements, or for creating useful software used by MISO:
 * Eric Suh (Princeton)
 * Warren Emmett (UCL)
 * Maayan Kreitzman (BCGSC)
+* John Tobias (UPenn)
+* Sabine Dietmann (MRC, University of Cambridge)
 
 Authors
 =======
