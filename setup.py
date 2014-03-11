@@ -73,7 +73,7 @@ for scheme in INSTALL_SCHEMES.values():
 ##
 ## Definition of the current version
 ##
-MISO_VERSION = "0.5.1"
+MISO_VERSION = "0.5.2"
 
 ##
 ## Generate a __version__.py attribute
@@ -93,7 +93,7 @@ setup(name = 'misopy',
       long_description = long_description,
       author = 'Yarden Katz,Gabor Csardi',
       author_email = 'yarden@mit.edu,gcsardi@stat.harvard.edu',
-        maintainer = 'Yarden Katz',
+      maintainer = 'Yarden Katz',
       maintainer_email = 'yarden@mit.edu',
       url = 'http://genes.mit.edu/burgelab/miso/',
       ext_modules = [splicing_extension],
