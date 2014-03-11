@@ -1143,7 +1143,7 @@ Updates
 
 * **Thu, Feb 20**: Released ``0.5.0``. 
 
-  * Renamed scripts: The core MISO scripts are now named ``miso``, ``summarize_miso`` and ``compare_samples``. Python extensions (``.py``) have been dropped. Entry points are used in Python installations to resolve issues with scripts not being registered as executables after installation.
+  * Renamed scripts: The core MISO scripts are now named ``miso``, ``summarize_miso`` and ``compare_miso``. Python extensions (``.py``) have been dropped. Entry points are used in Python installations to resolve issues with scripts not being registered as executables after installation.
 
   * Added ``--no-wait`` option to ``miso`` to prevent main process from waiting on cluster jobs
 
