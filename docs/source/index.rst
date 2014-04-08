@@ -801,7 +801,7 @@ Thanks to Michael Lovci for this feature.
 Raw MISO output format 
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-When running MISO, through ``miso --compute-genes-psi``, the raw output will be a set of posterior distributions over |Psi| values. Each exon or gene, depending on whether the analysis is exon or isoform-centric, will have its own file containing posterior samples from the distribution over |Psi|. 
+When running MISO, through ``miso --run``, the raw output will be a set of posterior distributions over |Psi| values. Each exon or gene, depending on whether the analysis is exon or isoform-centric, will have its own file containing posterior samples from the distribution over |Psi|. 
 
 Most users will never need to access these raw distributions and can simply summarize this raw output as described in :ref:`summarizing`, or perform a comparison between a set of samples as described in :ref:`comparing-samples`.
 
@@ -1011,13 +1011,13 @@ Below is an example of a MISO pipeline, where |Psi| values for a set of alternat
   ## the cluster
 
   # Compute Psi values for control sample
-  miso --compute-genes-psi mm9/pickled/SE data/control.bam --output-dir SE/control/ --read-len 35 --paired-end 250 15 --use-cluster
+  miso --run mm9/pickled/SE data/control.bam --output-dir SE/control/ --read-len 35 --paired-end 250 15 --use-cluster
 
   # Compute Psi values for knockdown sample
-  miso --compute-genes-psi mm9/pickled/SE data/knockdown.bam --output-dir SE/knockdown/ --read-len 35 --paired-end 250 15 --use-cluster
+  miso --run mm9/pickled/SE data/knockdown.bam --output-dir SE/knockdown/ --read-len 35 --paired-end 250 15 --use-cluster
 
   
-  ## Summarize the output (only run this once --compute-genes-psi finished!)
+  ## Summarize the output (only run this once --run finished!)
   ## This will create a "summary" directory in SE/control/ and in SE/knockdown/
   summarize_miso --summarize-samples SE/control/ SE/control/
   summarize_miso --summarize-samples SE/knockdown/ SE/knockdown/
@@ -1274,7 +1274,7 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 
 .. _answer11:
 
-11. **What is the input to the** ``--compare-samples`` **option? Do I have to generate a summary file before using it?** The input to ``--compare-samples`` are two directories (corresponding to the two samples to be compared) that are outputted by a call to ``--compute-genes-psi`` (in ``miso``). There is no need to generate a summary file before calling ``--compare-samples``, and the output of ``--summarize-samples`` is not used at all when doing a samples comparison. A summary file is just a single-file summary of the information contained in the directory produced by ``--compute-genes-psi`` for a particular sample, made for convenience as a summary of the expression levels of exons/isoforms in that sample. (`back <#faq>`_)
+11. **What is the input to the** ``--compare-samples`` **option? Do I have to generate a summary file before using it?** The input to ``--compare-samples`` are two directories (corresponding to the two samples to be compared) that are outputted by a call to ``--run`` (in ``miso``). There is no need to generate a summary file before calling ``--compare-samples``, and the output of ``--summarize-samples`` is not used at all when doing a samples comparison. A summary file is just a single-file summary of the information contained in the directory produced by ``--run`` for a particular sample, made for convenience as a summary of the expression levels of exons/isoforms in that sample. (`back <#faq>`_)
 
 .. _answer12:
 
