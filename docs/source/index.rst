@@ -7,7 +7,7 @@
 
 
 .. image:: images/MISO-docs-logo-small.png
-   :scale: 60%
+   :scale: 40%
    :align: right
    :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
 
