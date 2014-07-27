@@ -1310,7 +1310,7 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 
 .. _answer20:
 
-20. **What is the license for MISO?** MISO is distributed under a free for academic use CreativeCommons license. For more information on licensing, please contact Dan Dardani at `MIT TLO <http://web.mit.edu/tlo/www/>`_.
+20. **What is the license for MISO?** As of July 2014, MISO is now the <a href="http://en.wikipedia.org/wiki/BSD_licenses">MIT/BSD license</a>. 
 
 .. .. _sec:
 
