@@ -36,7 +36,7 @@
    <img src="_images/twitter.png" alt="twitter share button" title="twitter share button" />
    </a>
 
-We released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq data and MISO output. Check it out!
+We released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq data and MISO output. 
 
 .. "&para;"
 
