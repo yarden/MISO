@@ -36,20 +36,15 @@
    <img src="_images/twitter.png" alt="twitter share button" title="twitter share button" />
    </a>
 
-We released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq data and MISO output. 
 
 .. "&para;"
-
-
-+------------------------------+
-|                              |
-|                              |
-+------------------------------+
 
 
 **Quick links:**
  
  * `Download MISO annotations in GFF format <annotation.html>`_
+ * We released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq data and MISO output. 
+
 
 .. * :ref:`Download alternative event annotation files (available for human, mouse and D. melanogaster) <event-annotation>` 
 .. * :ref:`Download gene models in GFF format for isoform-centric analysis (available for human, mouse) <iso-centric>`
