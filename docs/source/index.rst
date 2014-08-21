@@ -1186,7 +1186,7 @@ Frequently Asked Questions (FAQ)
 #. **When I run MISO on my BAM file, it finds that 0 reads align to all events!** (`answer <#answer4>`_)
 #. **When I run MISO on my BAM file, it finds far too few reads aligning to the events (but not 0)!** (`answer <#answer5>`_)
 #. **I am making my own GFF annotation file of alternative events for use with MISO. How should I format the** ``ID`` **value of GFF entries?** (`answer <#answer6>`_)
-#. **What are the different MISO versions? Which should I use?** (`answer <#answer7>`_)
+#. **Are there different MISO versions? Which should I use?** (`answer <#answer7>`_)
 #. **Where can I download MISO?** (`answer <#answer8>`_)
 #. **How can I map MISO alternative event annotations to the genes they are in?** (`answer <#answer9>`_)
 #. **Can I use MISO with my own custom annotations of alternative events? Or my own annotation of genes from their mRNA isoforms that I obtained from Ensembl/UCSC/Refseq?** (`answer <#answer10>`_)
@@ -1245,7 +1245,7 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 
 .. _answer7: 
 
-7. **What are the different MISO versions? Which should I use?** MISO currently has two versions: the original version, written in Python, and a newer version (released October 2011) containing a statistical inference engine written in C -- called ``fastmiso`` -- that is accessible through a Python interface. Version ``fastmiso`` is roughly 60-100x faster than the Python-only version. The Python interface to ``fastmiso`` is identical to the Python interface to the original version of MISO, meaning both take exactly the same inputs and command line arguments, and output files in exactly the same formats. Thus, using the two versions from a user's perspective is the same, the only difference is the installation (``fastmiso`` requires compilation using a C compiler like GCC and fewer Python packages to be installaed, while the Python-only version of MISO requires no compilation, but has a larger set of Python package requirements.) We recommend using ``fastmiso``, which now replaces the original Python-only version. (`back <#faq>`_)
+7. **Are there different MISO versions? Which should I use?** The original version of MISO was written in Python, and is no longer supported. The newer of MISO uses a statistical inference engine written in C -- called ``fastmiso`` -- that is accessible through a Python interface. Version ``fastmiso`` is roughly 60-100x faster than the Python-only version. (`back <#faq>`_)
 
 .. _answer8:
 
@@ -1514,18 +1514,6 @@ Installing Python-only MISO version
 
  .. warning::
     The Python-only version of MISO is now deprecated -- we recommend using ``fastmiso``.
-
-This version requires:
-
-1. `Python 2.6`_ or higher
-2. `numpy`_ / `scipy`_. **NOTE**: MISO requires numpy version > 1.4!
-3. `matplotlib`_
-4. `samtools`_ for accessing SAM/BAM files
-5. `pysam`_, a Python library for working with SAM/BAM files through ``samtools`` (**NOTE**: MISO requires pysam version 0.6 or higher)
-
-MISO has not been tested with Python 3.x. Once these libraries are available, the Python-only version of MISO can be used.
-
-To get the most up to date version of the Python-only MISO, we recommend checking out the latest version of the ``dev`` branch from our GitHub `repository`_.
 
 .. _myrefs:
 
