@@ -79,7 +79,7 @@ Mailing list where users can ask technical questions is available at `miso-users
 Installation
 ============
 
-The primary version of MISO is called ``fastmiso`` -- which is written in a combination of Python and the C programming language. This version is approximately 60-100x faster than the older Python-only version of MISO, which is no longer supported. To install ``fastmiso``, see section :ref:`installing-fastmiso`. 
+The primary version of MISO is called ``fastmiso`` -- which is written in a combination of Python and the C programming language.  
 
 To install MISO, either download one of the stable releases (see :ref:`releases`) or install the latest version from our GitHub repository. See below for detailed installation instructions.
 
