@@ -21,9 +21,6 @@
    :alt: sashimi-plot
    :target: `sashimi_plot`_
 
-.. image:: _images/twitter.png
-   :scale: 0%
-   
 .. raw:: html
 
    <a target="_blank" href="http://twitter.com/share?text=Currently reading MISO documentation (http%3A%2F%2Fgenes.mit.edu%2Fburgelab%2Fmiso%2Fdocs%2F)" title="Click to share this post on Twitter">
