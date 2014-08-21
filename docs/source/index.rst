@@ -21,7 +21,7 @@
    :alt: sashimi-plot
    :target: `sashimi_plot`_
 
-.. image:: images/twitter.png
+.. image:: _images/twitter.png
    :scale: 0%
    
 .. raw:: html
