@@ -24,14 +24,8 @@
 .. image:: images/twitter.png
    :scale: 0%
    
-.. image:: images/linkedin.png
-   :scale: 0%
-
 .. raw:: html
 
-   <a href="http://www.linkedin.com/shareArticle?mini=true&url=http://genes.mit.edu/burgelab/miso/docs/&title=MISO: Analysis of isoform expression using RNA-Seq&summary=&source=MIT" target="_new">
-   <img src="_images/linkedin.png" alt="linkedin share button" title="linkedin share button" />
-   </a>
    <a target="_blank" href="http://twitter.com/share?text=Currently reading MISO documentation (http%3A%2F%2Fgenes.mit.edu%2Fburgelab%2Fmiso%2Fdocs%2F)" title="Click to share this post on Twitter">
    <img src="_images/twitter.png" alt="twitter share button" title="twitter share button" />
    </a>
@@ -42,8 +36,8 @@
 
 **Quick links:**
  
- * `Download MISO annotations in GFF format <annotation.html>`_
- * We released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq data and MISO output. 
+* `Download MISO annotations in GFF format <annotation.html>`_
+* We released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq data and MISO output. 
 
 
 .. * :ref:`Download alternative event annotation files (available for human, mouse and D. melanogaster) <event-annotation>` 
