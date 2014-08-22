@@ -71,7 +71,7 @@ def get_ids_passing_filter(gff_index_dir,
     return ids_passing_filter
             
 
-def check_gff_and_bam(gff_dir, bam_filename,
+def check_gff_and_bam(gff_dir, bam_filename, main_logger,
                       num_genes=10000,
                       num_reads=10000,
                       given_read_len=None):
@@ -88,9 +88,9 @@ def check_gff_and_bam(gff_dir, bam_filename,
     # Check that a BAM header is available
     bam_index_fname = "%s.bai" %(bam_filename)
     if not os.path.isfile(bam_index_fname):
-        print "WARNING: Expected BAM index file %s not found." \
-            %(bam_index_fname)
-        print "Are you sure your BAM file is indexed?"
+        main_logger.warning("Expected BAM index file %s not found." \
+                            %(bam_index_fname))
+        main_logger.warning("Are you sure your BAM file is indexed?")
     print "Checking if BAM has mixed read lengths..."
     bam_file = pysam.Samfile(bam_filename, "rb")
     n = 0
@@ -103,37 +103,39 @@ def check_gff_and_bam(gff_dir, bam_filename,
         n += 1
     all_seq_lens = seq_lens.keys()
     if len(all_seq_lens) > 1:
-        print "\nWARNING: Found mixed length reads in your BAM file! " \
+        msg = "Found mixed length reads in your BAM file: %s\n" \
               "MISO does not support mixed read lengths. Please " \
               "trim your reads to a uniform length and re-run " \
               "or run MISO separately on each read length. " \
-              "Proceeding anyway, though it is likely that this will " \
+              "Proceeding anyway, though this may " \
               "result in errors or inability to match reads to " \
-              "your annotation."
-        print "Read lengths were: %s" %(",".join(map(str, all_seq_lens)))
-        time.sleep(15)
+              "your annotation.\n" %(bam_filename)
+        msg += "Read lengths were: %s\n" %(",".join(map(str, all_seq_lens)))
+        main_logger.warning(msg)
+        time.sleep(5)
     else:
         print "Found reads of length %d in BAM." %(all_seq_lens[0])
         # Check the BAM read length against the read length that was
         # given
         if given_read_len != None:
             if all_seq_lens[0] != given_read_len:
-                print "Error: The given read length (%d) does not match " \
-                      "the read length found in BAM (%d). Please re-run " \
-                      "and pass the correct --read-len argument. " \
-                      "Note that MISO does not support mixed read lengths " \
-                      "in the same BAM file." \
-                      %(given_read_len,
-                        all_seq_lens[0])
+                e = "Error: The given read length (%d) does not match " \
+                    "the read length found in BAM (%d). Please re-run " \
+                    "and pass the correct --read-len argument. " \
+                    "Note that MISO does not support mixed read lengths " \
+                    "in the same BAM file." \
+                    %(given_read_len,
+                      all_seq_lens[0])
+                main_logger.error(e)
                 sys.exit(1)
         time.sleep(5)
         
     genes_fname = os.path.join(gff_dir, "genes.gff")
     if not os.path.isfile(genes_fname):
         # No genes.gff found - warn user and abort headers check
-        print "WARNING: No genes.gff file found in %s. Did you index "\
-              "your GFF with an older version of MISO?" \
-              %(gff_dir)
+        main_logger.warning("No genes.gff file found in %s. Did you index " \
+                            "your GFF with an older version of MISO?" \
+                            %(gff_dir))
         return
     # Read first few genes chromosomes
     gff_chroms = {}
@@ -166,11 +168,11 @@ def check_gff_and_bam(gff_dir, bam_filename,
     if bam_starts_with_chr != gff_starts_with_chr:
         mismatch_found = True
     if mismatch_found:
-        print "\nWARNING: It looks like your GFF annotation file and your BAM " \
-              "file might not have matching headers (chromosome names.) " \
-              "If this is the case, your run will fail as no reads from " \
-              "the BAM could be matched up with your annotation."
-        print "\nPlease see:\n\t%s\n for more information." %(manual_url)
+        miso_logger.warning("It looks like your GFF annotation file and your BAM " \
+                            "file might not have matching headers (chromosome names.) " \
+                            "If this is the case, your run will fail as no reads from " \
+                            "the BAM could be matched up with your annotation.")
+        miso_logger.warning("Please see:\n\t%s\n for more information." %(manual_url))
         # Default: assume BAM starts with chr headers
         chr_containing = "BAM file (%s)" %(bam_filename)
         not_chr_containing = "GFF annotation (%s)" %(gff_dir)
@@ -178,41 +180,23 @@ def check_gff_and_bam(gff_dir, bam_filename,
             # BAM does not start with chr, GFF does
             chr_containing, not_chr_containing = \
                 not_chr_containing, chr_containing
-        print "It looks like your %s contains \'chr\' chromosomes (UCSC-style) " \
-              "while your %s does not." %(chr_containing,
-                                          not_chr_containing)
-        print "\nThe first few BAM chromosomes were: "
-        print ",".join(bam_chroms.keys())
+        miso_logger.warning("It looks like your %s contains \'chr\' chromosomes (UCSC-style) " \
+                            "while your %s does not." %(chr_containing,
+                                                        not_chr_containing))
+        miso_logger.warning("The first few BAM chromosomes were: %s" \
+                            %(",".join(bam_chroms.keys())))
         print "BAM references: "
         print bam_file.references
-        print "The first few GFF chromosomes were: "
-        print ",".join(gff_chroms.keys())
-        print "\nRun is likely to fail or produce empty output. Proceeding " \
-              "anyway...\n"
+        miso_logger.warning("The first few GFF chromosomes were: %s" \
+                            %(",".join(gff_chroms.keys())))
+        miso_logger.warning("Run is likely to fail or produce empty output. Proceeding " \
+                            "anyway...")
         time.sleep(15)
-        
 
-            
-def output_gene_ids_in_batches(gene_ids_to_gff_index,
-                               output_dir,
-                               chunk_jobs):
-    """
-    Takes mapping from gene IDs to their GFF index
-    and splits them into 1 or more files (batches),
-    each file containing the gene ID and its associated
-    indexed GFF path.  These files are then taken as input
-    by MISO and run either on a cluster or locally using
-    multi-cores.
-    """
-    for gene_id in gene_ids_to_gff_index:
-        indeed_filename = gene_ids_to_gff_index[gene_id]
-    pass
-
-    
         
 def compute_psi(sample_filenames, output_dir, event_type,
                 read_len, overhang_len,
-		use_cluster=False,
+                use_cluster=False,
                 chunk_jobs=False,
                 filter_events=True,
                 events_info_filename=None,

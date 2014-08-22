@@ -192,7 +192,6 @@ class MISOSampler:
                 os.makedirs(self.log_dir)
             except OSError:
                 pass
-
         self.miso_logger = get_logger('miso_logger', self.log_dir)
         self.miso_logger.info("Instantiated sampler.")
 

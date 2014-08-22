@@ -6,7 +6,18 @@ import sys
 import time
 import shelve
 
+import time
+from time import strftime
+
 COMPRESS_PREFIX = "misocomp"
+
+
+def get_timestamp():
+    """
+    Return filename-friendly time stamp.
+    """
+    tstamp = strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+    return tstamp
 
 
 def inv_dict(mydict):

@@ -8,6 +8,7 @@ import time
 import sys
 import subprocess
 from collections import defaultdict
+import logging
 
 import pysam
 
@@ -26,6 +27,37 @@ miso_path = os.path.dirname(os.path.abspath(__file__))
 manual_url = "http://genes.mit.edu/burgelab/miso/docs/"
 
 
+def get_main_logger(log_outdir,
+                    level=logging.WARNING,
+                    include_stdout=True):
+    """
+    Return logger object for main MISO thread.
+    """
+    logger_name = "miso_main"
+    misc_utils.make_dir(log_outdir)
+    logger = logging.getLogger(logger_name)
+    formatter = \
+        logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                          datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.root.setLevel(level)
+    # Optionally add handler that streams all logs
+    # to stdout
+    if include_stdout:
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(level)
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+    # Write to main logger filename along
+    # with time stamp
+    logger_basename = "main.%s.log" %(misc_utils.get_timestamp())
+    logger_fname = os.path.join(log_outdir, logger_basename)
+    fh = logging.FileHandler(logger_fname)
+    fh.setLevel(level)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    return logger
+
+
 def greeting(parser=None):
     print "MISO (Mixture of Isoforms model)"
     print "Probabilistic analysis of RNA-Seq data for detecting " \
@@ -42,6 +74,7 @@ class GenesDispatcher:
     """
     def __init__(self, gff_dir, bam_filename,
                  output_dir, read_len, overhang_len,
+                 main_logger,
                  settings_fname=None,
                  paired_end=None,
                  use_cluster=False,
@@ -51,18 +84,19 @@ class GenesDispatcher:
                  gene_ids=None,
                  num_proc=None,
                  wait_on_jobs=True):
+        self.main_logger = main_logger
         self.threads = {}
         self.gff_dir = gff_dir
         self.bam_filename = bam_filename
         # Check that the BAM filename exists and that it has an index
         if not os.path.isfile(self.bam_filename):
-            print "Error: BAM file %s not found." %(self.bam_filename)
+            self.main_logger.error("BAM file %s not found." %(self.bam_filename))
             sys.exit(1)
         self.bam_index_fname = "%s.bai" %(self.bam_filename)
         if not os.path.isfile(self.bam_index_fname):
-            print "WARNING: Expected BAM index file %s not found." \
-                %(self.bam_index_fname)
-            print "Are you sure your BAM file is indexed?"
+            self.main_logger.warning("Expected BAM index file %s not found." \
+                                %(self.bam_index_fname))
+            self.main_logger.warning("Are you sure your BAM file is indexed?")
         self.output_dir = output_dir
         self.read_len = read_len
         # For now setting overhang to 1 always
@@ -85,7 +119,7 @@ class GenesDispatcher:
         if num_proc is not None:
             num_proc = int(num_proc)
             self.num_processors = num_proc
-            print "Using %d processors" %(num_proc)
+            self.main_logger.info("Using %d processors" %(num_proc))
         self.long_thresh = 50
         self.batch_logs_dir = \
             os.path.join(output_dir, "batch-logs")
@@ -110,10 +144,10 @@ class GenesDispatcher:
         else:
             self.gene_ids = self.gene_ids_to_gff_index.keys()
         if len(self.gene_ids) == 0:
-            print "Error: No genes to run on. Did you pass me the wrong path " \
-                  "to your index GFF directory? " \
-                  "Or perhaps your indexed GFF directory " \
-                  "is empty?"
+            self.main_logger.error("No genes to run on. Did you pass me the wrong path " \
+                                   "to your index GFF directory? " \
+                                   "Or perhaps your indexed GFF directory " \
+                                   "is empty?")
             sys.exit(1)
         self.batch_filenames = self.output_batch_files()
 
@@ -258,9 +292,9 @@ class GenesDispatcher:
                 # of cluster jobs is empty, it means we could not
                 # find the IDs of the job from the submission
                 # system. Report this to the user.
-                print "WARNING: Asked to wait on cluster jobs but cannot " \
-                      "parse their job IDs from the cluster submission " \
-                      "system."
+                self.main_logger.warning("Asked to wait on cluster jobs but cannot " \
+                                         "parse their job IDs from the cluster submission " \
+                                         "system.")
             # Try to wait on jobs no matter what; though if 'cluster_jobs'
             # is empty here, it will not wait
             cluster_utils.wait_on_jobs(cluster_jobs,
@@ -269,7 +303,7 @@ class GenesDispatcher:
             if self.use_cluster:
                 # If we're running in cluster mode and asked not
                 # to wait for jobs, let user know
-                print "Not waiting on cluster jobs."
+                self.main_logger.info("Not waiting on cluster jobs.")
         # If ran jobs locally, wait on them to finish
         # (this will do nothing if we submitted jobs to
         # cluster)
@@ -292,18 +326,19 @@ class GenesDispatcher:
             curr_thread = self.threads[thread_name]
             curr_thread.wait()
             if curr_thread.returncode != 0:
-                print "WARNING: Thread %s might have failed..." \
-                    %(thread_name)
+                self.main_logger.warning("Thread %s might have failed..." \
+                                    %(thread_name))
             if curr_thread.returncode is None:
-                print "WARNING: Thread still going..." 
+                self.main_logger.warning("Thread still going...")
             threads_completed[thread_name] = True
         t_end = time.time()
         duration = ((t_end - t_start) / 60.) / 60.
-        print "  - Threads completed in %.2f hours." \
-            %(duration)
+        self.main_logger.info("Threads completed in %.2f hours." \
+                              %(duration))
 
 
-def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
+def compute_all_genes_psi(gff_dir, bam_filename, read_len,
+                          output_dir, main_logger,
                           use_cluster=False,
                           SGEarray=False,
                           chunk_jobs=800,
@@ -333,7 +368,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     misc_utils.make_dir(output_dir)
 
     # Check GFF and BAM for various errors like headers mismatch
-    run_events.check_gff_and_bam(gff_dir, bam_filename,
+    run_events.check_gff_and_bam(gff_dir, bam_filename, main_logger,
                                  given_read_len=read_len)
     
     # Prefilter events that do not meet the coverage criteria
@@ -342,10 +377,10 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
     all_gene_ids = None
     
     if prefilter:
-        print "  - Prefiltering on"
+        main_logger.info("Prefiltering on")
         if misc_utils.which("bedtools") is None:
-            print "Error: Cannot use bedtools. Bedtools is " \
-                  "required for --prefilter option"
+            main_logger.error("Error: Cannot use bedtools. Bedtools is " \
+                              "required for --prefilter option")
             sys.exit(1)
         filtered_gene_ids = run_events.get_ids_passing_filter(gff_dir,
                                                               bam_filename,
@@ -359,14 +394,14 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
             # something must have gone wrong, e.g. mismatch
             # in chromosome headers between BAM and GFF
             if num_pass == 0:
-                print "Error: None of the events in %s appear to meet the " \
-                      "read coverage filter. Check that your BAM headers " \
-                      "in %s match the GFF headers of indexed events." \
-                      %(gff_dir,
-                        bam_filename)
+                main_logger.error("None of the events in %s appear to meet the " \
+                                  "read coverage filter. Check that your BAM headers " \
+                                  "in %s match the GFF headers of indexed events." \
+                                  %(gff_dir,
+                                    bam_filename))
                 sys.exit(1)
-            print "  - Total of %d events pass coverage filter." \
-                %(num_pass)
+            main_logger.info("Total of %d events pass coverage filter." \
+                             %(num_pass))
 
     ##
     ## Submit jobs either using cluster or locally
@@ -377,6 +412,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len, output_dir,
                                  output_dir,
                                  read_len,
                                  overhang_len,
+                                 main_logger,
                                  settings_fname=settings_fname,
                                  paired_end=paired_end,
                                  use_cluster=use_cluster,
@@ -520,16 +556,21 @@ def main():
         # Output directory to use
         output_dir = os.path.abspath(os.path.expanduser(options.output_dir))
 
+        ##
+        ## Load the main logging object
+        ##
+        logs_output_dir = os.path.join(output_dir, "logs")
+        main_logger = get_main_logger(logs_output_dir)
+
         if options.read_len == None:
-            print "Error: need --read-len to compute Psi values."
+            main_logger.error("need --read-len to compute Psi values.")
             sys.exit(1)
 
         overhang_len = 1
 
         if options.paired_end != None and options.overhang_len != None:
-            print "WARNING: cannot use --overhang-len in paired-end mode."
-            print "Using overhang = 1"
-
+            main_logger.warning("cannot use --overhang-len in paired-end mode.\n" \
+                                "Using overhang = 1")
         if options.overhang_len != None:
             overhang_len = options.overhang_len
 
@@ -537,6 +578,7 @@ def main():
         wait_on_jobs = not options.no_wait
         compute_all_genes_psi(gff_filename, bam_filename,
                               options.read_len, output_dir,
+                              main_logger,
                               overhang_len=overhang_len,
                               use_cluster=options.use_cluster,
                               SGEarray=options.SGEarray,

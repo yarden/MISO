@@ -161,7 +161,8 @@ def load_bam_reads(bam_filename,
     return bamfile
 
 
-def fetch_bam_reads_in_gene(bamfile, chrom, start, end, gene=None):
+def fetch_bam_reads_in_gene(bamfile, chrom, start, end,
+                            gene=None):
     """
     Align BAM reads to the gene model.
     """
@@ -348,7 +349,8 @@ def read_matches_strand(read,
 def sam_parse_reads(samfile,
                     paired_end=False,
                     strand_rule=None,
-                    target_strand=None):
+                    target_strand=None,
+                    given_read_len=None):
     """
     Parse the SAM reads. If paired-end, pair up the mates
     together.
@@ -356,10 +358,16 @@ def sam_parse_reads(samfile,
     Also forces the strandedness convention, discarding
     reads that do not match the correct strand.
 
+    Kwargs:
+    - paired_end: whether paired-end or not
     - strand_rule: specifies the strandedness convention. Can be
       'fr-unstranded', 'fr-firststrand' or 'fr-secondstrand'.
     - target_strand: specifies the strand to match, i.e. the
       annotation strand. Can be '+' or '-'.
+    - given_read_len: The read length given to MISO by the user.
+    If passed to this function, it will filter out all reads 
+    that do not have this length (e.g. in mixed read length
+    BAM file.)
     """
     read_positions = []
     read_cigars = []
@@ -398,6 +406,13 @@ def sam_parse_reads(samfile,
             read1, read2 = read_info
             if (read1.cigar is None) or (read2.cigar is None):
                 continue
+            # Filter on given read length here for PAIRED-END
+            # If either mate is not of the given read length,
+            # skip it
+            if given_read_len is not None:
+                if (read1.rlen != given_read_len) or \
+                   (read2.rlen != given_read_len):
+                   continue
             # Read positions and cigar strings are collected
             read_positions.append(int(read1.pos))
             read_positions.append(int(read2.pos))
@@ -409,6 +424,11 @@ def sam_parse_reads(samfile,
         for read in samfile:
             if read.cigar is None:
                 continue
+            # Filter on given read length here for SINGLE-END
+            if given_read_len is not None:
+                # Skip reads that don't have the given read length
+                if read.rlen != given_read_len:
+                    continue
             if check_strand:
                 if not read_matches_strand(read,
                                            target_strand,
