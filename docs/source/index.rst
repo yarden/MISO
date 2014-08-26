@@ -35,7 +35,7 @@
 
 
 What is MISO?
-=============
+=========
 
 MISO (Mixture-of-Isoforms) is a probabilistic framework that
 quantitates the expression level of alternatively spliced genes from
@@ -49,7 +49,7 @@ The MISO framework is described in Katz et. al., `Analysis and design of RNA seq
 
 
 How MISO works
-==============
+===========
 
 MISO treats the expression level of a set of isoforms as a random
 variable and estimates a distribution over the values of this
@@ -58,7 +58,7 @@ the family of techniques known as Markov Chain Monte Carlo ("MCMC").
 For details of the inference procedure, see Katz et. al. (2010).
 
 Features
---------
+-------
 
 * Estimates of isoform expression (|Psi| values, for "Percent Spliced In" or "Percent Spliced Isoform") and differential
   isoform expression for single-end or paired-end RNA-Seq data
@@ -70,14 +70,14 @@ Features
   system
 
 Mailing list
-============
+=======
 
 Mailing list where users can ask technical questions is available at `miso-users`_ (http://mailman.mit.edu/mailman/listinfo/miso-users).
 
 .. _installation: 
 
 Installation
-============
+=======
 
 The primary version of MISO is called ``fastmiso`` -- which is written in a combination of Python and the C programming language.  
 
@@ -86,7 +86,7 @@ To install MISO, either download one of the stable releases (see :ref:`releases`
 .. _releases: 
 
 Releases
---------
+-------
 
 MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python Package Index).
 
@@ -129,12 +129,12 @@ MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python P
 
 
 Latest version from GitHub
---------------------------
+----------------------
 
 * Download latest MISO version from ``fastmiso`` GitHub `repository`_ (.zip): https://github.com/yarden/MISO/zipball/fastmiso
 
 Installation requirements
--------------------------
+--------------------
 
 MISO requires a small number of Python modules and commonly used software like `samtools` for accessing SAM/BAM files. The requirements are:
 
@@ -157,7 +157,7 @@ MISO requires a small number of Python modules and commonly used software like `
 We strongly recommend that you install MISO using a Python package manager (see :ref:`installing-fastmiso`) so that the required Python modules are automatically installed and managed for you.
 
 Quickstart
-----------
+---------
 
 To quickly start using MISO, follow these steps (each of which is described in detail in the rest of the manual):
 
@@ -199,48 +199,51 @@ For a full example of running MISO, see :ref:`pipeline`. Also see the :ref:`faq`
 .. _installing-fastmiso:
 
 Installing the ``fastmiso`` version of MISO
--------------------------------------------
+-----------------------------------
 
 The ``fastmiso`` version of MISO is written in a combination of C and Python. The underlying statistical inference engine is written in C and can be compiled on Mac OS X or Unix-like platforms using GCC or other standard compilers. The interface to this code is written in Python and is identical in its commands and input and output formats to the original Python-only version of MISO. (The Python-only version of MISO is now deprecated.)
 
 There are two options for installing MISO, using either a stable release or installing the latest version from GitHub.
 
 Installing using a stable release
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
-It is highly recommended to install Python packages using a package manager such as the `distribute`_ ``easy_install`` utility (see `Python packaging tools tutorial <http://guide.python-distribute.org/installation.html>`_ for straightforward instructions on getting started.) Package managers will automatically download and install all necessary requirements for MISO and save headaches later on. 
-To install a stable release package of MISO using a Python package manager like distribute's ``easy_install``, simply type: ::
+It is highly recommended to install Python packages using a package manager such as the `pip`_ utility (see `Python packaging tools tutorial <http://guide.python-distribute.org/installation.html>`_ for straightforward instructions on getting started.) Package managers will automatically download and install all necessary requirements for MISO and save headaches later on. 
+To install a stable release package of MISO using a Python package ``pip``, simply type: ::
 
-  easy_install misopy
+  pip install misopy
 
-This will install MISO globally, fetching and installing all of its required Python modules. For local installation, use: ::
+This will install MISO globally, fetching and installing all of its required Python modules. To install MISO locally (without needing global installation access), it is best to use `virtualenv`_ in combination with ``pip``. ``virtualenv`` will create a "virtual environment" where a package and all of its dependencies can be installed. The virtual environment can be loaded whenever needed and so it will not interfere with other (potentially conflicting) Python packages that are available on the system. If you're a user working on a cluster system where you don't have root privileges, all you need is ``pip`` and ``virtualenv`` to be available -- the remaining installation steps can all be done locally without root access. To start, create a virtual environment (in this case called ``myenv``) in a local directory to which you have write access (e.g. your home directory):
 
-  easy_install --user -U misopy
+  virtualenv myenv
 
-If ``easy_install`` is unavailable on your system, you can simply download a stable release package (available from :ref:`releases`) and install it like ordinary Python modules. Unzip the package (e.g. for version "0.x"): ::
+This will create a directory ``myenv/`` that contains a Python virtual environment. Next, install MISO in this local environment: ::
 
- tar -xzvf misopy-0.x.tar.gz
+  myenv/bin/pip install misopy
 
-This will create a ``setup.py`` file in the directory where the package was unzipped. Compile the code and install MISO packages as follows: ::
+Finally, activate the environment in order to make all the executable MISO scripts available: ::
 
- python setup.py install
+  source myenv/bin/activate
 
-This command will install MISO globally on the system. To install it in a particular location, such as your home directory, use the following call to ``setup.py`` instead: ::
-
- python setup.py install --prefix=~/
-
-This will result in a local installation of the MISO Python package. To test the installation, load Python and import the ``misopy`` and ``pysplicing`` packages in the interpreter: ::
+This will completes a local installation of the MISO Python package. To test the installation, load Python and import the ``misopy`` and ``pysplicing`` packages in the interpreter: ::
 
  >> import misopy
  >> import pysplicing
 
-If you get no errors, the installation completed successfully. If you choose to install packages using ``--prefix=`` instead of a package manager, please consider that the Python packages you install have to be visible from your ``PYTHONPATH`` (see `Python packaging tools tutorial <http://guide.python-distribute.org/installation.html>`_ for information.)
+The ``miso`` main executable should be available on your path now: ::
 
-MISO needs to ``samtools`` to be installed and available on your path.
+  $ miso
+  MISO (Mixture of Isoforms model)
+  Probabilistic analysis of RNA-Seq data for detecting differential isoforms
+  Use --help argument to view options.
+
+If you get no errors, the installation completed successfully. 
+
+Note that MISO also needs to ``samtools`` to be installed and available on your path.
 
 
 Installing the latest version from GitHub repository
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To install the latest version from the GitHub `repository`_, there are two options: (a) using ``git`` to get the latest source from our GitHub repository, or (b) by downloading a snapshot of the current repository, without going through ``git``. If you have ``git`` installed and configured with your GitHub account, you can clone our repository as follows: ::
 
@@ -273,7 +276,7 @@ We strongly recommend that you manage Python packages using a package manager ra
 .. _Testing the installation:
 
 Testing the installation
-------------------------
+-------------------
 
 To test if the required modules are available, use the
 ``module_availability`` script as follows: ::
@@ -299,7 +302,7 @@ You should be able to import both of these packages without errors from the Pyth
 
 
 Testing MISO
-------------
+-----------
 
 To test that MISO can be run properly, run ``test_miso`` as shown
 below. These tests ensure that MISO can be run on a few
@@ -323,7 +326,7 @@ test run.
 
 
 Overview
-========
+======
 
 To run MISO, a set of annotations (typically specified in GFF format) of the isoforms of alternative
 events must be provided and RNA-Seq reads (typically specified in SAM format). The GFF annotation is 
@@ -344,7 +347,7 @@ The figure below shows an overview of how to run MISO.
 
 
 Ways of running MISO and associated file formats
-================================================
+================================
 
 MISO can be run on either single or paired-end RNA-Seq data. Two general kinds of analyses are possible:
 
@@ -361,7 +364,7 @@ To run MISO, an annotation of the alternative splicing events or isoforms must b
 a set of reads. Single or paired-end reads can be provided in the `Spliced Alignment/Map (SAM)`_ format (in its binary form, BAM) and the annotation can be in the `GFF`_ (version 3) format. The GFF format can be used to specify either whole mRNA isoforms of genes (which is the common use of the format) or to specify single alternative splicing events, as described in :ref:`event-annotation`.
 
 Using MISO in parallel on multiple cores 
-========================================
+==========================
 
 When run locally and not on a cluster, MISO will use multiple cores on the machine
 on which it is running. The number of cores/processors to be used by MISO is set 
@@ -369,7 +372,7 @@ through the settings file (see :ref:`config`).
 
 
 Using MISO on a cluster
-=======================
+===============
 
 It is highly recommended to run MISO on a cluster when possible. Since each
 gene/exon can be treated as an independent inference problem, MISO is
@@ -382,7 +385,7 @@ that there's a shared filesystem between all the nodes.
 .. _event-annotation:
 
 Alternative event annotations
-=============================
+===================
 
 Alternative event annotations are available for the major classes of alternative
 splicing and alternative RNA processing events in the human (hg18, hg19), mouse (mm9) and Drosophila melanogaster genomes. 
@@ -403,14 +406,14 @@ For performing isoform-centric analyses, any gene models annotation can be used 
 .. _tian-apa:
 
 Expanded alternative cleavage and polyadenylation annotation for mouse
-----------------------------------------------------------------------
+----------------------------------------------------------
 
 A recent paper from Bin Tian's group, `Analysis of alternative cleavage and polyadenylation by 3′ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_, annotated alternative cleavage and polyadenylation events in mouse tissues using the *3′READS* method. The annotated events (TandemUTR and ALE) are available in GFF format on the `MISO annotations page <annotation.html>`_, courtesy of the Tian group. 
 
 .. _gff-event-annotation:
 
 GFF-based alternative events format
------------------------------------
+-----------------------------
 
 Single alternative splicing events can be described in GFF format, using the convention 
 described below. In the mouse and human genome event annotations in :ref:`event-annotation`, 
@@ -440,13 +443,13 @@ exons, respectively.
 .. _events-to-genes:
 
 Mapping of alternative events to genes
---------------------------------------
+-------------------------------
 
 A mapping from alternative events to genes can be downloaded from the `MISO annotations page <annotation.html>`_.
 
 
 Using GFF event annotations with paired-end reads
--------------------------------------------------
+-----------------------------------------
 
 Note that in the above GFF annotations for events, only immediately flanking exons to an alternative event are considered. 
 For example, for a skipped exon event, only the two exons that flank it are considered in the annotation. In the human/mouse genomes, 
@@ -457,7 +460,7 @@ libraries where the average insert is significantly longer than these isoform le
 .. _iso-centric:
 
 Human/mouse gene models for isoform-centric analyses
-----------------------------------------------------
+---------------------------------------------
 
 For isoform-centric analyses, annotations of gene models are needed, where whole mRNA isoforms are specified for each gene. Any annotation that is in GFF3 format can be used, e.g. annotations obtained from RefSeq, Ensembl, UCSC or other databases.
 
@@ -502,10 +505,10 @@ For convenience, we also provide GFF3 annotations of gene models from Ensembl (r
 
 
 Running MISO
-============
+=========
 
 Invoking MISO from the command line
------------------------------------
+-------------------------------
 
 When installing the MISO package, the set of scripts that make up to inteface to MISO will automatically be placed as an executables in your path, so that you can refer to these without modifying your shell environment. For example, if you install MISO using ``setup.py install`` globally, then a MISO script like ``miso`` will become available on the path, and can be run as: ::
 
@@ -517,7 +520,7 @@ If you installed MISO using ``setup.py --prefix=~/`` in your home directory or s
 
 
 Preparing the RNA-Seq reads
----------------------------
+-----------------------
 
 MISO can take as input RNA-Seq reads in the `SAM`_ format. SAM files are typically the output of read alignment programs, such as `Bowtie`_ or `Tophat`_. The SAM format can represent both single and paired-end reads.
 
@@ -1549,6 +1552,7 @@ General reading on probabilistic modeling and inference
 
 .. _A primer on probabilistic inference: http://cocosci.berkeley.edu/tom/papers/tutorial.pdf
 
+.. _virtualenv: http://virtualenv.readthedocs.org/en/latest/
 .. _distribute: http://packages.python.org/distribute/
 .. _pip: http://pypi.python.org/pypi/pip
 .. _Enthought Python Distribution: http://www.enthought.com/products/epd.php
