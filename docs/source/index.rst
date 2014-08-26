@@ -237,9 +237,7 @@ The ``miso`` main executable should be available on your path now: ::
   Probabilistic analysis of RNA-Seq data for detecting differential isoforms
   Use --help argument to view options.
 
-If you get no errors, the installation completed successfully. 
-
-Note that MISO also needs to ``samtools`` to be installed and available on your path.
+If you get no errors, the installation completed successfully. Note that MISO also needs to ``samtools`` to be installed and available on your path.
 
 
 Installing the latest version from GitHub repository
@@ -741,7 +739,7 @@ To compute the insert length by simple pairing of read mates by their ID (assumi
      The option ``--compute-insert-len`` can take a comma-separated list of BAM filenames in case you want to compute the insert length for multiple samples in one command. The ``--compute-insert-len`` option of ``pe_utils`` by default uses only exons from the GFF file that are 500 bases or longer. This can be tweaked by passing ``pe_utils`` the optional ``--min-exon-size N`` argument, which will only use exons of size ``N`` or longer. In our example, we used a constitutive exons GFF file that contained only exons that are 100 bp or longer, so the default settings will consider all exons in that file.
 
 Prefiltering MISO events
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 
 To increase efficiency, a prefiltering option was added in release ``0.4.7``. When ``--prefilter`` is given to ``miso``, MISO will calculate the number of reads in the input BAM mapping to each event in the input GFF. Events that do not meet the read coverage thresholds (as set in the configuration file) will be removed from the run. This feature requires the Bedtools utility ``tagBam`` to be installed and available on path. The call to ``tagBam`` introduces a startup cost per BAM file, but could in many cases save computation time, since events low coverage events will not processed or distributed as jobs to nodes when running on the cluster. From ``miso --help``: ::
 
@@ -760,7 +758,7 @@ To increase efficiency, a prefiltering option was added in release ``0.4.7``. Wh
 
 
 Distributing MISO jobs to a cluster
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Running MISO on a cluster is **highly recommended**. Since each gene or alternative splicing event 
 can be treated independently, the computation of expression levels is easily parallelized on a cluster. 
@@ -782,7 +780,7 @@ Thanks to Michael Lovci for this feature.
 
 
 Raw MISO output format 
-^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 
 When running MISO, through ``miso --run``, the raw output will be a set of posterior distributions over |Psi| values. Each exon or gene, depending on whether the analysis is exon or isoform-centric, will have its own file containing posterior samples from the distribution over |Psi|. 
 
@@ -820,7 +818,7 @@ the raw output can be compressed (see :ref:`compressing`.)
 .. _summarizing:
 
 Summarizing MISO output
-=======================
+=================
 
 To summarize MISO output and obtain confidence intervals (CIs) for |Psi| values, the ``summarize_miso --summarize-samples`` option can be used: ::
 
@@ -838,7 +836,7 @@ This will create a subdirectory ``summary_output/summary/`` with a file ``my_sam
 .. _summary-format:
 
 Summary file output format
---------------------------
+----------------------
 
 The summary file is a tab-separated format containing the following columns:
 
@@ -865,7 +863,7 @@ Note that ``miso_posterior_mean`` is an estimate of |Psi| and [``ci_low``, ``ci_
 .. _comparing-samples:
 
 Detecting differentially expressed isoforms
-===========================================
+============================
 
 Once MISO output has been computed for two samples or more, pairwise comparison of differential
 isoform expression can be computed. To test if an isoform or exon is differentially expressed between 
@@ -884,7 +882,7 @@ to the directory ``comparisons/control_vs_knockdown``. Note that
 this comparison is described below.
 
 Output of samples comparison
-----------------------------
+------------------------
 
 The main output of ``--compare-samples`` will be in:
 
@@ -893,7 +891,7 @@ The main output of ``--compare-samples`` will be in:
 .. _bf-output:
 
 Bayes factors file output format
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 The Bayes factors file (ending in ``.miso_bf``) will be stored in the ``bayes-factors/`` directory generated
 by the ``--compare-samples`` option. The Bayes factor file is a tab-separated format containing the following columns: 
@@ -944,7 +942,7 @@ The ``miso_pack`` utility will traverse the entire directory structure of ``miso
 
 
 Long-term archival and compression of MISO output
--------------------------------------------------
+------------------------------------------
 
 Once all the samples have been summarized and all pairwise comparisons between samples have been made (as described in :ref:`summarizing` and :ref:`comparing-samples`), space can be saved by archiving the MISO output for long-term storage.
 
@@ -985,7 +983,7 @@ This will uncompress ``mydata.misozip`` and output its contents into the directo
 
 
 Example MISO pipeline
-=====================
+==============
 
 Below is an example of a MISO pipeline, where |Psi| values for a set of alternative events are computed (with confidence intervals) for a pair of samples called "control" and "knockdown". A samples comparison is performed to detect differentially expressed isoforms between the samples. ::
 
@@ -1014,7 +1012,7 @@ Below is an example of a MISO pipeline, where |Psi| values for a set of alternat
 .. _interpreting:
 
 Interpreting and filtering MISO output
-======================================
+========================
 
 Once MISO runs are completed and pairwise comparisons between your samples have been made to compute Bayes factors (using ``--compare-samples``), the resulting files can be interpreted to detect differential events.  For each pairwise comparison, we will have a ``.miso_bf`` file which contains the |Psi| values of each event in both samples along with confidence intervals (assuming the event is detectable in both), the |Delta| |Psi| values, the Bayes factor, and other useful information about the read counts used to compute these values.
 
@@ -1023,7 +1021,7 @@ MISO comes with several utilities (such as ``filter_events``, described in :ref:
 .. _usingcounts:
 
 Using the read class counts
----------------------------
+----------------------
 
 A first-pass filter for detecting differentially changing events can apply a Bayes factor cutoff along with a |Delta| |Psi| cutoff, using the ``bayes_factor`` and ``diff`` fields of the samples comparison output file. Section :ref:`filterscript` describes a utility that will apply these filters for exon-centric analyses.
 
@@ -1070,7 +1068,7 @@ For isoform-centric analyses where the number of read classes is considerably la
 .. _confidence_intervals:
 
 Using the confidence intervals
-------------------------------
+------------------------
 
  .. figure:: images/confidence_intervals.png
       :scale: 70%
@@ -1086,7 +1084,7 @@ The figure on the right shows two posterior distributions over |Psi| for the sam
 .. _filterscript:
 
 Filtering differentially expressed events
------------------------------------------
+-------------------------------
 
 Given a MISO Bayes factor comparison file for two-isoform events, events can be filtered based on their coverage or magnitude of change. The ``filter_events`` script allows filtering of events, based on the following criteria:
 
@@ -1108,13 +1106,13 @@ This will output a filtered Bayes factor file, ``filtered/control.miso_bf.filter
 .. _plotting: 
 
 Visualizing and plotting MISO output
-====================================
+========================
 
 MISO comes with a built-in utility, `sashimi_plot`_, for visualizing its output and for plotting raw RNA-Seq read densities along exons and junctions. 
 
 
 Updates
-=======
+=====
 
 **2014**
 
@@ -1172,7 +1170,7 @@ See also `all release updates <updates.html>`_ (including older releases).
 .. _faq: 
 
 Frequently Asked Questions (FAQ)
-================================
+======================
 
 #. **How can I convert my GTF file into a GFF3 format that MISO accepts?** (`answer <#answer1>`_)
 #. **When filtering events from a Bayes factor comparison file, I get the error "Exception: Malformed comparison line."** (`answer <#answer2>`_)
@@ -1512,7 +1510,7 @@ Installing Python-only MISO version
 .. _myrefs:
 
 References
-==========
+=======
 
 1. Katz Y, Wang ET, Airoldi EM, Burge CB. (2010). `Analysis and design of RNA sequencing experiments for identifying isoform regulation`_. Nature Methods 7, 1009-1015.
 
@@ -1521,7 +1519,7 @@ References
 .. _Analysis and design of RNA sequencing experiments for identifying isoform regulation: http://www.nature.com/nmeth/journal/v7/n12/full/nmeth.1528.html
 
 Related software
-----------------
+--------------
 
 * `sashimi_plot`_: tool for visualizing RNA-Seq data and plotting MISO output
 * `Bowtie`_: for alignment of RNA-Seq reads to genome (optionally with precomputed set of splice junctions)
@@ -1531,22 +1529,22 @@ Related software
 * `Cufflinks`_: another isoform expression/differential regulation software with transcript assembly
 
 Related reading
----------------
+-------------
 
 Probabilistic models in computational biology
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Airoldi, E.M. (2007). `Getting started in probabilistic graphical models`_. PLoS Computational Biology, 3, e252.
 
 .. _Getting started in probabilistic graphical models: http://dx.doi.org/10.1371/journal.pcbi.0030252
 
 Bayes factors and Bayesian hypothesis testing
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * `A Practical Course in Bayesian Graphical Modeling`_ by Michael Lee and Eric-Jan Wagenmakers: Free online book that contains (among many other things) excellent chapters on Bayesian hypothesis testing with practical examples, including discussion of Bayes factors and the Savage-Dickey ratio test.
 
 General reading on probabilistic modeling and inference
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Griffiths, T. L., & Yuille, A. (2006). `A primer on probabilistic inference`_. Trends in Cognitive Sciences, 10.
 
