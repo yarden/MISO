@@ -14,7 +14,6 @@
 
 .. contents::
 
-
 .. image:: images/sashimi-plot.png
    :scale: 20%
    :align: right
@@ -24,10 +23,11 @@
 .. "&para;"
 
 
-**Quick links:**
- 
-* `Download MISO annotations in GFF format <annotation.html>`_
-* We released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq data and MISO output. 
+..
+   **Quick links:**
+
+   * `Download MISO annotations in GFF format <annotation.html>`_
+   * We released a flexible plotting tool, `sashimi_plot`_, for visualizing RNA-Seq data and MISO output. 
 
 
 .. * :ref:`Download alternative event annotation files (available for human, mouse and D. melanogaster) <event-annotation>` 
