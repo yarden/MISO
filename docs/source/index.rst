@@ -213,7 +213,7 @@ To install a stable release package of MISO using a Python package ``pip``, simp
 
   pip install misopy
 
-This will install MISO globally, fetching and installing all of its required Python modules. To install MISO locally (without needing global installation access), it is best to use `virtualenv`_ in combination with ``pip``. ``virtualenv`` will create a "virtual environment" where a package and all of its dependencies can be installed. The virtual environment can be loaded whenever needed and so it will not interfere with other (potentially conflicting) Python packages that are available on the system. If you're a user working on a cluster system where you don't have root privileges, all you need is ``pip`` and ``virtualenv`` to be available -- the remaining installation steps can all be done locally without root access. To start, create a virtual environment (in this case called ``myenv``) in a local directory to which you have write access (e.g. your home directory):
+This will install MISO globally, fetching and installing all of its required Python modules. To install MISO locally (without needing global installation access), it is best to use `virtualenv`_ in combination with ``pip``. ``virtualenv`` will create a "virtual environment" where a package and all of its dependencies can be installed. The virtual environment can be loaded whenever needed and so it will not interfere with other (potentially conflicting) Python packages that are available on the system. If you're a user working on a cluster system where you don't have root privileges, all you need is ``pip`` and ``virtualenv`` to be available -- the remaining installation steps can all be done locally without root access. To start, create a virtual environment (in this case called ``myenv``) in a local directory to which you have write access (e.g. your home directory): ::
 
   virtualenv myenv
 
@@ -225,7 +225,7 @@ Finally, activate the environment in order to make all the executable MISO scrip
 
   source myenv/bin/activate
 
-This will completes a local installation of the MISO Python package. To test the installation, load Python and import the ``misopy`` and ``pysplicing`` packages in the interpreter: ::
+This completes a local installation of the MISO Python package. To test the installation, load Python and import the ``misopy`` and ``pysplicing`` packages in the interpreter: ::
 
  >> import misopy
  >> import pysplicing
