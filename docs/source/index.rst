@@ -249,27 +249,7 @@ To install the latest version from the GitHub `repository`_, there are two optio
 
 This will create a directory called ``MISO``, containing the repository. Alternatively, if you do not want to go through ``git``, you can download a zip file containing the latest MISO GitHub release (following this link: https://github.com/yarden/MISO/zipball/fastmiso). This zip file has to be unzipped (e.g. using ``unzip fastmiso`` on Unix systems) and contains the latest release of the MISO repository. 
 
-Next, compile the code and install MISO using the Python package manager (such as ``easy_install``) as described above, or using ``setup.py``. With the package manager, use: ::
-
-  easy_install --user -U .
-
-If a package manager is not available, resort to ``setup.py``: ::
-
- python setup.py install
-
-The ``--prefix=`` option can be used as usual to specify an alternative installation path. For example, to install MISO in your local directory ``/home/user/pylibs/``, you can use: ::
-
- python setup.py install --prefix=/home/user/pylibs/
-
-This will create a directory called ``lib`` inside that directory that contains the ``site-packages`` directory, which is the directory Python expects to find packages in. The exact path of the directory depends on the Python version used when calling ``setup.py``. If you used Python 2.7, your directory might be ``/home/user/pylibs/lib/python2.7/site-packages/``. To ensure that this directory is available to Python, you can add it to your ``PYTHONPATH`` environment variable, as follows (for ``bash``-shell like systems): ::
-
-  export PYTHONPATH=/home/user/pylibs/python2.7/site-packages/:$PYTHONPATH
-
-This will place the local ``site-packages`` ahead of the current setting of ``PYTHONPATH``, resulting in Python loading the version of the package installed there (if it is available) over versions existing in the system's global ``site-packages`` directory.
-
-Executable scripts that are part of MISO (like ``miso``) get placed in a local ``bin`` directory (e.g. ``~/bin/``) directory. If you'd like these to get used from the shell in place of a globally installed version, make sure that ``~/bin`` is first in your ``PATH`` variable. 
-
-We strongly recommend that you manage Python packages using a package manager rather than manually installing packages and modifying your ``PYTHONPATH``, which is error prone and time consuming.
+Next, compile the code and install MISO using the Python package manager (such as as `pip`_ or `easy_install`_) as described above. We strongly recommend that you manage Python packages using a package manager rather than manually installing packages and modifying your ``PYTHONPATH``, which is error prone and time consuming.
 
 .. _Testing the installation:
 
