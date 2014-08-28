@@ -6,10 +6,11 @@
    contain the root `toctree` directive. images/Miso-Pipeline.jpg
 
 
-.. image:: images/MISO-docs-logo-small.png
-   :scale: 40%
-   :align: right
-   :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
+..
+   .. image:: images/MISO-docs-logo-small.png
+      :scale: 40%
+      :align: right
+      :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
 
 
 .. contents::
