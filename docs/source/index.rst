@@ -1,4 +1,6 @@
-.. doctree::
+.. toctree::
+   :titlesonly:
+
    index
    glossary
 
