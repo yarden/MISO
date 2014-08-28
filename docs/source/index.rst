@@ -130,12 +130,12 @@ MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python P
 
 
 Latest version from GitHub
---------------------------
+---------------------------
 
 * Download latest MISO version from ``fastmiso`` GitHub `repository`_ (.zip): https://github.com/yarden/MISO/zipball/fastmiso
 
 Installation requirements
--------------------------
+--------------------------
 
 MISO requires a small number of Python modules and commonly used software like `samtools` for accessing SAM/BAM files. The requirements are:
 
@@ -659,7 +659,7 @@ The ``--overhang-len`` option is not supported for paired-end reads.
 
 
 Computing the insert length distribution and its statistics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We provide a set of utilities for computing and plotting the insert length distribution in paired-end RNA-Seq samples. The insert length distribution of a sample is computed by aligning the read pairs to long constitutive exons and then measuring the insert length of each pair. The set of insert lengths obtained this way form a distribution, and summary statistics of this distribution -- like its mean and standard deviation -- are used by MISO to assign read pairs to isoforms.
 
