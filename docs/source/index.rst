@@ -35,7 +35,7 @@
 
 
 What is MISO?
-=========
+=============
 
 MISO (Mixture-of-Isoforms) is a probabilistic framework that
 quantitates the expression level of alternatively spliced genes from
@@ -49,7 +49,7 @@ The MISO framework is described in Katz et. al., `Analysis and design of RNA seq
 
 
 How MISO works
-===========
+==============
 
 MISO treats the expression level of a set of isoforms as a random
 variable and estimates a distribution over the values of this
@@ -58,7 +58,7 @@ the family of techniques known as Markov Chain Monte Carlo ("MCMC").
 For details of the inference procedure, see Katz et. al. (2010).
 
 Features
--------
+---------
 
 * Estimates of isoform expression (|Psi| values, for "Percent Spliced In" or "Percent Spliced Isoform") and differential
   isoform expression for single-end or paired-end RNA-Seq data
@@ -70,14 +70,14 @@ Features
   system
 
 Mailing list
-=======
+=============
 
 Mailing list where users can ask technical questions is available at `miso-users`_ (http://mailman.mit.edu/mailman/listinfo/miso-users).
 
 .. _installation: 
 
 Installation
-=======
+============
 
 The primary version of MISO is called ``fastmiso`` -- which is written in a combination of Python and the C programming language.  
 
@@ -86,7 +86,7 @@ To install MISO, either download one of the stable releases (see :ref:`releases`
 .. _releases: 
 
 Releases
--------
+---------
 
 MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python Package Index).
 
@@ -129,12 +129,12 @@ MISO is available as a Python package, listed as ``misopy`` in `pypi`_ (Python P
 
 
 Latest version from GitHub
-----------------------
+--------------------------
 
 * Download latest MISO version from ``fastmiso`` GitHub `repository`_ (.zip): https://github.com/yarden/MISO/zipball/fastmiso
 
 Installation requirements
---------------------
+-------------------------
 
 MISO requires a small number of Python modules and commonly used software like `samtools` for accessing SAM/BAM files. The requirements are:
 
@@ -157,7 +157,7 @@ MISO requires a small number of Python modules and commonly used software like `
 We strongly recommend that you install MISO using a Python package manager (see :ref:`installing-fastmiso`) so that the required Python modules are automatically installed and managed for you.
 
 Quickstart
----------
+----------
 
 To quickly start using MISO, follow these steps (each of which is described in detail in the rest of the manual):
 
@@ -199,14 +199,14 @@ For a full example of running MISO, see :ref:`pipeline`. Also see the :ref:`faq`
 .. _installing-fastmiso:
 
 Installing the ``fastmiso`` version of MISO
------------------------------------
+--------------------------------------------
 
 The ``fastmiso`` version of MISO is written in a combination of C and Python. The underlying statistical inference engine is written in C and can be compiled on Mac OS X or Unix-like platforms using GCC or other standard compilers. The interface to this code is written in Python and is identical in its commands and input and output formats to the original Python-only version of MISO. (The Python-only version of MISO is now deprecated.)
 
 There are two options for installing MISO, using either a stable release or installing the latest version from GitHub.
 
 Installing using a stable release
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is highly recommended to install Python packages using a package manager such as the `pip`_ utility (see `Python packaging tools tutorial <http://guide.python-distribute.org/installation.html>`_ for straightforward instructions on getting started.) Package managers will automatically download and install all necessary requirements for MISO and save headaches later on. 
 To install a stable release package of MISO using a Python package ``pip``, simply type: ::
@@ -241,7 +241,7 @@ If you get no errors, the installation completed successfully. Note that MISO al
 
 
 Installing the latest version from GitHub repository
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To install the latest version from the GitHub `repository`_, there are two options: (a) using ``git`` to get the latest source from our GitHub repository, or (b) by downloading a snapshot of the current repository, without going through ``git``. If you have ``git`` installed and configured with your GitHub account, you can clone our repository as follows: ::
 
@@ -254,7 +254,7 @@ Next, compile the code and install MISO using the Python package manager (such a
 .. _Testing the installation:
 
 Testing the installation
--------------------
+------------------------
 
 To test if the required modules are available, use the
 ``module_availability`` script as follows: ::
@@ -280,7 +280,7 @@ You should be able to import both of these packages without errors from the Pyth
 
 
 Testing MISO
------------
+------------
 
 To test that MISO can be run properly, run ``test_miso`` as shown
 below. These tests ensure that MISO can be run on a few
@@ -304,7 +304,7 @@ test run.
 
 
 Overview
-======
+=========
 
 To run MISO, a set of annotations (typically specified in GFF format) of the isoforms of alternative
 events must be provided and RNA-Seq reads (typically specified in SAM format). The GFF annotation is 
@@ -325,7 +325,7 @@ The figure below shows an overview of how to run MISO.
 
 
 Ways of running MISO and associated file formats
-================================
+=================================================
 
 MISO can be run on either single or paired-end RNA-Seq data. Two general kinds of analyses are possible:
 
@@ -342,7 +342,7 @@ To run MISO, an annotation of the alternative splicing events or isoforms must b
 a set of reads. Single or paired-end reads can be provided in the `Spliced Alignment/Map (SAM)`_ format (in its binary form, BAM) and the annotation can be in the `GFF`_ (version 3) format. The GFF format can be used to specify either whole mRNA isoforms of genes (which is the common use of the format) or to specify single alternative splicing events, as described in :ref:`event-annotation`.
 
 Using MISO in parallel on multiple cores 
-==========================
+=========================================
 
 When run locally and not on a cluster, MISO will use multiple cores on the machine
 on which it is running. The number of cores/processors to be used by MISO is set 
@@ -350,7 +350,7 @@ through the settings file (see :ref:`config`).
 
 
 Using MISO on a cluster
-===============
+========================
 
 It is highly recommended to run MISO on a cluster when possible. Since each
 gene/exon can be treated as an independent inference problem, MISO is
@@ -363,7 +363,7 @@ that there's a shared filesystem between all the nodes.
 .. _event-annotation:
 
 Alternative event annotations
-===================
+==============================
 
 Alternative event annotations are available for the major classes of alternative
 splicing and alternative RNA processing events in the human (hg18, hg19), mouse (mm9) and Drosophila melanogaster genomes. 
@@ -384,14 +384,14 @@ For performing isoform-centric analyses, any gene models annotation can be used 
 .. _tian-apa:
 
 Expanded alternative cleavage and polyadenylation annotation for mouse
-----------------------------------------------------------
+-----------------------------------------------------------------------
 
 A recent paper from Bin Tian's group, `Analysis of alternative cleavage and polyadenylation by 3′ region extraction and deep sequencing <http://www.nature.com/nmeth/journal/vaop/ncurrent/abs/nmeth.2288.html>`_, annotated alternative cleavage and polyadenylation events in mouse tissues using the *3′READS* method. The annotated events (TandemUTR and ALE) are available in GFF format on the `MISO annotations page <annotation.html>`_, courtesy of the Tian group. 
 
 .. _gff-event-annotation:
 
 GFF-based alternative events format
------------------------------
+------------------------------------
 
 Single alternative splicing events can be described in GFF format, using the convention 
 described below. In the mouse and human genome event annotations in :ref:`event-annotation`, 
@@ -421,13 +421,13 @@ exons, respectively.
 .. _events-to-genes:
 
 Mapping of alternative events to genes
--------------------------------
+---------------------------------------
 
 A mapping from alternative events to genes can be downloaded from the `MISO annotations page <annotation.html>`_.
 
 
 Using GFF event annotations with paired-end reads
------------------------------------------
+--------------------------------------------------
 
 Note that in the above GFF annotations for events, only immediately flanking exons to an alternative event are considered. 
 For example, for a skipped exon event, only the two exons that flank it are considered in the annotation. In the human/mouse genomes, 
@@ -438,7 +438,7 @@ libraries where the average insert is significantly longer than these isoform le
 .. _iso-centric:
 
 Human/mouse gene models for isoform-centric analyses
----------------------------------------------
+----------------------------------------------------
 
 For isoform-centric analyses, annotations of gene models are needed, where whole mRNA isoforms are specified for each gene. Any annotation that is in GFF3 format can be used, e.g. annotations obtained from RefSeq, Ensembl, UCSC or other databases.
 
@@ -483,10 +483,10 @@ For convenience, we also provide GFF3 annotations of gene models from Ensembl (r
 
 
 Running MISO
-=========
+=============
 
 Invoking MISO from the command line
--------------------------------
+------------------------------------
 
 When installing the MISO package, the set of scripts that make up to inteface to MISO will automatically be placed as an executables in your path, so that you can refer to these without modifying your shell environment. For example, if you install MISO using ``setup.py install`` globally, then a MISO script like ``miso`` will become available on the path, and can be run as: ::
 
@@ -498,7 +498,7 @@ If you installed MISO using ``setup.py --prefix=~/`` in your home directory or s
 
 
 Preparing the RNA-Seq reads
------------------------
+----------------------------
 
 MISO can take as input RNA-Seq reads in the `SAM`_ format. SAM files are typically the output of read alignment programs, such as `Bowtie`_ or `Tophat`_. The SAM format can represent both single and paired-end reads.
 
@@ -664,10 +664,7 @@ We provide a set of utilities for computing and plotting the insert length distr
 
 The utilities in ``exon_utils`` and ``pe_utils`` can be used to first get a set of long constitituve exons to map read pairs to, and second compute the insert length distribution and its statistics. 
 
-Getting a set of long constitutive exons
-........................................
-
-When computing the insert length distribution, it's important to use exons that are significantly larger than the insert length that was selected for in preparing the RNA-Seq library. If the insert length selected for in preparing the RNA-Seq library was roughly 250-300 nt, we can use constitutive exons that are at least 1000 bases long, for example, so that both read pairs will map within the exon and not outside of it. The requirement that the exons be constitutive is to avoid errors in the insert length measurements that are caused by alternative splicing of the exon (which could alter the insert length.)
+**Getting a set of long constitutive exons**: When computing the insert length distribution, it's important to use exons that are significantly larger than the insert length that was selected for in preparing the RNA-Seq library. If the insert length selected for in preparing the RNA-Seq library was roughly 250-300 nt, we can use constitutive exons that are at least 1000 bases long, for example, so that both read pairs will map within the exon and not outside of it. The requirement that the exons be constitutive is to avoid errors in the insert length measurements that are caused by alternative splicing of the exon (which could alter the insert length.)
 
 We first get all constitutive exons from a gene models GFF, like the Ensembl annotation of mouse genes (available here, `Mus_musculus.NCBIM37.65.gff`_), we use ``exon_utils``: ::
 
@@ -675,15 +672,8 @@ We first get all constitutive exons from a gene models GFF, like the Ensembl ann
 
 This will output a GFF file (named ``Mus_musculus.NCBIM37.65.min_1000.const_exons.gff``) into the ``exons`` directory containing only constitutive exons that are at least 1000 bases long. This file can be used to compute the insert length distribution of all mouse RNA-Seq datasets. Exons here are defined as constitutive only if they occur in all annotated transcripts of a gene.
 
-.. ####
-.. #### ADD CONSTITUTIVE EXON TABLES HERE
-.. ####
 
-
-Computing the insert length distribution given a constitutive exons file
-........................................................................
-
-Now that we have a file containing the long constitutive exons, we can compute the insert length for any BAM file using the ``pe_utils`` utilities. The option ``--compute-insert-len`` takes a BAM file with the RNA-Seq sample and a GFF file containing the long constitutive exons. The insert length is defined simply as the distance between the start coordinate of the first mate in the read pair and the end coordinate of the second mate in the read pair.
+**Computing the insert length distribution given a constitutive exons file**: Now that we have a file containing the long constitutive exons, we can compute the insert length for any BAM file using the ``pe_utils`` utilities. The option ``--compute-insert-len`` takes a BAM file with the RNA-Seq sample and a GFF file containing the long constitutive exons. The insert length is defined simply as the distance between the start coordinate of the first mate in the read pair and the end coordinate of the second mate in the read pair.
 
 To compute the insert length for ``sample.bam`` using the constitutive exons file we made above, run: ::
 
@@ -719,7 +709,7 @@ To compute the insert length by simple pairing of read mates by their ID (assumi
      The option ``--compute-insert-len`` can take a comma-separated list of BAM filenames in case you want to compute the insert length for multiple samples in one command. The ``--compute-insert-len`` option of ``pe_utils`` by default uses only exons from the GFF file that are 500 bases or longer. This can be tweaked by passing ``pe_utils`` the optional ``--min-exon-size N`` argument, which will only use exons of size ``N`` or longer. In our example, we used a constitutive exons GFF file that contained only exons that are 100 bp or longer, so the default settings will consider all exons in that file.
 
 Prefiltering MISO events
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To increase efficiency, a prefiltering option was added in release ``0.4.7``. When ``--prefilter`` is given to ``miso``, MISO will calculate the number of reads in the input BAM mapping to each event in the input GFF. Events that do not meet the read coverage thresholds (as set in the configuration file) will be removed from the run. This feature requires the Bedtools utility ``tagBam`` to be installed and available on path. The call to ``tagBam`` introduces a startup cost per BAM file, but could in many cases save computation time, since events low coverage events will not processed or distributed as jobs to nodes when running on the cluster. From ``miso --help``: ::
 
@@ -738,7 +728,7 @@ To increase efficiency, a prefiltering option was added in release ``0.4.7``. Wh
 
 
 Distributing MISO jobs to a cluster
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Running MISO on a cluster is **highly recommended**. Since each gene or alternative splicing event 
 can be treated independently, the computation of expression levels is easily parallelized on a cluster. 
@@ -760,7 +750,7 @@ Thanks to Michael Lovci for this feature.
 
 
 Raw MISO output format 
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 When running MISO, through ``miso --run``, the raw output will be a set of posterior distributions over |Psi| values. Each exon or gene, depending on whether the analysis is exon or isoform-centric, will have its own file containing posterior samples from the distribution over |Psi|. 
 
@@ -798,7 +788,7 @@ the raw output can be compressed (see :ref:`compressing`.)
 .. _summarizing:
 
 Summarizing MISO output
-=================
+=======================
 
 To summarize MISO output and obtain confidence intervals (CIs) for |Psi| values, the ``summarize_miso --summarize-samples`` option can be used: ::
 
@@ -816,7 +806,7 @@ This will create a subdirectory ``summary_output/summary/`` with a file ``my_sam
 .. _summary-format:
 
 Summary file output format
-----------------------
+--------------------------
 
 The summary file is a tab-separated format containing the following columns:
 
@@ -843,7 +833,7 @@ Note that ``miso_posterior_mean`` is an estimate of |Psi| and [``ci_low``, ``ci_
 .. _comparing-samples:
 
 Detecting differentially expressed isoforms
-============================
+===========================================
 
 Once MISO output has been computed for two samples or more, pairwise comparison of differential
 isoform expression can be computed. To test if an isoform or exon is differentially expressed between 
@@ -862,7 +852,7 @@ to the directory ``comparisons/control_vs_knockdown``. Note that
 this comparison is described below.
 
 Output of samples comparison
-------------------------
+----------------------------
 
 The main output of ``--compare-samples`` will be in:
 
@@ -871,7 +861,7 @@ The main output of ``--compare-samples`` will be in:
 .. _bf-output:
 
 Bayes factors file output format
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Bayes factors file (ending in ``.miso_bf``) will be stored in the ``bayes-factors/`` directory generated
 by the ``--compare-samples`` option. The Bayes factor file is a tab-separated format containing the following columns: 
@@ -922,7 +912,7 @@ The ``miso_pack`` utility will traverse the entire directory structure of ``miso
 
 
 Long-term archival and compression of MISO output
-------------------------------------------
+--------------------------------------------------
 
 Once all the samples have been summarized and all pairwise comparisons between samples have been made (as described in :ref:`summarizing` and :ref:`comparing-samples`), space can be saved by archiving the MISO output for long-term storage.
 
@@ -963,7 +953,7 @@ This will uncompress ``mydata.misozip`` and output its contents into the directo
 
 
 Example MISO pipeline
-==============
+=====================
 
 Below is an example of a MISO pipeline, where |Psi| values for a set of alternative events are computed (with confidence intervals) for a pair of samples called "control" and "knockdown". A samples comparison is performed to detect differentially expressed isoforms between the samples. ::
 
@@ -992,7 +982,7 @@ Below is an example of a MISO pipeline, where |Psi| values for a set of alternat
 .. _interpreting:
 
 Interpreting and filtering MISO output
-========================
+======================================
 
 Once MISO runs are completed and pairwise comparisons between your samples have been made to compute Bayes factors (using ``--compare-samples``), the resulting files can be interpreted to detect differential events.  For each pairwise comparison, we will have a ``.miso_bf`` file which contains the |Psi| values of each event in both samples along with confidence intervals (assuming the event is detectable in both), the |Delta| |Psi| values, the Bayes factor, and other useful information about the read counts used to compute these values.
 
@@ -1001,7 +991,7 @@ MISO comes with several utilities (such as ``filter_events``, described in :ref:
 .. _usingcounts:
 
 Using the read class counts
-----------------------
+---------------------------
 
 A first-pass filter for detecting differentially changing events can apply a Bayes factor cutoff along with a |Delta| |Psi| cutoff, using the ``bayes_factor`` and ``diff`` fields of the samples comparison output file. Section :ref:`filterscript` describes a utility that will apply these filters for exon-centric analyses.
 
@@ -1048,7 +1038,7 @@ For isoform-centric analyses where the number of read classes is considerably la
 .. _confidence_intervals:
 
 Using the confidence intervals
-------------------------
+------------------------------
 
  .. figure:: images/confidence_intervals.png
       :scale: 70%
@@ -1064,7 +1054,7 @@ The figure on the right shows two posterior distributions over |Psi| for the sam
 .. _filterscript:
 
 Filtering differentially expressed events
--------------------------------
+-----------------------------------------
 
 Given a MISO Bayes factor comparison file for two-isoform events, events can be filtered based on their coverage or magnitude of change. The ``filter_events`` script allows filtering of events, based on the following criteria:
 
@@ -1086,13 +1076,13 @@ This will output a filtered Bayes factor file, ``filtered/control.miso_bf.filter
 .. _plotting: 
 
 Visualizing and plotting MISO output
-========================
+====================================
 
 MISO comes with a built-in utility, `sashimi_plot`_, for visualizing its output and for plotting raw RNA-Seq read densities along exons and junctions. 
 
 
 Updates
-=====
+========
 
 **2014**
 
@@ -1150,7 +1140,7 @@ See also `all release updates <updates.html>`_ (including older releases).
 .. _faq: 
 
 Frequently Asked Questions (FAQ)
-======================
+================================
 
 #. **How can I convert my GTF file into a GFF3 format that MISO accepts?** (`answer <#answer1>`_)
 #. **When filtering events from a Bayes factor comparison file, I get the error "Exception: Malformed comparison line."** (`answer <#answer2>`_)
