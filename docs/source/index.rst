@@ -1,3 +1,7 @@
+.. doctree::
+   index
+   glossary
+
 .. include:: <isogrk3.txt>
 
 .. MISO documentation master file, created by .. 
@@ -6,20 +10,19 @@
    contain the root `toctree` directive. images/Miso-Pipeline.jpg
 
 
-..
-   .. image:: images/MISO-docs-logo-small.png
-      :scale: 40%
-      :align: right
-      :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
+.. image:: images/MISO-docs-logo-small.png
+   :scale: 40%
+   :align: right
+   :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
 
 
 .. contents::
 
-.. .. image:: images/sashimi-plot.png
-..    :scale: 20%
-..    :align: right
-..    :alt: sashimi-plot
-..   :target: `sashimi_plot`_
+.. image:: images/sashimi-plot.png
+    :scale: 20%
+    :align: right
+    :alt: sashimi-plot
+   :target: `sashimi_plot`_
 
 
 ..
