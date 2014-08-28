@@ -1,8 +1,8 @@
 .. toctree::
    :titlesonly:
 
-   index
-   glossary
+   index.rst
+   glossary.rst
 
 .. include:: <isogrk3.txt>
 
