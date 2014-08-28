@@ -1480,7 +1480,7 @@ Installing Python-only MISO version
 .. _myrefs:
 
 References
-=======
+==========
 
 1. Katz Y, Wang ET, Airoldi EM, Burge CB. (2010). `Analysis and design of RNA sequencing experiments for identifying isoform regulation`_. Nature Methods 7, 1009-1015.
 
@@ -1489,7 +1489,7 @@ References
 .. _Analysis and design of RNA sequencing experiments for identifying isoform regulation: http://www.nature.com/nmeth/journal/v7/n12/full/nmeth.1528.html
 
 Related software
---------------
+----------------
 
 * `sashimi_plot`_: tool for visualizing RNA-Seq data and plotting MISO output
 * `Bowtie`_: for alignment of RNA-Seq reads to genome (optionally with precomputed set of splice junctions)
@@ -1499,22 +1499,22 @@ Related software
 * `Cufflinks`_: another isoform expression/differential regulation software with transcript assembly
 
 Related reading
--------------
+----------------
 
 Probabilistic models in computational biology
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Airoldi, E.M. (2007). `Getting started in probabilistic graphical models`_. PLoS Computational Biology, 3, e252.
 
 .. _Getting started in probabilistic graphical models: http://dx.doi.org/10.1371/journal.pcbi.0030252
 
 Bayes factors and Bayesian hypothesis testing
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * `A Practical Course in Bayesian Graphical Modeling`_ by Michael Lee and Eric-Jan Wagenmakers: Free online book that contains (among many other things) excellent chapters on Bayesian hypothesis testing with practical examples, including discussion of Bayes factors and the Savage-Dickey ratio test.
 
 General reading on probabilistic modeling and inference
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Griffiths, T. L., & Yuille, A. (2006). `A primer on probabilistic inference`_. Trends in Cognitive Sciences, 10.
 
