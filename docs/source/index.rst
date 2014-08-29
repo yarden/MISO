@@ -15,7 +15,7 @@ MISO (Mixture of Isoforms) software documentation
 
 
 .. toctree::
-   :hidden:
+   :maxdepth: 3
 
    index.rst
    glossary.rst
