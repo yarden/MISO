@@ -20,13 +20,6 @@
 
 .. contents::
 
-.. image:: images/sashimi-plot.png
-    :scale: 20%
-    :align: right
-    :alt: sashimi-plot
-   :target: `sashimi_plot`_
-
-
 ..
    **Quick links:**
 
