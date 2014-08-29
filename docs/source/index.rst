@@ -1,5 +1,5 @@
 .. toctree::
-   :titlesonly:
+   :hidden:
 
    index.rst
    glossary.rst
