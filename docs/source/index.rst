@@ -236,7 +236,7 @@ The ``miso`` main executable should be available on your path now: ::
   Probabilistic analysis of RNA-Seq data for detecting differential isoforms
   Use --help argument to view options.
 
-If you get no errors, the installation completed successfully. Note that MISO also needs to ``samtools`` to be installed and available on your path.
+If you get no errors, the installation completed successfully. Note that MISO also needs ``samtools`` to be installed and available on your path.
 
 
 Installing the latest version from GitHub repository
