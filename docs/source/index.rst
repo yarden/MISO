@@ -1,9 +1,3 @@
-.. toctree::
-   :hidden:
-
-   index.rst
-   glossary.rst
-
 .. include:: <isogrk3.txt>
 
 .. MISO documentation master file, created by .. 
@@ -11,6 +5,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive. images/Miso-Pipeline.jpg
 
+MISO (Mixture of Isoforms) software documentation
+=================================
 
 .. image:: images/MISO-docs-logo-small.png
    :scale: 40%
@@ -18,7 +14,14 @@
    :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
 
 
-.. contents::
+.. toctree::
+   :hidden:
+
+   index.rst
+   glossary.rst
+
+.. 
+  .. contents::
 
 ..
    **Quick links:**
