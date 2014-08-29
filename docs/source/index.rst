@@ -18,7 +18,6 @@ MISO (Mixture of Isoforms) software documentation
    :maxdepth: 3
 
    index.rst
-   glossary.rst
 
 .. 
   .. contents::
