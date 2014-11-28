@@ -9,7 +9,7 @@ MISO (Mixture of Isoforms) software documentation
 =================================
 
 .. image:: images/MISO-docs-logo-small.png
-   :scale: 60%
+   :scale: 70%
    :align: right
    :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
 
