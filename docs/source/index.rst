@@ -207,7 +207,7 @@ There are two options for installing MISO, using either a stable release or inst
 Installing using a stable release
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It is highly recommended to install Python packages using a package manager such as the `pip`_ utility (see `Python packaging tools tutorial <http://guide.python-distribute.org/installation.html>`_ for straightforward instructions on getting started.) Package managers will automatically download and install all necessary requirements for MISO and save headaches later on. 
+It is highly recommended to install Python packages using a package manager such as the `pip`_ utility (see `Python packaging tools tutorial <https://python-packaging-user-guide.readthedocs.org/en/latest/installing.html>`_ for straightforward instructions on getting started.) Package managers will automatically download and install all necessary requirements for MISO and save headaches later on. 
 To install a stable release package of MISO using a Python package ``pip``, simply type: ::
 
   pip install misopy
