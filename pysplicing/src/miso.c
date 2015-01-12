@@ -835,8 +835,6 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_drift_proposal_propose(noiso, noChains, 
 						 alpha, sigma, psi, alpha));
   
-  printf("no chains: %d\n", noChains);
-
   /* Initialize assignments of reads */
   if (algorithm == SPLICING_ALGO_REASSIGN) {
     SPLICING_CHECK(splicing_reassign_samples(mymatch_matrix, &match_order,
