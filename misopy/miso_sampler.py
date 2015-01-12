@@ -319,8 +319,7 @@ class MISOSampler:
                                            long(num_chains),
                                            start_cond,
                                            stop_cond,
-                                           pysplicing.MISO_ALGO_REASSIGN)
-#                                           algorithm)
+                                           algorithm)
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0]))
