@@ -306,7 +306,7 @@ class MISOSampler:
                                                  stop_cond)
         else:
             # Run single-end
-            miso_results = pysplicing.MISO(c_gene,
+            miso_results = pysplicing.doMISO(c_gene,
                                            0L,
                                            read_positions,
                                            read_cigars,
