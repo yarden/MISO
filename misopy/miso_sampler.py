@@ -201,7 +201,10 @@ class MISOSampler:
                     num_chains=6,
                     burn_in=1000,
                     lag=2,
+                    prior = pysplicing.MISO_PRIOR_DIRICHLET,
                     prior_params=None,
+                    logistic_prior_mean = 0.0,
+                    logistic_prior_var = 3.0,
                     # By default, use sampler with read classes (collapsed)
                     # to get speed boost for single-end reads
                     # (To revert to old reassigning sampler, use
@@ -299,27 +302,31 @@ class MISOSampler:
                                                  long(num_iters),
                                                  long(burn_in),
                                                  long(lag),
-                                                 prior_params,
+                                                 rior_params,
                                                  long(self.overhang_len),
                                                  long(num_chains),
                                                  start_cond,
                                                  stop_cond)
         else:
             # Run single-end
-            miso_results = pysplicing.doMISO(c_gene,
-                                           0L,
-                                           read_positions,
-                                           read_cigars,
-                                           long(self.read_len),
-                                           long(num_iters),
-                                           long(burn_in),
-                                           long(lag),
-                                           prior_params,
-                                           long(self.overhang_len),
-                                           long(num_chains),
-                                           start_cond,
-                                           stop_cond,
-                                           algorithm)
+            miso_results = pysplicing.doMISO(
+                GFF = c_gene,
+                gene = 0L,
+                read_pos = read_positions,
+                read_cigar = read_cigars,
+                read_len = long(self.read_len),
+                num_iters = long(num_iters),
+                burn_in = long(burn_in),
+                lag = long(lag),
+                prior = prior,
+                dirichlet_prior_params = prior_params,
+                logistic_prior_mean = 0.0,
+                logistic_prior_var = 3.0,
+                overHang = long(self.overhang_len),
+                num_chains = long(num_chains),
+                start = start_cond,
+                stop = stop_cond,
+                algorithm = algorithm)
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0]))

@@ -641,7 +641,9 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const char **cigarstr, int readLength, int overHang,
 		  int noChains, int noIterations, 
 		  int maxIterations, int noBurnIn, int noLag,
-		  const splicing_vector_t *hyperp, 
+		  splicing_miso_prior_t prior,
+		  const splicing_vector_t *dirichlet_hyperp,
+		  double logistic_mean, double logistic_var,
 		  splicing_algorithm_t algorithm,
 		  splicing_miso_start_t start,
 		  splicing_miso_stop_t stop,
@@ -696,7 +698,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
 
-  if (splicing_vector_size(hyperp) != noiso) { 
+  if (splicing_vector_size(dirichlet_hyperp) != noiso) {
     SPLICING_ERROR("Invalid hyperparameter vector length", 
 		   SPLICING_EINVAL);
   }
@@ -859,7 +861,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 							mymatch_matrix,
 							&assignmentMatrix,
 							&matches,
-							&effisolen, hyperp,
+							&effisolen, dirichlet_hyperp,
 							&isoscores, 
 							m > 0 ? 1 : 0, 
 							&acceptP, &cJS, 

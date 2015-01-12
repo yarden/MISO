@@ -69,6 +69,10 @@ typedef enum { SPLICING_TYPE_GENE, SPLICING_TYPE_MRNA,
 typedef enum { SPLICING_STRAND_PLUS, SPLICING_STRAND_MINUS, 
 	       SPLICING_STRAND_UNKNOWN } splicing_strand_t;
 
+typedef enum { SPLICING_MISO_PRIOR_AUTO = 0,
+	       SPLICING_MISO_PRIOR_DIRICHLET = 1,
+	       SPLICING_MISO_PRIOR_LOGISTIC = 2 } splicing_miso_prior_t;
+
 /* TODO: arbitrary attributes */
 
 typedef struct {
@@ -204,7 +208,10 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_vector_int_t *position,
 		  const char **cigarstr, int readLength, int overHang,
 		  int noChains, int noIterations, int maxIterations, 
-		  int noBurnIn, int noLag, const splicing_vector_t *hyperp, 
+		  int noBurnIn, int noLag,
+		  splicing_miso_prior_t prior,
+		  const splicing_vector_t *dirichlet_hyperp,
+		  double logistic_mean, double logistic_var,
 		  splicing_algorithm_t algorithm,
 		  splicing_miso_start_t start, splicing_miso_stop_t stop,
 		  const splicing_matrix_t *start_psi,
