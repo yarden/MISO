@@ -13,8 +13,9 @@ if cc.has_function('float a = rintf(1.0); return rand',
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_RINTF', '1'))
 
-if cc.has_function('finite(1.0);rand', includes=['math.h', 'stdlib.h']):
-    defines.append(('HAVE_FINITE', '1'))
+if cc.has_function('int a = isfinite(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
+    defines.append(('HAVE_ISFINITE', '1'))
 
 if cc.has_function('double a = expm1(1.0); return rand',
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
