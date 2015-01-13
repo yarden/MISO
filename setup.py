@@ -5,6 +5,8 @@ import os
 import sys
 import shutil
 
+os.makedirs("temp")
+
 ## Test for functions, with a hack to suppress compiler warnings.
 cc = distutils.ccompiler.new_compiler()
 cc.define_macro('main', 'int (main)')
