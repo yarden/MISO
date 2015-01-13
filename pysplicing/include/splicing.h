@@ -263,17 +263,25 @@ int splicing_ldirichlet(const splicing_vector_t *x,
 			const splicing_vector_t *alpha, int len, 
 			double *res);
 
+int splicing_llogistic(const splicing_vector_t *x,
+		       double logistic_mean, double logistic_var,
+		       double *res);
+
 int splicing_mvrnorm(const splicing_matrix_t *mu, double sigma, 
 		     splicing_matrix_t *resalpha, int len);
 
 int splicing_logit_inv(const splicing_matrix_t *x, 
 		       splicing_matrix_t *res, int len, int noChains);
 
+double splicing_logit1(double v);
+
 int splicing_score_joint(splicing_algorithm_t algorithm,
 			 const splicing_matrix_int_t *assignment,
 			 int no_reads, int noChains, 
-			 const splicing_matrix_t *psi, 
-			 const splicing_vector_t *hyper, 
+			 const splicing_matrix_t *psi,
+			 splicing_miso_prior_t prior,
+			 const splicing_vector_t *dirichlet_hyper,
+			 double logistic_mean, double logistic_var,
 			 const splicing_vector_int_t *effisolen,
 			 const splicing_vector_t *isoscores, 
 			 const splicing_matrix_t *match,
@@ -320,7 +328,9 @@ int splicing_metropolis_hastings_ratio(splicing_algorithm_t algorithm,
 				       const splicing_matrix_t *assignment,
 				       const splicing_vector_t *matches,
 				       const splicing_vector_int_t *effisolen,
-				       const splicing_vector_t *hyperp, 
+				       splicing_miso_prior_t prior,
+				       const splicing_vector_t *dirichlet_hyperp,
+				       double logistic_mean, double logistic_var,
 				       const splicing_vector_t *isoscores,
 				       int full, splicing_vector_t *acceptP, 
 				       splicing_vector_t *pcJS, 
