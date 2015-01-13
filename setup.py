@@ -49,7 +49,7 @@ if cc.has_function('double fmin(double, double); double a = fmin(1.0,0.0); retur
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_FMIN', '1'))
 
-shutil.rmtree("temp")
+                shutil.rmtree("temp")
 
 # prefix directory for pysplicing module
 pysplicing_dir = 'pysplicing'
@@ -150,11 +150,6 @@ setup(name = 'misopy',
                      ['misopy/gff-events/mm9/genes/Atp2b1.mm9.gff']),
                     ('misopy/sashimi_plot/test-data', 
                       ['misopy/sashimi_plot/test-data/events.gff']),
-                    ('misopy/sashimi_plot/test-data/miso-data',
-                     ['misopy/sashimi_plot/test-data/miso-data/heartKOa/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso',
-                      'misopy/sashimi_plot/test-data/miso-data/heartKOb/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso',
-                      'misopy/sashimi_plot/test-data/miso-data/heartWT1/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso',
-                      'misopy/sashimi_plot/test-data/miso-data/heartWT2/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso']),
                     ('misopy/sashimi_plot/test-data/bam-data',
                      ['misopy/sashimi_plot/test-data/bam-data/heartKOa.bam.bai',
                       'misopy/sashimi_plot/test-data/bam-data/heartKOa.sorted.bam',

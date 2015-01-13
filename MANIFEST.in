@@ -5,12 +5,6 @@ include misopy/settings/*
 include misopy/sashimi_plot/settings/*
 include misopy/sashimi_plot/test-data/*
 include misopy/sashimi_plot/test-data/bam-data/*
-include misopy/sashimi_plot/test-data/miso-data/*
-include misopy/sashimi_plot/test-data/miso-data/heartKOa/chr17/*
-include misopy/sashimi_plot/test-data/miso-data/heartKOb/chr17/*
-include misopy/sashimi_plot/test-data/miso-data/heartWT1/chr17/*
-include misopy/sashimi_plot/test-data/miso-data/heartWT2/chr17/*
 include misopy/gff-events/mm9/*
 include misopy/gff-events/mm9/genes/*
 include misopy/test-data/sam-data/*
-include misopy/test-data/se-counts/*
