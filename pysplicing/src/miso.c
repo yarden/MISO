@@ -389,7 +389,6 @@ int splicing_drift_proposal_init(int noiso, int noChains,
 	MATRIX(*respsi, 0, j) = RNG_UNIF01();
 	MATRIX(*respsi, 1, j) = 1 - MATRIX(*respsi, j, 0);
 	MATRIX(*resalpha, 0, j) = 0.0;
-	MATRIX(*resalpha, 1, j) = 0.0;
       }
       *ressigma = SIGMA;
     }
