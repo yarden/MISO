@@ -3,39 +3,52 @@ import distutils.ccompiler
 import glob
 import os
 import sys
+import shutil
 
 ## Test for functions, with a hack to suppress compiler warnings.
 cc = distutils.ccompiler.new_compiler()
+cc.define_macro('main', 'int (main)')
 defines = []
-if cc.has_function('rintf(1.0);rand', includes=['math.h', 'stdlib.h'],
-                   libraries=['m']):
+if cc.has_function('float a = rintf(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_RINTF', '1'))
+
 if cc.has_function('finite(1.0);rand', includes=['math.h', 'stdlib.h']):
     defines.append(('HAVE_FINITE', '1'))
-if cc.has_function('expm1(1.0);rand', includes=['math.h', 'stdlib.h'],
-                   libraries=['m']):
+
+if cc.has_function('double a = expm1(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_EXPM1', '1'))
-if cc.has_function('rint(1.0);rand', includes=['math.h', 'stdlib.h'], 
-                   libraries=['m']):
+
+if cc.has_function('double a = rint(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_RINT', '1'))
-if cc.has_function('double log2(double) ; log2(1.0);rand', 
+
+if cc.has_function('double log2(double); double a = log2(1.0); return rand',
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_LOG2', '1'))
-if cc.has_function('logbl(1.0);rand', includes=['math.h', 'stdlib.h'],
-                   libraries=['m']):
+
+if cc.has_function('long double a = logbl(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_LOGBL', '1'))
-if cc.has_function('snprintf(0, 0, "");rand', 
+
+if cc.has_function('snprintf(0, 0, ""); return rand',
                    includes=['stdio.h', 'stdlib.h']):
     defines.append(('HAVE_SNPRINTF', '1'))
-if cc.has_function('log1p(1.0);rand', includes=['math.h', 'stdlib.h'],
-                   libraries=['m']):
+
+if cc.has_function('double a = log1p(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_LOG1P', '1'))
-if cc.has_function('double round(double) ; round(1.0);rand', 
+
+if cc.has_function('double round(double) ; double a = round(1.0); return rand', 
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_ROUND', '1'))
-if cc.has_function('double fmin(double, double); fmin(1.0,0.0);rand', 
+
+if cc.has_function('double fmin(double, double); double a = fmin(1.0,0.0); return rand', 
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_FMIN', '1'))
+
+shutil.rmtree("temp")
 
 # prefix directory for pysplicing module
 pysplicing_dir = 'pysplicing'
