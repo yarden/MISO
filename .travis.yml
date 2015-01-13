@@ -1,13 +1,21 @@
+
 language: python
+
 python:
-  - "2.6"
+#  - "2.6"
   - "2.7"
+#  - "3.2"
+#  - "3.3"
+#  - "3.4"
+
 before_install:
-  - sudo apt-get install liblapack-dev gfortran libblas-dev
-  - sudo apt-get install samtools
+  - sudo apt-get install -qq python-numpy python-scipy
+
+virtualenv:
+  system_site_packages: true
+
 install:
-  - travis_wait pip install scipy
-  - travis_wait pip install pysam
-  - pip install .
-script:
-  - python -m unittest discover misopy
+  - pip install pysam
+  - sudo python setup.py install
+
+script: nosetests tests
