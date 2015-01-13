@@ -580,8 +580,13 @@ int FUNCTION(splicing_matrix,order_cols)(const TYPE(splicing_matrix) *m,
 					 splicing_vector_int_t *order) {
   size_t i, ncol=FUNCTION(splicing_matrix,ncol)(m);
 
+  if (ncol > (int) ncol) {
+    SPLICING_ERROR("Cannot order matrix columns into int vector",
+		   SPLICING_EINTOVERFLOW);
+  }
+
   SPLICING_CHECK(splicing_vector_int_resize(order, ncol));
-  for (i=0; i<ncol; i++) { VECTOR(*order)[i] = i; }
+  for (i=0; i<ncol; i++) { VECTOR(*order)[i] = (int) i; }
   
   splicing_qsort_r(VECTOR(*order), ncol, sizeof(int), (void*) m, 
 		   FUNCTION(splicing_matrix,order_cols_cmp));
@@ -592,8 +597,13 @@ int FUNCTION(splicing_matrix,binorder_cols)(const TYPE(splicing_matrix) *m,
 					    splicing_vector_int_t *order) {
   size_t i, ncol=FUNCTION(splicing_matrix,ncol)(m);
 
+  if (ncol > (int) ncol) {
+    SPLICING_ERROR("Cannot order matrix columns into int vector",
+		   SPLICING_EINTOVERFLOW);
+  }
+
   SPLICING_CHECK(splicing_vector_int_resize(order, ncol));
-  for (i=0; i<ncol; i++) { VECTOR(*order)[i] = i; }
+  for (i=0; i<ncol; i++) { VECTOR(*order)[i] = (int) i; }
   
   splicing_qsort_r(VECTOR(*order), ncol, sizeof(int), (void*) m, 
 		   FUNCTION(splicing_matrix,binorder_cols_cmp));
@@ -603,8 +613,8 @@ int FUNCTION(splicing_matrix,binorder_cols)(const TYPE(splicing_matrix) *m,
 
 int FUNCTION(splicing_matrix,sort_cols)(TYPE(splicing_matrix) *m) {
   splicing_vector_int_t order;
-  int ncol=FUNCTION(splicing_matrix,ncol)(m);
-  int nrow=FUNCTION(splicing_matrix,nrow)(m);
+  long ncol=FUNCTION(splicing_matrix,ncol)(m);
+  long nrow=FUNCTION(splicing_matrix,nrow)(m);
   TYPE(splicing_matrix) tmp;
   int i;
   

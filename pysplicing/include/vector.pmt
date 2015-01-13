@@ -2246,7 +2246,7 @@ int FUNCTION(splicing_vector,difference_sorted)(const TYPE(splicing_vector) *v1,
     else j++;
   }
   if (i < i0) {
-    int oldsize = FUNCTION(splicing_vector,size)(result);
+    size_t oldsize = FUNCTION(splicing_vector,size)(result);
     SPLICING_CHECK(FUNCTION(splicing_vector,resize)(result, oldsize+i0-i));
     memcpy(result->stor_begin+oldsize, v1->stor_begin+i, sizeof(BASE)*(i0-i));
   }

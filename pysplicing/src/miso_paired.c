@@ -28,7 +28,7 @@ int splicing_reassign_samples_paired(
 			     int noiso, int noChains, int fragmentStart, 
 			     splicing_matrix_int_t *result) {
 
-  int noreads = splicing_matrix_ncol(matches);
+  int noreads = (int) splicing_matrix_ncol(matches);
   int i, k, w;
   double *prev, *curr;
   double rand, sumpsi;
@@ -91,8 +91,7 @@ int splicing_score_iso_paired(const splicing_vector_t *psi, int noiso,
 			      const splicing_vector_t *assscores,
 			      double *res) {
 
-  int noreads=splicing_vector_int_size(assignment);
-  int *isolen = VECTOR(*pisolen);
+  int noreads = (int) splicing_vector_int_size(assignment);
   double sum, maxpsieff, score;
   splicing_vector_t logpsi;
   int i;
@@ -141,7 +140,7 @@ int splicing_score_joint_paired(const splicing_matrix_int_t *assignment,
 				int fragmentStart, 
 				splicing_vector_t *score) {
 
-  int i, j, noiso = splicing_vector_int_size(isolen);
+  int i, j, noiso = (int) splicing_vector_int_size(isolen);
 
   SPLICING_CHECK(splicing_vector_resize(score, noChains));
 
@@ -262,7 +261,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   splicing_vector_t acceptP, cJS, pJS;
   double sigma;
-  int noReads = splicing_vector_int_size(position)/2;
+  int noReads = (int) splicing_vector_int_size(position)/2;
   splicing_matrix_int_t vass;
   size_t noiso;
   splicing_matrix_t vpsi, vpsiNew, valpha, valphaNew, 
@@ -307,7 +306,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			  1.0/splicing_vector_sum(myfragmentProb));
   }
 
-  il=splicing_vector_size(myfragmentProb);
+  il = (int) splicing_vector_size(myfragmentProb);
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
 
@@ -338,7 +337,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
     SPLICING_ERROR("Given PSI has wrong size", SPLICING_EINVAL);
   }
 
-  rundata->noIso=noiso;
+  rundata->noIso=(int) noiso;
   rundata->noIters=noIterations;
   rundata->noBurnIn=noBurnIn;
   rundata->noLag=noLag;
@@ -375,7 +374,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_FINALLY(splicing_vector_int_destroy, &match_order);
   SPLICING_CHECK(splicing_matrix_int_init(&fragmentLength, noiso, noReads));
   SPLICING_FINALLY(splicing_matrix_int_destroy, &fragmentLength);
-  SPLICING_CHECK(splicing_matchIso_paired(gff, gene, position, cigarstr, 
+  SPLICING_CHECK(splicing_matchIso_paired(gff, (int) gene, position, cigarstr,
 					  readLength, overHang, 
 					  myfragmentProb, 
 					  fragmentStart, normalMean, 
@@ -428,21 +427,21 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   /* Initialize Psi(0) randomly */
 
-  SPLICING_CHECK(splicing_drift_proposal_init(noiso, noChains, psi, alpha, &sigma,
-					 start, start_psi, gff,
-					 gene, readLength, overHang, 
+  SPLICING_CHECK(splicing_drift_proposal_init((int)noiso, noChains, psi, alpha,
+					 &sigma, start, start_psi, gff,
+					 (int) gene, readLength, overHang,
 					 position, cigarstr, /*paired=*/ 1, 
 					 fragmentProb, fragmentStart,
 					 normalMean, normalVar, numDevs));
 
-  SPLICING_CHECK(splicing_drift_proposal_propose(noiso, noChains, 
+  SPLICING_CHECK(splicing_drift_proposal_propose((int) noiso, noChains,
 						 alpha, sigma, psi, alpha));
   
   /* Initialize assignments of reads */  
   
   SPLICING_CHECK(splicing_reassign_samples_paired(mymatch_matrix,
 						  &match_order, 
-						  psi, noiso, noChains, 
+						  psi, (int) noiso, noChains,
 						  fragmentStart,
 						  &vass));
   
@@ -452,14 +451,14 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
     for (m=0; m < noIterations; m++) {
       
-      SPLICING_CHECK(splicing_drift_proposal_propose(noiso, noChains,
+      SPLICING_CHECK(splicing_drift_proposal_propose((int) noiso, noChains,
 						     alpha, sigma,
 						     psiNew, alphaNew));
 
       SPLICING_CHECK(splicing_metropolis_hastings_ratio_paired(&vass,
 					     noReads, noChains,
 					     psiNew, alphaNew, psi, alpha,
-					     sigma, noiso, &isolen, hyperp, 
+					     sigma, (int) noiso, &isolen, hyperp,
 					     &isoscores, &assscores,
 					     &fragmentLength, fragmentStart,
 					     m > 0 ? 1 : 0, 
@@ -492,7 +491,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
       
       SPLICING_CHECK(splicing_reassign_samples_paired(mymatch_matrix,
 						      &match_order,
-						      psi, noiso, noChains, 
+						      psi, (int) noiso, noChains,
 						      fragmentStart, &vass));
 
     } /* for m < noIterations */
@@ -578,7 +577,7 @@ int splicing_i_miso_classes1(const splicing_matrix_t *match_matrix,
 			     splicing_matrix_t *class_templates,
 			     splicing_vector_t *class_counts) {
   
-  int noiso=splicing_matrix_nrow(match_matrix);
+  int noiso = (int) splicing_matrix_nrow(match_matrix);
   
   if (splicing_matrix_size(match_matrix) == 0) { 
 
@@ -588,7 +587,7 @@ int splicing_i_miso_classes1(const splicing_matrix_t *match_matrix,
 
   } else { 
 
-    int i, noreads=splicing_vector_int_size(match_order);
+    int i, noreads = (int) splicing_vector_int_size(match_order);
     int lastclass=0;
     double *prev, *curr;
     int *order=VECTOR(*match_order);
@@ -629,7 +628,7 @@ int splicing_i_miso_classes2(const splicing_matrix_t *match_matrix,
 			     splicing_matrix_t *class_templates,
 			     splicing_vector_t *class_counts) {
 
-  int noiso=splicing_matrix_nrow(match_matrix);
+  int noiso = (int) splicing_matrix_nrow(match_matrix);
   
   if (splicing_matrix_size(match_matrix) == 0) { 
 
@@ -639,7 +638,7 @@ int splicing_i_miso_classes2(const splicing_matrix_t *match_matrix,
 
   } else { 
 
-    int i, j, noreads=splicing_matrix_ncol(match_matrix);
+    int i, j, noreads = (int) splicing_matrix_ncol(match_matrix);
     int lastclass=0;
     double *prev, *curr;
     splicing_vector_int_t match_order;
@@ -650,7 +649,7 @@ int splicing_i_miso_classes2(const splicing_matrix_t *match_matrix,
 
     SPLICING_CHECK(splicing_matrix_binorder_cols(match_matrix, &match_order));
     order=VECTOR(match_order);
- 
+
     SPLICING_CHECK(splicing_matrix_resize(class_templates, noiso, 1));
     SPLICING_CHECK(splicing_vector_resize(class_counts, 1));
    

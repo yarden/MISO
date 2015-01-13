@@ -49,7 +49,7 @@ if cc.has_function('double fmin(double, double); double a = fmin(1.0,0.0); retur
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_FMIN', '1'))
 
-                shutil.rmtree("temp")
+shutil.rmtree("temp")
 
 # prefix directory for pysplicing module
 pysplicing_dir = 'pysplicing'

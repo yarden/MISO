@@ -2,7 +2,7 @@
 #include "pysplicing.h"
 
 int pysplicing_to_vector_int(PyObject *pv, splicing_vector_int_t *v) {
-  int i, n;
+  Py_ssize_t i, n;
   
   if (!PyTuple_Check(pv)) { 
     PyErr_SetString(PyExc_TypeError, "Need a tuple");
@@ -13,14 +13,14 @@ int pysplicing_to_vector_int(PyObject *pv, splicing_vector_int_t *v) {
   splicing_vector_int_init(v, n);
   for (i=0; i<n; i++) {
     PyObject *it=PyTuple_GetItem(pv, i);
-    VECTOR(*v)[i]=PyInt_AsLong(it);
+    VECTOR(*v)[i] = (int) PyInt_AsLong(it);
   }
   
   return 0;
 }
 
 int pysplicing_to_vector(PyObject *pv, splicing_vector_t *v) {
-  int i, n;
+  Py_ssize_t i, n;
   
   if (!PyTuple_Check(pv)) {
     PyErr_SetString(PyExc_TypeError, "Need a tuple");
@@ -38,7 +38,7 @@ int pysplicing_to_vector(PyObject *pv, splicing_vector_t *v) {
 }
 
 int pysplicing_to_strvector(PyObject *pv, splicing_strvector_t *v) {
-  int i, n;
+  Py_ssize_t i, n;
 
   if (!PyTuple_Check(pv)) {
     PyErr_SetString(PyExc_TypeError, "Need a tuple");
@@ -57,18 +57,18 @@ int pysplicing_to_strvector(PyObject *pv, splicing_strvector_t *v) {
 }
 
 int pysplicing_to_exons(PyObject *pex, splicing_vector_int_t *ex) {
-  int i, p, noexons=PyTuple_Size(pex);
+  Py_ssize_t i, p, noexons=PyTuple_Size(pex);
   splicing_vector_int_init(ex, noexons*2);
   for (i=0, p=0; i<noexons; i++) {
     PyObject *it=PyTuple_GetItem(pex, i);
-    VECTOR(*ex)[p++] = PyInt_AsLong(PyTuple_GetItem(it, 0));
-    VECTOR(*ex)[p++] = PyInt_AsLong(PyTuple_GetItem(it, 1));
+    VECTOR(*ex)[p++] = (int) PyInt_AsLong(PyTuple_GetItem(it, 0));
+    VECTOR(*ex)[p++] = (int) PyInt_AsLong(PyTuple_GetItem(it, 1));
   }
   return 0;
 }
 
 int pysplicing_to_isoforms(PyObject *piso, splicing_vector_int_t *iso) {
-  int i, p, veclen, noiso=PyTuple_Size(piso);
+  Py_ssize_t i, p, veclen, noiso=PyTuple_Size(piso);
   
   for (i=0, veclen=0; i<noiso; i++) {
     veclen += PyTuple_Size(PyTuple_GetItem(piso, i));
@@ -78,9 +78,9 @@ int pysplicing_to_isoforms(PyObject *piso, splicing_vector_int_t *iso) {
   
   for (i=0, p=0; i<noiso; i++) {
     PyObject *it=PyTuple_GetItem(piso, i);
-    int j, ilen=PyTuple_Size(it);
+    Py_ssize_t j, ilen=PyTuple_Size(it);
     for (j=0; j<ilen; j++) {
-      VECTOR(*iso)[p++] = PyInt_AsLong(PyTuple_GetItem(it, j));
+      VECTOR(*iso)[p++] = (int) PyInt_AsLong(PyTuple_GetItem(it, j));
     }
     VECTOR(*iso)[p++] = -1;
   }
@@ -89,7 +89,7 @@ int pysplicing_to_isoforms(PyObject *piso, splicing_vector_int_t *iso) {
 }
 
 PyObject *pysplicing_from_vector(const splicing_vector_t *v) {
-  int i, n=splicing_vector_size(v);
+  Py_ssize_t i, n=splicing_vector_size(v);
   PyObject *o=PyTuple_New(n);
   for (i=0; i<n; i++) {
     PyObject *it=PyFloat_FromDouble(VECTOR(*v)[i]);
@@ -100,8 +100,8 @@ PyObject *pysplicing_from_vector(const splicing_vector_t *v) {
 
 PyObject *pysplicing_from_matrix(const splicing_matrix_t *m) {
   int i, j;
-  int nrow=splicing_matrix_nrow(m);
-  int ncol=splicing_matrix_ncol(m);
+  int nrow = (int) splicing_matrix_nrow(m);
+  int ncol = (int) splicing_matrix_ncol(m);
   PyObject *o=PyTuple_New(nrow);
   for (i=0; i<nrow; i++) {
     PyObject *r=PyTuple_New(ncol);
@@ -117,8 +117,8 @@ PyObject *pysplicing_from_matrix(const splicing_matrix_t *m) {
 
 PyObject *pysplicing_from_matrix_transposed(const splicing_matrix_t *m) {
   int i, j;
-  int nrow=splicing_matrix_nrow(m);
-  int ncol=splicing_matrix_ncol(m);
+  int nrow = (int) splicing_matrix_nrow(m);
+  int ncol = (int) splicing_matrix_ncol(m);
   PyObject *o=PyTuple_New(ncol);
   for (i=0; i<ncol; i++) {
     PyObject *r=PyTuple_New(nrow);
@@ -133,7 +133,7 @@ PyObject *pysplicing_from_matrix_transposed(const splicing_matrix_t *m) {
 }
 
 PyObject *pysplicing_from_vector_int(const splicing_vector_int_t *v) {
-  int i, n=splicing_vector_int_size(v);
+  int i, n = (int) splicing_vector_int_size(v);
   PyObject *o=PyTuple_New(n);
   for (i=0; i<n; i++) {
     PyObject *it=PyInt_FromLong(VECTOR(*v)[i]);
@@ -144,7 +144,7 @@ PyObject *pysplicing_from_vector_int(const splicing_vector_int_t *v) {
 
 
 PyObject *pysplicing_from_strvector(const splicing_strvector_t *v) {
-  int i, n=splicing_strvector_size(v);
+  int i, n = (int) splicing_strvector_size(v);
   PyObject *o=PyTuple_New(n);
   for (i=0; i<n; i++) {
     PyObject *it=PyString_FromString(splicing_strvector_get(v, i));
@@ -155,8 +155,8 @@ PyObject *pysplicing_from_strvector(const splicing_strvector_t *v) {
 
 PyObject *pysplicing_from_vector_int_index(const splicing_vector_int_t *v,
 					   const splicing_vector_int_t *idx) {
-  int i, n=splicing_vector_int_size(idx);
-  int vn=splicing_vector_int_size(v);
+  int i, n = (int) splicing_vector_int_size(idx);
+  int vn = (int) splicing_vector_int_size(v);
   PyObject *o=PyList_New(n);
   for (i=0; i<n; i++) {
     int j=VECTOR(*idx)[i];

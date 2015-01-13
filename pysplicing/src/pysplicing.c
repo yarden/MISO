@@ -547,7 +547,7 @@ static PyObject* pysplicing_gff_nogenes(PyObject *self, PyObject *args) {
   mygff=PyCObject_AsVoidPtr(gff);
   
   SPLICING_PYCHECK(splicing_gff_nogenes(mygff, &nogenes));
-  nogenes2=nogenes;		/* in case int and size_t are different */
+  nogenes2 = (int) nogenes;		/* in case int and size_t are different */
     
   return Py_BuildValue("i", nogenes2);
 } 
@@ -646,13 +646,18 @@ static PyObject* pysplicing_to_gff(PyObject *self, PyObject *args) {
       Ctype2=SPLICING_TYPE_START_CODON;
     } else if (!strcmp(Ctype, "stop_codon")) {
       Ctype2=SPLICING_TYPE_STOP_CODON;
-    } /* TODO: else error? */
+    } else {
+      splicing_error("Cannot create GFF", __FILE__, __LINE__,
+		     SPLICING_EINVAL);
+      splicingmodule_handle_splicing_error();
+      return NULL;
+    }
 
-    Cstart=PyInt_AsLong(start);
-    Cend=PyInt_AsLong(end);
+    Cstart = (int) PyInt_AsLong(start);
+    Cend = (int) PyInt_AsLong(end);
     Cscore=PyFloat_AsDouble(score);
-    Cstrand=PyInt_AsLong(strand);
-    Cphase=PyInt_AsLong(phase);
+    Cstrand = (int) PyInt_AsLong(strand);
+    Cphase = (int) PyInt_AsLong(phase);
     CID=PyString_AsString(ID);
     if (Parent) { Cparent=PyString_AsString(Parent); }
 

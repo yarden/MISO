@@ -21,7 +21,7 @@ int splicing_numeric_cigar(const splicing_vector_int_t *exstart,
     /* Does the isoform start where we start? */
     if (VECTOR(*exstart)[pos] != genestart) { 
       SPLICING_CHECK(splicing_vector_int_push_back(result, 
-					genestart-VECTOR(*exstart)[pos]));
+			      (int) genestart - VECTOR(*exstart)[pos]));
     }
     while (pos<pos2) {
       int l=VECTOR(*exend)[pos] - VECTOR(*exstart)[pos] + 1;

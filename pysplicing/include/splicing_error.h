@@ -308,6 +308,7 @@ splicing_set_error_handler(splicing_error_handler_t* new_handler);
  * \enumval SPLICING_EATTRCOMBINE Unimplemented attribute combination 
  *   method for the given attribute type.
  * \enumval SPLICING_ELAPACK A LAPACK call resulted an error.
+ * \enumval SPLICING_EINTOVERFLOW Integer overflow.
  */
 
 typedef enum {
@@ -363,7 +364,8 @@ typedef enum {
   SPLICING_GLP_ESTOP        = 50,
   SPLICING_EATTRIBUTES      = 51,
   SPLICING_EATTRCOMBINE     = 52,
-  SPLICING_ELAPACK          = 53
+  SPLICING_ELAPACK          = 53,
+  SPLICING_EINTOVERFLOW     = 54
 } splicing_error_type_t;
 
 /**

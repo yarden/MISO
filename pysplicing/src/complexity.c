@@ -39,7 +39,7 @@ int splicing_gene_complexity(const splicing_gff_t *gff, size_t gene,
       SPLICING_CHECK(splicing_vector_init(&values, 0));
       SPLICING_FINALLY(splicing_vector_destroy, &values);
       SPLICING_CHECK(splicing_dgesdd(&assignment_matrix, &values));
-      n=splicing_vector_size(&values);
+      n = (int) splicing_vector_size(&values);
       for (i=n-1; i>=0 && VECTOR(values)[i] < 1e-14; i--) ;
       *complexity = VECTOR(values)[0] / VECTOR(values)[i];
       splicing_vector_destroy(&values);

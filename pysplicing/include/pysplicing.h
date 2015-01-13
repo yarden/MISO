@@ -20,4 +20,6 @@ PyObject *pysplicing_from_vector_int_index(const splicing_vector_int_t *v,
 					   const splicing_vector_int_t *idx);
 PyObject *pysplicing_from_miso_rundata(const splicing_miso_rundata_t *data);
 
+void pysplicing_init_rng(PyObject* splicing_module);
+
 #endif

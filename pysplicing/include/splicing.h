@@ -143,6 +143,7 @@ int splicing_gff_print_gene(const splicing_gff_t *gff,
 int splicing_gff_fprint(const splicing_gff_t *gff, 
 			FILE *outfile);
 int splicing_gff_print(const splicing_gff_t *gff);
+int splicing_gff_reindex(splicing_gff_t *gff);
 
 typedef struct splicing_miso_rundata_t {
   int noIso, noIters, maxIters, noBurnIn, noLag, noAccepted, noRejected,

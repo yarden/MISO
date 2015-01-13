@@ -13,7 +13,6 @@ int splicing_create_gene(const splicing_vector_int_t *exons,
 			 splicing_gff_t *extend) {
 
   size_t i=0;
-  size_t exlen=splicing_vector_int_size(exons);
   size_t isolen=splicing_vector_int_size(isoforms);
   size_t genestart=splicing_vector_int_min(exons);
   size_t geneend=splicing_vector_int_max(exons);
@@ -25,7 +24,7 @@ int splicing_create_gene(const splicing_vector_int_t *exons,
   /* Gene */
   SPLICING_CHECK(splicing_gff_append(extend, seqid, source, 
 				     SPLICING_TYPE_GENE, 
-				     genestart, geneend, 
+				     (int) genestart, (int) geneend,
 				     /*score=*/ SPLICING_NA_REAL, 
 				     strand, /*phase=*/ SPLICING_NA_INTEGER,
 				     id, /*parent=*/ 0));
@@ -43,7 +42,7 @@ int splicing_create_gene(const splicing_vector_int_t *exons,
     snprintf(buffer, sizeof(buffer)/sizeof(char)-sizeof(char), 
 	     "%s-isoform-%i", id, noiso);    
     SPLICING_CHECK(splicing_gff_append(extend, seqid, source, 
-				       SPLICING_TYPE_MRNA, mmin, mmax, 
+				       SPLICING_TYPE_MRNA, (int) mmin, (int) mmax,
 				       /*score=*/ SPLICING_NA_REAL, strand,
 				       /*phase=*/ SPLICING_NA_INTEGER,
 				       buffer, /*parent=*/ id));
@@ -73,7 +72,7 @@ int splicing_simulate_reads(const splicing_gff_t *gff, int gene,
 			    splicing_strvector_t *cigar, 
 			    splicing_vector_t *sample_prob) {
   
-  size_t i, p, noiso, goodiso=0, nogenes;
+  size_t i, noiso, goodiso=0, nogenes;
   splicing_vector_int_t effisolen;
   splicing_vector_t sampleprob;
   double rand, sumpsi=0.0;
@@ -149,7 +148,7 @@ int splicing_simulate_reads(const splicing_gff_t *gff, int gene,
   for (i=0; i<noreads; i++) { 
     int iso=VECTOR(*isoform)[i];
     int len=VECTOR(effisolen)[iso];
-    VECTOR(*position)[i]=RNG_INTEGER(1, len);
+    VECTOR(*position)[i] = (int) RNG_INTEGER(1, len);
   }
 
   /* Translate isoform coordinates to genomic coordintes */
@@ -238,7 +237,7 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
   splicing_vector_int_t exstart, exend, exidx;
   splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
     vfragmentProb;
-  int fs, fl;
+  size_t fs, fl;
 
   SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
   if (gene < 0 || gene >= nogenes) {
@@ -297,8 +296,8 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
 
   for (i=0; i<noiso; i++) {
     int ilen=VECTOR(isolen)[i];
-    int r1= ilen >= fl ? ilen - fl + 1 : 0;
-    int r2= ilen >= fs ? (ilen >= fl ? fl - fs : ilen - fs + 1) : 0;
+    size_t r1= ilen >= fl ? ilen - fl + 1 : 0;
+    size_t r2= ilen >= fs ? (ilen >= fl ? fl - fs : ilen - fs + 1) : 0;
     /* int r3= fs - 1; */
     double sp=0.0;
     if (r1 > 0) { sp += r1; } 
@@ -359,11 +358,12 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
 
   for (i=0, j=0; i<noreads; i++) {
     int iso=VECTOR(*isoform)[2*i];
-    int ilen=VECTOR(isolen)[iso];
-    int r1= ilen >= fl ? ilen - fl + 1 : 0;
-    int r2= ilen >= fs ? (ilen >= fl ? fl - fs : ilen - fs + 1) : 0;
+    size_t ilen=VECTOR(isolen)[iso];
+    size_t r1= ilen >= fl ? ilen - fl + 1 : 0;
+    size_t r2= ilen >= fs ? (ilen >= fl ? fl - fs : ilen - fs + 1) : 0;
     /* int r3= fs - 1; */
-    int pos, fragment;
+    size_t pos;
+    int fragment;
     double sp=0.0;
     if (r1 > 0) { sp += r1; } 
     if (r2 > 0) { sp += VECTOR(cpx)[r2-1]; }
@@ -385,8 +385,8 @@ int splicing_simulate_paired_reads(const splicing_gff_t *gff, int gene,
     for (fragment=0; VECTOR(px)[fragment] < rand; fragment++) ;
     fragment += fragmentStart;
 
-    VECTOR(*position)[j++] = pos;
-    VECTOR(*position)[j++] = pos+fragment-readLength;
+    VECTOR(*position)[j++] = (int) pos;
+    VECTOR(*position)[j++] = (int) pos+fragment-readLength;
     
   }
 

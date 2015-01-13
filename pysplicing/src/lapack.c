@@ -11,9 +11,9 @@ int splicing_dgesdd(const splicing_matrix_t *matrix,
 		    splicing_vector_t *values) {
 
   splicing_matrix_t tmp;
-  int m=splicing_matrix_nrow(matrix);
-  int n=splicing_matrix_ncol(matrix);
-  int lda=m, minmn= m < n ? m : n, maxmn = m < n ? n : m;
+  int m = (int) splicing_matrix_nrow(matrix);
+  int n = (int) splicing_matrix_ncol(matrix);
+  int lda=m, minmn= m < n ? m : n;
   int lwork=-1;
   int info=0;
   splicing_vector_t work;

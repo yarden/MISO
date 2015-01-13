@@ -339,10 +339,6 @@ L130:
     static doublereal dummy, unorm, ztest;
     static integer rtnkey;
 
-    /* Fortran I/O blocks */
-    static cilist io___33 = { 0, 6, 0, "(/a)", 0 };
-
-
 /*     ------------------------------------------------------------------ */
 /*     integer INDEX(N) */
 /*     double precision A(MDA,N), B(M), W(N), X(N), ZZ(M) */
