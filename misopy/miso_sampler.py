@@ -224,8 +224,8 @@ class MISOSampler:
         if prior_params == None:
             prior_params = (1.0,) * num_isoforms
 
-        read_positions = reads[0]
-        read_cigars = reads[1]
+        read_positions = reads[0][0] # TODO
+        read_cigars = reads[0][1]    # TODO
 
         self.num_reads = len(read_positions)
 

@@ -59,7 +59,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
     print "Computing Psi for %d genes..." %(num_genes)
     print "  - " + ", ".join(gene_ids)
     print "  - GFF filename: %s" %(gff_index_filename)
-    print "  - BAM: %s" %(bam_filename)
+    print "  - BAM: %s" %(' '.join(bam_filename))
     print "  - Outputting to: %s" %(output_dir)
 
     if paired_end:
@@ -96,9 +96,9 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
     else:
         filter_reads = settings["filter_reads"]
         
-    # Load the BAM file upfront
-    bamfile = sam_utils.load_bam_reads(bam_filename,
-                                       template=template)
+    # Load the BAM files upfront
+    bamfile = [ sam_utils.load_bam_reads(bam, template=template)
+                for bam in bam_filename ]
     # Check if we're in compressed mode
     compressed_mode = misc_utils.is_compressed_index(gff_index_filename)
     
@@ -124,28 +124,32 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
 
         # Fetch reads aligning to the gene boundaries
         gene_reads = \
-            sam_utils.fetch_bam_reads_in_gene(bamfile,
-                                              gene_obj.chrom,
-                                              tx_start,
-                                              tx_end,
-                                              gene_obj)
+            [ sam_utils.fetch_bam_reads_in_gene(bam,
+                                                gene_obj.chrom,
+                                                tx_start,
+                                                tx_end,
+                                                gene_obj) for bam in bamfile ]
         # Parse reads: checking strandedness and pairing
         # reads in case of paired-end data
-        reads, num_raw_reads = \
-            sam_utils.sam_parse_reads(gene_reads,
-                                      paired_end=paired_end,
-                                      strand_rule=strand_rule,
-                                      target_strand=gene_obj.strand,
-                                      given_read_len=read_len)
+        reads, num_raw_reads = zip(
+            *(sam_utils.sam_parse_reads(
+                gr, paired_end=paired_end, strand_rule=strand_rule,
+                target_strand=gene_obj.strand,
+                given_read_len=read_len) for gr in gene_reads))
+
         # Skip gene if none of the reads align to gene boundaries
-        if filter_reads:
+        if filter_reads and len(reads) > 1:
+            print "Not filtering reads for replicates"
+
+        if filter_reads and len(reads) == 1:
             if num_raw_reads < min_event_reads:
                 print "Only %d reads in gene, skipping (needed >= %d reads)" \
                       %(num_raw_reads,
                         min_event_reads)
                 continue
             else:
-                print "%d raw reads in event" %(num_raw_reads)
+                print "%s raw reads in event" \
+                    %(", ".join([str(r) for r in num_raw_reads]))
 
         num_isoforms = len(gene_obj.isoforms)
         hyperparameters = ones(num_isoforms)
@@ -224,9 +228,10 @@ def run_compute_genes_from_file(options):
     genes_filename = \
         os.path.abspath(os.path.expanduser(options.compute_genes_from_file[0]))
     bam_filename = \
-        os.path.abspath(os.path.expanduser(options.compute_genes_from_file[1]))
+        [ os.path.abspath(os.path.expanduser(bam))
+          for bam in options.compute_genes_from_file[1:-1]]
     output_dir = \
-        os.path.abspath(os.path.expanduser(options.compute_genes_from_file[2]))
+        os.path.abspath(os.path.expanduser(options.compute_genes_from_file[-1]))
     print "Computing Psi for genes from file..."
     print "  - Input file: %s" %(genes_filename)
     if options.paired_end != None:
@@ -237,9 +242,10 @@ def run_compute_genes_from_file(options):
     if not os.path.isfile(genes_filename):
         print "Error: %s filename does not exist." %(genes_filename)
         sys.exit(1)
-    if not os.path.isfile(bam_filename):
-        print "Error: BAM filename %s does not exist." %(bam_filename)
-        sys.exit(1)
+    for bam in bam_filename:
+        if not os.path.isfile(bam):
+            print "Error: BAM filename %s does not exist." %(bam)
+            sys.exit(1)
     # Load the events and their indexed GFF paths
     num_genes = 0
     with open(genes_filename) as genes_in:
