@@ -313,6 +313,18 @@ def main():
     from optparse import OptionParser
     parser = OptionParser()
 
+    def bam_cb(option, opt_str, value, parser):
+        args=[]
+        for arg in parser.rargs:
+            if arg[0] != "-":
+                args.append(arg)
+            else:
+                del parser.rargs[:len(args)]
+                break
+        if getattr(parser.values, option.dest):
+            args.extend(getattr(parser.values, option.dest))
+        setattr(parser.values, option.dest, args)
+
     ##
     ## Main options
     ##
@@ -331,14 +343,14 @@ def main():
                       "deviation for the fragment length distribution (assumed "
                       "to have discretized normal form.)")
     parser.add_option("--compute-genes-from-file", dest="compute_genes_from_file",
-                      nargs=3, default=None,
+                      action="callback", callback = bam_cb, default=None,
                       help="Runs on a set of genes from a file. Takes as input: "
                       "(1) a two-column tab-delimited file, where column 1 is the "
                       "event ID (ID field from GFF) and the second column is "
                       "the path to the indexed GFF file for that event. "
                       "MISO will run on all the events described in the file, "
-                      "(2) a sorted, indexed BAM file to run on, and (3) a "
-                      "directory to output results to.")
+                      "(2) one or more sorted, indexed BAM files to run on,"
+                      "and (3) a directory to output results to.")
     
     ##
     ## Psi utilities
