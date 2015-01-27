@@ -1220,7 +1220,7 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 
 .. _answer10:
 
-10. **Can I use MISO with my own custom annotations of alternative events? Or my own annotation of genes from their mRNA isoforms that I obtained from Ensembl/UCSC/Refseq?** Yes. MISO will take any correctly formatted GFF3 file and quantitate the abundances of the mRNAs listed for each entry in that file. Those entries can represent individual alternative splicing events like our own annotation (yielding an "exon-centric" quantitation, as described in the documentation), or they might be the full mRNAs of each gene, as described in a database like Ensembl or UCSC (to perform "isoform-centric" quantitation). (`back <#faq>`_)
+10. **Can I use MISO with my own custom annotations of alternative events? Or my own annotation of genes from their mRNA isoforms that I obtained from Ensembl/UCSC/Refseq?** Yes. MISO will take any correctly formatted GFF3 file and quantitate the abundances of the mRNAs listed for each entry in that file. Those entries can represent individual alternative splicing events like our own annotation (yielding an "exon-centric" quantitation, as described in the documentation), or they might be the full mRNAs of each gene, as described in a database like Ensembl or UCSC (to perform "isoform-centric" quantitation). To make your own GFF3 exon-centric annotation from transcript data, see `rnaseqlib`_ (`back <#faq>`_)
 
 .. _answer11:
 
@@ -1519,6 +1519,7 @@ General reading on probabilistic modeling and inference
 
 .. _A primer on probabilistic inference: http://cocosci.berkeley.edu/tom/papers/tutorial.pdf
 
+.. _rnaseqlib: http://rnaseqlib.readthedocs.org
 .. _virtualenv: http://virtualenv.readthedocs.org/en/latest/
 .. _distribute: http://packages.python.org/distribute/
 .. _pip: http://pypi.python.org/pypi/pip
