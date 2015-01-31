@@ -292,21 +292,24 @@ class MISOSampler:
             num_sds = 4L
 
             # Run paired-end
-            miso_results = pysplicing.MISOPaired(c_gene, 0L,
-                                                 read_positions,
-                                                 read_cigars,
-                                                 long(self.read_len),
-                                                 float(self.mean_frag_len),
-                                                 float(self.frag_variance),
-                                                 float(num_sds),
-                                                 long(num_iters),
-                                                 long(burn_in),
-                                                 long(lag),
-                                                 rior_params,
-                                                 long(self.overhang_len),
-                                                 long(num_chains),
-                                                 start_cond,
-                                                 stop_cond)
+            miso_results = pysplicing.doMISOPaired(
+                GFF = c_gene,
+                gene = 0L,
+                read_pos = read_positions,
+                read_cigar = read_cigars,
+                read_len = long(self.read_len),
+                mean_frag_len = float(self.mean_frag_len),
+                frag_variance = float(self.frag_variance),
+                num_sds = float(num_sds),
+                num_iters = long(num_iters),
+                burn_in = long(burn_in),
+                lag = long(lag),
+                prior = prior,
+                dirichlet_prior_params = prior_params,
+                overHang = long(self.overhang_len),
+                num_chains = long(num_chains),
+                start = start_cond,
+                stop = stop_cond)
         else:
             # Run single-end
             miso_results = pysplicing.doMISO(

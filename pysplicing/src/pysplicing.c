@@ -181,7 +181,10 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_gff_t *mygff;
   splicing_strvector_t myreadcigar;
   splicing_vector_int_t myreadpos;
+  splicing_miso_prior_t prior = SPLICING_MISO_PRIOR_DIRICHLET;
   splicing_vector_t myhyperp;
+  double logistic_mean = 0.0;
+  double logistic_var = 3.0;
   splicing_matrix_t samples;
   splicing_vector_t logLik;
   splicing_matrix_t bin_class_templates;
@@ -190,10 +193,31 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_miso_rundata_t rundata;
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
   
-  if (!PyArg_ParseTuple(args, "OiOOiddd|iiiOiiii", &gff, &gene, &readpos, 
+  if (!PyArg_ParseTuple(args,
+			"O"	/* gff */
+			"i"	/* gene */
+			"O"	/* readpos */
+			"O"	/* readcigar */
+			"i"	/* readLength */
+			"d"	/* normalMean */
+			"d"	/* normalVar */
+			"d"	/* numDevs */
+			"|i"	/* noIterations */
+			"i"	/* noBurnIn */
+			"i"	/* noLag */
+			"i"     /* prior */
+			"O"	/* hyperp */
+			"d"	/* logistic_mean */
+			"d"	/* logistic_var */
+			"i"	/* overhang */
+			"i"	/* no_chains */
+			"i"	/* start */
+			"i",	/* stop */
+			&gff, &gene, &readpos,
 			&readcigar, &readLength, &normalMean, &normalVar,
 			&numDevs, &noIterations, &noBurnIn, &noLag,
-			&hyperp, &overhang, &no_chains, &start, &stop)) { 
+			&prior, &hyperp, &logistic_mean, &logistic_var,
+			&overhang, &no_chains, &start, &stop)) {
     return NULL; 
   }
 
@@ -228,9 +252,9 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   
   splicing_miso_paired(mygff, gene, &myreadpos,
 		       (const char**) myreadcigar.table, readLength,
-		       overhang, no_chains, noIterations, 
-		       maxIterations, noBurnIn, noLag, &myhyperp, 
-		       start, stop, /*start_psi=*/ 0,
+		       overhang, no_chains, noIterations, maxIterations,
+		       noBurnIn, noLag, prior, &myhyperp, logistic_mean,
+		       logistic_var, start, stop, /*start_psi=*/ 0,
 		       /*insertProb=*/ 0, /*insertStart=*/ 0,
 		       normalMean, normalVar, numDevs, &samples, &logLik,
 		       /*match_matrix=*/ 0, /*class_templates=*/ 0, 
