@@ -4,6 +4,7 @@
 ##
 import os
 import time
+import sys
 
 def sam_to_bam(sam_filename, output_dir,
                header_ref=None):
@@ -40,7 +41,11 @@ def sam_to_bam(sam_filename, output_dir,
     t2 = time.time()
     print "Conversion took %.2f minutes." %((t2 - t1)/60.)
 
-def main():
+def main(argv = None):
+
+    if argv is None:
+        argv = sys.argv[1:]
+
     from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("--convert", dest="convert", nargs=2, default=None,
@@ -48,7 +53,7 @@ def main():
                       "with headers. Takes SAM filename and output directory.")
     parser.add_option("--ref", dest="ref", nargs=1, default=None,
                       help="References file to use to get chromosome lengths.")
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(argv)
 
     if options.convert != None:
         ref = None

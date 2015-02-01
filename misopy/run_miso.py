@@ -309,7 +309,11 @@ def greeting(parser=None):
         parser.print_help()
     
     
-def main():
+def main(argv = None):
+
+    if argv is None:
+        argv = sys.argv[1:]
+
     from optparse import OptionParser
     parser = OptionParser()
 
@@ -411,7 +415,7 @@ def main():
                       help="View the contents of a gene/event that has "
                       "been indexed. Takes as input an "
                       "indexed (.pickle) filename.")
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(argv)
 
     if options.compute_gene_psi is None:
         greeting()
