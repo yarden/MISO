@@ -35,7 +35,11 @@ def greeting(parser=None):
         parser.print_help()
     
     
-def main():
+def main(argv = None):
+
+    if argv is None:
+        argv = sys.argv[1:]
+
     from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("--summarize-samples", dest="summarize_samples",
@@ -52,7 +56,7 @@ def main():
                       help="Use compressed event IDs. Takes as input a "
                       "genes_to_filenames.shelve file produced by the "
                       "index_gff script.")
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(argv)
 
     greeting()
 
