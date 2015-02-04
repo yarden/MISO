@@ -10,6 +10,8 @@ python:
 
 before_install:
   - sudo apt-get install -qq python-numpy python-scipy
+
+install:
   - pip install pysam
 
 virtualenv:
