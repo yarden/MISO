@@ -224,6 +224,10 @@ class MISOSampler:
         if prior_params == None:
             prior_params = (1.0,) * num_isoforms
 
+        if prior != pysplicing.MISO_PRIOR_DIRICHLET and len(reads) > 1:
+            self.miso_logger.error("Replicates need the Dirichlet prior")
+            sys.exit(1)
+
         read_positions = reads[0][0] # TODO
         read_cigars = reads[0][1]    # TODO
 

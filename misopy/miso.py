@@ -320,6 +320,7 @@ class GenesDispatcher:
         num_threads = len(self.threads)
         if num_threads == 0:
             return
+        retcode = 0
         print "Waiting on %d threads..." %(num_threads)
         t_start = time.time()
         for thread_name in self.threads:
@@ -330,6 +331,7 @@ class GenesDispatcher:
             if curr_thread.returncode != 0:
                 self.main_logger.warning("Thread %s might have failed..." \
                                     %(thread_name))
+                retcode = curr_thread.returncode
             if curr_thread.returncode is None:
                 self.main_logger.warning("Thread still going...")
             threads_completed[thread_name] = True
@@ -337,6 +339,8 @@ class GenesDispatcher:
         duration = ((t_end - t_start) / 60.) / 60.
         self.main_logger.info("Threads completed in %.2f hours." \
                               %(duration))
+        if retcode != 0:
+            sys.exit(retcode)
 
 
 def compute_all_genes_psi(gff_dir, bam_filename, read_len,

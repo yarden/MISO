@@ -1,7 +1,7 @@
 
+import setup_miso
 import misopy
 import misopy.gff_utils
-# TODO: this loads the _installed_ pysplicing
 import pysplicing
 import random
 

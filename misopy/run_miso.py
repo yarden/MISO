@@ -23,6 +23,8 @@ import misopy.misc_utils as misc_utils
 from misopy.parse_csv import *
 from misopy.samples_utils import *
 
+import pysplicing
+
 import numpy as np
 np.seterr(all='ignore')
 
@@ -35,7 +37,8 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
                      output_dir, read_len, overhang_len,
                      paired_end=None,
                      event_type=None,
-                     verbose=True):
+                     verbose=True,
+                     prior=pysplicing.MISO_PRIOR_DIRICHLET):
     """
     Run Psi at the Gene-level (for multi-isoform inference.)
 
@@ -101,6 +104,11 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
                 for bam in bam_filename ]
     # Check if we're in compressed mode
     compressed_mode = misc_utils.is_compressed_index(gff_index_filename)
+
+    # Replicates need the logistic prior
+    if len(bamfile) > 1 and prior != pysplicing.MISO_PRIOR_LOGISTIC:
+        print "Error: replicates need the logistic prior"
+        sys.exit(1)
     
     for gene_id, gene_info in gff_genes.iteritems():
         lookup_id = gene_id
@@ -257,7 +265,8 @@ def run_compute_genes_from_file(options):
             compute_gene_psi([gene_id], gff_filename, bam_filename,
                              output_dir, options.read_len, overhang_len,
                              paired_end=paired_end,
-                             event_type=options.event_type)
+                             event_type=options.event_type,
+                             prior=options.prior)
             num_genes += 1
     print "Processed %d genes" %(num_genes)
             
@@ -297,7 +306,8 @@ def run_compute_gene_psi(options):
     compute_gene_psi(gene_ids, gff_filename, bam_filename, output_dir,
                      options.read_len, overhang_len,
                      paired_end=paired_end,
-                     event_type=options.event_type)
+                     event_type=options.event_type,
+                     prior=options.prior)
 
         
 def greeting(parser=None):
@@ -407,6 +417,11 @@ def main(argv = None):
                       help="Use compressed event IDs. Takes as input a "
                       "genes_to_filenames.shelve file produced by the "
                       "index_gff script.")
+    parser.add_option("--prior", dest="prior", nargs=1, default="dirichlet",
+                      help="Prior to use for the expression profiles "
+                      "defaults to a Dirichlet prior. The other choice "
+                      "is a Logistic prior, only implemented for "
+                      "two-isoform genes currently")
     ##
     ## Gene utilities
     ##
@@ -419,6 +434,15 @@ def main(argv = None):
 
     if options.compute_gene_psi is None:
         greeting()
+
+    options.prior = options.prior.lower()
+    if options.prior == "dirichlet":
+        options.prior = pysplicing.MISO_PRIOR_DIRICHLET
+    elif options.prior == "logistic":
+        options.prior = pysplicing.MISO_PRIOR_LOGISTIC
+    else:
+        print("Error: unkown prior, much be 'dirichlet' or 'logistic'")
+        sys.exit(1)
 
     ##
     ## Load the settings file 

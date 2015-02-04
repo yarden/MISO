@@ -3,16 +3,14 @@ import os
 import sys
 import tempfile
 import shutil
-import misopy
-import pysplicing
+
+from nose.tools import *
+
+import setup_miso
 
 def miso_cli(sams = None, gff = None):
 
-    miso_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-
-    # This is where we import the scripts from
-    misopy_dir = os.path.join(miso_dir, "misopy")
-    sys.path.insert(0, misopy_dir)
+    miso_dir = setup_miso.miso_dir
 
     # Data files in a temporary directory
     if gff is None:
@@ -57,8 +55,9 @@ def miso_cli(sams = None, gff = None):
 def test_miso_cli():
     miso_cli()
 
+@raises(SystemExit)
 def test_error_if_multiple_bam_files():
-    miso_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    miso_dir = setup_miso.miso_dir
     test_sam = os.path.join(miso_dir, "misopy", "test-data", "sam-data",
                             "c2c12.Atp2b1.sam")
     test_sam2 = os.path.dirname(test_sam) + "c2c12.Atp2b2-2.sam"
