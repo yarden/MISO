@@ -10,6 +10,7 @@ python:
 
 before_install:
   - sudo apt-get install -qq python-numpy python-scipy
+  - sudo tools/install_samtools.sh
 
 install:
   - pip install pysam
