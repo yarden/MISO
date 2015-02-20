@@ -94,71 +94,71 @@ class TestMISO(unittest.TestCase):
                                                      target,
                                                      "fr-unstranded") == True), \
                     "Error checking strand of fr-unstranded."
-        # fr-firststrand: forward read must be *opposite* of target strand,
-        # i.e. +read matches -target, and -read matches +target
+        # fr-firststrand: forward read must match target strand,
+        # i.e. +read matches +target, and -read matches -target
         # test +read
         print "Testing fr-firststrand..."
         assert(sam_utils.read_matches_strand(f_read,
-                                             minus_target_strand,
-                                             "fr-firststrand") == True), \
-            "+read must match -target under fr-firstrand."
-        assert(sam_utils.read_matches_strand(f_read,
                                              plus_target_strand,
+                                             "fr-firststrand") == True), \
+            "+read must match +target under fr-firstrand."
+        assert(sam_utils.read_matches_strand(f_read,
+                                             minus_target_strand,
                                              "fr-firststrand") == False), \
-            "+read must *not* match +target under fr-firststrand."
+            "+read must match +target under fr-firststrand."
         # test -read
         assert(sam_utils.read_matches_strand(r_read,
                                              plus_target_strand,
-                                             "fr-firststrand") == True), \
-            "-read must match +target under fr-firststrand."
+                                             "fr-firststrand") == False), \
+            "-read must match -target under fr-firststrand."
         assert(sam_utils.read_matches_strand(r_read,
                                              minus_target_strand,
-                                             "fr-firststrand") == False), \
-            "+read must match -target under fr-firststrand."
+                                             "fr-firststrand") == True), \
+            "-read must match -target under fr-firststrand."
         # Test fr-firststrand read pair
         pe = (300, 10)
         assert(sam_utils.read_matches_strand((f_read, r_read),
-                                             minus_target_strand,
-                                             "fr-firststrand",
-                                             paired_end=pe) == True), \
-            "(+, -) must match -target under fr-firststrand."
-        assert(sam_utils.read_matches_strand((f_read, r_read),
                                              plus_target_strand,
                                              "fr-firststrand",
+                                             paired_end=pe) == True), \
+            "(+, -) must match +target under fr-firststrand."
+        assert(sam_utils.read_matches_strand((f_read, r_read),
+                                             minus_target_strand,
+                                             "fr-firststrand",
                                              paired_end=pe) == False), \
-            "(+, -) must *not* match +target under fr-firststrand."
-        # fr-secondstrand: forward read must be *matching* target strand,
-        # i.e. +read matches +target, and -read matches +target
+            "(+, -) must *not* match -target under fr-firststrand."
+        # fr-secondstrand: forward read must *NOT* match target strand,
+        # i.e. +read matches -target, and -read matches +target
         print "Testing fr-secondstrand..."
         # test +read
         assert(sam_utils.read_matches_strand(f_read,
                                              plus_target_strand,
-                                             "fr-secondstrand") == True), \
+                                             "fr-secondstrand") == False), \
             "+read must match +target under fr-secondstrand."
         assert(sam_utils.read_matches_strand(f_read,
                                              minus_target_strand,
-                                             "fr-secondstrand") == False), \
-            "+read must *not* match -target under fr-secondstrand."
+                                             "fr-secondstrand") == True), \
+            "+read must match -target under fr-secondstrand."
         # test -read
         assert(sam_utils.read_matches_strand(r_read,
-                                             minus_target_strand,
-                                             "fr-secondstrand") == True), \
-            "-read must match -target under fr-secondstrand."
-        assert(sam_utils.read_matches_strand(r_read,
                                              plus_target_strand,
+                                             "fr-secondstrand") == True), \
+            "-read must match +target under fr-secondstrand."
+        assert(sam_utils.read_matches_strand(r_read,
+                                             minus_target_strand,
                                              "fr-secondstrand") == False), \
-            "-read must *not* match +target under fr-secondstrand."
+            "-read must *not* match -target under fr-secondstrand."
         # Test fr-secondstrand read pair
         assert(sam_utils.read_matches_strand((f_read, r_read),
                                              plus_target_strand,
                                              "fr-secondstrand",
-                                             paired_end=pe) == True), \
-            "(+, -) must match + under fr-secondstrand."
+                                             paired_end=pe) == False), \
+            "(+, -) must *not* match + under fr-secondstrand."
         assert(sam_utils.read_matches_strand((f_read, r_read),
                                              minus_target_strand,
                                              "fr-secondstrand",
-                                             paired_end=pe) == False), \
-            "(+, -) must *not* match - under fr-secondstrand."                                 
+                                             paired_end=pe) == True), \
+            "(+, -) must match - under fr-secondstrand."                                 
 
         
     def test_z_gene_psi(self):

@@ -273,8 +273,7 @@ def greeting(parser=None):
 
 def main():
     print "MISO (Mixture of Isoforms model)"
-    print "run_events_analysis.py interface is deprecated. Please run " \
-          "\'miso\' instead."
+    print "To run MISO, please use \"miso\" instead."
 		    
 if __name__ == '__main__':
     main()

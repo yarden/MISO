@@ -281,12 +281,12 @@ You should be able to import both of these packages without errors from the Pyth
 Testing MISO
 ------------
 
-To test that MISO can be run properly, run ``test_miso`` as shown
+To test that MISO can be run properly, run the unit tests as shown
 below. These tests ensure that MISO can be run on a few
 genes/exons. The output of these tests can be ignored and the
 abbreviated version should be along the following lines: ::
 
- $ test_miso
+ $ python -m unittest discover misopy
  Testing conversion of SAM to BAM...
  ...output omitted...
  Computing Psi for 1 genes...
@@ -1082,6 +1082,10 @@ MISO comes with a built-in utility, `sashimi_plot`_, for visualizing its output 
 
 Updates
 ========
+
+**2015**
+
+* **Fri, Feb 20**: Released ``0.5.3``, which fixes a bug in processing stranded reads. Thanks to Renee Sears.
 
 **2014**
 
