@@ -9,7 +9,7 @@ MISO (Mixture of Isoforms) software documentation
 =================================
 
 .. image:: images/MISO-docs-logo-small.png
-   :scale: 40%
+   :scale: 70%
    :align: right
    :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
 
@@ -281,12 +281,12 @@ You should be able to import both of these packages without errors from the Pyth
 Testing MISO
 ------------
 
-To test that MISO can be run properly, run ``test_miso`` as shown
+To test that MISO can be run properly, run the unit tests as shown
 below. These tests ensure that MISO can be run on a few
 genes/exons. The output of these tests can be ignored and the
 abbreviated version should be along the following lines: ::
 
- $ test_miso
+ $ python -m unittest discover misopy
  Testing conversion of SAM to BAM...
  ...output omitted...
  Computing Psi for 1 genes...
@@ -1083,6 +1083,10 @@ MISO comes with a built-in utility, `sashimi_plot`_, for visualizing its output 
 Updates
 ========
 
+**2015**
+
+* **Fri, Feb 20**: Released ``0.5.3``, which fixes a bug in processing stranded reads. Thanks to Renee Sears.
+
 **2014**
 
 * **Tue, Mar 11**: Released ``0.5.2``, which fixes an error reporting bug. Thanks to John Tobias and Sabine Dietmann.
@@ -1220,7 +1224,7 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 
 .. _answer10:
 
-10. **Can I use MISO with my own custom annotations of alternative events? Or my own annotation of genes from their mRNA isoforms that I obtained from Ensembl/UCSC/Refseq?** Yes. MISO will take any correctly formatted GFF3 file and quantitate the abundances of the mRNAs listed for each entry in that file. Those entries can represent individual alternative splicing events like our own annotation (yielding an "exon-centric" quantitation, as described in the documentation), or they might be the full mRNAs of each gene, as described in a database like Ensembl or UCSC (to perform "isoform-centric" quantitation). (`back <#faq>`_)
+10. **Can I use MISO with my own custom annotations of alternative events? Or my own annotation of genes from their mRNA isoforms that I obtained from Ensembl/UCSC/Refseq?** Yes. MISO will take any correctly formatted GFF3 file and quantitate the abundances of the mRNAs listed for each entry in that file. Those entries can represent individual alternative splicing events like our own annotation (yielding an "exon-centric" quantitation, as described in the documentation), or they might be the full mRNAs of each gene, as described in a database like Ensembl or UCSC (to perform "isoform-centric" quantitation). To make your own GFF3 exon-centric annotation from transcript data, see `rnaseqlib`_ (`back <#faq>`_)
 
 .. _answer11:
 
@@ -1519,6 +1523,7 @@ General reading on probabilistic modeling and inference
 
 .. _A primer on probabilistic inference: http://cocosci.berkeley.edu/tom/papers/tutorial.pdf
 
+.. _rnaseqlib: http://rnaseqlib.readthedocs.org
 .. _virtualenv: http://virtualenv.readthedocs.org/en/latest/
 .. _distribute: http://packages.python.org/distribute/
 .. _pip: http://pypi.python.org/pypi/pip

@@ -57,8 +57,8 @@ splicing_extension = Extension('pysplicing.pysplicing', sources,
 # Extract long description of MISO from README
 long_description = open('README').read()
 
-if sys.version_info > (3, 0):
-    options["use_2to3"] = True
+#if sys.version_info > (3, 0):
+#    options["use_2to3"] = True
 
 # This forces distutils to place the data files
 # in the directory where the Py packages are installed
@@ -71,9 +71,10 @@ for scheme in INSTALL_SCHEMES.values():
         scheme['data'] = scheme['purelib']
 
 ##
-## Definition of the current version
+## Definition of the current version. This is defined here
+## and then gets written to __init__.py in misopy.
 ##
-MISO_VERSION = "0.5.2"
+MISO_VERSION = "0.5.3"
 
 ##
 ## Generate a __version__.py attribute

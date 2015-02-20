@@ -322,25 +322,25 @@ def read_matches_strand(read,
         # Paired-end reads
         read1, read2 = read
         if strand_rule == "fr-firststrand":
-            # fr-firststrand: means that the *second* of the mates
-            # must match the strand
-            matches = (flag_to_strand(read2.flag) == target_strand)
-        elif strand_rule == "fr-secondstrand":
-            # fr-secondstrand: means that the *first* of the mates
+            # fr-firststrand: means that the *first* of the mates
             # must match the strand
             matches = (flag_to_strand(read1.flag) == target_strand)
+        elif strand_rule == "fr-secondstrand":
+            # fr-secondstrand: means that the *second* of the mates
+            # must match the strand
+            matches = (flag_to_strand(read2.flag) == target_strand)
         else:
             raise Exception, "Unknown strandedness rule."
     else:
         # Single-end reads
         if strand_rule == "fr-firststrand":
             # fr-firststrand: We sequence the first read only, so it must
-            # *NOT* match the target strand
-            matches = (flag_to_strand(read.flag) != target_strand)
+            # match the target strand
+            matches = (flag_to_strand(read.flag) == target_strand)
         elif strand_rule == "fr-secondstrand":
             # fr-secondstrand: We only sequence the first read, which 
-            # is supposed to match the target strand
-            matches = (flag_to_strand(read.flag) == target_strand)
+            # is *NOT* supposed to match the target strand
+            matches = (flag_to_strand(read.flag) != target_strand)
         else:
             raise Exception, "Unknown strandedness rule."
     return matches 

@@ -25,7 +25,6 @@ def chunk_list(seq, num):
   out = []
   last = 0.0
   if len(seq) < num:
-      print "Returning a single chunk!"
       return [seq]
   while last < len(seq):
     out.append(seq[int(last):int(last + avg)])
