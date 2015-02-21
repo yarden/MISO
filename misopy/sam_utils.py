@@ -196,9 +196,9 @@ def flag_to_strand(flag):
     Takes integer flag as argument.
     Returns strand ('+' or '-') from flag.
     """
-    if flag == 0 or not (int(bin(flag)[-5]) & 1):
-        return "+"
-    return "-"
+    if flag & 16:
+        return "-"
+    return "+"
 
 
 def strip_mate_id(read_name):
@@ -217,7 +217,8 @@ def strip_mate_id(read_name):
     return read_name
 
     
-def pair_sam_reads(samfile, filter_reads=True,
+def pair_sam_reads(samfile,
+                   filter_reads=True,
                    return_unpaired=False):
     """
     Pair reads from a SAM file together.
@@ -238,9 +239,17 @@ def pair_sam_reads(samfile, filter_reads=True,
                 unpaired_reads[curr_name] = read
                 continue
         paired_reads[curr_name].append(read)
+        # Ensure that the reads that were paired are
+        # in the right order - i.e., that read1 is
+        # first and read2 follows.
+        if len(paired_reads[curr_name]) == 2:
+            # If the first read is read2, and second is
+            # read1, then flip the order to get it right
+            if paired_reads[curr_name][0].is_read1:
+                paired_reads[curr_name] = paired_reads[curr_name][::-1]
+            
 
     to_delete = []
-
     num_unpaired = 0
     num_total = 0
 
@@ -325,6 +334,7 @@ def read_matches_strand(read,
             # fr-firststrand: means that the *first* of the mates
             # must match the strand
             matches = (flag_to_strand(read1.flag) == target_strand)
+            print "read1 flag: ", read1.flag, flag_to_strand(read1.flag), " target: ", target_strand
         elif strand_rule == "fr-secondstrand":
             # fr-secondstrand: means that the *second* of the mates
             # must match the strand
