@@ -333,12 +333,17 @@ def read_matches_strand(read,
         if strand_rule == "fr-firststrand":
             # fr-firststrand: means that the *first* of the mates
             # must match the strand
-            matches = (flag_to_strand(read1.flag) == target_strand)
-            print "read1 flag: ", read1.flag, flag_to_strand(read1.flag), " target: ", target_strand
+            if target_strand == "+":
+                return (flag_to_strand(read1.flag) == target_strand)
+            elif target_strand == "-":
+                return (flag_to_strand(read2.flag) == target_strand)
         elif strand_rule == "fr-secondstrand":
             # fr-secondstrand: means that the *second* of the mates
             # must match the strand
-            matches = (flag_to_strand(read2.flag) == target_strand)
+            if target_strand == "+":
+                return (flag_to_strand(read2.flag) == target_strand)
+            elif target_strand == "-":
+                return (flag_to_strand(read1.flag) == target_strand)
         else:
             raise Exception, "Unknown strandedness rule."
     else:
