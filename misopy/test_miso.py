@@ -81,7 +81,6 @@ class TestMISO(unittest.TestCase):
         ##
         #   fr-unstranded,
         #   fr-firststrand,
-        #   fr-secondstrand
         plus_target_strand = "+"
         minus_target_strand = "-"
         # fr-unstranded: both strand reads should match
@@ -122,44 +121,12 @@ class TestMISO(unittest.TestCase):
                                              "fr-firststrand",
                                              paired_end=pe) == True), \
             "(+, -) must match +target under fr-firststrand."
+        # If target strand is -, second read must match minus strand
         assert(sam_utils.read_matches_strand((f_read, r_read),
                                              minus_target_strand,
                                              "fr-firststrand",
-                                             paired_end=pe) == False), \
-            "(+, -) must *not* match -target under fr-firststrand."
-        # fr-secondstrand: forward read must *NOT* match target strand,
-        # i.e. +read matches -target, and -read matches +target
-        print "Testing fr-secondstrand..."
-        # test +read
-        assert(sam_utils.read_matches_strand(f_read,
-                                             plus_target_strand,
-                                             "fr-secondstrand") == False), \
-            "+read must match +target under fr-secondstrand."
-        assert(sam_utils.read_matches_strand(f_read,
-                                             minus_target_strand,
-                                             "fr-secondstrand") == True), \
-            "+read must match -target under fr-secondstrand."
-        # test -read
-        assert(sam_utils.read_matches_strand(r_read,
-                                             plus_target_strand,
-                                             "fr-secondstrand") == True), \
-            "-read must match +target under fr-secondstrand."
-        assert(sam_utils.read_matches_strand(r_read,
-                                             minus_target_strand,
-                                             "fr-secondstrand") == False), \
-            "-read must *not* match -target under fr-secondstrand."
-        # Test fr-secondstrand read pair
-        assert(sam_utils.read_matches_strand((f_read, r_read),
-                                             plus_target_strand,
-                                             "fr-secondstrand",
-                                             paired_end=pe) == False), \
-            "(+, -) must *not* match + under fr-secondstrand."
-        assert(sam_utils.read_matches_strand((f_read, r_read),
-                                             minus_target_strand,
-                                             "fr-secondstrand",
                                              paired_end=pe) == True), \
-            "(+, -) must match - under fr-secondstrand."                                 
-
+            "(+, -) must match -target under fr-firststrand."
         
     def test_z_gene_psi(self):
         """
