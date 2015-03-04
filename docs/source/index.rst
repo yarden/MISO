@@ -1088,7 +1088,7 @@ Updates
 
 **2015**
 
-* **Fri, Feb 20**: Released ``0.5.3``, which fixes a bug in processing stranded reads. Thanks to Renee Sears.
+* **Thur, March 4**: Released ``0.5.3``, which fixes a bug in processing stranded reads. Thanks to Renee Sears.
 
 **2014**
 
@@ -1469,6 +1469,7 @@ for suggesting many improvements, or for creating useful software used by MISO:
 * Maayan Kreitzman (BCGSC)
 * John Tobias (UPenn)
 * Sabine Dietmann (MRC, University of Cambridge)
+* Renee Sears (Washington University in St. Louis)
 
 Authors
 =======
