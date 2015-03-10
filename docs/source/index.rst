@@ -1,4 +1,4 @@
-.. include:: <isogrk3.txt>
+license.. include:: <isogrk3.txt>
 
 .. MISO documentation master file, created by .. 
    sphinx-quickstart on Fri Oct 22 16:50:57 2010.
@@ -1267,7 +1267,7 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 
 .. _answer20:
 
-20. **What is the license for MISO?** As of July 2014, MISO is now the <a href="http://en.wikipedia.org/wiki/BSD_licenses">MIT/BSD license</a>. 
+20. **What is the license for MISO?** MISO is licensed under the GPL v2 license (updated March, 2015).
 
 .. .. _sec:
 
