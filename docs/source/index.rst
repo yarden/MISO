@@ -1088,7 +1088,7 @@ Updates
 
 **2015**
 
-* **Thur, March 4**: Released ``0.5.3``, which fixes a bug in processing stranded reads. Thanks to Renee Sears.
+* **Tue, March 10**: Released ``0.5.3``, which fixes a bug in processing stranded reads. Thanks to Renee Sears. MISO license updated: it is licensed under GPL 2, not BSD, since it depends on GPL 2 code. We apologize for the confusion. Added support for Travis CI.
 
 **2014**
 
