@@ -1,4 +1,4 @@
-license.. include:: <isogrk3.txt>
+.. include:: <isogrk3.txt>
 
 .. MISO documentation master file, created by .. 
    sphinx-quickstart on Fri Oct 22 16:50:57 2010.
