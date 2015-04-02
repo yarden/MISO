@@ -132,9 +132,7 @@ int splicing_score_iso_paired(const splicing_vector_t *psi, int noiso,
 int splicing_score_joint_paired(const splicing_matrix_int_t *assignment,
 				int no_reads, int noChains,
 				const splicing_matrix_t *psi, 
-				splicing_miso_prior_t prior,
-				const splicing_vector_t *dirichlet_hyper,
-				double logistic_mean, double logistic_var,
+				splicing_miso_hyperprior_t *hyperprior,
 				const splicing_vector_int_t *isolen,
 				const splicing_matrix_t *isoscores, 
 				const splicing_vector_t *assscores,
@@ -166,11 +164,13 @@ int splicing_score_joint_paired(const splicing_matrix_int_t *assignment,
     /* Score isoforms */
     SPLICING_CHECK(splicing_score_iso_paired(&tmp, noiso, &tmp2,
 					     isolen, assscores, &assProb));
-    if (prior == SPLICING_MISO_PRIOR_DIRICHLET) {
-      SPLICING_CHECK(splicing_ldirichlet(&tmp, dirichlet_hyper, noiso,
-					 &psiProb));
+    if (hyperprior->prior == SPLICING_MISO_PRIOR_DIRICHLET) {
+      SPLICING_CHECK(splicing_ldirichlet(&tmp, &(hyperprior->dirichlet_hyperp),
+					 noiso, &psiProb));
     } else {
-      SPLICING_CHECK(splicing_llogistic(&tmp, logistic_mean, logistic_var,
+      SPLICING_CHECK(splicing_llogistic(&tmp,
+					hyperprior->logistic_mean,
+					hyperprior->logistic_var,
 					&psiProb));
     }
     
@@ -189,9 +189,7 @@ int splicing_metropolis_hastings_ratio_paired(
 			      const splicing_matrix_t *alpha,
 			      double sigma, int noiso, 
 			      const splicing_vector_int_t *isolen,
-			      splicing_miso_prior_t prior,
-			      const splicing_vector_t *dirichlet_hyperp,
-			      double logistic_mean, double logistic_var,
+			      splicing_miso_hyperprior_t *hyperprior,
 			      const splicing_matrix_t *isoscores,
 			      const splicing_vector_t *assscores,
 			      const splicing_matrix_int_t *fragmentLength,
@@ -213,14 +211,12 @@ int splicing_metropolis_hastings_ratio_paired(
   SPLICING_FINALLY(splicing_vector_destroy, &ctoPS);
 
   SPLICING_CHECK(splicing_score_joint_paired(ass, no_reads, noChains, 
-					     psiNew, prior, dirichlet_hyperp,
-					     logistic_mean, logistic_var,
+					     psiNew, hyperprior,
 					     isolen, isoscores, assscores, 
 					     fragmentLength, fragmentStart,
 					     ppJS));
   SPLICING_CHECK(splicing_score_joint_paired(ass, no_reads, noChains, 
-					     psi, prior, dirichlet_hyperp,
-					     logistic_mean, logistic_var,
+					     psi, hyperprior,
 					     isolen, isoscores, assscores,
 					     fragmentLength, fragmentStart,
 					     pcJS));
@@ -254,9 +250,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const char **cigarstr, int readLength, int overHang,
 			 int noChains, int noIterations, 
 			 int maxIterations, int noBurnIn, int noLag,
-			 splicing_miso_prior_t prior,
-			 const splicing_vector_t *dirichlet_hyperp,
-			 double logistic_mean, double logistic_var,
+			 splicing_miso_hyperprior_t *hyperprior,
 			 splicing_miso_start_t start, 
 			 splicing_miso_stop_t stop,
 			 const splicing_matrix_t *start_psi,
@@ -324,31 +318,32 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
 
-  if (prior != SPLICING_MISO_PRIOR_AUTO &&
-      prior != SPLICING_MISO_PRIOR_DIRICHLET &&
-      prior != SPLICING_MISO_PRIOR_LOGISTIC) {
+  if (hyperprior->prior != SPLICING_MISO_PRIOR_AUTO &&
+      hyperprior->prior != SPLICING_MISO_PRIOR_DIRICHLET &&
+      hyperprior->prior != SPLICING_MISO_PRIOR_LOGISTIC) {
     SPLICING_ERROR("'prior' is invalid", SPLICING_EINVAL);
   }
 
-  if (prior == SPLICING_MISO_PRIOR_AUTO) {
+  if (hyperprior->prior == SPLICING_MISO_PRIOR_AUTO) {
     if (noiso == 2) {
-      prior = SPLICING_MISO_PRIOR_LOGISTIC;
+      hyperprior->prior = SPLICING_MISO_PRIOR_LOGISTIC;
     } else {
-      prior = SPLICING_MISO_PRIOR_DIRICHLET;
+      hyperprior->prior = SPLICING_MISO_PRIOR_DIRICHLET;
     }
   }
 
-  if (splicing_vector_size(dirichlet_hyperp) != noiso) {
+  if (hyperprior->prior == SPLICING_MISO_PRIOR_DIRICHLET &&
+      splicing_vector_size(&(hyperprior->dirichlet_hyperp)) != noiso) {
     SPLICING_ERROR("Invalid hyperparameter vector length", 
 		   SPLICING_EINVAL);
   }
 
-  if (prior == SPLICING_MISO_PRIOR_LOGISTIC && noiso != 2) {
+  if (hyperprior->prior == SPLICING_MISO_PRIOR_LOGISTIC && noiso != 2) {
     SPLICING_ERROR("Logistic prior currently only works for two isoforms",
 		   SPLICING_UNIMPLEMENTED);
   }
 
-  if (logistic_var < 0) {
+  if (hyperprior->logistic_var < 0) {
     SPLICING_ERROR("Variance of the logistic prior must be non-negative",
 		   SPLICING_EINVAL);
   }
@@ -495,8 +490,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
       SPLICING_CHECK(splicing_metropolis_hastings_ratio_paired(&vass,
 	       noReads, noChains, psiNew, alphaNew, psi, alpha,
-	       sigma, (int) noiso, &isolen, prior,
-	       dirichlet_hyperp, logistic_mean, logistic_var,
+	       sigma, (int) noiso, &isolen, hyperprior,
 	       &isoscores, &assscores, &fragmentLength, fragmentStart,
 	       m > 0 ? 1 : 0, &acceptP, &cJS, &pJS));
 

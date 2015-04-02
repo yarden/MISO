@@ -73,6 +73,17 @@ typedef enum { SPLICING_MISO_PRIOR_AUTO = 0,
 	       SPLICING_MISO_PRIOR_DIRICHLET = 1,
 	       SPLICING_MISO_PRIOR_LOGISTIC = 2 } splicing_miso_prior_t;
 
+typedef struct {
+  splicing_miso_prior_t prior;
+  splicing_vector_t dirichlet_hyperp; /* The Dirichlet hyperparameters */
+  double logistic_mean;		      /* Fitted population parameter   */
+  double logistic_var;		      /* Fitted population parameter   */
+  double logistic_mean_mean;	      /* Prior mean of logistic_mean   */
+  double logistic_mean_var;	      /* Prior var of logictic_mean    */
+  double logistic_var_mean;	      /* Prior mean of logistic_var    */
+  double logistic_var_var;	      /* Prior var of logistic var     */
+} splicing_miso_hyperprior_t;
+
 /* TODO: arbitrary attributes */
 
 typedef struct {
@@ -210,9 +221,7 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const char **cigarstr, int readLength, int overHang,
 		  int noChains, int noIterations, int maxIterations, 
 		  int noBurnIn, int noLag,
-		  splicing_miso_prior_t prior,
-		  const splicing_vector_t *dirichlet_hyperp,
-		  double logistic_mean, double logistic_var,
+		  splicing_miso_hyperprior_t *hyperprior,
 		  splicing_algorithm_t algorithm,
 		  splicing_miso_start_t start, splicing_miso_stop_t stop,
 		  const splicing_matrix_t *start_psi,
@@ -228,9 +237,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const char **cigarstr, int readLength, int overHang,
 			 int noChains, int noIterations, int maxIterations,
 			 int noBurnIn, int noLag, 
-			 splicing_miso_prior_t prior,
-			 const splicing_vector_t *dirichlet_hyperp,
-			 double logistic_mean, double logistic_var,
+			 splicing_miso_hyperprior_t *hyperprior,
 			 splicing_miso_start_t start, 
 			 splicing_miso_stop_t stop, 
 			 const splicing_matrix_t *start_psi,
@@ -281,9 +288,7 @@ int splicing_score_joint(splicing_algorithm_t algorithm,
 			 const splicing_matrix_int_t *assignment,
 			 int no_reads, int noChains, 
 			 const splicing_matrix_t *psi,
-			 splicing_miso_prior_t prior,
-			 const splicing_vector_t *dirichlet_hyper,
-			 double logistic_mean, double logistic_var,
+			 splicing_miso_hyperprior_t *hyperprior,
 			 const splicing_vector_int_t *effisolen,
 			 const splicing_vector_t *isoscores, 
 			 const splicing_matrix_t *match,
@@ -330,9 +335,7 @@ int splicing_metropolis_hastings_ratio(splicing_algorithm_t algorithm,
 				       const splicing_matrix_t *assignment,
 				       const splicing_vector_t *matches,
 				       const splicing_vector_int_t *effisolen,
-				       splicing_miso_prior_t prior,
-				       const splicing_vector_t *dirichlet_hyperp,
-				       double logistic_mean, double logistic_var,
+				       splicing_miso_hyperprior_t *prior,
 				       const splicing_vector_t *isoscores,
 				       int full, splicing_vector_t *acceptP, 
 				       splicing_vector_t *pcJS, 
@@ -479,9 +482,7 @@ int splicing_score_iso_paired(const splicing_vector_t *psi, int noiso,
 int splicing_score_joint_paired(const splicing_matrix_int_t *assignment,
 				int no_reads, int noChains,
 				const splicing_matrix_t *psi, 
-				splicing_miso_prior_t prior,
-				const splicing_vector_t *dirichlet_hyper,
-				double logistic_mean, double logistic_var,
+				splicing_miso_hyperprior_t *hyperprior,
 				const splicing_vector_int_t *isolen,
 				const splicing_matrix_t *isoscores, 
 				const splicing_vector_t *assscores,
@@ -498,9 +499,7 @@ int splicing_metropolis_hastings_ratio_paired(
 			      const splicing_matrix_t *alpha,
 			      double sigma, int noiso, 
 			      const splicing_vector_int_t *isolen,
-			      splicing_miso_prior_t prior,
-			      const splicing_vector_t *dirichlet_hyperp,
-			      double logistic_mean, double logistic_var,
+			      splicing_miso_hyperprior_t *hyperprior,
 			      const splicing_matrix_t *isoscores,
 			      const splicing_vector_t *assscores,
 			      const splicing_matrix_int_t *fragmentLength,
