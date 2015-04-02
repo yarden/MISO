@@ -19,10 +19,10 @@ from misopy.parse_csv import *
 from misopy.settings import Settings, load_settings
 from misopy.settings import miso_path as miso_settings_path
 import misopy.cluster_utils as cluster_utils
+from misopy.miso_logger import get_logger
 
 miso_path = os.path.dirname(os.path.abspath(__file__))
 manual_url = "http://genes.mit.edu/burgelab/miso/docs/"
-
 
 def get_ids_passing_filter(gff_index_dir,
                            bam_filename,
@@ -168,11 +168,11 @@ def check_gff_and_bam(gff_dir, bam_filename, main_logger,
     if bam_starts_with_chr != gff_starts_with_chr:
         mismatch_found = True
     if mismatch_found:
-        miso_logger.warning("It looks like your GFF annotation file and your BAM " \
+        main_logger.warning("It looks like your GFF annotation file and your BAM " \
                             "file might not have matching headers (chromosome names.) " \
                             "If this is the case, your run will fail as no reads from " \
                             "the BAM could be matched up with your annotation.")
-        miso_logger.warning("Please see:\n\t%s\n for more information." %(manual_url))
+        main_logger.warning("Please see:\n\t%s\n for more information." %(manual_url))
         # Default: assume BAM starts with chr headers
         chr_containing = "BAM file (%s)" %(bam_filename)
         not_chr_containing = "GFF annotation (%s)" %(gff_dir)
@@ -180,16 +180,16 @@ def check_gff_and_bam(gff_dir, bam_filename, main_logger,
             # BAM does not start with chr, GFF does
             chr_containing, not_chr_containing = \
                 not_chr_containing, chr_containing
-        miso_logger.warning("It looks like your %s contains \'chr\' chromosomes (UCSC-style) " \
+        main_logger.warning("It looks like your %s contains \'chr\' chromosomes (UCSC-style) " \
                             "while your %s does not." %(chr_containing,
                                                         not_chr_containing))
-        miso_logger.warning("The first few BAM chromosomes were: %s" \
+        main_logger.warning("The first few BAM chromosomes were: %s" \
                             %(",".join(bam_chroms.keys())))
         print "BAM references: "
         print bam_file.references
-        miso_logger.warning("The first few GFF chromosomes were: %s" \
+        main_logger.warning("The first few GFF chromosomes were: %s" \
                             %(",".join(gff_chroms.keys())))
-        miso_logger.warning("Run is likely to fail or produce empty output. Proceeding " \
+        main_logger.warning("Run is likely to fail or produce empty output. Proceeding " \
                             "anyway...")
         time.sleep(15)
 
