@@ -19,7 +19,6 @@ from misopy.parse_csv import *
 from misopy.settings import Settings, load_settings
 from misopy.settings import miso_path as miso_settings_path
 import misopy.cluster_utils as cluster_utils
-from misopy.miso_logger import get_logger
 
 miso_path = os.path.dirname(os.path.abspath(__file__))
 manual_url = "http://genes.mit.edu/burgelab/miso/docs/"
