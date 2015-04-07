@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include "splicing_vector.h"
+#include "splicing_vector_ptr.h"
 #include "splicing_matrix.h"
 #include "splicing_lapack.h"
 #include "splicing_random.h"
@@ -156,6 +157,23 @@ int splicing_gff_fprint(const splicing_gff_t *gff,
 int splicing_gff_print(const splicing_gff_t *gff);
 int splicing_gff_reindex(splicing_gff_t *gff);
 
+typedef struct {
+  splicing_vector_int_t pos;
+  splicing_strvector_t cigar;
+} splicing_reads_t;
+
+void splicing_reads_destroy(splicing_reads_t *reads);
+
+typedef struct {
+  splicing_vector_ptr_t reads;
+} splicing_replicate_reads_t;
+
+void splicing_replicate_reads_destroy(splicing_replicate_reads_t *reads);
+const splicing_vector_int_t *
+splicing_replicate_reads_pos(const splicing_replicate_reads_t *reads, int rep_num);
+const char **
+splicing_replicate_reads_cigar(const splicing_replicate_reads_t *reads, int rep_num);
+
 typedef struct splicing_miso_rundata_t {
   int noIso, noIters, maxIters, noBurnIn, noLag, noAccepted, noRejected,
     noChains, noSamples;
@@ -217,8 +235,8 @@ int splicing_i_check_convergent_mean(splicing_matrix_t *chainMeans,
 				     int *shouldstop);
 
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
-		  const splicing_vector_int_t *position,
-		  const char **cigarstr, int readLength, int overHang,
+		  const splicing_replicate_reads_t *reads,
+		  int readLength, int overHang,
 		  int noChains, int noIterations, int maxIterations, 
 		  int noBurnIn, int noLag,
 		  splicing_miso_hyperprior_t *hyperprior,
@@ -233,8 +251,8 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  splicing_miso_rundata_t *rundata);
 
 int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
-			 const splicing_vector_int_t *position,
-			 const char **cigarstr, int readLength, int overHang,
+			 const splicing_replicate_reads_t *reads,
+			 int readLength, int overHang,
 			 int noChains, int noIterations, int maxIterations,
 			 int noBurnIn, int noLag, 
 			 splicing_miso_hyperprior_t *hyperprior,

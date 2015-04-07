@@ -228,14 +228,12 @@ class MISOSampler:
             self.miso_logger.error("Replicates need the Dirichlet prior")
             sys.exit(1)
 
-        read_positions = reads[0][0] # TODO
-        read_cigars = reads[0][1]    # TODO
+        if len(reads) == 1:
+            self.num_reads = len(reads[0][0])
 
-        self.num_reads = len(read_positions)
-
-        if self.num_reads == 0:
-            print "No reads for gene: %s" %(gene.label)
-            return
+            if self.num_reads == 0:
+                print "No reads for gene: %s" %(gene.label)
+                return
 
         output_file = output_file + ".miso"
         # If output filename exists, don't run sampler
@@ -288,7 +286,9 @@ class MISOSampler:
         ##
         ## Run C MISO
         ##
-        read_positions = tuple([r+1 for r in read_positions])
+        for i, v in enumerate(reads):
+            reads[i][0] = tuple([r+1 for r in v])
+
         if self.paired_end:
             # Number of standard deviations in insert length
             # distribution to consider when assigning reads
@@ -299,8 +299,7 @@ class MISOSampler:
             miso_results = pysplicing.doMISOPaired(
                 GFF = c_gene,
                 gene = 0L,
-                read_pos = read_positions,
-                read_cigar = read_cigars,
+                reads = reads,
                 read_len = long(self.read_len),
                 mean_frag_len = float(self.mean_frag_len),
                 frag_variance = float(self.frag_variance),
@@ -319,8 +318,7 @@ class MISOSampler:
             miso_results = pysplicing.doMISO(
                 GFF = c_gene,
                 gene = 0L,
-                read_pos = read_positions,
-                read_cigar = read_cigars,
+                reads = reads,
                 read_len = long(self.read_len),
                 num_iters = long(num_iters),
                 burn_in = long(burn_in),

@@ -1,5 +1,6 @@
 
 #include "pysplicing.h"
+#include <stdio.h>
 
 int pysplicing_to_vector_int(PyObject *pv, splicing_vector_int_t *v) {
   Py_ssize_t i, n;
@@ -15,7 +16,7 @@ int pysplicing_to_vector_int(PyObject *pv, splicing_vector_int_t *v) {
     PyObject *it=PyTuple_GetItem(pv, i);
     VECTOR(*v)[i] = (int) PyInt_AsLong(it);
   }
-  
+
   return 0;
 }
 
@@ -85,6 +86,62 @@ int pysplicing_to_isoforms(PyObject *piso, splicing_vector_int_t *iso) {
     VECTOR(*iso)[p++] = -1;
   }
   
+  return 0;
+}
+
+int pysplicing_to_reads(PyObject *pyreads, splicing_reads_t *reads) {
+
+  Py_ssize_t n;
+
+  if (!PyTuple_Check(pyreads)) {
+    PyErr_SetString(PyExc_TypeError, "Need a tuple");
+    return 1;
+  }
+
+  n = PyTuple_Size(pyreads);
+
+  if (n != 2) {
+    PyErr_SetString(PyExc_TypeError, "Invalid read object");
+    return 1;
+  }
+
+  if (pysplicing_to_vector_int(PyTuple_GetItem(pyreads, 0), &reads->pos)) {
+    return 1;
+  }
+  if (pysplicing_to_strvector(PyTuple_GetItem(pyreads, 1), &reads->cigar)) {
+    return 1;
+  }
+
+  return 0;
+}
+
+int pysplicing_to_replicate_reads(PyObject *pyreads,
+				  splicing_replicate_reads_t *reads) {
+
+  Py_ssize_t i, n;
+
+  if (!PyList_Check(pyreads)) {
+    PyErr_SetString(PyExc_TypeError, "Need a list");
+    return 1;
+  }
+
+  n = PyList_Size(pyreads);
+
+  splicing_vector_ptr_init(&reads->reads, n);
+
+  for (i = 0; i < n; i++) {
+    PyObject *it = PyList_GetItem(pyreads, i);
+    splicing_reads_t *reads1 = splicing_Calloc(1, splicing_reads_t);
+    VECTOR(reads->reads)[i] = 0;
+    if (!reads1) {
+      splicing_replicate_reads_destroy(reads);
+      PyErr_SetString(PyExc_MemoryError, "No memory");
+      return 1;
+    }
+    if (pysplicing_to_reads(it, reads1)) { return 1; }
+    VECTOR(reads->reads)[i] = reads1;
+  }
+
   return 0;
 }
 

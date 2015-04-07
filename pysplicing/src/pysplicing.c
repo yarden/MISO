@@ -39,7 +39,7 @@ static PyObject* pysplicing_read_gff(PyObject *self, PyObject *args) {
 }
 
 static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
-  PyObject *gff, *readpos, *readcigar, *hyperp=0;
+  PyObject *gff, *reads, *hyperp=0;
   int gene, readLength, noIterations=5000, maxIterations=100000, 
     noBurnIn=500, noLag=10;
   int overhang=1;
@@ -48,8 +48,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   splicing_miso_start_t start=SPLICING_MISO_START_AUTO;
   splicing_miso_stop_t stop=SPLICING_MISO_STOP_FIXEDNO;
   splicing_gff_t *mygff;
-  splicing_strvector_t myreadcigar;
-  splicing_vector_int_t myreadpos;
+  splicing_replicate_reads_t myreads;
   splicing_miso_hyperprior_t hyperprior;
   splicing_matrix_t samples;
   splicing_vector_t logLik;
@@ -66,8 +65,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args,
 			"O"	/* gff */
 			"i"	/* gene */
-			"O"	/* readpos */
-			"O"	/* readcigar */
+			"O"	/* reads */
 			"i"	/* readLength */
 			"|i"	/* noIterations */
 			"i"	/* noBurnIn */
@@ -81,7 +79,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
 			"i"	/* start */
 			"i"	/* stop */
 			"i",	/* algo */
-			&gff, &gene, &readpos, &readcigar,
+			&gff, &gene, &reads,
 			&readLength, &noIterations, &noBurnIn, &noLag,
 			&hyperprior.prior, &hyperp,
 			&hyperprior.logistic_mean, &hyperprior.logistic_var,
@@ -101,8 +99,8 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   SPLICING_FINALLY(splicing_vector_destroy, &class_counts);
   SPLICING_PYCHECK(splicing_vector_int_init(&assignment, 0));
   SPLICING_FINALLY(splicing_vector_int_destroy, &assignment);
-  if (pysplicing_to_vector_int(readpos, &myreadpos)) { return NULL; }
-  SPLICING_FINALLY(splicing_vector_int_destroy, &myreadpos);
+  if (pysplicing_to_replicate_reads(reads, &myreads)) { return NULL; }
+  SPLICING_FINALLY(splicing_replicate_reads_destroy, &myreads);
   if (hyperp) { 
     if (pysplicing_to_vector(hyperp, &hyperprior.dirichlet_hyperp)) { return NULL; }
     SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.dirichlet_hyperp);
@@ -113,11 +111,8 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
     SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.dirichlet_hyperp);
     for (i=0; i<noiso; i++) { VECTOR(hyperprior.dirichlet_hyperp)[i] = 1.0; }
   }
-  if (pysplicing_to_strvector(readcigar, &myreadcigar)) { return NULL; };
-  SPLICING_FINALLY(splicing_strvector_destroy, &myreadcigar);
   
-  SPLICING_PYCHECK(splicing_miso(mygff, gene, &myreadpos, 
-				 (const char**) myreadcigar.table, 
+  SPLICING_PYCHECK(splicing_miso(mygff, gene, &myreads,
 				 readLength, overhang, no_chains,
 				 noIterations, maxIterations, 
 				 noBurnIn, noLag, &hyperprior, algo,
@@ -126,9 +121,8 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
 				 &class_counts, &assignment, &rundata));
 
   splicing_vector_destroy(&hyperprior.dirichlet_hyperp);
-  splicing_vector_int_destroy(&myreadpos);
-  splicing_strvector_destroy(&myreadcigar);
-  SPLICING_FINALLY_CLEAN(3);
+  splicing_replicate_reads_destroy(&myreads);
+  SPLICING_FINALLY_CLEAN(2);
   
   r6=pysplicing_from_miso_rundata(&rundata);
 
@@ -171,7 +165,7 @@ static PyObject* pysplicing_write_gff(PyObject *self, PyObject *args) {
 }
 
 static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
-  PyObject *gff, *readpos, *readcigar, *hyperp=0;
+  PyObject *gff, *reads, *hyperp=0;
   int gene, readLength, noIterations=5000, maxIterations=100000, 
     noBurnIn=500, noLag=10;
   int overhang=1;
@@ -180,8 +174,7 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_miso_stop_t stop=SPLICING_MISO_STOP_FIXEDNO;
   double normalMean, normalVar, numDevs;
   splicing_gff_t *mygff;
-  splicing_strvector_t myreadcigar;
-  splicing_vector_int_t myreadpos;
+  splicing_replicate_reads_t myreads;
   splicing_miso_hyperprior_t hyperprior;
   splicing_matrix_t samples;
   splicing_vector_t logLik;
@@ -198,8 +191,7 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   if (!PyArg_ParseTuple(args,
 			"O"	/* gff */
 			"i"	/* gene */
-			"O"	/* readpos */
-			"O"	/* readcigar */
+			"O"	/* reads */
 			"i"	/* readLength */
 			"d"	/* normalMean */
 			"d"	/* normalVar */
@@ -215,8 +207,8 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
 			"i"	/* no_chains */
 			"i"	/* start */
 			"i",	/* stop */
-			&gff, &gene, &readpos,
-			&readcigar, &readLength, &normalMean, &normalVar,
+			&gff, &gene, &reads,
+			&readLength, &normalMean, &normalVar,
 			&numDevs, &noIterations, &noBurnIn, &noLag,
 			&hyperprior.dirichlet_hyperp, &hyperp,
 			&hyperprior.logistic_mean, &hyperprior.logistic_var,
@@ -237,8 +229,8 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   SPLICING_PYCHECK(splicing_vector_int_init(&assignment, 0));
   SPLICING_FINALLY(splicing_vector_int_destroy, &assignment);
   
-  if (pysplicing_to_vector_int(readpos, &myreadpos)) { return NULL; }
-  SPLICING_FINALLY(splicing_vector_int_destroy, &myreadpos);
+  if (pysplicing_to_replicate_reads(reads, &myreads)) { return NULL; }
+  SPLICING_FINALLY(splicing_replicate_reads_destroy, &myreads);
   
   if (hyperp) { 
     if (pysplicing_to_vector(hyperp, &hyperprior.dirichlet_hyperp)) { return NULL; }
@@ -250,11 +242,9 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
     SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.dirichlet_hyperp);
     for (i=0; i<noiso; i++) { VECTOR(hyperprior.dirichlet_hyperp)[i] = 1.0; }
   }
-  if (pysplicing_to_strvector(readcigar, &myreadcigar)) { return NULL; }
-  SPLICING_FINALLY(splicing_strvector_destroy, &myreadcigar);
   
-  splicing_miso_paired(mygff, gene, &myreadpos,
-		       (const char**) myreadcigar.table, readLength,
+  splicing_miso_paired(mygff, gene, &myreads,
+		       readLength,
 		       overhang, no_chains, noIterations, maxIterations,
 		       noBurnIn, noLag, &hyperprior,
 		       start, stop, /*start_psi=*/ 0,
@@ -265,9 +255,8 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
 		       &bin_class_counts, &assignment, &rundata);
   
   splicing_vector_destroy(&hyperprior.dirichlet_hyperp);
-  splicing_vector_int_destroy(&myreadpos);
-  splicing_strvector_destroy(&myreadcigar);
-  SPLICING_FINALLY_CLEAN(3);
+  splicing_replicate_reads_destroy(&myreads);
+  SPLICING_FINALLY_CLEAN(2);
   
   r6=pysplicing_from_miso_rundata(&rundata);
 

@@ -26,7 +26,7 @@ def test_MISO():
     random.seed(42)
     reads = pysplicing.simulateReads(gene, 0L, (0.2, 0.8), 2000L, 33L)
     random.seed(42)
-    results = pysplicing.MISO(gene, 0L, reads[1], reads[2], 33L, 500L,
+    results = pysplicing.MISO(gene, 0L, [reads[1:3]], 33L, 500L,
                               100L, 10L)
 
     psi = transpose(array(results[0]))

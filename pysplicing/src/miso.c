@@ -663,8 +663,8 @@ int splicing_i_check_convergent_mean(splicing_matrix_t *chainMeans,
 }
 
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
-		  const splicing_vector_int_t *position,
-		  const char **cigarstr, int readLength, int overHang,
+		  const splicing_replicate_reads_t *reads,
+		  int readLength, int overHang,
 		  int noChains, int noIterations, 
 		  int maxIterations, int noBurnIn, int noLag,
 		  splicing_miso_hyperprior_t *hyperprior,
@@ -678,6 +678,9 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  splicing_vector_t *class_counts,
 		  splicing_vector_int_t *assignment,
 		  splicing_miso_rundata_t *rundata) {
+
+  const splicing_vector_int_t *position = splicing_replicate_reads_pos(reads, 0);
+  const char **cigarstr = splicing_replicate_reads_cigar(reads, 0);
   splicing_vector_t acceptP, cJS, pJS;
   double sigma;
   int noReads = (int) splicing_vector_int_size(position);
