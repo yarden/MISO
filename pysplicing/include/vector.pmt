@@ -355,6 +355,13 @@ void FUNCTION(splicing_vector,destroy)   (TYPE(splicing_vector)* v) {
   }
 }
 
+void FUNCTION(splicing_vector,destroy_free)(TYPE(splicing_vector)* v) {
+  if (v) {
+    FUNCTION(splicing_vector,destroy)(v);
+    splicing_Free(v);
+  }
+}
+
 /**
  * \ingroup vector
  * \function splicing_vector_reserve

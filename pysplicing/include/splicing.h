@@ -173,6 +173,9 @@ const splicing_vector_int_t *
 splicing_replicate_reads_pos(const splicing_replicate_reads_t *reads, int rep_num);
 const char **
 splicing_replicate_reads_cigar(const splicing_replicate_reads_t *reads, int rep_num);
+int splicing_replicate_reads_noreads(const splicing_replicate_reads_t *reads,
+				     int rep_num);
+int splicing_replicate_reads_noreps(const splicing_replicate_reads_t *reads);
 
 typedef struct splicing_miso_rundata_t {
   int noIso, noIters, maxIters, noBurnIn, noLag, noAccepted, noRejected,
@@ -243,11 +246,12 @@ int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  splicing_algorithm_t algorithm,
 		  splicing_miso_start_t start, splicing_miso_stop_t stop,
 		  const splicing_matrix_t *start_psi,
-		  splicing_matrix_t *samples, splicing_vector_t *logLik, 
-		  splicing_matrix_t *match_matrix,
+		  splicing_vector_ptr_t *samples,
+		  splicing_vector_t *logLik,
+		  splicing_vector_ptr_t *match_matrix,
 		  splicing_matrix_t *class_templates,
-		  splicing_vector_t *class_counts,
-		  splicing_vector_int_t *assignment,
+		  splicing_vector_ptr_t *class_counts,
+		  splicing_vector_ptr_t *assignment,
 		  splicing_miso_rundata_t *rundata);
 
 int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
@@ -272,11 +276,11 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 splicing_vector_int_t *assignment,
 			 splicing_miso_rundata_t *rundata);
 
-int splicing_reassign_samples(const splicing_matrix_t *matches, 
-			      const splicing_vector_int_t *match_order,
-			      const splicing_matrix_t *psi, 
+int splicing_reassign_samples(const splicing_vector_ptr_t *matches,
+			      const splicing_vector_ptr_t *match_order,
+			      const splicing_vector_ptr_t *psi,
 			      int noiso, int noChains, 
-			      splicing_matrix_int_t *result);
+			      splicing_vector_ptr_t *result);
 
 int splicing_mvplogisnorm(const splicing_vector_t *theta, 
 			  const splicing_vector_t *mu, 
@@ -315,24 +319,24 @@ int splicing_score_joint(splicing_algorithm_t algorithm,
 			 splicing_vector_t *score);
 
 int splicing_drift_proposal_init(int noiso, int noChains, 
-				 splicing_matrix_t *respsi, 
-				 splicing_matrix_t *resalpha,
+				 splicing_vector_ptr_t *respsi,
+				 splicing_vector_ptr_t *resalpha,
 				 double *ressigma,
 				 splicing_miso_start_t start,
 				 const splicing_matrix_t *start_psi,
 				 const splicing_gff_t *gff, int gene, 
 				 int readLength, int overHang, 
-				 const splicing_vector_int_t *position,
-				 const char **cigarstr, int paired, 
+				 const splicing_replicate_reads_t *reads,
+				 int paired,
 				 const splicing_vector_t *fragmentProb,
 				 int fragmentStart, double normalMean,
 				 double normalVar, double numDevs);
 
 int splicing_drift_proposal_propose(int noiso, int noChains, 
-				    const splicing_matrix_t *alpha,
+				    const splicing_vector_ptr_t *all_alpha,
 				    double sigma, 
-				    splicing_matrix_t *respsi,
-				    splicing_matrix_t *resalpha);
+				    splicing_vector_ptr_t *all_respsi,
+				    splicing_vector_ptr_t *all_resalpha);
 
 int splicing_drift_proposal_score(int noiso, int noChains, 
 				  const splicing_matrix_t *psi,
@@ -573,5 +577,28 @@ int splicing_gff_constitutive_exons(const splicing_gff_t *gff,
 				    splicing_exonset_t *exons,
 				    int min_length, 
 				    splicing_constitutive_mode_t mode);
+
+int splicing_logit(const splicing_matrix_t *x,
+		   splicing_matrix_t *res, int len, int noChains);
+
+int splicing_drift_proposal_init_paired(int noiso, int noChains, 
+				 splicing_matrix_t *respsi, 
+				 splicing_matrix_t *resalpha,
+				 double *ressigma,
+				 splicing_miso_start_t start,
+				 const splicing_matrix_t *start_psi,
+				 const splicing_gff_t *gff, int gene, 
+				 int readLength, int overHang, 
+				 const splicing_vector_int_t *position,
+				 const char **cigarstr, int paired, 
+				 const splicing_vector_t *fragmentProb,
+				 int fragmentStart, double normalMean,
+				 double normalVar, double numDevs);
+
+int splicing_drift_proposal_propose_paired(int noiso, int noChains, 
+				    const splicing_matrix_t *alpha,
+				    double sigma, 
+				    splicing_matrix_t *respsi,
+				    splicing_matrix_t *resalpha);
 
 #endif

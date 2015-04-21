@@ -32,3 +32,13 @@ splicing_replicate_reads_cigar(const splicing_replicate_reads_t *reads,
   splicing_reads_t *reads1 = VECTOR(reads->reads)[rep_num];
   return (const char **) reads1->cigar.table;
 }
+
+int splicing_replicate_reads_noreps(const splicing_replicate_reads_t *reads) {
+  return splicing_vector_ptr_size(&reads->reads);
+}
+
+int splicing_replicate_reads_noreads(const splicing_replicate_reads_t *reads,
+				     int rep_num) {
+  splicing_reads_t *reads1 = VECTOR(reads->reads)[rep_num];
+  return splicing_vector_int_size(&reads1->pos);
+}

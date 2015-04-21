@@ -462,14 +462,14 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   /* Initialize Psi(0) randomly */
 
-  SPLICING_CHECK(splicing_drift_proposal_init((int)noiso, noChains, psi, alpha,
+  SPLICING_CHECK(splicing_drift_proposal_init_paired((int)noiso, noChains, psi, alpha,
 					 &sigma, start, start_psi, gff,
 					 (int) gene, readLength, overHang,
 					 position, cigarstr, /*paired=*/ 1, 
 					 fragmentProb, fragmentStart,
 					 normalMean, normalVar, numDevs));
 
-  SPLICING_CHECK(splicing_drift_proposal_propose((int) noiso, noChains,
+  SPLICING_CHECK(splicing_drift_proposal_propose_paired((int) noiso, noChains,
 						 alpha, sigma, psi, alpha));
   
   /* Initialize assignments of reads */  
@@ -486,7 +486,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
     for (m=0; m < noIterations; m++) {
       
-      SPLICING_CHECK(splicing_drift_proposal_propose((int) noiso, noChains,
+      SPLICING_CHECK(splicing_drift_proposal_propose_paired((int) noiso, noChains,
 						     alpha, sigma,
 						     psiNew, alphaNew));
 

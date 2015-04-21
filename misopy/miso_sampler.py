@@ -286,8 +286,13 @@ class MISOSampler:
         ##
         ## Run C MISO
         ##
+        # TODO: this is baaaad
+        reads = list(reads)
         for i, v in enumerate(reads):
-            reads[i][0] = tuple([r+1 for r in v])
+            reads[i] = list(reads[i])
+            reads[i][0] = tuple([r+1 for r in v[0]])
+            reads[i] = tuple(reads[i])
+        reads = tuple(reads)
 
         if self.paired_end:
             # Number of standard deviations in insert length

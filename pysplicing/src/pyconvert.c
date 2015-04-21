@@ -120,17 +120,17 @@ int pysplicing_to_replicate_reads(PyObject *pyreads,
 
   Py_ssize_t i, n;
 
-  if (!PyList_Check(pyreads)) {
-    PyErr_SetString(PyExc_TypeError, "Need a list");
+  if (!PyTuple_Check(pyreads)) {
+    PyErr_SetString(PyExc_TypeError, "Need a tuple");
     return 1;
   }
 
-  n = PyList_Size(pyreads);
+  n = PyTuple_Size(pyreads);
 
   splicing_vector_ptr_init(&reads->reads, n);
 
   for (i = 0; i < n; i++) {
-    PyObject *it = PyList_GetItem(pyreads, i);
+    PyObject *it = PyTuple_GetItem(pyreads, i);
     splicing_reads_t *reads1 = splicing_Calloc(1, splicing_reads_t);
     VECTOR(reads->reads)[i] = 0;
     if (!reads1) {

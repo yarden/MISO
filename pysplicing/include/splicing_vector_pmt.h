@@ -40,6 +40,7 @@ int FUNCTION(splicing_vector,init_seq)(TYPE(splicing_vector)*v, BASE from, BASE 
 int FUNCTION(splicing_vector,copy)(TYPE(splicing_vector) *to, 
 				 const TYPE(splicing_vector) *from);
 void FUNCTION(splicing_vector,destroy)(TYPE(splicing_vector)* v);
+void FUNCTION(splicing_vector,destroy_free)(TYPE(splicing_vector)* v);
 
 /*--------------------*/
 /* Accessing elements */

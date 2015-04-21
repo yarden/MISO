@@ -75,6 +75,12 @@ void FUNCTION(splicing_matrix,destroy)(TYPE(splicing_matrix) *m) {
   FUNCTION(splicing_vector,destroy)(&m->data);
 }
 
+void FUNCTION(splicing_matrix,destroy_free)(TYPE(splicing_matrix) *m) {
+  if (m) {
+    FUNCTION(splicing_matrix,destroy)(m);
+    splicing_Free(m);
+  }
+}
 /**
  * \section splicing_matrix_accessing_elements Accessing elements of a matrix
  */
