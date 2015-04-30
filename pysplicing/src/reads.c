@@ -8,7 +8,7 @@ void splicing_reads_destroy(splicing_reads_t *reads) {
 }
 
 void splicing_replicate_reads_destroy(splicing_replicate_reads_t *reads) {
-  int i, n = splicing_vector_ptr_size(&reads->reads);
+  int i, n = (int) splicing_vector_ptr_size(&reads->reads);
   for (i = 0; i < n; i++) {
     splicing_reads_t *it = VECTOR(reads->reads)[i];
     if (!it) break;
@@ -34,11 +34,11 @@ splicing_replicate_reads_cigar(const splicing_replicate_reads_t *reads,
 }
 
 int splicing_replicate_reads_noreps(const splicing_replicate_reads_t *reads) {
-  return splicing_vector_ptr_size(&reads->reads);
+  return (int) splicing_vector_ptr_size(&reads->reads);
 }
 
 int splicing_replicate_reads_noreads(const splicing_replicate_reads_t *reads,
 				     int rep_num) {
   splicing_reads_t *reads1 = VECTOR(reads->reads)[rep_num];
-  return splicing_vector_int_size(&reads1->pos);
+  return (int) splicing_vector_int_size(&reads1->pos);
 }

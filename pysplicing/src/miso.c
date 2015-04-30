@@ -34,7 +34,7 @@ int splicing_reassign_samples(const splicing_vector_ptr_t *all_matches, /* matri
 			      int noiso, int noChains, 
 			      splicing_vector_ptr_t *all_result) { /* matrix_int_t */
 
-  int rep, norep = splicing_vector_ptr_size(all_matches);
+  int rep, norep = (int) splicing_vector_ptr_size(all_matches);
   for (rep = 0; rep < norep; rep++) {
     const splicing_matrix_t *matches = VECTOR(*all_matches)[rep];
     const splicing_vector_int_t *match_order = VECTOR(*all_match_order)[rep];
@@ -406,7 +406,7 @@ int splicing_drift_proposal_init(int noiso, int noChains,
 				 int fragmentStart, double normalMean,
 				 double normalVar, double numDevs) {
 
-  int i, noReplicates = splicing_vector_ptr_size(all_psi);
+  int i, noReplicates = (int) splicing_vector_ptr_size(all_psi);
 
   for (i = 0; i < noReplicates; i++) {
     splicing_matrix_t *psi = VECTOR(*all_psi)[i];
@@ -558,7 +558,7 @@ int splicing_drift_proposal_propose(int noiso, int noChains,
 				    splicing_vector_ptr_t *all_respsi, /* matrix_t */
 				    splicing_vector_ptr_t *all_resalpha) { /* matrix_t */
 
-  int i, noReplicates = splicing_vector_ptr_size(all_respsi);
+  int i, noReplicates = (int) splicing_vector_ptr_size(all_respsi);
   for (i = 0; i < noReplicates; i++) {
     const splicing_matrix_t *alpha = VECTOR(*all_alpha)[i];
     splicing_matrix_t *respsi = VECTOR(*all_respsi)[i];
