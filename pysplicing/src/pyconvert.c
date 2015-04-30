@@ -238,3 +238,36 @@ PyObject *pysplicing_from_miso_rundata(const splicing_miso_rundata_t *data) {
   PyTuple_SetItem(o, 5, PyInt_FromLong(data->noRejected));
   return o;
 }
+
+PyObject *pysplicing_from_vectorlist(const splicing_vector_ptr_t *v) {
+  int i, n = (int) splicing_vector_ptr_size(v);
+  PyObject *o = PyTuple_New(n);
+  for (i = 0 ; i < n; i++) {
+    const splicing_vector_t *vv = VECTOR(*v)[i];
+    PyObject *it = pysplicing_from_vector(vv);
+    PyTuple_SetItem(o, i, it);
+  }
+  return o;
+}
+
+PyObject *pysplicing_from_vectorlist_int(const splicing_vector_ptr_t *v) {
+  int i, n = (int) splicing_vector_ptr_size(v);
+  PyObject *o = PyTuple_New(n);
+  for (i = 0 ; i < n; i++) {
+    const splicing_vector_int_t *vv = VECTOR(*v)[i];
+    PyObject *it = pysplicing_from_vector_int(vv);
+    PyTuple_SetItem(o, i, it);
+  }
+  return o;
+}
+
+PyObject *pysplicing_from_matrixlist(const splicing_vector_ptr_t *v) {
+  int i, n = (int) splicing_vector_ptr_size(v);
+  PyObject *o = PyTuple_New(n);
+  for (i = 0 ; i < n; i++) {
+    const splicing_matrix_t *vv = VECTOR(*v)[i];
+    PyObject *it = pysplicing_from_matrix(vv);
+    PyTuple_SetItem(o, i, it);
+  }
+  return o;
+}

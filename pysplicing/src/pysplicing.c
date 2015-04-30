@@ -58,10 +58,6 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   splicing_miso_rundata_t rundata;
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
 
-  splicing_vector_int_t *ass;
-  splicing_vector_t *cc;
-  splicing_matrix_t *ss;
-
   hyperprior.prior = SPLICING_MISO_PRIOR_DIRICHLET;
   hyperprior.logistic_mean = 0.0;
   hyperprior.logistic_var = 3.0;
@@ -130,12 +126,10 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   
   r6=pysplicing_from_miso_rundata(&rundata);
 
-  ass = VECTOR(assignment)[0];
-  r5=pysplicing_from_vector_int(ass);
+  r5=pysplicing_from_vectorlist_int(&assignment);
   splicing_vector_ptr_destroy(&assignment); SPLICING_FINALLY_CLEAN(1);
 
-  cc = VECTOR(class_counts)[0];
-  r4=pysplicing_from_vector(cc);
+  r4=pysplicing_from_vectorlist(&class_counts);
   splicing_vector_ptr_destroy(&class_counts); SPLICING_FINALLY_CLEAN(1);
 
   splicing_matrix_transpose(&class_templates);
@@ -145,8 +139,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   r2=pysplicing_from_vector(&logLik);
   splicing_vector_destroy(&logLik); SPLICING_FINALLY_CLEAN(1);
 
-  ss = VECTOR(samples)[0];
-  r1=pysplicing_from_matrix(ss);
+  r1=pysplicing_from_matrixlist(&samples);
   splicing_vector_ptr_destroy(&samples); SPLICING_FINALLY_CLEAN(1);
   
   return Py_BuildValue("OOOOOO", r1, r2, r3, r4, r5, r6);

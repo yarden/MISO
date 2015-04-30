@@ -405,7 +405,7 @@ class MISOSampler:
                                  burn_in, lag, proposal_type, output_file):
 
         # Psi samples
-        psi_vectors = transpose(array(miso_results[0]))
+        psi_vectors = transpose(array(miso_results[0][0]))
 
         # Log scores of accepted samples
         kept_log_scores = transpose(array(miso_results[1]))
@@ -414,10 +414,10 @@ class MISOSampler:
         read_classes = miso_results[2]
 
         # Read class statistics
-        read_class_data = miso_results[3]
+        read_class_data = miso_results[3][0]
 
         # Assignments of reads to isoforms
-        assignments = miso_results[4]
+        assignments = miso_results[4][0]
 
         # Statistics and parameters about sampler run
         run_stats = miso_results[5]
