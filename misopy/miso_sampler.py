@@ -318,6 +318,10 @@ class MISOSampler:
                 num_chains = long(num_chains),
                 start = start_cond,
                 stop = stop_cond)
+            self.handle_results_paired(miso_results, gene, num_iters,
+                                       burn_in, lag, proposal_type,
+                                       output_file)
+
         else:
             # Run single-end
             miso_results = pysplicing.doMISO(
@@ -337,6 +341,17 @@ class MISOSampler:
                 start = start_cond,
                 stop = stop_cond,
                 algorithm = algorithm)
+            self.handle_results_nonpaired(miso_results, gene, num_iters,
+                                          burn_in, lag, proposal_type,
+                                          output_file)
+
+        if verbose:
+            t2 = time.time()
+            print "Event took %.2f seconds" %(t2 - t1)
+
+
+    def handle_results_paired(self, miso_results, gene, num_iters,
+                              burn_in, lag, proposal_type, output_file):
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0]))
@@ -384,9 +399,57 @@ class MISOSampler:
                                  psi_vectors, kept_log_scores, num_iters,
                                  burn_in, lag, percent_acceptance,
                                  proposal_type)
-        if verbose:
-            t2 = time.time()
-            print "Event took %.2f seconds" %(t2 - t1)
+
+
+    def handle_results_nonpaired(self, miso_results, gene, num_iters,
+                                 burn_in, lag, proposal_type, output_file):
+
+        # Psi samples
+        psi_vectors = transpose(array(miso_results[0]))
+
+        # Log scores of accepted samples
+        kept_log_scores = transpose(array(miso_results[1]))
+
+        # Read classes
+        read_classes = miso_results[2]
+
+        # Read class statistics
+        read_class_data = miso_results[3]
+
+        # Assignments of reads to isoforms
+        assignments = miso_results[4]
+
+        # Statistics and parameters about sampler run
+        run_stats = miso_results[5]
+
+        # Assignments of reads to classes.
+        # read_classes[n] represents the read class that has
+        # read_assignments[n]-many reads.
+        reads_data = (read_classes, read_class_data)
+
+        assignments = array(assignments)
+
+        # Skip events where all reads are incompatible with the annotation;
+        # do not output a file for those.
+        if all(assignments == -1):
+            print "All reads incompatible with annotation, skipping..."
+            return
+
+        accepted_proposals = run_stats[4]
+        rejected_proposals = run_stats[5]
+
+        percent_acceptance = (float(accepted_proposals)/(accepted_proposals + \
+                                                         rejected_proposals)) * 100
+        #self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
+        #self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
+
+        # Write MISO output to file
+        print "Outputting samples to: %s..." %(output_file)
+        self.miso_logger.info("Outputting samples to: %s" %(output_file))
+        self.output_miso_results(output_file, gene, reads_data, assignments,
+                                 psi_vectors, kept_log_scores, num_iters,
+                                 burn_in, lag, percent_acceptance,
+                                 proposal_type)
 
 
     def output_miso_results(self, output_file, gene, reads_data, assignments,
