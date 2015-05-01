@@ -76,13 +76,13 @@ typedef enum { SPLICING_MISO_PRIOR_AUTO = 0,
 
 typedef struct {
   splicing_miso_prior_t prior;
-  splicing_vector_t dirichlet_hyperp; /* The Dirichlet hyperparameters */
-  double logistic_mean;		      /* Fitted population parameter   */
-  double logistic_var;		      /* Fitted population parameter   */
-  double logistic_mean_mean;	      /* Prior mean of logistic_mean   */
-  double logistic_mean_var;	      /* Prior var of logictic_mean    */
-  double logistic_var_mean;	      /* Prior mean of logistic_var    */
-  double logistic_var_var;	      /* Prior var of logistic var     */
+  splicing_vector_t dirichlet_hyperp;  /* The Dirichlet hyperparameters */
+  splicing_vector_t logistic_mean;       /* Fitted population parameter */
+  splicing_vector_t logistic_var;        /* Fitted population parameter */
+  splicing_vector_t logistic_mean_mean;	 /* Prior mean of logistic_mean */
+  splicing_vector_t logistic_mean_var;	 /* Prior var of logictic_mean  */
+  splicing_vector_t logistic_var_numobs; /* Prior mean of logistic_var  */
+  splicing_vector_t logistic_var_var;    /* Prior var of logistic var   */
 } splicing_miso_hyperprior_t;
 
 /* TODO: arbitrary attributes */

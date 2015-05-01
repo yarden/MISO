@@ -50,6 +50,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   splicing_gff_t *mygff;
   splicing_replicate_reads_t myreads;
   splicing_miso_hyperprior_t hyperprior;
+  double logistic_mean = 0.0, logistic_var = 3.0;
   splicing_vector_ptr_t samples;	/* matrix_t */
   splicing_vector_t logLik;
   splicing_matrix_t class_templates;
@@ -59,8 +60,6 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
 
   hyperprior.prior = SPLICING_MISO_PRIOR_DIRICHLET;
-  hyperprior.logistic_mean = 0.0;
-  hyperprior.logistic_var = 3.0;
 
   if (!PyArg_ParseTuple(args,
 			"O"	/* gff */
@@ -82,7 +81,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
 			&gff, &gene, &reads,
 			&readLength, &noIterations, &noBurnIn, &noLag,
 			&hyperprior.prior, &hyperp,
-			&hyperprior.logistic_mean, &hyperprior.logistic_var,
+			&logistic_mean, &logistic_var,
 			&overhang, &no_chains, &start, &stop, &algo)) {
     return NULL; 
   }
@@ -101,6 +100,7 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
   SPLICING_FINALLY(splicing_vector_ptr_destroy, &assignment);
   if (pysplicing_to_replicate_reads(reads, &myreads)) { return NULL; }
   SPLICING_FINALLY(splicing_replicate_reads_destroy, &myreads);
+
   if (hyperp) { 
     if (pysplicing_to_vector(hyperp, &hyperprior.dirichlet_hyperp)) { return NULL; }
     SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.dirichlet_hyperp);
@@ -111,6 +111,13 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
     SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.dirichlet_hyperp);
     for (i=0; i<noiso; i++) { VECTOR(hyperprior.dirichlet_hyperp)[i] = 1.0; }
   }
+
+  SPLICING_PYCHECK(splicing_vector_init(&hyperprior.logistic_mean, no_chains));
+  SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.logistic_mean);
+  splicing_vector_fill(&hyperprior.logistic_mean, logistic_mean);
+  SPLICING_PYCHECK(splicing_vector_init(&hyperprior.logistic_var, no_chains));
+  SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.logistic_var);
+  splicing_vector_fill(&hyperprior.logistic_var, logistic_var);
   
   SPLICING_PYCHECK(splicing_miso(mygff, gene, &myreads,
 				 readLength, overhang, no_chains,
@@ -119,6 +126,10 @@ static PyObject* pysplicing_miso(PyObject *self, PyObject *args) {
 				 start, stop, 0, &samples, &logLik,
 				 /*match_matrix=*/ 0, &class_templates,
 				 &class_counts, &assignment, &rundata));
+
+  splicing_vector_destroy(&hyperprior.logistic_mean);
+  splicing_vector_destroy(&hyperprior.logistic_var);
+  SPLICING_FINALLY_CLEAN(2);
 
   splicing_vector_destroy(&hyperprior.dirichlet_hyperp);
   splicing_replicate_reads_destroy(&myreads);
@@ -176,6 +187,7 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_gff_t *mygff;
   splicing_replicate_reads_t myreads;
   splicing_miso_hyperprior_t hyperprior;
+  double logistic_mean = 0.0, logistic_var = 3.0;
   splicing_matrix_t samples;
   splicing_vector_t logLik;
   splicing_matrix_t bin_class_templates;
@@ -185,8 +197,6 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
 
   hyperprior.prior = SPLICING_MISO_PRIOR_DIRICHLET;
-  hyperprior.logistic_mean = 0.0;
-  hyperprior.logistic_var = 3.0;
 
   if (!PyArg_ParseTuple(args,
 			"O"	/* gff */
@@ -211,7 +221,7 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
 			&readLength, &normalMean, &normalVar,
 			&numDevs, &noIterations, &noBurnIn, &noLag,
 			&hyperprior.dirichlet_hyperp, &hyperp,
-			&hyperprior.logistic_mean, &hyperprior.logistic_var,
+			&logistic_mean, &logistic_var,
 			&overhang, &no_chains, &start, &stop)) {
     return NULL; 
   }
@@ -242,7 +252,14 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
     SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.dirichlet_hyperp);
     for (i=0; i<noiso; i++) { VECTOR(hyperprior.dirichlet_hyperp)[i] = 1.0; }
   }
-  
+
+  SPLICING_PYCHECK(splicing_vector_init(&hyperprior.logistic_mean, no_chains));
+  SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.logistic_mean);
+  splicing_vector_fill(&hyperprior.logistic_mean, logistic_mean);
+  SPLICING_PYCHECK(splicing_vector_init(&hyperprior.logistic_var, no_chains));
+  SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.logistic_var);
+  splicing_vector_fill(&hyperprior.logistic_var, logistic_var);
+
   splicing_miso_paired(mygff, gene, &myreads,
 		       readLength,
 		       overhang, no_chains, noIterations, maxIterations,
@@ -253,6 +270,10 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
 		       /*match_matrix=*/ 0, /*class_templates=*/ 0, 
 		       /*class_counts=*/ 0, &bin_class_templates, 
 		       &bin_class_counts, &assignment, &rundata);
+
+  splicing_vector_destroy(&hyperprior.logistic_mean);
+  splicing_vector_destroy(&hyperprior.logistic_var);
+  SPLICING_FINALLY_CLEAN(2);
   
   splicing_vector_destroy(&hyperprior.dirichlet_hyperp);
   splicing_replicate_reads_destroy(&myreads);

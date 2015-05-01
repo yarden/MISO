@@ -169,8 +169,8 @@ int splicing_score_joint_paired(const splicing_matrix_int_t *assignment,
 					 noiso, &psiProb));
     } else {
       SPLICING_CHECK(splicing_llogistic(&tmp,
-					hyperprior->logistic_mean,
-					hyperprior->logistic_var,
+					VECTOR(hyperprior->logistic_mean)[j],
+					VECTOR(hyperprior->logistic_var)[j],
 					&psiProb));
     }
     
@@ -345,7 +345,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 		   SPLICING_UNIMPLEMENTED);
   }
 
-  if (hyperprior->logistic_var < 0) {
+  if (splicing_vector_min(&hyperprior->logistic_var) < 0) {
     SPLICING_ERROR("Variance of the logistic prior must be non-negative",
 		   SPLICING_EINVAL);
   }

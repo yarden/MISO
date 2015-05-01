@@ -347,7 +347,8 @@ int splicing_score_joint(splicing_algorithm_t algorithm,
          &tmp, &(hyperprior->dirichlet_hyperp), noiso, &psiProb));
     } else if (hyperprior->prior == SPLICING_MISO_PRIOR_LOGISTIC) {
       SPLICING_CHECK(splicing_llogistic(
-	 &tmp, hyperprior->logistic_mean, hyperprior->logistic_var,
+	 &tmp, VECTOR(hyperprior->logistic_mean)[j],
+	 VECTOR(hyperprior->logistic_var)[j],
 	 &psiProb));
     } else {
       SPLICING_ERROR("Unknown prior", SPLICING_EINVAL);
@@ -884,7 +885,7 @@ int splicing_miso(
 		   SPLICING_UNIMPLEMENTED);
   }
 
-  if (hyperprior->logistic_var < 0) {
+  if (splicing_vector_min(&hyperprior->logistic_var) < 0) {
     SPLICING_ERROR("Variance of the logistic prior must be non-negative",
 		   SPLICING_EINVAL);
   }
