@@ -320,7 +320,7 @@ class MISOSampler:
                 stop = stop_cond)
             self.handle_results_paired(miso_results, gene, num_iters,
                                        burn_in, lag, proposal_type,
-                                       num_chains, output_file)
+                                       num_chains, prior, output_file)
 
         else:
             # Run single-end
@@ -343,7 +343,7 @@ class MISOSampler:
                 algorithm = algorithm)
             self.handle_results_nonpaired(miso_results, gene, num_iters,
                                           burn_in, lag, proposal_type,
-                                          num_chains, output_file)
+                                          num_chains, prior, output_file)
 
         if verbose:
             t2 = time.time()
@@ -352,7 +352,7 @@ class MISOSampler:
 
     def handle_results_paired(self, miso_results, gene, num_iters,
                               burn_in, lag, proposal_type, num_chains,
-                              output_file):
+                              prior, output_file):
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0]))
@@ -399,12 +399,12 @@ class MISOSampler:
         self.output_miso_results(output_file, gene, reads_data, assignments,
                                  psi_vectors, kept_log_scores, num_iters,
                                  burn_in, lag, percent_acceptance,
-                                 proposal_type, num_chains)
+                                 proposal_type, num_chains, prior)
 
 
     def handle_results_nonpaired(self, miso_results, gene, num_iters,
                                  burn_in, lag, proposal_type, num_chains,
-                                 output_file):
+                                 prior, output_file):
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0][0]))
@@ -451,13 +451,13 @@ class MISOSampler:
         self.output_miso_results(output_file, gene, reads_data, assignments,
                                  psi_vectors, kept_log_scores, num_iters,
                                  burn_in, lag, percent_acceptance,
-                                 proposal_type, num_chains)
+                                 proposal_type, num_chains, prior)
 
 
     def output_miso_results(self, output_file, gene, reads_data, assignments,
                             psi_vectors, kept_log_scores, num_iters, burn_in,
                             lag, percent_acceptance, proposal_type,
-                            num_chains):
+                            num_chains, prior):
         """
         Output results of MISO to a file.
         """
@@ -478,6 +478,15 @@ class MISOSampler:
         # And of the exon lengths
         exon_lens = ",".join(["(\'%s\',%d)" %(p.label, p.len) \
                               for p in gene.parts])
+
+        if prior == pysplicing.MISO_PRIOR_AUTO:
+            prior_str = "auto"
+        elif prior == pysplicing.MISO_PRIOR_DIRICHLET:
+            prior_str = "dirichlet"
+        elif prior == pysplicing.MISO_PRIOR_LOGISTIC:
+            prior_str = "logistic"
+        else:
+            prior_str = "unknown"
 
         ## Compile header with information about isoforms and internal parameters used
         ## by the sampler, and also information about read counts and number of
@@ -523,11 +532,12 @@ class MISOSampler:
         strand = gene.strand
         if strand == None:
             strand = "NA"
-        header = "#isoforms=%s\texon_lens=%s\treplicates=1\t" \
+        header = "#isoforms=%s\texon_lens=%s\tprior=%s\treplicates=1\t" \
                  "chains=%d\titers=%d\tburn_in=%d\tlag=%d\t" \
                  "percent_accept=%.2f\tproposal_type=%s\t" \
                  "counts=%s\tassigned_counts=%s\tchrom=%s\tstrand=%s\tmRNA_starts=%s\tmRNA_ends=%s\n" \
-                 %(str_isoforms, exon_lens, num_chains, num_iters, burn_in, lag,
+                 %(str_isoforms, exon_lens, prior_str, num_chains,
+                   num_iters, burn_in, lag,
                    percent_acceptance, proposal_type, read_counts_str,
                    assigned_counts_str,
                    # Fields related to gene/event
