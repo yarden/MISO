@@ -867,7 +867,7 @@ int splicing_miso(
 
   if (hyperprior->prior == SPLICING_MISO_PRIOR_AUTO) {
     if (noiso == 2) {
-      hyperprior->prior = SPLICING_MISO_PRIOR_LOGISTIC;
+      hyperprior->prior = SPLICING_MISO_PRIOR_DIRICHLET;
     } else {
       hyperprior->prior = SPLICING_MISO_PRIOR_DIRICHLET;
     }
