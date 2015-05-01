@@ -320,7 +320,7 @@ class MISOSampler:
                 stop = stop_cond)
             self.handle_results_paired(miso_results, gene, num_iters,
                                        burn_in, lag, proposal_type,
-                                       output_file)
+                                       num_chains, output_file)
 
         else:
             # Run single-end
@@ -343,7 +343,7 @@ class MISOSampler:
                 algorithm = algorithm)
             self.handle_results_nonpaired(miso_results, gene, num_iters,
                                           burn_in, lag, proposal_type,
-                                          output_file)
+                                          num_chains, output_file)
 
         if verbose:
             t2 = time.time()
@@ -351,7 +351,8 @@ class MISOSampler:
 
 
     def handle_results_paired(self, miso_results, gene, num_iters,
-                              burn_in, lag, proposal_type, output_file):
+                              burn_in, lag, proposal_type, num_chains,
+                              output_file):
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0]))
@@ -398,11 +399,12 @@ class MISOSampler:
         self.output_miso_results(output_file, gene, reads_data, assignments,
                                  psi_vectors, kept_log_scores, num_iters,
                                  burn_in, lag, percent_acceptance,
-                                 proposal_type)
+                                 proposal_type, num_chains)
 
 
     def handle_results_nonpaired(self, miso_results, gene, num_iters,
-                                 burn_in, lag, proposal_type, output_file):
+                                 burn_in, lag, proposal_type, num_chains,
+                                 output_file):
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0][0]))
@@ -449,12 +451,13 @@ class MISOSampler:
         self.output_miso_results(output_file, gene, reads_data, assignments,
                                  psi_vectors, kept_log_scores, num_iters,
                                  burn_in, lag, percent_acceptance,
-                                 proposal_type)
+                                 proposal_type, num_chains)
 
 
     def output_miso_results(self, output_file, gene, reads_data, assignments,
                             psi_vectors, kept_log_scores, num_iters, burn_in,
-                            lag, percent_acceptance, proposal_type):
+                            lag, percent_acceptance, proposal_type,
+                            num_chains):
         """
         Output results of MISO to a file.
         """
@@ -520,10 +523,11 @@ class MISOSampler:
         strand = gene.strand
         if strand == None:
             strand = "NA"
-        header = "#isoforms=%s\texon_lens=%s\titers=%d\tburn_in=%d\tlag=%d\t" \
+        header = "#isoforms=%s\texon_lens=%s\treplicates=1\t" \
+                 "chains=%d\titers=%d\tburn_in=%d\tlag=%d\t" \
                  "percent_accept=%.2f\tproposal_type=%s\t" \
                  "counts=%s\tassigned_counts=%s\tchrom=%s\tstrand=%s\tmRNA_starts=%s\tmRNA_ends=%s\n" \
-                 %(str_isoforms, exon_lens, num_iters, burn_in, lag,
+                 %(str_isoforms, exon_lens, num_chains, num_iters, burn_in, lag,
                    percent_acceptance, proposal_type, read_counts_str,
                    assigned_counts_str,
                    # Fields related to gene/event
