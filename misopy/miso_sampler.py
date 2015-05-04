@@ -205,6 +205,10 @@ class MISOSampler:
                     prior_params=None,
                     logistic_prior_mean = 0.0,
                     logistic_prior_var = 3.0,
+                    replicate_mean_prior_mean = 0.0,
+                    replicate_mean_prior_var = 100.0,
+                    replicate_var_prior_numobs = 1/10.0,
+                    replicate_var_prior_var = 1/10.0,
                     # By default, use sampler with read classes (collapsed)
                     # to get speed boost for single-end reads
                     # (To revert to old reassigning sampler, use
@@ -334,8 +338,12 @@ class MISOSampler:
                 lag = long(lag),
                 prior = prior,
                 dirichlet_prior_params = prior_params,
-                logistic_prior_mean = 0.0,
-                logistic_prior_var = 3.0,
+                logistic_prior_mean = float(logistic_prior_mean),
+                logistic_prior_var = float(logistic_prior_var),
+                replicate_mean_prior_mean = float(replicate_mean_prior_mean),
+                replicate_mean_prior_var =  float(replicate_mean_prior_var),
+                replicate_var_prior_numobs = float(replicate_var_prior_numobs),
+                replicate_var_prior_var = float(replicate_var_prior_var),
                 overHang = long(self.overhang_len),
                 num_chains = long(num_chains),
                 start = start_cond,
@@ -407,7 +415,7 @@ class MISOSampler:
                                  prior, output_file):
 
         # Psi samples
-        psi_vectors = transpose(array(miso_results[0][0]))
+        psi_vectors = transpose(array(miso_results[0]))
 
         # Log scores of accepted samples
         kept_log_scores = transpose(array(miso_results[1]))

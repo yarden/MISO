@@ -260,6 +260,11 @@ int splicing_logit(const splicing_matrix_t *x,
   return 0;
 }
 
+/* alpha -> psi
+   Note that len is number of isoforms minus one here.
+   and the last isoform is not used, because that it redundant
+   from the fact that they sum up to one. */
+
 int splicing_logit_inv(const splicing_matrix_t *x, 
 		       splicing_matrix_t *res, int len, int noChains) {
   int i, j;
@@ -281,6 +286,38 @@ int splicing_logit_inv(const splicing_matrix_t *x,
     }
   }
   
+  return 0;
+}
+
+/* alpha -> psi
+   len is number of isoforms minus one */
+
+int splicing_logit_inv_raw(const double *x /* alpha */,
+			   double *res /* psi */, int len, int noChains) {
+
+  int i, j;
+
+  for (j = 0; j < noChains; j++) {
+    const double *col = x;
+    double sumexp = 0.0;
+    double sumpsi = 0.0;
+    for (i = 0; i < len; i++) {
+      sumexp += exp(*x);
+      x++;
+    }
+    sumexp += 1.0;
+
+    x = col;
+    for (i = 0; i < len; i++) {
+      *res = exp(*x) / sumexp;
+      sumpsi += *res;
+      res ++;
+      x++;
+    }
+    *res = 1 - sumpsi;
+    res++;
+  }
+
   return 0;
 }
 
@@ -781,6 +818,10 @@ int splicing_miso(
 
 		  /* OUTPUT */
 
+		  /* Samples for the population mean, only if
+		     replicates are used*/
+		  splicing_matrix_t *pop_samples,
+
 		  /* The samples for the psi vectors, for each replicate */
 		  splicing_vector_ptr_t *samples,	  /* matrix_t */
 
@@ -904,6 +945,10 @@ int splicing_miso(
       (splicing_matrix_nrow(start_psi) != noiso ||
        splicing_matrix_ncol(start_psi) != noChains)) {
     SPLICING_ERROR("Given PSI has wrong size", SPLICING_EINVAL);
+  }
+
+  if (noReplicates > 1 && ! pop_samples) {
+    SPLICING_ERROR("Replicates, but pop_samples is NULL", SPLICING_EINVAL);
   }
 
   rundata->noIso=(int) noiso;
@@ -1129,6 +1174,10 @@ int splicing_miso(
     SPLICING_CHECK(splicing_matrix_init(cv, noiso, noChains));
   }
 
+  if (pop_samples) {
+    SPLICING_CHECK(splicing_matrix_resize(pop_samples, noiso, noSamples));
+  }
+
   SPLICING_CHECK(splicing_vector_ptr_resize(samples, noReplicates));
   splicing_vector_ptr_set_item_destructor(samples,
     (splicing_finally_func_t *) splicing_matrix_destroy_free);
@@ -1202,7 +1251,11 @@ int splicing_miso(
 	}
 	
       }	/* i < noReplicates */
+
+      /* Update population mean, TODO */
       
+      /* Update population variance, TODO */
+
       if (m >= noBurnIn) {
 	if (lagCounter == noLag - 1) {
 	  for (i = 0; i < noReplicates; i++) {
@@ -1212,9 +1265,18 @@ int splicing_miso(
 		   noChains * noiso * sizeof(double));
 	    memcpy(VECTOR(*logLik)+noS, VECTOR(cJS), 
 		   noChains * sizeof(double));
+	    if (pop_samples && noReplicates == 1) {
+	      memcpy(&MATRIX(*pop_samples, 0, noS), &MATRIX(*psi1, 0, 0),
+		     noChains * noiso * sizeof(double));
+	    } else {
+	      splicing_logit_inv_raw(VECTOR(hyperprior->logistic_mean),
+				     &MATRIX(*pop_samples, 0, noS),
+				     (int) noiso - 1, noChains);
+	    }
+
 	    noS += noChains;
-	    lagCounter = 0;
 	  }
+	  lagCounter = 0;
 	} else {
 	  lagCounter ++;
 	}
