@@ -2273,6 +2273,17 @@ double splicing_rgamma(splicing_rng_t *rng, double a, double scale)
     return scale * x * x;
 }
 
+double splicing_rng_get_invchi2(splicing_rng_t *rng, double nu, double tau2) {
+
+  /* This is the same as an Inv-Gamma(nu/2, nu*tau2/2) */
+  double alpha = nu / 2.0;
+  double beta  = nu * tau2 / 2.0;
+
+  /* And that is the same as 1 / Gamma(alpha, 1/beta) */
+  return 1.0 / RNG_GAMMA(alpha, 1.0 / beta);
+}
+
+
 #endif
 
 /**********************************************************

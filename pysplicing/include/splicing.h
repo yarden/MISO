@@ -237,6 +237,12 @@ int splicing_i_check_convergent_mean(splicing_matrix_t *chainMeans,
 				     const splicing_matrix_t *samples,
 				     int *shouldstop);
 
+int splicing_update_replicate_mean(splicing_miso_hyperprior_t *hyperprior,
+				   const splicing_vector_ptr_t *psi);
+
+int splicing_update_replicate_var(splicing_miso_hyperprior_t *hyperprior,
+				  const splicing_vector_ptr_t *psi);
+
 int splicing_miso(const splicing_gff_t *gff, size_t gene,
 		  const splicing_replicate_reads_t *reads,
 		  int readLength, int overHang,

@@ -798,6 +798,70 @@ int splicing_i_check_convergent_mean(splicing_matrix_t *chainMeans,
   return 0;
 }
 
+int splicing_update_replicate_mean(splicing_miso_hyperprior_t *hyperprior,
+				   const splicing_vector_ptr_t *psi) {
+
+  int noChains = (int) splicing_vector_size(&hyperprior->logistic_mean_mean);
+  int noReplicates = (int) splicing_vector_ptr_size(psi);
+  int i;
+
+  for (i = 0; i < noChains; i++) {
+    double mu0  = VECTOR(hyperprior->logistic_mean_mean)[i];
+    double tau20 = VECTOR(hyperprior->logistic_mean_var)[i];
+    double sigma2 = VECTOR(hyperprior->logistic_var)[i];
+    double yhat = 0.0;
+    double mun, tau2n;
+    int j;
+
+    /* data mean */
+    for (j = 0; j < noReplicates; j++) {
+      const splicing_matrix_t *psi1 = VECTOR(*psi)[j];
+      yhat += log(MATRIX(*psi1, 0, i)) - log(MATRIX(*psi1, 1, i));
+    }
+    yhat /= noReplicates;
+
+    /* posterior mean and variance */
+    mun = (1.0 / tau20 * mu0 + noReplicates / sigma2 * yhat) /
+      (1.0 / tau20 + noReplicates / sigma2);
+
+    tau2n = 1.0 / (1.0 / tau20 + noReplicates / sigma2);
+
+    VECTOR(hyperprior->logistic_mean)[i] = RNG_NORMAL(mun, sqrt(tau20));
+  }
+
+  return 0;
+}
+
+int splicing_update_replicate_var(splicing_miso_hyperprior_t *hyperprior,
+				  const splicing_vector_ptr_t *psi) {
+
+  int noChains = (int) splicing_vector_size(&hyperprior->logistic_mean_mean);
+  int noReplicates = (int) splicing_vector_ptr_size(psi);
+  int i;
+
+  for (i = 0; i < noChains; i++) {
+    double nu0 = VECTOR(hyperprior->logistic_var_numobs)[i];
+    double sigma20 = VECTOR(hyperprior->logistic_var_var)[i];
+    double theta = VECTOR(hyperprior->logistic_mean)[i];
+    double nu = 0.0;
+    int j;
+
+    /* data variance */
+    for (j = 0; j < noReplicates; j++) {
+      const splicing_matrix_t *psi1 = VECTOR(*psi)[j];
+      nu += pow(log(MATRIX(*psi1, 0, i)) - log(MATRIX(*psi1, 1, i)) -
+		theta, 2.0);
+    }
+    nu /= noReplicates;
+
+    VECTOR(hyperprior->logistic_var)[i] =
+      RNG_INVCHI2(nu0 + noReplicates,
+		  (nu0 * sigma20 + noReplicates * nu) / (nu0 + noReplicates));
+  }
+
+  return 0;
+}
+
 /* Replicates: we need to go over all replicate individually,
    for the most part. Replicates are only considered together
    when drawing population mean and variance. */
@@ -1252,9 +1316,11 @@ int splicing_miso(
 	
       }	/* i < noReplicates */
 
-      /* Update population mean, TODO */
-      
-      /* Update population variance, TODO */
+      /* Update population mean, var */
+      if (noReplicates > 1) {
+	splicing_update_replicate_mean(hyperprior, psi);
+	splicing_update_replicate_var(hyperprior, psi);
+      }
 
       if (m >= noBurnIn) {
 	if (lagCounter == noLag - 1) {

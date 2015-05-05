@@ -64,6 +64,7 @@ double splicing_rng_get_binom(splicing_rng_t *rng, long int n,
 double splicing_rng_get_gamma(splicing_rng_t *rng, double a, 
 			      double scale);
 unsigned long int splicing_rng_get_int31(splicing_rng_t *rng);
+double splicing_rng_get_invchi2(splicing_rng_t *rng, double nu, double tau2);
 
 /* --------------------------------- */
 
@@ -101,6 +102,7 @@ void PutRNGstate(void);
 #define RNG_BINOM(n,p)   (splicing_rng_get_binom(&splicing_rng_default,(n),(p)))
 #define RNG_GAMMA(a,s)   (splicing_rng_get_gamma(&splicing_rng_default,(a),(s)))
 #define RNG_INT31()      (splicing_rng_get_int31(&splicing_rng_default))
+#define RNG_INVCHI2(nu, tau2) (splicing_rng_get_invchi2(&splicing_rng_default, (nu), (tau2)))
 
 __END_DECLS
 
