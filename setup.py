@@ -93,6 +93,69 @@ for scheme in INSTALL_SCHEMES.values():
 ##
 MISO_VERSION = "0.5.3"
 
+## This is our implementation of dependency tracking,
+## to avoid rebuilding the C files continuesly.
+## Idea is from http://stackoverflow.com/questions/11013851
+
+def my_compile(self, sources, output_dir=None, macros=None,
+               include_dirs=None, debug=0, extra_preargs=None,
+               extra_postargs=None, depends=None):
+
+    macros, objects, extra_postargs, pp_opts, build = \
+        self._setup_compile(output_dir, macros, include_dirs, sources,
+                            depends, extra_postargs)
+    cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+
+    # -------------------------------------------------------------
+    # This is where we intervine. (The rest is the original
+    # CCompiler.compile.) We check which file in objects really
+    # needs a rebuild, and only keep the the ones that do.
+
+    # We need to create a temporary Makefile, with all the
+    # dependency data, collected from a previous compilation
+    import tempfile
+    import re
+    import subprocess
+
+    makefile_os = tempfile.mkstemp()
+    makefile = os.fdopen(makefile_os[0], "w")
+
+    makefile.write('objects: ' + ' '.join(objects) + '\n' +
+                   '.PHONY: objects\n\n')
+    depfiles = ' '.join([ re.sub("\.o$", ".d", of) for of in objects ])
+    makefile.write('-include ' + depfiles + '\n\n')
+
+    for obj in objects:
+        try:
+            src, ext = build[obj]
+        except KeyError:
+            continue
+        makefile.write(obj + ': ' + src + '\n' +
+                       '\t@echo $@\n\n')
+
+    makefile.close()
+
+    ood_objects = subprocess.check_output(['make', 'objects', '-f',
+                                           makefile_os[1]]).strip().split('\n')
+
+    # We need to add compiler flags to create the dependency files
+    cc_args += ['-MMD', '-MP']
+
+    # -------------------------------------------------------------
+
+    for obj in ood_objects:
+        try:
+            src, ext = build[obj]
+        except KeyError:
+            continue
+        self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+
+        # Return *all* object filenames, not just the ones we just built.
+    return objects
+
+if os.environ['GABOR'] == 'yes':
+    distutils.ccompiler.CCompiler.compile = my_compile
+
 ##
 ## Generate a __version__.py attribute
 ## for the module
