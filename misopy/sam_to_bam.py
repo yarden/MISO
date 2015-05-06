@@ -19,7 +19,7 @@ def sam_to_bam(sam_filename, output_dir,
     cmd = "samtools view -Sbh %s " %(sam_filename)
     if header_ref != None:
         cmd += " -t %s" %(header_ref)
-    cmd += " > %s" %(bam_filename)
+    cmd += " > %s 2>/dev/null" %(bam_filename)
     print "  - Executing: %s" %(cmd)
     os.system(cmd)
 
