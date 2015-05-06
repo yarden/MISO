@@ -153,8 +153,11 @@ def my_compile(self, sources, output_dir=None, macros=None,
         # Return *all* object filenames, not just the ones we just built.
     return objects
 
-if os.environ['GABOR'] == 'yes':
-    distutils.ccompiler.CCompiler.compile = my_compile
+try:
+    if os.environ['GABOR'] == 'yes':
+        distutils.ccompiler.CCompiler.compile = my_compile
+except:
+    None
 
 ##
 ## Generate a __version__.py attribute
