@@ -19,38 +19,42 @@ def miso_cli(sams = None, gff = None):
                              "c2c12.Atp2b1.sam") ]
 
     dirpath = 'output'
+    curdir = os.getcwd()
     try:
         os.mkdir(dirpath)
     except OSError:
         None
 
-    os.chdir(dirpath)
-    shutil.copyfile(test_gff, os.path.basename(test_gff))
-    [ shutil.copyfile(sam, os.path.basename(sam)) for sam in sams ]
+    try:
+        os.chdir(dirpath)
+        shutil.copyfile(test_gff, os.path.basename(test_gff))
+        [ shutil.copyfile(sam, os.path.basename(sam)) for sam in sams ]
 
-    # SAM to BAM
-    from misopy import sam_to_bam
-    def tobam(sam):
-        sam_to_bam.main(["--convert", os.path.basename(sam), "my_sample"])
-        return os.path.join(
-            "my_sample",
-            os.path.splitext(os.path.basename(sam))[0] + ".sorted.bam")
+        # SAM to BAM
+        from misopy import sam_to_bam
+        def tobam(sam):
+            sam_to_bam.main(["--convert", os.path.basename(sam), "my_sample"])
+            return os.path.join(
+                "my_sample",
+                os.path.splitext(os.path.basename(sam))[0] + ".sorted.bam")
 
-    bams = [ tobam(sam) for sam in sams ]
+        bams = [ tobam(sam) for sam in sams ]
 
-    # Index GFF
-    from misopy import index_gff
-    index_gff.main(["--index", os.path.basename(test_gff), "indexed"])
+        # Index GFF
+        from misopy import index_gff
+        index_gff.main(["--index", os.path.basename(test_gff), "indexed"])
 
-    # Run MISO
-    from misopy import miso
-    miso_args = ["--run", "indexed"] + bams + \
-                ["--output-dir", "output", "--read-len", "36"]
-    miso.main(miso_args)
+        # Run MISO
+        from misopy import miso
+        miso_args = ["--run", "indexed"] + bams + \
+                    ["--output-dir", "output", "--read-len", "36"]
+        miso.main(miso_args)
 
-    # Summarize
-    from misopy import summarize_miso
-    summarize_miso.main(["--summarize-samples", "output", "."])
+        # Summarize
+        from misopy import summarize_miso
+        summarize_miso.main(["--summarize-samples", "output", "."])
+    finally:
+        os.chdir(curdir)
 
 def test_miso_cli():
     miso_cli()
