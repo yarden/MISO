@@ -752,6 +752,62 @@ static PyObject* pysplicing_to_gff(PyObject *self, PyObject *args) {
 }
   
 /* -------------------------------------------------------------------- */
+/* These are internal, and only used for testing the C functions.       */
+
+static PyObject* pysplicing_test_rng_get_invchi2(PyObject *self, PyObject *args) {
+
+  splicing_vector_t nums;
+  int n = 1000;
+  double median, iqr;
+
+  SPLICING_PYCHECK(splicing_vector_init(&nums, 1000));
+
+  /* Generate 1000 numbers, and take their meadian and iqr */
+#define TEST(nu, tau2) {					\
+    int i;							\
+    for (i = 0; i < n; i++) {					\
+      VECTOR(nums)[i] = RNG_INVCHI2((nu), (tau2));		\
+    }								\
+    median = splicing_vector_median(&nums);			\
+    iqr    = splicing_vector_iqr(&nums);			\
+    /* printf("%f %f %f %f\n", nu, tau2, median, iqr);	*/	\
+  }
+
+  TEST(1.0, 0.5);
+  if (median < 0.8 || median > 1.5) return Py_False;
+  if (iqr    < 3.0 || iqr    > 7.0) return Py_False;
+
+  TEST(1.0, 1.0);
+  if (median < 1.5 || median >  3.0) return Py_False;
+  if (iqr    < 5.0 || iqr    > 20.0) return Py_False;
+
+  TEST(2.0, 0.5);
+  if (median < 0.6 || median > 0.9) return Py_False;
+  if (iqr    < 1.0 || iqr    > 2.0) return Py_False;
+
+  TEST(2.0, 1.0);
+  if (median < 1.2 || median > 1.8) return Py_False;
+  if (iqr    < 2.0 || iqr    > 3.7) return Py_False;
+
+  splicing_vector_destroy(&nums);
+  return Py_True;
+}
+
+static PyObject* pysplicing_test_vector_median(PyObject *self, PyObject *args) {
+
+  PyObject *v;
+  splicing_vector_t myv;
+  double median;
+
+  if (!PyArg_ParseTuple(args, "O", &v)) { return NULL; }
+  SPLICING_PYCHECK(pysplicing_to_vector(v, &myv));
+
+  median = splicing_vector_median(&myv);
+
+  return PyFloat_FromDouble(median);
+}
+
+/* -------------------------------------------------------------------- */
 
 static PyMethodDef pysplicing_methods[] = { 
   { "readGFF", pysplicing_read_gff, METH_VARARGS, "Read a GFF3 file." },
@@ -778,6 +834,14 @@ static PyMethodDef pysplicing_methods[] = {
   { "i_fromGFF", pysplicing_from_gff, METH_VARARGS, 
     "Convert a C GFF structure to Python" },
   { "toGFF", pysplicing_to_gff, METH_VARARGS, "Convert a Python GFF to C" },
+
+  /* These are internal and used for testing the C functions */
+
+  { "i_test_rng_get_invchi2", pysplicing_test_rng_get_invchi2, METH_VARARGS,
+    "Test drawing from a scaled inverse Chi squared distribution" },
+  { "i_test_vector_median", pysplicing_test_vector_median, METH_VARARGS,
+    "Test median of a vector" },
+
   { NULL, NULL, 0, NULL }
 };
 
