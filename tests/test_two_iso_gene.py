@@ -3,7 +3,7 @@ import setup_miso
 import misopy
 import misopy.gff_utils
 import pysplicing
-import random
+import random as plainrandom
 
 from scipy import *
 from numpy import *
@@ -18,16 +18,25 @@ def test_isoLength():
     assert(pysplicing.isoLength(gene) == [[300, 200]])
 
 def test_simulate_reads():
-    random.seed(42)
+    plainrandom.seed(42)
     reads = pysplicing.simulateReads(gene, 0L, (0.2, 0.8), 2000L, 33L)
-    assert(mean(reads[0]) == 0.7185)
+    meanreads = mean(reads[0])
+    print(meanreads)
+    assert(abs(meanreads - 0.7255) < 1e-8)
 
 def test_MISO():
-    random.seed(42)
+    def absl(x):
+        return [ abs(e) for e in x ]
+
+    plainrandom.seed(42)
     reads = pysplicing.simulateReads(gene, 0L, (0.2, 0.8), 2000L, 33L)
-    random.seed(42)
     results = pysplicing.MISO(gene, 0L, (tuple(reads[1:3]),), 33L, 500L,
                               100L, 10L)
 
     psi = transpose(array(results[0]))
-    assert(all(mean(psi, 0) - [ 0.19308989, 0.80691011] < 1e-8))
+    meanpsi = mean(psi, 0)
+    diff = absl(meanpsi - [0.18950034, 0.81049966])
+    print(meanpsi)
+    print(diff)
+
+    assert(diff[0] < 1e-8 and diff[1] < 1e-8)
