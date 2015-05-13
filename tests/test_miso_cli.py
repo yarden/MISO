@@ -67,6 +67,9 @@ def test_error_if_multiple_bam_files():
                             "c2c12.Atp2b1.sam")
     test_sam2 = os.path.join(os.path.dirname(test_sam),
                              "c2c12.Atp2b1-2.sam")
-    shutil.copyfile(test_sam, test_sam2)
-
-    miso_cli(sams = [test_sam, test_sam2])
+    try:
+        shutil.copyfile(test_sam, test_sam2)
+        miso_cli(sams = [test_sam, test_sam2])
+    finally:
+        if os.path.isfile:
+            os.remove(test_sam2)

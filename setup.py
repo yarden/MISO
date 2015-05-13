@@ -9,6 +9,7 @@ if not os.path.exists("temp"):
     os.makedirs("temp")
 
 ## Test for functions, with a hack to suppress compiler warnings.
+os.chdir('temp')
 cc = distutils.ccompiler.new_compiler()
 cc.define_macro('main', 'int (main)')
 defines = []
@@ -52,6 +53,7 @@ if cc.has_function('double fmin(double, double); double a = fmin(1.0,0.0); retur
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_FMIN', '1'))
 
+os.chdir('..')
 shutil.rmtree("temp")
 
 # prefix directory for pysplicing module
