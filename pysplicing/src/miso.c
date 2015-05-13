@@ -1389,6 +1389,9 @@ int splicing_miso(
       splicing_matrix_t *sam = VECTOR(*samples)[i];
       SPLICING_CHECK(splicing_matrix_resize(sam, noiso, noSamples));
     }
+    if (pop_samples) {
+      SPLICING_CHECK(splicing_matrix_resize(pop_samples, noiso, noSamples));
+    }
     SPLICING_CHECK(splicing_vector_resize(logLik, noSamples));
   }
   
