@@ -1329,9 +1329,8 @@ int splicing_miso(
 
 	  if (pop_samples) {
 	    if (noReplicates == 1 && samples) {
-	      splicing_matrix_t *samples1 = VECTOR(*samples)[0];
 	      splicing_matrix_t *psi1 = VECTOR(*psi)[0];
-	      memcpy(&MATRIX(*samples1, 0, noS), &MATRIX(*psi1, 0, 0), 
+	      memcpy(&MATRIX(*pop_samples, 0, noS), &MATRIX(*psi1, 0, 0),
 		     noChains * noiso * sizeof(double));
 	    } else {
 	      splicing_logit_inv_raw(VECTOR(hyperprior->logistic_mean),
