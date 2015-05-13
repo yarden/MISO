@@ -51,6 +51,19 @@ def test_MISO():
     assert( abs(meanpsi3[0] - 0.92413627) < 1e-8 and
             abs(meanpsi3[1] - 0.07586373) < 1e-8 )
 
+    results4 = pysplicing.doMISO(
+        GFF = gene, gene = 0L, reads = (tuple(reads[1:3]),),
+        read_len = 33L, num_iters = 5000L, burn_in = 1000L, lag = 10L,
+        prior = pysplicing.MISO_PRIOR_LOGISTIC, logistic_prior_mean = -5.0,
+        logistic_prior_var = 1.0)
+    psi4 = transpose(array(results4[0]))
+    meanpsi4 = mean(psi4, 0)
+
+    print "Logistic: ", meanpsi4
+
+    assert( abs(meanpsi4[0] - 0.08581447) < 1e-8 and
+            abs(meanpsi4[1] - 0.91418553) < 1e-8 )
+
 def test_paired_MISO():
     plainrandom.seed(42)
     reads = pysplicing.simulatePairedReads(gene,       # gff
