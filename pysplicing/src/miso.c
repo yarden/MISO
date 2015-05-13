@@ -1313,36 +1313,34 @@ int splicing_miso(
 
       if (m >= noBurnIn) {
 	if (lagCounter == noLag - 1) {
-	  for (i = 0; i < noReplicates; i++) {
-	    memcpy(VECTOR(*logLik)+noS, VECTOR(cJS), 
-		   noChains * sizeof(double));
-	    if (samples) {
+
+	  /* TODO: this is not correct for replicates */
+	  memcpy(VECTOR(*logLik)+noS, VECTOR(cJS), 
+		 noChains * sizeof(double));
+	  
+	  if (samples) {
+	    for (i = 0; i < noReplicates; i++) {
 	      splicing_matrix_t *samples1 = VECTOR(*samples)[i];
 	      splicing_matrix_t *psi1 = VECTOR(*psi)[i];
 	      memcpy(&MATRIX(*samples1, 0, noS), &MATRIX(*psi1, 0, 0), 
 		     noChains * noiso * sizeof(double));
-	      if (pop_samples && noReplicates == 1) {
-		memcpy(&MATRIX(*pop_samples, 0, noS), &MATRIX(*psi1, 0, 0),
-		       noChains * noiso * sizeof(double));
-	      } else if (pop_samples) {
-		splicing_logit_inv_raw(VECTOR(hyperprior->logistic_mean),
-				       &MATRIX(*pop_samples, 0, noS),
-				       (int) noiso - 1, noChains);
-	      }
-	    } else if (pop_samples) {
-	      if (noReplicates == 1) {
-		splicing_matrix_t *psi1 = VECTOR(*psi)[0];
-		memcpy(&MATRIX(*pop_samples, 0, noS), &MATRIX(*psi1, 0, 0),
-		       noChains * noiso * sizeof(double));
-	      } else {
-		splicing_logit_inv_raw(VECTOR(hyperprior->logistic_mean),
-				       &MATRIX(*pop_samples, 0, noS),
-				       (int) noiso - 1, noChains);
-	      }
 	    }
-	    
-	    noS += noChains;
 	  }
+
+	  if (pop_samples) {
+	    if (noReplicates == 1 && samples) {
+	      splicing_matrix_t *samples1 = VECTOR(*samples)[0];
+	      splicing_matrix_t *psi1 = VECTOR(*psi)[0];
+	      memcpy(&MATRIX(*samples1, 0, noS), &MATRIX(*psi1, 0, 0), 
+		     noChains * noiso * sizeof(double));
+	    } else {
+	      splicing_logit_inv_raw(VECTOR(hyperprior->logistic_mean),
+				     &MATRIX(*pop_samples, 0, noS),
+				     (int) noiso - 1, noChains);
+	    }
+	  }
+
+	  noS += noChains;
 	  lagCounter = 0;
 	  
 	} else {
