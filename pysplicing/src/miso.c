@@ -925,13 +925,13 @@ int splicing_miso(
 
   splicing_vector_t acceptP, cJS, pJS;
   double sigma;
+  splicing_matrix_t chainMeans, chainVars;
   
   /* These are different for each replicate */
 
   splicing_vector_ptr_t *mymatch_matrix = match_matrix,
     vmatch_matrix;			       /* matrix_t */
   splicing_vector_ptr_t match_order;	       /* vector_int_t */
-  splicing_vector_ptr_t chainMeans, chainVars; /* matrix_t */
   splicing_vector_ptr_t matches;	       /* vector_t */
   splicing_vector_ptr_t vass;		       /* matrix_int_t, 
 						  assignments to isoforms */
@@ -1011,6 +1011,11 @@ int splicing_miso(
     SPLICING_ERROR("Given PSI has wrong size", SPLICING_EINVAL);
   }
 
+  if (!pop_samples && !samples) {
+    SPLICING_ERROR("At least one of 'samples' and 'pop_samples' must"
+		   "be non-NULL", SPLICING_EINVAL);
+  }
+  
   if (noReplicates > 1 && ! pop_samples) {
     SPLICING_ERROR("Replicates, but pop_samples is NULL", SPLICING_EINVAL);
   }
@@ -1216,42 +1221,26 @@ int splicing_miso(
     }
   }
 
-  SPLICING_CHECK(splicing_vector_ptr_init(&chainMeans, noReplicates));
-  splicing_vector_ptr_set_item_destructor(&chainMeans,
-    (splicing_finally_func_t *) splicing_matrix_destroy_free);
-  SPLICING_FINALLY(splicing_vector_ptr_destroy, &chainMeans);
-  for (i = 0; i < noReplicates; i++) {
-    splicing_matrix_t *cm = splicing_Calloc(1, splicing_matrix_t);
-    if (!cm) { SPLICING_ERROR("No memory for chain means", SPLICING_ENOMEM); }
-    VECTOR(chainMeans)[i] = cm;
-    SPLICING_CHECK(splicing_matrix_init(cm, noiso, noChains));
-  }
-
-  SPLICING_CHECK(splicing_vector_ptr_init(&chainVars, noReplicates));
-  splicing_vector_ptr_set_item_destructor(&chainVars,
-    (splicing_finally_func_t *) splicing_matrix_destroy_free);
-  SPLICING_FINALLY(splicing_vector_ptr_destroy, &chainVars);
-  for (i = 0; i < noReplicates; i++) {
-    splicing_matrix_t *cv = splicing_Calloc(1, splicing_matrix_t);
-    if (!cv) { SPLICING_ERROR("No memory for chain vars", SPLICING_ENOMEM); }
-    VECTOR(chainVars)[i] = cv;
-    SPLICING_CHECK(splicing_matrix_init(cv, noiso, noChains));
-  }
+  
+  SPLICING_CHECK(splicing_matrix_init(&chainMeans, noiso, noChains));
+  SPLICING_CHECK(splicing_matrix_init(&chainVars, noiso, noChains));
 
   if (pop_samples) {
     SPLICING_CHECK(splicing_matrix_resize(pop_samples, noiso, noSamples));
   }
 
-  SPLICING_CHECK(splicing_vector_ptr_resize(samples, noReplicates));
-  splicing_vector_ptr_set_item_destructor(samples,
-    (splicing_finally_func_t *) splicing_matrix_destroy_free);
-  SPLICING_FINALLY(splicing_vector_ptr_destroy, samples);
-  for (i = 0; i < noReplicates; i++) {
-    splicing_matrix_t *ss = splicing_Calloc(1, splicing_matrix_t);
-    if (!ss) { SPLICING_ERROR("No memory for samples", SPLICING_ENOMEM); }
-    VECTOR(*samples)[i] = ss;
-    SPLICING_CHECK(splicing_matrix_init(ss, noiso, noSamples));
-  }  
+  if (samples) {
+    SPLICING_CHECK(splicing_vector_ptr_resize(samples, noReplicates));
+    splicing_vector_ptr_set_item_destructor(samples,
+      (splicing_finally_func_t *) splicing_matrix_destroy_free);
+    SPLICING_FINALLY(splicing_vector_ptr_destroy, samples);
+    for (i = 0; i < noReplicates; i++) {
+      splicing_matrix_t *ss = splicing_Calloc(1, splicing_matrix_t);
+      if (!ss) { SPLICING_ERROR("No memory for samples", SPLICING_ENOMEM); }
+      VECTOR(*samples)[i] = ss;
+      SPLICING_CHECK(splicing_matrix_init(ss, noiso, noSamples));
+    }
+  }
   
   SPLICING_CHECK(splicing_vector_resize(logLik, noSamples));
 
@@ -1325,29 +1314,42 @@ int splicing_miso(
       if (m >= noBurnIn) {
 	if (lagCounter == noLag - 1) {
 	  for (i = 0; i < noReplicates; i++) {
-	    splicing_matrix_t *samples1 = VECTOR(*samples)[i];
-	    splicing_matrix_t *psi1 = VECTOR(*psi)[i];
-	    memcpy(&MATRIX(*samples1, 0, noS), &MATRIX(*psi1, 0, 0), 
-		   noChains * noiso * sizeof(double));
 	    memcpy(VECTOR(*logLik)+noS, VECTOR(cJS), 
 		   noChains * sizeof(double));
-	    if (pop_samples && noReplicates == 1) {
-	      memcpy(&MATRIX(*pop_samples, 0, noS), &MATRIX(*psi1, 0, 0),
+	    if (samples) {
+	      splicing_matrix_t *samples1 = VECTOR(*samples)[i];
+	      splicing_matrix_t *psi1 = VECTOR(*psi)[i];
+	      memcpy(&MATRIX(*samples1, 0, noS), &MATRIX(*psi1, 0, 0), 
 		     noChains * noiso * sizeof(double));
-	    } else {
-	      splicing_logit_inv_raw(VECTOR(hyperprior->logistic_mean),
-				     &MATRIX(*pop_samples, 0, noS),
-				     (int) noiso - 1, noChains);
+	      if (pop_samples && noReplicates == 1) {
+		memcpy(&MATRIX(*pop_samples, 0, noS), &MATRIX(*psi1, 0, 0),
+		       noChains * noiso * sizeof(double));
+	      } else if (pop_samples) {
+		splicing_logit_inv_raw(VECTOR(hyperprior->logistic_mean),
+				       &MATRIX(*pop_samples, 0, noS),
+				       (int) noiso - 1, noChains);
+	      }
+	    } else if (pop_samples) {
+	      if (noReplicates == 1) {
+		splicing_matrix_t *psi1 = VECTOR(*psi)[0];
+		memcpy(&MATRIX(*pop_samples, 0, noS), &MATRIX(*psi1, 0, 0),
+		       noChains * noiso * sizeof(double));
+	      } else {
+		splicing_logit_inv_raw(VECTOR(hyperprior->logistic_mean),
+				       &MATRIX(*pop_samples, 0, noS),
+				       (int) noiso - 1, noChains);
+	      }
 	    }
-
+	    
 	    noS += noChains;
 	  }
 	  lagCounter = 0;
+	  
 	} else {
 	  lagCounter ++;
 	}
       }
-      
+
       if (algorithm == SPLICING_ALGO_REASSIGN) {
 	SPLICING_CHECK(splicing_reassign_samples(mymatch_matrix, &match_order,
 						 psi, (int) noiso, noChains, &vass));
@@ -1364,15 +1366,10 @@ int splicing_miso(
       if (maxIterations <= noIterations) { 
 	shouldstop = 1; 
       } else {
-	for (i = 0; i < noReplicates; i++) {
-	  int shouldstop1 = 1;
-	  splicing_matrix_t *cm = VECTOR(chainMeans)[i];
-	  splicing_matrix_t *cv = VECTOR(chainVars)[i];
-	  splicing_matrix_t *sam = VECTOR(*samples)[i];
-	  SPLICING_CHECK(splicing_i_check_convergent_mean(cm, cv, sam,
-							  &shouldstop1));
-	  shouldstop = shouldstop && shouldstop1;
-	}
+	splicing_matrix_t *sam = pop_samples ? pop_samples : VECTOR(*samples)[0];
+	SPLICING_CHECK(splicing_i_check_convergent_mean(&chainMeans,
+							&chainVars, sam,
+							&shouldstop));
       }
       break;
     }
@@ -1385,9 +1382,11 @@ int splicing_miso(
     noSamples = noChains * (noIterations - noBurnIn) / noLag;
     lagCounter = 0;
 
-    for (i = 0; i < noReplicates; i++) {
-      splicing_matrix_t *sam = VECTOR(*samples)[i];
-      SPLICING_CHECK(splicing_matrix_resize(sam, noiso, noSamples));
+    if (samples) {
+      for (i = 0; i < noReplicates; i++) {
+	splicing_matrix_t *sam = VECTOR(*samples)[i];
+	SPLICING_CHECK(splicing_matrix_resize(sam, noiso, noSamples));
+      }
     }
     if (pop_samples) {
       SPLICING_CHECK(splicing_matrix_resize(pop_samples, noiso, noSamples));
@@ -1395,8 +1394,8 @@ int splicing_miso(
     SPLICING_CHECK(splicing_vector_resize(logLik, noSamples));
   }
   
-  splicing_vector_ptr_destroy(&chainVars);
-  splicing_vector_ptr_destroy(&chainMeans);
+  splicing_matrix_destroy(&chainVars);
+  splicing_matrix_destroy(&chainMeans);
   SPLICING_FINALLY_CLEAN(2);
 
   if (assignment) {
@@ -1456,9 +1455,15 @@ int splicing_miso(
 
   if (rundata->noSamples != noSamples) {
     splicing_vector_remove_section(logLik, 0, noSamples-rundata->noSamples);
-    for (i = 0; i < noReplicates; i++) {
-      splicing_matrix_t *sam = VECTOR(*samples)[i];
-      splicing_matrix_remove_cols_section(sam, 0,
+    if (samples) {
+      for (i = 0; i < noReplicates; i++) {
+	splicing_matrix_t *sam = VECTOR(*samples)[i];
+	splicing_matrix_remove_cols_section(sam, 0,
+					  noSamples-rundata->noSamples);
+      }
+    }
+    if (pop_samples) {
+      splicing_matrix_remove_cols_section(pop_samples, 0,
 					  noSamples-rundata->noSamples);
     }
   }
