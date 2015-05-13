@@ -826,7 +826,7 @@ int splicing_update_replicate_mean(splicing_miso_hyperprior_t *hyperprior,
 
     tau2n = 1.0 / (1.0 / tau20 + noReplicates / sigma2);
 
-    VECTOR(hyperprior->logistic_mean)[i] = RNG_NORMAL(mun, sqrt(tau20));
+    VECTOR(hyperprior->logistic_mean)[i] = RNG_NORMAL(mun, sqrt(tau2n));
   }
 
   return 0;
