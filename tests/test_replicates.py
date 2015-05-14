@@ -36,8 +36,9 @@ def do_one(reads):
 def do_onebyone(reads):
     psi = [ do_one(r) for r in reads ]
     meanpsi = matrix([ mean(p, 0) for p in psi ])
-    assert(var(meanpsi, 0).ravel().tolist()[0] ==
-           [0.017807353098872165, 0.01780735309887213])
+    varpsi = var(meanpsi, 0).ravel().tolist()[0]
+    assert(abs(varpsi[0] - 0.0178073530988721) < 1e-8 and
+           abs(varpsi[1] - 0.0178073530988721) < 1e-8)
     return mean(meanpsi, 0).ravel().tolist()[0]
 
 def test_replicates():
