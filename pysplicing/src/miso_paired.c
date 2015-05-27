@@ -432,7 +432,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   SPLICING_CHECK(splicing_vector_int_init(&noReads, noReplicates));
   for (i = 0; i < noReplicates; i++) {
-    VECTOR(noReads)[i] = splicing_replicate_reads_noreads(reads, i);
+    VECTOR(noReads)[i] = splicing_replicate_reads_noreads(reads, i) / 2;
   }
 
   SPLICING_CHECK(splicing_vector_ptr_init(&vass, noReplicates));
@@ -545,25 +545,36 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   }
   
   if (class_templates || bin_class_templates) {
-    SPLICING_CHECK(splicing_vector_ptr_resize(class_counts, noReplicates));
-    splicing_vector_ptr_set_item_destructor(class_counts,
-      (splicing_finally_func_t *) splicing_vector_destroy_free);
-    SPLICING_FINALLY(splicing_vector_ptr_destroy, class_counts);
-
-    SPLICING_CHECK(splicing_vector_ptr_resize(bin_class_counts, noReplicates));
-    splicing_vector_ptr_set_item_destructor(bin_class_counts,
-      (splicing_finally_func_t *) splicing_vector_destroy_free);
-    SPLICING_FINALLY(splicing_vector_ptr_destroy, bin_class_counts);
+    if (class_counts) {
+      SPLICING_CHECK(splicing_vector_ptr_resize(class_counts, noReplicates));
+      splicing_vector_ptr_set_item_destructor(class_counts,
+        (splicing_finally_func_t *) splicing_vector_destroy_free);
+      SPLICING_FINALLY(splicing_vector_ptr_destroy, class_counts);
+      for (i = 0; i < noReplicates; i++) {
+	splicing_vector_t *cc = splicing_Calloc(1, splicing_vector_t);
+	if (!cc) { SPLICING_ERROR("No memory for class counts", SPLICING_ENOMEM); }
+	VECTOR(*class_counts)[i] = cc;
+	SPLICING_CHECK(splicing_vector_init(cc, 0));
+      }
+    }
+    if (bin_class_counts) {
+      SPLICING_CHECK(splicing_vector_ptr_resize(bin_class_counts, noReplicates));
+      splicing_vector_ptr_set_item_destructor(bin_class_counts,
+        (splicing_finally_func_t *) splicing_vector_destroy_free);
+      SPLICING_FINALLY(splicing_vector_ptr_destroy, bin_class_counts);
+      for (i = 0; i < noReplicates; i++) {
+	splicing_vector_t *bcc = splicing_Calloc(1, splicing_vector_t);
+	if (!bcc) { SPLICING_ERROR("No memory for class counts", SPLICING_ENOMEM); }
+	VECTOR(*bin_class_counts)[i] = bcc;
+	SPLICING_CHECK(splicing_vector_init(bcc, 0));
+      }
+    }
 
     for (i = 0; i < noReplicates; i++) {
       splicing_matrix_t *mm = VECTOR(*mymatch_matrix)[i];
       splicing_vector_int_t *mo = VECTOR(match_order)[i];
-      splicing_vector_t *cc = splicing_Calloc(1, splicing_vector_t);
-      splicing_vector_t *bcc = splicing_Calloc(1, splicing_vector_t);
-      if (!cc) { SPLICING_ERROR("No memory for class counts", SPLICING_ENOMEM); }
-      if (!bcc) { SPLICING_ERROR("No memory for binary class counts",
-				 SPLICING_ENOMEM); }
-    
+      splicing_vector_t *cc = class_counts ? VECTOR(*class_counts)[i] : 0;
+      splicing_vector_t *bcc = bin_class_counts ? VECTOR(*bin_class_counts)[i] : 0;
       SPLICING_CHECK(splicing_i_miso_classes(mm, mo, class_templates, cc,
 					     bin_class_templates,  bcc));
     }
