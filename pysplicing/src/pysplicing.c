@@ -223,11 +223,16 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   splicing_replicate_reads_t myreads;
   splicing_miso_hyperprior_t hyperprior;
   double logistic_mean = 0.0, logistic_var = 3.0;
-  splicing_matrix_t samples;
+  double replicate_mean_prior_mean = 0.0;
+  double replicate_mean_prior_var = 100.0;
+  double replicate_var_prior_numobs = 1/10.0;
+  double replicate_var_prior_var = 1/10.0;
+  splicing_matrix_t pop_samples;
+  splicing_vector_ptr_t samples; /* matrix_t */
   splicing_vector_t logLik;
   splicing_matrix_t bin_class_templates;
-  splicing_vector_t bin_class_counts;
-  splicing_vector_int_t assignment;
+  splicing_vector_ptr_t bin_class_counts;
+  splicing_vector_ptr_t assignment;
   splicing_miso_rundata_t rundata;
   PyObject *r1, *r2, *r3, *r4, *r5, *r6;
 
@@ -248,6 +253,10 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
 			"O"	/* hyperp */
 			"d"	/* logistic_mean */
 			"d"	/* logistic_var */
+			"d"     /* replicate_mean_prior_mean */
+			"d"     /* replicate_mean_prior_var */
+			"d"     /* replicate_var_prior_numobs */
+			"d" 	/* replicate_var_prior_var */
 			"i"	/* overhang */
 			"i"	/* no_chains */
 			"i"	/* start */
@@ -257,22 +266,28 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
 			&numDevs, &noIterations, &noBurnIn, &noLag,
 			&hyperprior.dirichlet_hyperp, &hyperp,
 			&logistic_mean, &logistic_var,
+			&replicate_mean_prior_mean,
+			&replicate_mean_prior_var,
+			&replicate_var_prior_numobs,
+			&replicate_var_prior_var,
 			&overhang, &no_chains, &start, &stop)) {
     return NULL; 
   }
 
   mygff=PyCObject_AsVoidPtr(gff);
   
-  SPLICING_PYCHECK(splicing_matrix_init(&samples, 0, 0));
-  SPLICING_FINALLY(splicing_matrix_destroy, &samples);
+  SPLICING_PYCHECK(splicing_matrix_init(&pop_samples, 0, 0));
+  SPLICING_FINALLY(splicing_matrix_destroy, &pop_samples);
+  SPLICING_PYCHECK(splicing_vector_ptr_init(&samples, 0));
+  SPLICING_FINALLY(splicing_vector_ptr_destroy, &samples);
   SPLICING_PYCHECK(splicing_vector_init(&logLik, 0));
   SPLICING_FINALLY(splicing_vector_destroy, &logLik);
   SPLICING_PYCHECK(splicing_matrix_init(&bin_class_templates, 0, 0));
   SPLICING_FINALLY(splicing_matrix_destroy, &bin_class_templates);
-  SPLICING_PYCHECK(splicing_vector_init(&bin_class_counts, 0));
-  SPLICING_FINALLY(splicing_vector_destroy, &bin_class_counts);
-  SPLICING_PYCHECK(splicing_vector_int_init(&assignment, 0));
-  SPLICING_FINALLY(splicing_vector_int_destroy, &assignment);
+  SPLICING_PYCHECK(splicing_vector_ptr_init(&bin_class_counts, 0));
+  SPLICING_FINALLY(splicing_vector_ptr_destroy, &bin_class_counts);
+  SPLICING_PYCHECK(splicing_vector_ptr_init(&assignment, 0));
+  SPLICING_FINALLY(splicing_vector_ptr_destroy, &assignment);
   
   if (pysplicing_to_replicate_reads(reads, &myreads)) { return NULL; }
   SPLICING_FINALLY(splicing_replicate_reads_destroy, &myreads);
@@ -295,20 +310,39 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.logistic_var);
   splicing_vector_fill(&hyperprior.logistic_var, logistic_var);
 
+  SPLICING_PYCHECK(splicing_vector_init(&hyperprior.logistic_mean_mean, no_chains));
+  SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.logistic_mean_mean);
+  splicing_vector_fill(&hyperprior.logistic_mean_mean, replicate_mean_prior_mean);
+  SPLICING_PYCHECK(splicing_vector_init(&hyperprior.logistic_mean_var, no_chains));
+  SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.logistic_mean_var);
+  splicing_vector_fill(&hyperprior.logistic_mean_var, replicate_mean_prior_var);
+
+  SPLICING_PYCHECK(splicing_vector_init(&hyperprior.logistic_var_numobs, no_chains));
+  SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.logistic_var_numobs);
+  splicing_vector_fill(&hyperprior.logistic_var_numobs, replicate_var_prior_numobs);
+  SPLICING_PYCHECK(splicing_vector_init(&hyperprior.logistic_var_var, no_chains));
+  SPLICING_FINALLY(splicing_vector_destroy, &hyperprior.logistic_var_var);
+  splicing_vector_fill(&hyperprior.logistic_var_var, replicate_var_prior_var);
+  
   splicing_miso_paired(mygff, gene, &myreads,
 		       readLength,
 		       overhang, no_chains, noIterations, maxIterations,
 		       noBurnIn, noLag, &hyperprior,
 		       start, stop, /*start_psi=*/ 0,
 		       /*insertProb=*/ 0, /*insertStart=*/ 0,
-		       normalMean, normalVar, numDevs, &samples, &logLik,
+		       normalMean, normalVar, numDevs, &pop_samples,
+		       &samples, &logLik,
 		       /*match_matrix=*/ 0, /*class_templates=*/ 0, 
 		       /*class_counts=*/ 0, &bin_class_templates, 
 		       &bin_class_counts, &assignment, &rundata);
 
+  splicing_vector_destroy(&hyperprior.logistic_var_var);
+  splicing_vector_destroy(&hyperprior.logistic_var_numobs);
+  splicing_vector_destroy(&hyperprior.logistic_mean_var);
+  splicing_vector_destroy(&hyperprior.logistic_mean_mean);
   splicing_vector_destroy(&hyperprior.logistic_mean);
   splicing_vector_destroy(&hyperprior.logistic_var);
-  SPLICING_FINALLY_CLEAN(2);
+  SPLICING_FINALLY_CLEAN(6);
   
   splicing_vector_destroy(&hyperprior.dirichlet_hyperp);
   splicing_replicate_reads_destroy(&myreads);
@@ -316,11 +350,11 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   
   r6=pysplicing_from_miso_rundata(&rundata);
 
-  r5=pysplicing_from_vector_int(&assignment);
-  splicing_vector_int_destroy(&assignment); SPLICING_FINALLY_CLEAN(1);
+  r5=pysplicing_from_vectorlist_int(&assignment);
+  splicing_vector_ptr_destroy(&assignment); SPLICING_FINALLY_CLEAN(1);
 
-  r4=pysplicing_from_vector(&bin_class_counts);
-  splicing_vector_destroy(&bin_class_counts); SPLICING_FINALLY_CLEAN(1);
+  r4=pysplicing_from_vectorlist(&bin_class_counts);
+  splicing_vector_ptr_destroy(&bin_class_counts); SPLICING_FINALLY_CLEAN(1);
 
   splicing_matrix_transpose(&bin_class_templates);
   r3=pysplicing_from_matrix(&bin_class_templates);
@@ -329,8 +363,10 @@ static PyObject* pysplicing_miso_paired(PyObject *self, PyObject*args) {
   r2=pysplicing_from_vector(&logLik);
   splicing_vector_destroy(&logLik); SPLICING_FINALLY_CLEAN(1);
 
-  r1=pysplicing_from_matrix(&samples);
-  splicing_matrix_destroy(&samples); SPLICING_FINALLY_CLEAN(1);
+  r1=pysplicing_from_matrix(&pop_samples);
+  splicing_matrix_destroy(&pop_samples); SPLICING_FINALLY_CLEAN(1);
+
+  splicing_vector_ptr_destroy(&samples);
   
   return Py_BuildValue("OOOOOO", r1, r2, r3, r4, r5, r6);
 }

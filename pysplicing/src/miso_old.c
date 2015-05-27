@@ -10,7 +10,54 @@
 
 #define SIGMA (0.2/noiso/noiso)
 
+int splicing_drift_proposal_init_paired1(int noiso, int noChains, 
+				 splicing_matrix_t *respsi, 
+				 splicing_matrix_t *resalpha,
+				 double *ressigma,
+				 splicing_miso_start_t start,
+				 const splicing_matrix_t *start_psi,
+				 const splicing_gff_t *gff, int gene, 
+				 int readLength, int overHang, 
+				 const splicing_vector_int_t *position,
+				 const char **cigarstr, int paired, 
+				 const splicing_vector_t *fragmentProb,
+				 int fragmentStart, double normalMean,
+				 double normalVar, double numDevs);
+
 int splicing_drift_proposal_init_paired(int noiso, int noChains, 
+				 splicing_vector_ptr_t *all_psi, 
+				 splicing_vector_ptr_t *all_alpha,
+				 double *ressigma,
+				 splicing_miso_start_t start,
+				 const splicing_matrix_t *start_psi,
+				 const splicing_gff_t *gff, int gene, 
+				 int readLength, int overHang, 
+				 const splicing_replicate_reads_t *reads,
+				 int paired, 
+				 const splicing_vector_t *fragmentProb,
+				 int fragmentStart, double normalMean,
+				 double normalVar, double numDevs) {
+
+  int i, noReplicates = (int) splicing_vector_ptr_size(all_psi);
+
+  for (i = 0; i < noReplicates; i++) {
+    splicing_matrix_t *psi = VECTOR(*all_psi)[i];
+    splicing_matrix_t *alpha = VECTOR(*all_alpha)[i];
+    const splicing_vector_int_t *position =
+      splicing_replicate_reads_pos(reads, i);
+    const char **cigarstr = splicing_replicate_reads_cigar(reads, i);
+    splicing_drift_proposal_init_paired1(noiso, noChains, psi, alpha, ressigma,
+				  start, start_psi, gff, gene, readLength,
+				  overHang, position, cigarstr, paired,
+				  fragmentProb, fragmentStart, normalMean,
+				  normalVar, numDevs);
+  }
+
+  return 0;
+}
+
+  
+int splicing_drift_proposal_init_paired1(int noiso, int noChains, 
 				 splicing_matrix_t *respsi, 
 				 splicing_matrix_t *resalpha,
 				 double *ressigma,
@@ -23,7 +70,7 @@ int splicing_drift_proposal_init_paired(int noiso, int noChains,
 				 const splicing_vector_t *fragmentProb,
 				 int fragmentStart, double normalMean,
 				 double normalVar, double numDevs) {
-
+  
   SPLICING_CHECK(splicing_matrix_resize(respsi, noiso, noChains));
   SPLICING_CHECK(splicing_matrix_resize(resalpha, noiso-1, noChains));
 
@@ -129,7 +176,31 @@ int splicing_drift_proposal_init_paired(int noiso, int noChains,
   return 0;
 }
 
+int splicing_drift_proposal_propose_paired1(int noiso, int noChains, 
+				    const splicing_matrix_t *alpha,
+				    double sigma, 
+				    splicing_matrix_t *respsi,
+				    splicing_matrix_t *resalpha);
+
 int splicing_drift_proposal_propose_paired(int noiso, int noChains, 
+				    const splicing_vector_ptr_t *all_alpha,
+				    double sigma, 
+				    splicing_vector_ptr_t *all_respsi,
+				    splicing_vector_ptr_t *all_resalpha) {
+
+  int i, noReplicates = (int) splicing_vector_ptr_size(all_respsi);
+  for (i = 0; i < noReplicates; i++) {
+    const splicing_matrix_t *alpha = VECTOR(*all_alpha)[i];
+    splicing_matrix_t *respsi = VECTOR(*all_respsi)[i];
+    splicing_matrix_t *resalpha = VECTOR(*all_resalpha)[i];
+    splicing_drift_proposal_propose_paired1(noiso, noChains, alpha, sigma,
+				     respsi, resalpha);
+  }
+
+  return 0;
+}
+
+int splicing_drift_proposal_propose_paired1(int noiso, int noChains, 
 				    const splicing_matrix_t *alpha,
 				    double sigma, 
 				    splicing_matrix_t *respsi,

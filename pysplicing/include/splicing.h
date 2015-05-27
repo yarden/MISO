@@ -273,14 +273,15 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			 const splicing_vector_t *fragmentProb, 
 			 int fragmentStart,
 			 double normalMean, double normalVar, double numDevs,
-			 splicing_matrix_t *samples, 
-			 splicing_vector_t *logLik, 
-			 splicing_matrix_t *match_matrix,
+			 splicing_matrix_t *pop_samples,
+			 splicing_vector_ptr_t *samples,
+			 splicing_vector_t *logLik,
+			 splicing_vector_ptr_t *match_matrix,
 			 splicing_matrix_t *class_templates,
-			 splicing_vector_t *class_counts,
+			 splicing_vector_ptr_t *class_counts,
 			 splicing_matrix_t *bin_class_templates,
-			 splicing_vector_t *bin_class_count,
-			 splicing_vector_int_t *assignment,
+			 splicing_vector_ptr_t *bin_class_counts,
+			 splicing_vector_ptr_t *assignment,
 			 splicing_miso_rundata_t *rundata);
 
 int splicing_reassign_samples(const splicing_vector_ptr_t *matches,
@@ -310,6 +311,9 @@ int splicing_mvrnorm(const splicing_matrix_t *mu, double sigma,
 
 int splicing_logit_inv(const splicing_matrix_t *x, 
 		       splicing_matrix_t *res, int len, int noChains);
+
+int splicing_logit_inv_raw(const double *x /* alpha */,
+			   double *res /* psi */, int len, int noChains);
 
 double splicing_logit1(double v);
 
@@ -496,11 +500,11 @@ int splicing_paired_assignment_matrix_old(const splicing_gff_t *gff,
 				  splicing_matrix_t *matrix);
 
 int splicing_reassign_samples_paired(
-			     const splicing_matrix_t *matches, 
-			     const splicing_vector_int_t *match_order,
-			     const splicing_matrix_t *psi, 
+			     const splicing_vector_ptr_t *all_matches, 
+			     const splicing_vector_ptr_t *all_match_order,
+			     const splicing_vector_ptr_t *all_psi, 
 			     int noiso, int noChains, int fragmentStart, 
-			     splicing_matrix_int_t *result);
+			     splicing_vector_ptr_t *all_result);
 
 int splicing_score_iso_paired(const splicing_vector_t *psi, int noiso, 
 			      const splicing_vector_int_t *assignment, 
@@ -589,23 +593,23 @@ int splicing_logit(const splicing_matrix_t *x,
 		   splicing_matrix_t *res, int len, int noChains);
 
 int splicing_drift_proposal_init_paired(int noiso, int noChains, 
-				 splicing_matrix_t *respsi, 
-				 splicing_matrix_t *resalpha,
+				 splicing_vector_ptr_t *all_psi, 
+				 splicing_vector_ptr_t *all_alpha,
 				 double *ressigma,
 				 splicing_miso_start_t start,
 				 const splicing_matrix_t *start_psi,
 				 const splicing_gff_t *gff, int gene, 
 				 int readLength, int overHang, 
-				 const splicing_vector_int_t *position,
-				 const char **cigarstr, int paired, 
+				 const splicing_replicate_reads_t *reads,
+				 int paired, 
 				 const splicing_vector_t *fragmentProb,
 				 int fragmentStart, double normalMean,
 				 double normalVar, double numDevs);
 
 int splicing_drift_proposal_propose_paired(int noiso, int noChains, 
-				    const splicing_matrix_t *alpha,
-				    double sigma, 
-				    splicing_matrix_t *respsi,
-				    splicing_matrix_t *resalpha);
+				   const splicing_vector_ptr_t *alpha,
+				   double sigma, 
+				   splicing_vector_ptr_t *all_respsi,
+				   splicing_vector_ptr_t *all_resalpha);
 
 #endif

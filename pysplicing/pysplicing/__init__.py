@@ -42,6 +42,10 @@ def doMISOPaired(GFF, gene, reads, read_len, mean_frag_len,
                  frag_variance, num_sds, num_iters, burn_in, lag,
                  prior = MISO_PRIOR_DIRICHLET, dirichlet_prior_params = None,
                  logistic_prior_mean = 0.0, logistic_prior_var = 3.0,
+                 replicate_mean_prior_mean = 0.0,
+                 replicate_mean_prior_var = 100.0,
+                 replicate_var_prior_numobs = 1/10.0,
+                 replicate_var_prior_var = 1/10.0,
                  overHang = 1L, num_chains = 6L, start = MISO_START_AUTO,
                  stop = MISO_STOP_FIXEDNO):
 
@@ -53,4 +57,6 @@ def doMISOPaired(GFF, gene, reads, read_len, mean_frag_len,
         GFF, gene, reads, read_len, mean_frag_len,
         frag_variance, num_sds, num_iters, burn_in, lag, prior,
         dirichlet_prior_params, logistic_prior_mean, logistic_prior_var,
+        replicate_mean_prior_mean, replicate_mean_prior_var,
+        replicate_var_prior_numobs, replicate_var_prior_var,
         overHang, num_chains, start, stop)
