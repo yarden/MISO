@@ -303,7 +303,7 @@ def summarize_sampler_results(samples_dir, summary_filename,
         counts_info = samples_results[5]
         shape_len = len(shape(samples))
         if shape_len < 2:
-            print "WARNING: Skipping %s -- mishaped file" %(samples_filename)
+            print "WARNING: Skipping %s -- mishaped file" %(event_name)
             continue
         num_samples, num_isoforms = shape(samples)
         output_fields = format_credible_intervals(event_name, samples)
