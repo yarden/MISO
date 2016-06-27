@@ -245,6 +245,7 @@ class GenesDispatcher:
                                                chunk=self.chunk_jobs)
             # End SGE case
             return
+        
         # All cluster jobs 
         cluster_jobs = []
         for batch_num, cmd_info in enumerate(all_miso_cmds):

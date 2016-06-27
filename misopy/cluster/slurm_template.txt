@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#SBATCH -p {partition}
+#SBATCH --mem {mem}
+#SBATCH --job-name {jobname}
+#SBATCH -t {time}
+#SBATCH -n 1
+#SBATCH -N 1
+
+source new-modules.sh
+module load python/2.7.6-fasrc01
+module load miso
+
+{cmd}
+

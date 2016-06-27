@@ -4,6 +4,7 @@ min_event_reads = 20
 
 [cluster]
 cluster_command = qsub
+slurm_template = /home/akitzmiller/workspace/MISO/misopy/cluster/slurm_template.txt
 
 [sampler]
 burn_in = 500
