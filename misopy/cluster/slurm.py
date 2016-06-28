@@ -141,6 +141,7 @@ class SlurmClusterEngine():
         '''
         Runs cluster command and returns the job id
         '''
+        print 'Running command %s' % cmd
         proc = subprocess.Popen(cluster_cmd, shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
