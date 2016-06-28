@@ -22,6 +22,7 @@ from misopy.parse_csv import *
 from misopy.settings import Settings, load_settings
 from misopy.settings import miso_path as miso_settings_path
 import misopy.cluster_utils as cluster_utils
+from misopy.cluster import getClusterEngine
 
 miso_path = os.path.dirname(os.path.abspath(__file__))
 manual_url = "http://genes.mit.edu/burgelab/miso/docs/"
@@ -266,6 +267,9 @@ class GenesDispatcher:
                 print "  - Submitted thread %s" %(thread_id)
                 self.threads[thread_id] = p
             else:
+                # Setup cluster engine
+                self.cluster_engine = getClusterEngine('slurm',self.settings_fname)
+                
                 # Run on cluster
                 if batch_size >= self.long_thresh:
                     queue_type = "long"
@@ -275,7 +279,7 @@ class GenesDispatcher:
                 job_name = "gene_psi_batch_%d" %(batch_num)
                 print "Submitting to cluster: %s" %(cmd_to_run)
                 job_id = \
-                    cluster_utils.run_on_cluster(cmd_to_run,
+                    self.cluster_engine.run_on_cluster(cmd_to_run,
                                                  job_name,
                                                  self.output_dir,
                                                  queue_type=queue_type,
@@ -298,7 +302,7 @@ class GenesDispatcher:
                                          "system.")
             # Try to wait on jobs no matter what; though if 'cluster_jobs'
             # is empty here, it will not wait
-            cluster_utils.wait_on_jobs(cluster_jobs,
+            self.cluster_engine.wait_on_jobs(cluster_jobs,
                                        self.cluster_cmd)
         else:
             if self.use_cluster:
