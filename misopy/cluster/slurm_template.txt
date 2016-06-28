@@ -1,9 +1,8 @@
 #!/bin/bash
 
-#SBATCH -p {partition}
-#SBATCH --mem {mem}
-#SBATCH --job-name {jobname}
-#SBATCH -t {time}
+#SBATCH -p serial_requeue
+#SBATCH --mem 4000
+#SBATCH -t 0-1:00
 #SBATCH -n 1
 #SBATCH -N 1
 

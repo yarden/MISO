@@ -6,9 +6,10 @@ misopy.cluster.slurm
 @license: GPL v2.0
 @contact: aaron_kitzmiller@harvard.edu
 '''
-import os, subprocess, traceback
+import os, subprocess, traceback, time
 
-from settings import load_settings
+from misopy.settings import load_settings
+from misopy import misc_utils
 
 
 
@@ -39,15 +40,50 @@ class SlurmClusterEngine():
         if self.template.strip() == '':
             raise Exception('slurm template file %s is empty' % template_filename)
         
-            
+        
+        
+    def make_bash_script(self,script_name,cmd):
+        '''
+        Use the template to write out a sbatch submission script
+        '''
+        scripttxt = self.template.format(cmd=cmd)
+        with open(script_name,'w') as script:
+            script.write(scripttxt + '\n')
+        
+        
     
     def run_on_cluster(self, cmd, job_name, cluster_output_dir,
                        cluster_scripts_dir=None,
                        queue_type=None,
                        settings_fname=None):
-        pass
+        '''
+        Composes job script and launches job
+        '''
+        
+        misc_utils.make_dir(cluster_output_dir)
+        if cluster_scripts_dir == None:
+            cluster_scripts_dir = os.path.join(cluster_output_dir,
+                                               'cluster_scripts')
+            misc_utils.make_dir(cluster_scripts_dir)
+            
+        scripts_output_dir = os.path.join(cluster_output_dir,
+                                          'scripts_output')
+        misc_utils.make_dir(scripts_output_dir)
+        scripts_output_dir = os.path.abspath(scripts_output_dir)
+        cluster_call = 'sbatch -o \"%s\" -e \"%s\"' %(scripts_output_dir,scripts_output_dir)
+        
+        script_name = os.path.join(cluster_scripts_dir,
+                                         '%s_time_%s.sh' \
+                                         %(job_name,
+                                           time.strftime("%m-%d-%y_%H:%M:%S")))
+        self.make_bash_script(script_name, cmd)
+        cluster_cmd = cluster_call + ' \"%s\"' %(script_name)
+        job_id = self.launch_job(cluster_cmd)
+        return job_id
     
-    def wait_on_job(self, job_id, cluster_cmd, delay=60):
+    
+    
+    def wait_on_job(self, job_id, delay=60):
         '''
         Wait until job is done.  Uses squeue first, then sacct.
         Runs squeue /sacct until either the job is done or until squeue_max_attempts is reached.
@@ -97,9 +133,7 @@ class SlurmClusterEngine():
             if state is not None:
                 if state in ["COMPLETED","COMPLETING","CANCELLED","FAILED","TIMEOUT","PREEMPTED","NODE_FAIL"]:
                     done = True
-                
-                
-                
+                     
         
         
     
