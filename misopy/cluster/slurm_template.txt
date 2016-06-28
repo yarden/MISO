@@ -8,7 +8,6 @@
 
 source new-modules.sh
 module load python/2.7.6-fasrc01
-module load miso
 
 {cmd}
 

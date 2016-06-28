@@ -133,7 +133,9 @@ class SlurmClusterEngine():
             if state is not None:
                 if state in ["COMPLETED","COMPLETING","CANCELLED","FAILED","TIMEOUT","PREEMPTED","NODE_FAIL"]:
                     done = True
-                     
+                    print state
+                    
+            time.sleep(delay)         
         
         
     
