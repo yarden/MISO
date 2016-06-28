@@ -75,7 +75,7 @@ class SlurmClusterEngine():
         script_name = os.path.join(cluster_scripts_dir,
                                          '%s_time_%s.sh' \
                                          %(job_name,
-                                           time.strftime("%m-%d-%y_%H:%M:%S")))
+                                           time.strftime("%m-%d-%y_%H_%M_%S")))
         self.make_bash_script(script_name, cmd)
         cluster_cmd = cluster_call + ' \"%s\"' %(script_name)
         job_id = self.launch_job(cluster_cmd)
