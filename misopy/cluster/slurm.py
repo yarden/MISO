@@ -70,7 +70,7 @@ class SlurmClusterEngine():
                                           'scripts_output')
         misc_utils.make_dir(scripts_output_dir)
         scripts_output_dir = os.path.abspath(scripts_output_dir)
-        cluster_call = 'sbatch -o \"%s\" -e \"%s\"' %(scripts_output_dir,scripts_output_dir)
+        cluster_call = 'sbatch -o \"%s.%s.out\" -e \"%s.%s.err\"' %(scripts_output_dir,job_name,scripts_output_dir,job_name)
         
         script_name = os.path.join(cluster_scripts_dir,
                                          '%s_time_%s.sh' \
