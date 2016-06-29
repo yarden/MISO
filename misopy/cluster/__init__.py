@@ -369,7 +369,7 @@ class SlurmClusterEngine(AbstractClusterEngine):
     
     
     
-    def wait_on_job(self, job_id, delay=60.0):
+    def wait_on_job(self, job_id, delay=10):
         '''
         Wait until job is done.  Uses squeue first, then sacct.
         Runs squeue /sacct until either the job is done or until squeue_max_attempts is reached.
@@ -421,7 +421,7 @@ class SlurmClusterEngine(AbstractClusterEngine):
                     done = True
                     print state
                     
-            time.sleep(delay)         
+            time.sleep(10)         
         
         
     
