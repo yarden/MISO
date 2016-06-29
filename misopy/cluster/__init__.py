@@ -25,19 +25,52 @@ def getClusterEngine(cluster_type,settings_fname):
         
     return ce
     
-
-class LsfClusterEngine():
+class AbstractClusterEngine(object):
+    '''
+    Base class for cluster engines
+    '''
+    def __init__(self,settings_filename):
+        '''
+        Load settings
+        '''
+        self.settings = load_settings(settings_filename)
+        
+    def wait_on_jobs(self,job_ids, cluster_cmd,
+                     delay=120):
+        """
+        Wait on a set of job IDs.
+        """
+        if len(job_ids) == 0:
+            return
+        num_jobs = len(job_ids)
+        print "Waiting on a set of %d jobs..." %(num_jobs)
+        curr_time = time.strftime("%x, %X")
+        t_start = time.time()
+        print "  - Starting to wait at %s" %(curr_time)
+        completed_jobs = {}
+        for job_id in job_ids:
+            if job_id in completed_jobs:
+                continue
+            self.wait_on_job(job_id, cluster_cmd)
+            print "  - Job ", job_id, " completed."
+            completed_jobs[job_id] = True
+        curr_time = time.strftime("%x, %X")
+        t_end = time.time()
+        print "Jobs completed at %s" %(curr_time)
+        duration = ((t_end - t_start) / 60.) / 60.
+        print "  - Took %.2f hours." %(duration)
+        
+        
+    def wait_on_job(self, job_id, delay):
+        
+        raise Exception('Must implement wait on job')
+    
+    
+class LsfClusterEngine(AbstractClusterEngine):
     '''
     Run jobs on an LSF cluster
     '''
     
-    def __init__(self,settings_filename):
-        '''
-        Get the slurm job template file and load it
-        '''
-        self.settings = load_settings(settings_filename)
-        
-        
     def make_bash_script(self,filename, cmd, crate_dir=None):
         """
         Make an executable bash script out of the given command.
@@ -151,18 +184,11 @@ class LsfClusterEngine():
     
 
 
-class SgeClusterEngine():
+class SgeClusterEngine(AbstractClusterEngine):
     '''
     Run jobs on an SGE cluster
     '''
-    
-    def __init__(self,settings_filename):
-        '''
-        Get the slurm job template file and load it
-        '''
-        self.settings = load_settings(settings_filename)
-        
-        
+            
     def make_bash_script(self,filename, cmd, crate_dir=None):
         """
         Make an executable bash script out of the given command.
@@ -272,7 +298,7 @@ class SgeClusterEngine():
 
 
 
-class SlurmClusterEngine():
+class SlurmClusterEngine(AbstractClusterEngine):
     '''
     Run jobs on a Slurm cluster
     '''
@@ -281,7 +307,8 @@ class SlurmClusterEngine():
         '''
         Get the slurm job template file and load it
         '''
-        self.settings = load_settings(settings_filename)
+        super(SlurmClusterEngine,self).__init__(settings_filename)
+        
         if not 'slurm_template' in self.settings:
             raise Exception('slurm_template must be defined in settings to use Slurm')
         
