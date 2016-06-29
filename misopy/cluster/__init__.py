@@ -22,6 +22,12 @@ def getClusterEngine(cluster_type,settings_fname):
     ce = None
     if cluster_type == 'slurm':
         ce = SlurmClusterEngine(settings_fname)
+    elif cluster_type == 'lsf':
+        ce = LsfClusterEngine(settings_fname)
+    elif cluster_type == 'sge':
+        ce = SgeClusterEngine(settings_fname)
+    else:
+        raise Exception('Unknown cluster type %s' % cluster_type)
         
     return ce
     
