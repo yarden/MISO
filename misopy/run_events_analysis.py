@@ -24,7 +24,6 @@ from misopy.miso_sampler import get_logger
 miso_path = os.path.dirname(os.path.abspath(__file__))
 manual_url = "http://genes.mit.edu/burgelab/miso/docs/"
 
-miso_logger = get_logger('miso_logger')
 
 def get_ids_passing_filter(gff_index_dir,
                            bam_filename,
