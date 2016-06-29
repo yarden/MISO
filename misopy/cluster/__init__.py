@@ -36,7 +36,7 @@ class AbstractClusterEngine(object):
         self.settings = load_settings(settings_filename)
         
     def wait_on_jobs(self,job_ids, cluster_cmd,
-                     delay=120):
+                     delay=120.0):
         """
         Wait on a set of job IDs.
         """
@@ -369,7 +369,7 @@ class SlurmClusterEngine(AbstractClusterEngine):
     
     
     
-    def wait_on_job(self, job_id, delay=60):
+    def wait_on_job(self, job_id, delay=60.0):
         '''
         Wait until job is done.  Uses squeue first, then sacct.
         Runs squeue /sacct until either the job is done or until squeue_max_attempts is reached.
