@@ -15,19 +15,19 @@ from misopy.settings import load_settings, Settings
 from misopy import misc_utils
 
 
-def getClusterEngine(cluster_type,settings_fname):
+def getClusterEngine(clustercmd,settings_fname):
     '''
     Returns the correct cluster engine
     '''
     ce = None
-    if cluster_type == 'slurm':
+    if clustercmd == 'sbatch':
         ce = SlurmClusterEngine(settings_fname)
-    elif cluster_type == 'lsf':
+    elif clustercmd == 'bsub':
         ce = LsfClusterEngine(settings_fname)
-    elif cluster_type == 'sge':
+    elif clustercmd == 'qsub':
         ce = SgeClusterEngine(settings_fname)
     else:
-        raise Exception('Unknown cluster type %s' % cluster_type)
+        raise Exception('Unknown cluster command %s' % clustercmd)
         
     return ce
     
@@ -346,8 +346,7 @@ class SlurmClusterEngine(AbstractClusterEngine):
     
     def run_on_cluster(self, cmd, job_name, cluster_output_dir,
                        cluster_scripts_dir=None,
-                       queue_type=None,
-                       settings_fname=None):
+                       queue_type=None):
         '''
         Composes job script and launches job
         '''

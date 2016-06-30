@@ -84,8 +84,7 @@ class GenesDispatcher:
                  sge_job_name="misojob",
                  gene_ids=None,
                  num_proc=None,
-                 wait_on_jobs=True,
-                 cluster_type=None):
+                 wait_on_jobs=True):
         self.main_logger = main_logger
         self.threads = {}
         self.gff_dir = gff_dir
@@ -112,7 +111,6 @@ class GenesDispatcher:
         self.cluster_cmd = Settings.get_cluster_command()
         self.sge_job_name = sge_job_name
         self.wait_on_jobs = wait_on_jobs
-        self.cluster_type = cluster_type
         # if chunk_jobs not given (i.e. set to False),
         # then set it to arbitrary value
         if not self.chunk_jobs:
@@ -270,10 +268,10 @@ class GenesDispatcher:
                 self.threads[thread_id] = p
             else:
                 # Setup cluster engine
-                if self.cluster_type is None:
-                    raise Exception('If --use-cluster is selected and --SGEarray is not, you must define a --cluster-type')
+                Settings.load(self.settings_fname)
+                clustercmd = Settings.get_cluster_command()
                 
-                self.cluster_engine = getClusterEngine(self.cluster_type,self.settings_fname)
+                self.cluster_engine = getClusterEngine(clustercmd,self.settings_fname)
                 
                 # Run on cluster
                 if batch_size >= self.long_thresh:
@@ -287,8 +285,7 @@ class GenesDispatcher:
                     self.cluster_engine.run_on_cluster(cmd_to_run,
                                                  job_name,
                                                  self.output_dir,
-                                                 queue_type=queue_type,
-                                                 settings_fname=self.settings_fname)
+                                                 queue_type=queue_type)
                 if job_id is not None:
                     cluster_jobs.append(job_id)
                 time.sleep(delay_constant)
@@ -432,8 +429,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len,
                                  SGEarray=SGEarray,
                                  gene_ids=all_gene_ids,
                                  num_proc=num_proc,
-                                 wait_on_jobs=wait_on_jobs,
-                                 cluster_type=cluster_type)
+                                 wait_on_jobs=wait_on_jobs)
     dispatcher.run()
 
 
@@ -455,8 +451,6 @@ def main():
     parser.add_option("--use-cluster", dest="use_cluster",
                       action="store_true", default=False,
                       help="Run events on cluster.")
-    parser.add_option("--cluster-type", dest="cluster_type",
-                      help="Type of cluster.  One of slurm, sge, or lsf.", default=None)
     parser.add_option("--chunk-jobs", dest="chunk_jobs",
                       default=False, type="int",
                       help="Size (in number of events) of each job to chunk "
@@ -603,8 +597,7 @@ def main():
                               settings_fname=settings_filename,
                               prefilter=options.prefilter,
                               num_proc=options.num_proc,
-                              wait_on_jobs=wait_on_jobs,
-                              cluster_type=options.cluster_type)
+                              wait_on_jobs=wait_on_jobs)
 
     if options.view_gene != None:
         indexed_gene_filename = \
