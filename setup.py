@@ -101,6 +101,7 @@ setup(name = 'misopy',
       # Tell distutils to look for pysplicing in the right directory
       package_dir = {'pysplicing': 'pysplicing/pysplicing'},
       packages = ['misopy',
+                  'misopy.cluster',
                   'misopy.sashimi_plot',
                   'misopy.sashimi_plot.plot_utils',
                   'pysplicing'],
