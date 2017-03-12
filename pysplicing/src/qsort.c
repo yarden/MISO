@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  */
 
+#include "splicing_error.h"
+
 #ifndef __unused
 #define __unused	__attribute__ ((unused))
 #endif
@@ -48,7 +50,7 @@ typedef int		 cmp_t(void *, const void *, const void *);
 typedef int		 cmp_t(const void *, const void *);
 #endif
 static inline char	*med3(char *, char *, char *, cmp_t *, void *);
-static inline void	 swapfunc(char *, char *, int, int);
+static inline void	 swapfunc(char *, char *, size_t, int);
 
 #define min(a, b)	(a) < (b) ? a : b
 
@@ -72,7 +74,8 @@ static inline void	 swapfunc(char *, char *, int, int);
 static inline void
 swapfunc(a, b, n, swaptype)
 	char *a, *b;
-	int n, swaptype;
+	size_t n;
+	int swaptype;
 {
 	if(swaptype <= 1)
 		swapcode(long, a, b, n)
@@ -109,16 +112,22 @@ __unused
 }
 
 #ifdef I_AM_QSORT_R
-void
+int
 splicing_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp)
 #else
 #define thunk NULL
-void
+int
 splicing_qsort(void *a, size_t n, size_t es, cmp_t *cmp)
 #endif
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
-	int d, r, swaptype, swap_cnt;
+	size_t d;
+	int r, swaptype, swap_cnt;
+
+	if (n > (int) n) {
+	  SPLICING_ERROR("Array too big, cannot fit into int",
+			 SPLICING_EINTOVERFLOW);
+	}
 
 loop:	SWAPINIT(a, es);
 	swap_cnt = 0;
@@ -128,7 +137,7 @@ loop:	SWAPINIT(a, es);
 			     pl > (char *)a && CMP(thunk, pl - es, pl) > 0;
 			     pl -= es)
 				swap(pl, pl - es);
-		return;
+		return 0;
 	}
 	pm = (char *)a + (n / 2) * es;
 	if (n > 7) {
@@ -176,26 +185,27 @@ loop:	SWAPINIT(a, es);
 			     pl > (char *)a && CMP(thunk, pl - es, pl) > 0;
 			     pl -= es)
 				swap(pl, pl - es);
-		return;
+		return 0;
 	}
 
 	pn = (char *)a + n * es;
-	r = min(pa - (char *)a, pb - pa);
+	r = min( (int) (pa - (char *)a), (int) (pb - pa));
 	vecswap(a, pb - r, r);
-	r = min(pd - pc, pn - pd - es);
+	r = min( (int) (pd - pc), (int) (pn - pd - es));
 	vecswap(pb, pn - r, r);
-	if ((r = pb - pa) > es)
+	if ((r = (int) (pb - pa)) > es)
 #ifdef I_AM_QSORT_R
 		splicing_qsort_r(a, r / es, es, thunk, cmp);
 #else
 		splicing_qsort(a, r / es, es, cmp);
 #endif
-	if ((r = pd - pc) > es) {
+		if ((r = (int) (pd - pc)) > es) {
 		/* Iterate rather than recurse to save stack space */
 		a = pn - r;
 		n = r / es;
 		goto loop;
 	}
 /*		qsort(pn - r, r / es, es, cmp);*/
+	return 0;
 }
 

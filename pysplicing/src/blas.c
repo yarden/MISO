@@ -13,8 +13,8 @@ int splicing_dgemv(int transpose, double alpha,
   int m, n;
   int inc = 1;
 
-  m = splicing_matrix_nrow(a);
-  n = splicing_matrix_ncol(a);
+  m = (int) splicing_matrix_nrow(a);
+  n = (int) splicing_matrix_ncol(a);
 
   if (splicing_vector_size(x) != (transpose ? m : n)) {
     SPLICING_ERROR("Invalid matrix-vector sizes", SPLICING_EINVAL);

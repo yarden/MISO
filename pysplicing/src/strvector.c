@@ -32,6 +32,7 @@ int splicing_strvector_clear(splicing_strvector_t *v) {
     free(v->table[i]);
   }
   v->size=0;
+  return 0;
 }
 
 void splicing_strvector_destroy(splicing_strvector_t *v) {
@@ -110,7 +111,7 @@ const char *splicing_strvector_get(const splicing_strvector_t *v,
 
 int splicing_strvector_search(const splicing_strvector_t *v, 
 			      const char *key, size_t *idx) {
-  int i, n=v->size;
+  size_t i, n=v->size;
   for (i=0; i<n; i++) {
     if (!strcmp(v->table[i], key)) { *idx = i; return 1; }
   }

@@ -39,7 +39,7 @@ int splicing_i_assignmat_cmp2(void *data, const void *a, const void *b) {
   int aa=*(int*)a, bb=*(int*)b;
   double *aaa=&MATRIX(*m, 0, aa);
   double *bbb=&MATRIX(*m, 0, bb);
-  int i, nrow=splicing_matrix_nrow(m);
+  long i, nrow=splicing_matrix_nrow(m);
   
   for (i=0; i<nrow; i++) {
     if (aaa[i]==0 && bbb[i] != 0) { return -1; }
@@ -52,8 +52,8 @@ int splicing_i_assignmat_simplify(splicing_matrix_t *mat) {
   splicing_matrix_t tmp;
   splicing_vector_int_t order;
   int i, j;
-  int ncol=splicing_matrix_ncol(mat);
-  int nrow=splicing_matrix_nrow(mat);
+  long ncol=splicing_matrix_ncol(mat);
+  long nrow=splicing_matrix_nrow(mat);
   
   SPLICING_CHECK(splicing_matrix_copy(&tmp, mat));
   SPLICING_FINALLY(splicing_matrix_destroy, &tmp);
@@ -116,15 +116,15 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_vector_int_init(&exidx, 0));
   SPLICING_FINALLY(splicing_vector_int_destroy, &exidx);
   SPLICING_CHECK(splicing_gff_exon_start_end(gff, &exstart, &exend, &exidx,
-					     gene));
+					     (int) gene));
   elen=splicing_vector_int_size(&exstart);
   for (i=0; i<elen; i++) {
     VECTOR(exstart)[i] -= genestart;
     VECTOR(exend)[i] -= genestart;
   }
   
-  SPLICING_CHECK(splicing_numeric_cigar(&exstart, &exend, &exidx, noiso, 0,
-					&cigar));
+  SPLICING_CHECK(splicing_numeric_cigar(&exstart, &exend, &exidx,
+					(int) noiso, 0,	&cigar));
 
   splicing_vector_int_destroy(&exidx);
   splicing_vector_int_destroy(&exend);
@@ -143,7 +143,8 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_matrix_resize(matrix, noiso, 0));
 
   while (p <= lastp) {
-    size_t pos=0, nextp, tmppos, ipos, l;
+    size_t pos=0, nextp, tmppos, ipos;
+    int l, ii;
 
     /* Calculate the initial CIGAR strings for all isoforms */
     splicing_vector_int_clear(&mp);
@@ -190,7 +191,7 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
       }
       if (VECTOR(cigar)[tmppos] > 0) {
 	size_t pnextp=nextp;
-	int j=ipos;
+	size_t j=ipos;
 	int rl2=readLength;
 	while (VECTOR(cigar)[j] != 0) {
 	  if (VECTOR(cigar)[j] >= rl2) { 
@@ -211,7 +212,7 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
        assignment class of the current position. Finally, we check
        whether this class is already in the result and then update/add
        it. */
-    for (i=0; i<noiso; i++) { VECTOR(isoseq)[i]=i; }
+    for (ii=0; ii<noiso; ii++) { VECTOR(isoseq)[ii]=ii; }
     splicing_qsort_r(VECTOR(isoseq), noiso, sizeof(int), &mpdata, 
 		     splicing_i_assignmat_cmp);
     
@@ -228,7 +229,7 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 	i++;
       }
       SPLICING_CHECK(splicing_matrix_add_cols(matrix, 1));
-      col=splicing_matrix_ncol(matrix)-1;
+      col = (int) splicing_matrix_ncol(matrix)-1;
       for (j=0; j<noiso; j++) { 
 	MATRIX(*matrix, j, col) = VECTOR(isomatch)[j] * nextp;
       }
@@ -242,7 +243,7 @@ int splicing_assignment_matrix(const splicing_gff_t *gff, size_t gene,
       if (VECTOR(cigar)[tmppos] != 0) {
 	VECTOR(cigar)[ipos] = 
 	  (VECTOR(cigar)[tmppos] < 0 ? -1 : 1) * 
-	  (abs(VECTOR(cigar)[tmppos])-nextp);
+	  (int) (abs(VECTOR(cigar)[tmppos])-nextp);
 	tmppos++;
 	if (VECTOR(cigar)[ipos] !=0 ) ipos++;
       }
@@ -281,7 +282,7 @@ int splicing_i_get_mp(const splicing_gff_converter_t *converter,
 		      splicing_vector_int_t *mppos,
 		      int sp1, int sp2, int readLength) {
   
-  int i, n=splicing_vector_int_size(subset); 
+  int i, n = (int) splicing_vector_int_size(subset);
   int l=0;
   const splicing_vector_int_t *exstart=&converter->exstart;
   const splicing_vector_int_t *exend=&converter->exend;
@@ -387,8 +388,8 @@ int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 
   splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
     vfragmentProb;
-  size_t noiso;
-  int sp1, laststartpos, elen;
+  size_t noiso, laststartpos;
+  int sp1;
   splicing_vector_int_t sp1i, sp2, sp2i, isolength;
   int minfl;
   int maxfl;
@@ -410,7 +411,7 @@ int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
   }
 
   minfl=fragmentStart;
-  maxfl=splicing_vector_size(myfragmentProb) + fragmentStart - 1;
+  maxfl  =(int) splicing_vector_size(myfragmentProb) + fragmentStart - 1;
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
 
@@ -432,7 +433,7 @@ int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 
   /* Calculate last possible starting position */
   /* TODO: This could be much more restrictive... */
-  laststartpos=geneend - minfl + 1;
+  laststartpos = geneend - minfl + 1;
 
   /* printf("Minimum fragment length: %i\n", minfl); */
   /* printf("Maximum fragment length: %i\n", maxfl); */
@@ -550,7 +551,7 @@ int splicing_paired_assignment_matrix(const splicing_gff_t *gff, size_t gene,
 	}
 	/* printf("ADDED: "); splicing_vector_print(&isomatch); */
 	SPLICING_CHECK(splicing_matrix_add_cols(matrix, 1));
-	col=splicing_matrix_ncol(matrix)-1;
+	col = (int) splicing_matrix_ncol(matrix)-1;
 	for (j=0; j<noiso; j++) {
 	  MATRIX(*matrix, j, col) = VECTOR(isomatch)[j];
 	}
@@ -633,7 +634,7 @@ int splicing_paired_assignment_matrix_old(const splicing_gff_t *gff, size_t gene
 			  1.0/splicing_vector_sum(myfragmentProb));
   }
 
-  il=splicing_vector_size(myfragmentProb);
+  il = (int) splicing_vector_size(myfragmentProb);
 
   SPLICING_CHECK(splicing_matrix_init(&tmpmat, 0, 0));
   SPLICING_FINALLY(splicing_matrix_destroy, &tmpmat);
@@ -642,13 +643,13 @@ int splicing_paired_assignment_matrix_old(const splicing_gff_t *gff, size_t gene
   SPLICING_CHECK(splicing_matrix_resize(matrix, noiso, 0));
   for (i=0; i<il; i++) {
 
-    int c, tmpncol, m, mncol=splicing_matrix_ncol(matrix);
+    int c, tmpncol, m, mncol = (int) splicing_matrix_ncol(matrix);
     int myrl=i + fragmentStart;
     double fact=VECTOR(*myfragmentProb)[i];
 
     SPLICING_CHECK(splicing_assignment_matrix(gff, gene, myrl, overHang, 
 					      &tmpmat));
-    tmpncol=splicing_matrix_ncol(&tmpmat);
+    tmpncol = (int) splicing_matrix_ncol(&tmpmat);
     for (c=0; c<tmpncol; c++) {
 
       int j, found;
@@ -667,7 +668,7 @@ int splicing_paired_assignment_matrix_old(const splicing_gff_t *gff, size_t gene
 	}
       } else {
 	SPLICING_CHECK(splicing_matrix_add_cols(matrix, 1));
-	m=splicing_matrix_ncol(matrix)-1;
+	m = (int) splicing_matrix_ncol(matrix)-1;
 	for (j=0; j<noiso; j++) { 
 	  MATRIX(*matrix, j, m) = fact * MATRIX(tmpmat, j, c);
 	}

@@ -3,39 +3,58 @@ import distutils.ccompiler
 import glob
 import os
 import sys
+import shutil
+
+if not os.path.exists("temp"):
+    os.makedirs("temp")
 
 ## Test for functions, with a hack to suppress compiler warnings.
+os.chdir('temp')
 cc = distutils.ccompiler.new_compiler()
+cc.define_macro('main', 'int (main)')
 defines = []
-if cc.has_function('rintf(1.0);rand', includes=['math.h', 'stdlib.h'],
-                   libraries=['m']):
+if cc.has_function('float a = rintf(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_RINTF', '1'))
-if cc.has_function('finite(1.0);rand', includes=['math.h', 'stdlib.h']):
-    defines.append(('HAVE_FINITE', '1'))
-if cc.has_function('expm1(1.0);rand', includes=['math.h', 'stdlib.h'],
-                   libraries=['m']):
+
+if cc.has_function('int a = isfinite(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
+    defines.append(('HAVE_ISFINITE', '1'))
+
+if cc.has_function('double a = expm1(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_EXPM1', '1'))
-if cc.has_function('rint(1.0);rand', includes=['math.h', 'stdlib.h'], 
-                   libraries=['m']):
+
+if cc.has_function('double a = rint(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_RINT', '1'))
-if cc.has_function('double log2(double) ; log2(1.0);rand', 
+
+if cc.has_function('double log2(double); double a = log2(1.0); return rand',
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_LOG2', '1'))
-if cc.has_function('logbl(1.0);rand', includes=['math.h', 'stdlib.h'],
-                   libraries=['m']):
+
+if cc.has_function('long double a = logbl(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_LOGBL', '1'))
-if cc.has_function('snprintf(0, 0, "");rand', 
+
+if cc.has_function('snprintf(0, 0, ""); return rand',
                    includes=['stdio.h', 'stdlib.h']):
     defines.append(('HAVE_SNPRINTF', '1'))
-if cc.has_function('log1p(1.0);rand', includes=['math.h', 'stdlib.h'],
-                   libraries=['m']):
+
+if cc.has_function('double a = log1p(1.0); return rand',
+                   includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_LOG1P', '1'))
-if cc.has_function('double round(double) ; round(1.0);rand', 
+
+if cc.has_function('double round(double) ; double a = round(1.0); return rand', 
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_ROUND', '1'))
-if cc.has_function('double fmin(double, double); fmin(1.0,0.0);rand', 
+
+if cc.has_function('double fmin(double, double); double a = fmin(1.0,0.0); return rand', 
                    includes=['math.h', 'stdlib.h'], libraries=['m']):
     defines.append(('HAVE_FMIN', '1'))
+
+os.chdir('..')
+shutil.rmtree("temp")
 
 # prefix directory for pysplicing module
 pysplicing_dir = 'pysplicing'
@@ -76,6 +95,72 @@ for scheme in INSTALL_SCHEMES.values():
 ##
 MISO_VERSION = "0.5.3"
 
+## This is our implementation of dependency tracking,
+## to avoid rebuilding the C files continuesly.
+## Idea is from http://stackoverflow.com/questions/11013851
+
+def my_compile(self, sources, output_dir=None, macros=None,
+               include_dirs=None, debug=0, extra_preargs=None,
+               extra_postargs=None, depends=None):
+
+    macros, objects, extra_postargs, pp_opts, build = \
+        self._setup_compile(output_dir, macros, include_dirs, sources,
+                            depends, extra_postargs)
+    cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+
+    # -------------------------------------------------------------
+    # This is where we intervine. (The rest is the original
+    # CCompiler.compile.) We check which file in objects really
+    # needs a rebuild, and only keep the the ones that do.
+
+    # We need to create a temporary Makefile, with all the
+    # dependency data, collected from a previous compilation
+    import tempfile
+    import re
+    import subprocess
+
+    makefile_os = tempfile.mkstemp()
+    makefile = os.fdopen(makefile_os[0], "w")
+
+    makefile.write('objects: ' + ' '.join(objects) + '\n' +
+                   '.PHONY: objects\n\n')
+    depfiles = ' '.join([ re.sub("\.o$", ".d", of) for of in objects ])
+    makefile.write('-include ' + depfiles + '\n\n')
+
+    for obj in objects:
+        try:
+            src, ext = build[obj]
+        except KeyError:
+            continue
+        makefile.write(obj + ': ' + src + '\n' +
+                       '\t@echo $@\n\n')
+
+    makefile.close()
+
+    ood_objects = subprocess.check_output(['make', 'objects', '-f',
+                                           makefile_os[1]]).strip().split('\n')
+
+    # We need to add compiler flags to create the dependency files
+    cc_args += ['-MMD', '-MP']
+
+    # -------------------------------------------------------------
+
+    for obj in ood_objects:
+        try:
+            src, ext = build[obj]
+        except KeyError:
+            continue
+        self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+
+        # Return *all* object filenames, not just the ones we just built.
+    return objects
+
+try:
+    if os.environ['GABOR'] == 'yes':
+        distutils.ccompiler.CCompiler.compile = my_compile
+except:
+    None
+
 ##
 ## Generate a __version__.py attribute
 ## for the module
@@ -93,7 +178,7 @@ setup(name = 'misopy',
                     "for isoform quantitation using RNA-Seq",
       long_description = long_description,
       author = 'Yarden Katz,Gabor Csardi',
-      author_email = 'yarden@mit.edu,gcsardi@stat.harvard.edu',
+      author_email = 'yarden@mit.edu,csardi.gabor@gmail.com',
       maintainer = 'Yarden Katz',
       maintainer_email = 'yarden@mit.edu',
       url = 'http://genes.mit.edu/burgelab/miso/',
@@ -136,11 +221,6 @@ setup(name = 'misopy',
                      ['misopy/gff-events/mm9/genes/Atp2b1.mm9.gff']),
                     ('misopy/sashimi_plot/test-data', 
                       ['misopy/sashimi_plot/test-data/events.gff']),
-                    ('misopy/sashimi_plot/test-data/miso-data',
-                     ['misopy/sashimi_plot/test-data/miso-data/heartKOa/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso',
-                      'misopy/sashimi_plot/test-data/miso-data/heartKOb/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso',
-                      'misopy/sashimi_plot/test-data/miso-data/heartWT1/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso',
-                      'misopy/sashimi_plot/test-data/miso-data/heartWT2/chr17/chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.miso']),
                     ('misopy/sashimi_plot/test-data/bam-data',
                      ['misopy/sashimi_plot/test-data/bam-data/heartKOa.bam.bai',
                       'misopy/sashimi_plot/test-data/bam-data/heartKOa.sorted.bam',

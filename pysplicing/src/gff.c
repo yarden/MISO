@@ -12,11 +12,6 @@ const char *splicing_types[] = { "gene", "mRNA", "exon", "CDS",
 /* TODO: do not ignore size */
 int splicing_gff_init(splicing_gff_t *gff, size_t size) {
 
-  if (size < 0) { 
-    SPLICING_ERROR("Cannot create GFF, `size' must be non-negative", 
-		   SPLICING_EINVAL);
-  }
-
   SPLICING_CHECK(splicing_strvector_init(&gff->seqids, 0));
   SPLICING_FINALLY(splicing_strvector_destroy, &gff->seqids);
   SPLICING_CHECK(splicing_strvector_init(&gff->sources, 0));
@@ -102,11 +97,13 @@ int splicing_gff_append(splicing_gff_t *gff, const char *seqid,
 
   if (type == SPLICING_TYPE_GENE) { 
     gff->nogenes++; 
-    SPLICING_CHECK(splicing_vector_int_push_back(&gff->genes, gff->n));
+    SPLICING_CHECK(splicing_vector_int_push_back(&gff->genes,
+						 (int) gff->n));
     SPLICING_CHECK(splicing_vector_int_push_back(&gff->strand, strand));
   } else if (type == SPLICING_TYPE_MRNA) { 
     gff->notranscripts++; 
-    SPLICING_CHECK(splicing_vector_int_push_back(&gff->transcripts, gff->n));
+    SPLICING_CHECK(splicing_vector_int_push_back(&gff->transcripts,
+						 (int) gff->n));
   }
 
   if (type == SPLICING_TYPE_GENE) {
@@ -119,12 +116,12 @@ int splicing_gff_append(splicing_gff_t *gff, const char *seqid,
       size_t idx;
       int seen=splicing_strvector_search(&gff->seqids, seqid, &idx);
       if (seen) { 
-	SPLICING_CHECK(splicing_vector_int_push_back(&gff->seqid, idx));
+	SPLICING_CHECK(splicing_vector_int_push_back(&gff->seqid, (int) idx));
 	gff->last_seqid=splicing_strvector_get(&gff->seqids, idx);
       } else {
 	size_t size=splicing_strvector_size(&gff->seqids);
 	SPLICING_CHECK(splicing_strvector_append(&gff->seqids, seqid));
-	SPLICING_CHECK(splicing_vector_int_push_back(&gff->seqid, size));
+	SPLICING_CHECK(splicing_vector_int_push_back(&gff->seqid, (int) size));
 	gff->last_source=splicing_strvector_get(&gff->seqids, size);
       }
     }
@@ -137,12 +134,12 @@ int splicing_gff_append(splicing_gff_t *gff, const char *seqid,
       size_t idx;
       int seen=splicing_strvector_search(&gff->sources, source, &idx);
       if (seen) { 
-	SPLICING_CHECK(splicing_vector_int_push_back(&gff->source, idx));
+	SPLICING_CHECK(splicing_vector_int_push_back(&gff->source, (int) idx));
 	gff->last_source=splicing_strvector_get(&gff->sources, idx);
       } else {
 	size_t size=splicing_strvector_size(&gff->sources);
 	SPLICING_CHECK(splicing_strvector_append(&gff->sources, source));
-	SPLICING_CHECK(splicing_vector_int_push_back(&gff->source, size));
+	SPLICING_CHECK(splicing_vector_int_push_back(&gff->source, (int) size));
 	gff->last_source=splicing_strvector_get(&gff->sources, size);
       }
     }
@@ -165,7 +162,7 @@ int splicing_gff_append(splicing_gff_t *gff, const char *seqid,
       SPLICING_WARNING("Unknown parent ID, invalid GFF file");
       SPLICING_CHECK(splicing_vector_int_push_back(&gff->parent, -1));
     } else {
-      SPLICING_CHECK(splicing_vector_int_push_back(&gff->parent, idx));
+      SPLICING_CHECK(splicing_vector_int_push_back(&gff->parent, (int) idx));
     }
   }
 
@@ -179,10 +176,10 @@ int splicing_gff_append(splicing_gff_t *gff, const char *seqid,
   /* Update last gene/mrna */
   if (type == SPLICING_TYPE_GENE) { 
     gff->last_gene_id = splicing_strvector_get(&gff->ID, gff->n);
-    gff->last_gene_no = gff->n;
+    gff->last_gene_no = (int) gff->n;
   } else if (type == SPLICING_TYPE_MRNA) {
     gff->last_mrna_id = splicing_strvector_get(&gff->ID, gff->n);
-    gff->last_mrna_no = gff->n;
+    gff->last_mrna_no = (int) gff->n;
   }
 
   gff->n += 1;
@@ -416,7 +413,7 @@ int splicing_gff_reindex(splicing_gff_t *gff) {
   splicing_vector_int_t index;
   splicing_vector_int_t index2;
   splicing_vector_int_t gindex;
-  int i, j, k, n=gff->n;
+  int i, j, k, n = (int) gff->n;
   
   SPLICING_CHECK(splicing_vector_int_init(&index, n));
   SPLICING_FINALLY(splicing_vector_int_destroy, &index);
@@ -586,7 +583,7 @@ int splicing_i_gff_noiso_one(const splicing_gff_t *gff, size_t gene,
   size_t nogenes, idx1, idx2;
   SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
   
-  if (gene < 0 || gene >= nogenes) {
+  if (gene >= nogenes) {
     SPLICING_ERROR("Invalid gene id", SPLICING_EINVAL);
   }
 
@@ -609,13 +606,13 @@ int splicing_i_gff_noiso_one(const splicing_gff_t *gff, size_t gene,
     idx1++;
     for (; idx1 < idx2; idx1++) {
       if (VECTOR(gff->type)[idx1] == SPLICING_TYPE_MRNA) { 
-	VECTOR(*isolen)[pos++]=il;
+	VECTOR(*isolen)[pos++] = (int) il;
 	il = 0;
       } else if (VECTOR(gff->type)[idx1] == SPLICING_TYPE_EXON) {
 	il += VECTOR(gff->end)[idx1] - VECTOR(gff->start)[idx1] + 1;
       }
     }
-    VECTOR(*isolen)[pos++]=il;
+    VECTOR(*isolen)[pos++] = (int) il;
   }
   
   return 0;
@@ -627,7 +624,7 @@ int splicing_gff_noexons_one(const splicing_gff_t *gff, size_t gene,
   size_t nogenes, idx1, idx2, noiso, pos, il;
   SPLICING_CHECK(splicing_gff_nogenes(gff, &nogenes));
   
-  if (gene < 0 || gene >= nogenes) {
+  if (gene >= nogenes) {
     SPLICING_ERROR("Invalid gene id", SPLICING_EINVAL);
   }
 
@@ -647,11 +644,11 @@ int splicing_gff_noexons_one(const splicing_gff_t *gff, size_t gene,
   idx1++;
   for (pos=0, il=0; idx1 < idx2; idx1++) {
     if (VECTOR(gff->type)[idx1] == SPLICING_TYPE_MRNA) {
-      VECTOR(*noexons)[pos++]=il;
+      VECTOR(*noexons)[pos++] = (int) il;
       il=0;
     } else if (VECTOR(gff->type)[idx1] == SPLICING_TYPE_EXON) { il++; }
   }
-  VECTOR(*noexons)[pos++]=il;
+  VECTOR(*noexons)[pos++] = (int) il;
 
   return 0;
 }
@@ -732,7 +729,7 @@ int splicing_gff_exon_start_end(const splicing_gff_t *gff,
 				int gene) {
   
   size_t noiso;
-  int i=0, p=0, n=splicing_gff_size(gff);
+  int i=0, p=0, n = (int) splicing_gff_size(gff);
   int pos;
   size_t nogenes;
   splicing_vector_int_t tmp, tmp2;
@@ -823,7 +820,7 @@ int splicing_gff_gene_start_end_one(const splicing_gff_t *gff, size_t gene,
   size_t nogenes=splicing_vector_int_size(&gff->genes);
   size_t idx;
   
-  if (gene < 0 || gene >= nogenes) { 
+  if (gene >= nogenes) {
     SPLICING_ERROR("Invalid gene id", SPLICING_EINVAL); 
   }
   
@@ -867,7 +864,7 @@ int splicing_gff_converter_init(const splicing_gff_t *gff, size_t gene,
   
   SPLICING_CHECK(splicing_gff_exon_start_end(gff, &converter->exstart, 
 					     &converter->exend, 
-					     &converter->exidx, gene));
+					     &converter->exidx, (int) gene));
 
   /* Calculate the shift */
   for (i=0; i < converter->noiso; i++) {
@@ -876,7 +873,7 @@ int splicing_gff_converter_init(const splicing_gff_t *gff, size_t gene,
     while (pos < pos2) {
       cs += VECTOR(converter->exstart)[pos];
       SPLICING_CHECK(splicing_vector_int_push_back(&converter->shift, 
-						   cs-ce-ex-1));
+						   (int) (cs-ce-ex-1)));
       ex++; ce += VECTOR(converter->exend)[pos]; pos++;
     }
   }
@@ -889,7 +886,8 @@ int splicing_gff_converter_init(const splicing_gff_t *gff, size_t gene,
       size_t l=
 	VECTOR(converter->exend)[pos] - VECTOR(converter->exstart)[pos]+1;
       cs += l;
-      SPLICING_CHECK(splicing_vector_int_push_back(&converter->exlim, cs+1));
+      SPLICING_CHECK(splicing_vector_int_push_back(&converter->exlim,
+						   (int) (cs+1)));
       pos++;
     }
   }
@@ -941,7 +939,7 @@ int splicing_iso_to_genomic(const splicing_gff_t *gff, size_t gene,
 	   VECTOR(myconverter->exlim)[ex] <= pos; 
 	 ex++) ;
     if (ex < VECTOR(myconverter->exidx)[iso+1]) { 
-      VECTOR(*position)[i] = pos + VECTOR(myconverter->shift)[ex];
+      VECTOR(*position)[i] = (int) pos + VECTOR(myconverter->shift)[ex];
     } else {
       VECTOR(*position)[i] = -1;
     }
@@ -1061,7 +1059,7 @@ int splicing_genomic_to_iso(const splicing_gff_t *gff, size_t gene,
       size_t pos=VECTOR(*position)[r];
       size_t startpos=VECTOR(myconverter->exidx)[i];
       size_t endpos=VECTOR(myconverter->exidx)[i+1];
-      int ex;
+      size_t ex;
       for (ex=startpos; 
 	   ex < endpos && VECTOR(myconverter->exend)[ex] < pos; 
 	   ex++) ;
@@ -1138,7 +1136,7 @@ int splicing_genomic_to_iso_all(const splicing_gff_t *gff, size_t gene,
   for (i=0; i<myconverter->noiso; i++) {
     size_t startpos=VECTOR(myconverter->exidx)[i];
     size_t endpos=VECTOR(myconverter->exidx)[i+1];
-    int ex;
+    size_t ex;
     for (ex=startpos; 
 	 ex < endpos && VECTOR(myconverter->exend)[ex] < position; 
 	 ex++) ;
@@ -1208,7 +1206,7 @@ int splicing_gff_fprint(const splicing_gff_t *gff,
   size_t i, n;
   SPLICING_CHECK(splicing_gff_nogenes(gff, &n));
   for (i=0; i<n; i++) {
-    SPLICING_CHECK(splicing_gff_fprint_gene(gff, outfile, i));
+    SPLICING_CHECK(splicing_gff_fprint_gene(gff, outfile, (int) i));
   }
   
   return 0;
@@ -1246,11 +1244,11 @@ int splicing_exonset_append(splicing_exonset_t *ex, const char *seqid,
   size_t idx;
   int seen=splicing_strvector_search(&ex->seqids, seqid, &idx);
   if (seen) { 
-    SPLICING_CHECK(splicing_vector_int_push_back(&ex->seqid, idx));
+    SPLICING_CHECK(splicing_vector_int_push_back(&ex->seqid, (int) idx));
   } else {
     size_t size=splicing_strvector_size(&ex->seqids);
     SPLICING_CHECK(splicing_strvector_append(&ex->seqids, seqid));
-    SPLICING_CHECK(splicing_vector_int_push_back(&ex->seqid, size));
+    SPLICING_CHECK(splicing_vector_int_push_back(&ex->seqid, (int) size));
   }
   SPLICING_CHECK(splicing_vector_int_push_back(&ex->start, start));
   SPLICING_CHECK(splicing_vector_int_push_back(&ex->end, end));
@@ -1290,7 +1288,7 @@ int splicing_i_gff_constitutive_exons_all(const splicing_gff_t *gff,
     int noex, idx, noEvents, i;
     size_t noiso;
     int start=VECTOR(gff->genes)[g];
-    int end= g+1 < nogenes ? VECTOR(gff->genes)[g+1] : gff->n;
+    int end= g+1 < nogenes ? VECTOR(gff->genes)[g+1] : (int) (gff->n);
     splicing_gff_noiso_one(gff, g, &noiso);
     
     /* Collect and sort all events */
@@ -1302,7 +1300,7 @@ int splicing_i_gff_constitutive_exons_all(const splicing_gff_t *gff,
 			-VECTOR(gff->end)[idx]));
       }
     }
-    noEvents=splicing_vector_int_size(&events);
+    noEvents = (int) splicing_vector_int_size(&events);
     splicing_qsort(VECTOR(events), noEvents, sizeof(int),
 		   splicing_i_const_cmp);
 
@@ -1359,7 +1357,7 @@ int splicing_i_gff_constitutive_exons_full(const splicing_gff_t *gff,
     int i, idx, noExons, noSame;
     size_t noiso;
     int start=VECTOR(gff->genes)[g];
-    int end= g+1 < nogenes ? VECTOR(gff->genes)[g+1] : gff->n;
+    int end= g+1 < nogenes ? VECTOR(gff->genes)[g+1] : (int) (gff->n);
     splicing_gff_noiso_one(gff, g, &noiso);
     
     /* Collect and sort all events */
@@ -1371,7 +1369,7 @@ int splicing_i_gff_constitutive_exons_full(const splicing_gff_t *gff,
 			VECTOR(gff->end)[idx]));
       }
     }
-    noExons=splicing_vector_int_size(&events)/2;
+    noExons = (int) splicing_vector_int_size(&events)/2;
     splicing_qsort(VECTOR(events), noExons, sizeof(int)*2,
 		   splicing_i_const_cmp2);
     

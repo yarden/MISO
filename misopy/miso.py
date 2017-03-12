@@ -89,14 +89,16 @@ class GenesDispatcher:
         self.gff_dir = gff_dir
         self.bam_filename = bam_filename
         # Check that the BAM filename exists and that it has an index
-        if not os.path.isfile(self.bam_filename):
-            self.main_logger.error("BAM file %s not found." %(self.bam_filename))
-            sys.exit(1)
-        self.bam_index_fname = "%s.bai" %(self.bam_filename)
-        if not os.path.isfile(self.bam_index_fname):
-            self.main_logger.warning("Expected BAM index file %s not found." \
-                                %(self.bam_index_fname))
-            self.main_logger.warning("Are you sure your BAM file is indexed?")
+        for bam in bam_filename:
+            if not os.path.isfile(bam):
+                self.main_logger.error("BAM file %s not found." %(bam))
+                sys.exit(1)
+        self.bam_index_fname = [ "%s.bai" %(bam) for bam in self.bam_filename ]
+        for bai in self.bam_index_fname:
+            if not os.path.isfile(bai):
+                self.main_logger.warning("Expected BAM index file %s not found." \
+                                         %(bai))
+                self.main_logger.warning("Are you sure your BAM file is indexed?")
         self.output_dir = output_dir
         self.read_len = read_len
         # For now setting overhang to 1 always
@@ -209,7 +211,7 @@ class GenesDispatcher:
               "python %s --compute-genes-from-file \"%s\" %s %s --read-len %d " \
                     %(miso_run,
                       batch_filename,
-                      self.bam_filename,
+                      ' '.join(self.bam_filename),
                       self.output_dir,
                       self.read_len)
             # Add paired-end parameters and read len/overhang len
@@ -318,6 +320,7 @@ class GenesDispatcher:
         num_threads = len(self.threads)
         if num_threads == 0:
             return
+        retcode = 0
         print "Waiting on %d threads..." %(num_threads)
         t_start = time.time()
         for thread_name in self.threads:
@@ -328,6 +331,7 @@ class GenesDispatcher:
             if curr_thread.returncode != 0:
                 self.main_logger.warning("Thread %s might have failed..." \
                                     %(thread_name))
+                retcode = curr_thread.returncode
             if curr_thread.returncode is None:
                 self.main_logger.warning("Thread still going...")
             threads_completed[thread_name] = True
@@ -335,6 +339,8 @@ class GenesDispatcher:
         duration = ((t_end - t_start) / 60.) / 60.
         self.main_logger.info("Threads completed in %.2f hours." \
                               %(duration))
+        if retcode != 0:
+            sys.exit(retcode)
 
 
 def compute_all_genes_psi(gff_dir, bam_filename, read_len,
@@ -361,15 +367,16 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len,
     """
     print "Computing Psi values..." 
     print "  - GFF index: %s" %(gff_dir)
-    print "  - BAM: %s" %(bam_filename)
+    print "  - BAM: %s" %(' '.join(bam_filename))
     print "  - Read length: %d" %(read_len)
     print "  - Output directory: %s" %(output_dir)
 
     misc_utils.make_dir(output_dir)
 
     # Check GFF and BAM for various errors like headers mismatch
-    run_events.check_gff_and_bam(gff_dir, bam_filename, main_logger,
-                                 given_read_len=read_len)
+    for bam in bam_filename:
+        run_events.check_gff_and_bam(gff_dir, bam, main_logger,
+                                     given_read_len=read_len)
     
     # Prefilter events that do not meet the coverage criteria
     # If filtering is on, only run on events that meet
@@ -382,9 +389,13 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len,
             main_logger.error("Error: Cannot use bedtools. Bedtools is " \
                               "required for --prefilter option")
             sys.exit(1)
-        filtered_gene_ids = run_events.get_ids_passing_filter(gff_dir,
-                                                              bam_filename,
-                                                              output_dir)
+
+        filtered_gene_ids = \
+            [ run_events.get_ids_passing_filter(gff_dir, bam, output_dir) for bam in bam_filename ]
+
+        # TODO: don't we want the union of them?
+        filtered_gene_ids = set.intersection(*filtered_gene_ids)
+
         # Prefiltering succeeded, so process only gene ids that
         # pass the filter
         if filtered_gene_ids != None:
@@ -398,7 +409,7 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len,
                                   "read coverage filter. Check that your BAM headers " \
                                   "in %s match the GFF headers of indexed events." \
                                   %(gff_dir,
-                                    bam_filename))
+                                    ' '.join(bam_filename)))
                 sys.exit(1)
             main_logger.info("Total of %d events pass coverage filter." \
                              %(num_pass))
@@ -426,16 +437,33 @@ def compute_all_genes_psi(gff_dir, bam_filename, read_len,
 
 
 
-def main():
+def main(argv = None):
+
+    if argv is None:
+        argv = sys.argv[1:]
+
     from optparse import OptionParser
     parser = OptionParser()
+
+    def bam_cb(option, opt_str, value, parser):
+        args=[]
+        for arg in parser.rargs:
+            if arg[0] != "-":
+                args.append(arg)
+            else:
+                del parser.rargs[:len(args)]
+                break
+        if getattr(parser.values, option.dest):
+            args.extend(getattr(parser.values, option.dest))
+        setattr(parser.values, option.dest, args)
+
     parser.add_option("--run", dest="compute_genes_psi",
-                      nargs=2, default=None,
+                      action="callback", default=None, callback = bam_cb,
                       help="Compute Psi values for a given GFF annotation "
                       "of either whole mRNA isoforms or isoforms produced by "
-                      "single alternative splicing events. Expects two "
+                      "single alternative splicing events. Expects at least two "
                       "arguments: an indexed GFF directory with genes to "
-                      "process, and a sorted, indexed BAM file (with "
+                      "process, and a sorted, indexed BAM file(s) (with "
                       "headers) to run on.")
     parser.add_option("--event-type", dest="event_type", nargs=1,
                       help="[OPTIONAL] Type of event (e.g. SE, RI, A3SS, ...)",
@@ -508,7 +536,7 @@ def main():
                       help="View the contents of a gene/event that has "
                       "been indexed. Takes as input an "
                       "indexed (.pickle) filename.")
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(argv)
 
     greeting()
 
@@ -547,7 +575,8 @@ def main():
 
         # BAM filename with reads
         bam_filename = \
-            os.path.abspath(os.path.expanduser(options.compute_genes_psi[1]))
+            [ os.path.abspath(os.path.expanduser(bam))
+              for bam in options.compute_genes_psi[1:]]
 
         if options.output_dir == None:
             print "Error: need --output-dir to compute Psi values."

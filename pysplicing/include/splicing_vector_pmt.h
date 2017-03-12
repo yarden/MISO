@@ -40,6 +40,7 @@ int FUNCTION(splicing_vector,init_seq)(TYPE(splicing_vector)*v, BASE from, BASE 
 int FUNCTION(splicing_vector,copy)(TYPE(splicing_vector) *to, 
 				 const TYPE(splicing_vector) *from);
 void FUNCTION(splicing_vector,destroy)(TYPE(splicing_vector)* v);
+void FUNCTION(splicing_vector,destroy_free)(TYPE(splicing_vector)* v);
 
 /*--------------------*/
 /* Accessing elements */
@@ -152,6 +153,10 @@ int FUNCTION(splicing_vector,is_equal)(const TYPE(splicing_vector) *lhs,
 					       const TYPE(splicing_vector) *rhs);
 BASE FUNCTION(splicing_vector,maxdifference)(const TYPE(splicing_vector) *m1,
 					   const TYPE(splicing_vector) *m2);
+BASE FUNCTION(splicing_vector,mean)(const TYPE(splicing_vector) *v);
+BASE FUNCTION(splicing_vector,var)(const TYPE(splicing_vector) *v);
+BASE FUNCTION(splicing_vector,median)(const TYPE(splicing_vector) *v);
+BASE FUNCTION(splicing_vector,iqr)(const TYPE(splicing_vector) *v);
 
 /*------------------------*/
 /* Searching for elements */

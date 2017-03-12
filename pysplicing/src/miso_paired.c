@@ -7,6 +7,7 @@
 #include "splicing_error.h"
 #include "splicing.h"
 #include "splicing_random.h"
+#include "splicing_memory.h"
 
 #define CUMSUM() do {							\
     int j;								\
@@ -21,14 +22,41 @@
     }									\
   } while (0)
 
+int splicing_reassign_samples_paired1(
+			     const splicing_matrix_t *matches, 
+			     const splicing_vector_int_t *match_order,
+			     const splicing_matrix_t *psi, 
+			     int noiso, int noChains, int fragmentStart, 
+			     splicing_matrix_int_t *result);
+
 int splicing_reassign_samples_paired(
+			     const splicing_vector_ptr_t *all_matches, 
+			     const splicing_vector_ptr_t *all_match_order,
+			     const splicing_vector_ptr_t *all_psi, 
+			     int noiso, int noChains, int fragmentStart, 
+			     splicing_vector_ptr_t *all_result) {
+
+  int rep, norep = (int) splicing_vector_ptr_size(all_matches);
+  for (rep = 0; rep < norep; rep++) {
+    const splicing_matrix_t *matches = VECTOR(*all_matches)[rep];
+    const splicing_vector_int_t *match_order = VECTOR(*all_match_order)[rep];
+    const splicing_matrix_t *psi = VECTOR(*all_psi)[rep];
+    splicing_matrix_int_t *result = VECTOR(*all_result)[rep];
+    splicing_reassign_samples_paired1(matches, match_order, psi, noiso, noChains,
+				      fragmentStart, result);
+  }
+
+  return 0;
+}  
+
+int splicing_reassign_samples_paired1(
 			     const splicing_matrix_t *matches, 
 			     const splicing_vector_int_t *match_order,
 			     const splicing_matrix_t *psi, 
 			     int noiso, int noChains, int fragmentStart, 
 			     splicing_matrix_int_t *result) {
 
-  int noreads = splicing_matrix_ncol(matches);
+  int noreads = (int) splicing_matrix_ncol(matches);
   int i, k, w;
   double *prev, *curr;
   double rand, sumpsi;
@@ -91,8 +119,7 @@ int splicing_score_iso_paired(const splicing_vector_t *psi, int noiso,
 			      const splicing_vector_t *assscores,
 			      double *res) {
 
-  int noreads=splicing_vector_int_size(assignment);
-  int *isolen = VECTOR(*pisolen);
+  int noreads = (int) splicing_vector_int_size(assignment);
   double sum, maxpsieff, score;
   splicing_vector_t logpsi;
   int i;
@@ -133,7 +160,7 @@ int splicing_score_iso_paired(const splicing_vector_t *psi, int noiso,
 int splicing_score_joint_paired(const splicing_matrix_int_t *assignment,
 				int no_reads, int noChains,
 				const splicing_matrix_t *psi, 
-				const splicing_vector_t *hyper, 
+				splicing_miso_hyperprior_t *hyperprior,
 				const splicing_vector_int_t *isolen,
 				const splicing_matrix_t *isoscores, 
 				const splicing_vector_t *assscores,
@@ -141,7 +168,7 @@ int splicing_score_joint_paired(const splicing_matrix_int_t *assignment,
 				int fragmentStart, 
 				splicing_vector_t *score) {
 
-  int i, j, noiso = splicing_vector_int_size(isolen);
+  int i, j, noiso = (int) splicing_vector_int_size(isolen);
 
   SPLICING_CHECK(splicing_vector_resize(score, noChains));
 
@@ -165,7 +192,15 @@ int splicing_score_joint_paired(const splicing_matrix_int_t *assignment,
     /* Score isoforms */
     SPLICING_CHECK(splicing_score_iso_paired(&tmp, noiso, &tmp2,
 					     isolen, assscores, &assProb));
-    SPLICING_CHECK(splicing_ldirichlet(&tmp, hyper, noiso, &psiProb));
+    if (hyperprior->prior == SPLICING_MISO_PRIOR_DIRICHLET) {
+      SPLICING_CHECK(splicing_ldirichlet(&tmp, &(hyperprior->dirichlet_hyperp),
+					 noiso, &psiProb));
+    } else {
+      SPLICING_CHECK(splicing_llogistic(&tmp,
+					VECTOR(hyperprior->logistic_mean)[j],
+					VECTOR(hyperprior->logistic_var)[j],
+					&psiProb));
+    }
     
     VECTOR(*score)[j] = readProb + assProb + psiProb;
   }
@@ -182,7 +217,7 @@ int splicing_metropolis_hastings_ratio_paired(
 			      const splicing_matrix_t *alpha,
 			      double sigma, int noiso, 
 			      const splicing_vector_int_t *isolen,
-			      const splicing_vector_t *hyperp, 
+			      splicing_miso_hyperprior_t *hyperprior,
 			      const splicing_matrix_t *isoscores,
 			      const splicing_vector_t *assscores,
 			      const splicing_matrix_int_t *fragmentLength,
@@ -204,12 +239,12 @@ int splicing_metropolis_hastings_ratio_paired(
   SPLICING_FINALLY(splicing_vector_destroy, &ctoPS);
 
   SPLICING_CHECK(splicing_score_joint_paired(ass, no_reads, noChains, 
-					     psiNew, hyperp,
+					     psiNew, hyperprior,
 					     isolen, isoscores, assscores, 
 					     fragmentLength, fragmentStart,
 					     ppJS));
   SPLICING_CHECK(splicing_score_joint_paired(ass, no_reads, noChains, 
-					     psi, hyperp,
+					     psi, hyperprior,
 					     isolen, isoscores, assscores,
 					     fragmentLength, fragmentStart,
 					     pcJS));
@@ -239,41 +274,48 @@ int splicing_metropolis_hastings_ratio_paired(
 }
 
 int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
-			 const splicing_vector_int_t *position,
-			 const char **cigarstr, int readLength, int overHang,
+			 const splicing_replicate_reads_t *reads,
+			 int readLength, int overHang,
 			 int noChains, int noIterations, 
 			 int maxIterations, int noBurnIn, int noLag,
-			 const splicing_vector_t *hyperp, 
+			 splicing_miso_hyperprior_t *hyperprior,
 			 splicing_miso_start_t start, 
 			 splicing_miso_stop_t stop,
 			 const splicing_matrix_t *start_psi,
 			 const splicing_vector_t *fragmentProb,
 			 int fragmentStart, double normalMean, 
 			 double normalVar, double numDevs,
-			 splicing_matrix_t *samples, 
+
+			 splicing_matrix_t *pop_samples,
+			 splicing_vector_ptr_t *samples, /* matrix_t */
+			 
 			 splicing_vector_t *logLik,
-			 splicing_matrix_t *match_matrix, 
+			 splicing_vector_ptr_t *match_matrix, /* matrix_t */
 			 splicing_matrix_t *class_templates,
-			 splicing_vector_t *class_counts,
+			 splicing_vector_ptr_t *class_counts, /* vector_t */
 			 splicing_matrix_t *bin_class_templates,
-			 splicing_vector_t *bin_class_counts,
-			 splicing_vector_int_t *assignment,
+			 splicing_vector_ptr_t *bin_class_counts, /* vector_t */
+			 splicing_vector_ptr_t *assignment,	  /* vector_int_t */
 			 splicing_miso_rundata_t *rundata) {
 
+  size_t noiso;
   splicing_vector_t acceptP, cJS, pJS;
   double sigma;
-  int noReads = splicing_vector_int_size(position)/2;
-  splicing_matrix_int_t vass;
-  size_t noiso;
-  splicing_matrix_t vpsi, vpsiNew, valpha, valphaNew, 
+  splicing_vector_int_t noReads;
+  int noReplicates = splicing_replicate_reads_noreps(reads);
+  splicing_vector_ptr_t vass;	/* matrix_int_t */
+
+  /* These all contain matrix_t's */
+  splicing_vector_ptr_t vpsi, vpsiNew, valpha, valphaNew, 
     *psi=&vpsi, *psiNew=&vpsiNew, *alpha=&valpha, *alphaNew=&valphaNew;
+
   int noSamples = noChains * (noIterations - noBurnIn) / noLag;
   int i, j, m, lagCounter=0, noS=0;
-  splicing_matrix_t *mymatch_matrix=match_matrix, vmatch_matrix;
-  splicing_vector_int_t match_order;
+  splicing_vector_ptr_t *mymatch_matrix=match_matrix, vmatch_matrix; /* matrix_t */
+  splicing_vector_ptr_t match_order;				     /* vector_int_t */
   splicing_vector_int_t isolen;
   splicing_matrix_t isoscores;
-  splicing_matrix_int_t fragmentLength;
+  splicing_vector_ptr_t fragmentLength; /* matrix_int_t */
   splicing_vector_t assscores;
   int il;
   splicing_vector_t *myfragmentProb=(splicing_vector_t*) fragmentProb,
@@ -307,12 +349,37 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 			  1.0/splicing_vector_sum(myfragmentProb));
   }
 
-  il=splicing_vector_size(myfragmentProb);
+  il = (int) splicing_vector_size(myfragmentProb);
 
   SPLICING_CHECK(splicing_gff_noiso_one(gff, gene, &noiso));
 
-  if (splicing_vector_size(hyperp) != noiso) { 
+  if (hyperprior->prior != SPLICING_MISO_PRIOR_AUTO &&
+      hyperprior->prior != SPLICING_MISO_PRIOR_DIRICHLET &&
+      hyperprior->prior != SPLICING_MISO_PRIOR_LOGISTIC) {
+    SPLICING_ERROR("'prior' is invalid", SPLICING_EINVAL);
+  }
+
+  if (hyperprior->prior == SPLICING_MISO_PRIOR_AUTO) {
+    if (noiso == 2) {
+      hyperprior->prior = SPLICING_MISO_PRIOR_LOGISTIC;
+    } else {
+      hyperprior->prior = SPLICING_MISO_PRIOR_DIRICHLET;
+    }
+  }
+
+  if (hyperprior->prior == SPLICING_MISO_PRIOR_DIRICHLET &&
+      splicing_vector_size(&(hyperprior->dirichlet_hyperp)) != noiso) {
     SPLICING_ERROR("Invalid hyperparameter vector length", 
+		   SPLICING_EINVAL);
+  }
+
+  if (hyperprior->prior == SPLICING_MISO_PRIOR_LOGISTIC && noiso != 2) {
+    SPLICING_ERROR("Logistic prior currently only works for two isoforms",
+		   SPLICING_UNIMPLEMENTED);
+  }
+
+  if (splicing_vector_min(&hyperprior->logistic_var) < 0) {
+    SPLICING_ERROR("Variance of the logistic prior must be non-negative",
 		   SPLICING_EINVAL);
   }
 
@@ -338,7 +405,17 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
     SPLICING_ERROR("Given PSI has wrong size", SPLICING_EINVAL);
   }
 
-  rundata->noIso=noiso;
+  if (!pop_samples && !samples) {
+    SPLICING_ERROR("At least one of 'samples' and 'pop_samples' must"
+		   "be non-NULL", SPLICING_EINVAL);
+  }
+
+  if (noReplicates > 1 && ! pop_samples) {
+    SPLICING_ERROR("Replicates, but pop_samples is NULL", SPLICING_EINVAL);
+  }
+
+  
+  rundata->noIso=(int) noiso;
   rundata->noIters=noIterations;
   rundata->noBurnIn=noBurnIn;
   rundata->noLag=noLag;
@@ -353,41 +430,154 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_vector_init(&pJS, noChains));
   SPLICING_FINALLY(splicing_vector_destroy, &pJS);
 
-  SPLICING_CHECK(splicing_matrix_int_init(&vass, noReads, noChains));
-  SPLICING_FINALLY(splicing_matrix_int_destroy, &vass);
-  SPLICING_CHECK(splicing_matrix_init(&vpsi, noiso, noChains));
-  SPLICING_FINALLY(splicing_matrix_destroy, &vpsi);
-  SPLICING_CHECK(splicing_matrix_init(&vpsiNew, noiso, noChains));
-  SPLICING_FINALLY(splicing_matrix_destroy, &vpsiNew);
-  SPLICING_CHECK(splicing_matrix_init(&valpha, noiso-1, noChains));
-  SPLICING_FINALLY(splicing_matrix_destroy, &valpha);
-  SPLICING_CHECK(splicing_matrix_init(&valphaNew, noiso-1, noChains));
-  SPLICING_FINALLY(splicing_matrix_destroy, &valphaNew);
-
-  if (match_matrix) { 
-    SPLICING_CHECK(splicing_matrix_resize(match_matrix, noiso, noReads));
-  } else {
-    mymatch_matrix=&vmatch_matrix;
-    SPLICING_CHECK(splicing_matrix_init(mymatch_matrix, noiso, noReads));
-    SPLICING_FINALLY(splicing_matrix_destroy, mymatch_matrix);
+  SPLICING_CHECK(splicing_vector_int_init(&noReads, noReplicates));
+  for (i = 0; i < noReplicates; i++) {
+    VECTOR(noReads)[i] = splicing_replicate_reads_noreads(reads, i) / 2;
   }
-  SPLICING_CHECK(splicing_vector_int_init(&match_order, noReads));
-  SPLICING_FINALLY(splicing_vector_int_destroy, &match_order);
-  SPLICING_CHECK(splicing_matrix_int_init(&fragmentLength, noiso, noReads));
-  SPLICING_FINALLY(splicing_matrix_int_destroy, &fragmentLength);
-  SPLICING_CHECK(splicing_matchIso_paired(gff, gene, position, cigarstr, 
-					  readLength, overHang, 
-					  myfragmentProb, 
-					  fragmentStart, normalMean, 
-					  normalVar, numDevs, mymatch_matrix,
-					  &fragmentLength));
-  SPLICING_CHECK(splicing_order_matches(mymatch_matrix, &match_order));
 
+  SPLICING_CHECK(splicing_vector_ptr_init(&vass, noReplicates));
+  splicing_vector_ptr_set_item_destructor(&vass,
+    (splicing_finally_func_t *) splicing_matrix_int_destroy_free);
+  SPLICING_FINALLY(splicing_vector_ptr_destroy, &vass);
+  for (i = 0; i < noReplicates; i++) {
+    splicing_matrix_int_t *vass1 =
+      splicing_Calloc(1, splicing_matrix_int_t);
+    if (!vass1) {
+      SPLICING_ERROR("No memory for assignment", SPLICING_ENOMEM);
+    }
+    VECTOR(vass)[i] = vass1;
+    SPLICING_CHECK(splicing_matrix_int_init(vass1, VECTOR(noReads)[i],
+					    noChains));
+  }
+  
+  SPLICING_CHECK(splicing_vector_ptr_init(&vpsi, noReplicates));
+  splicing_vector_ptr_set_item_destructor(&vpsi,
+    (splicing_finally_func_t *) splicing_matrix_destroy_free);
+  SPLICING_FINALLY(splicing_vector_ptr_destroy, &vpsi);
+
+  SPLICING_CHECK(splicing_vector_ptr_init(&vpsiNew, noReplicates));
+  splicing_vector_ptr_set_item_destructor(&vpsiNew,
+    (splicing_finally_func_t *) splicing_matrix_destroy_free);
+  SPLICING_FINALLY(splicing_vector_ptr_destroy, &vpsiNew);
+
+  SPLICING_CHECK(splicing_vector_ptr_init(&valpha, noReplicates));
+  splicing_vector_ptr_set_item_destructor(&valpha,
+    (splicing_finally_func_t *) splicing_matrix_destroy_free);
+  SPLICING_FINALLY(splicing_vector_ptr_destroy, &valpha);
+
+  SPLICING_CHECK(splicing_vector_ptr_init(&valphaNew, noReplicates));
+  splicing_vector_ptr_set_item_destructor(&valphaNew,
+    (splicing_finally_func_t *) splicing_matrix_destroy_free);
+  SPLICING_FINALLY(splicing_vector_ptr_destroy, &valphaNew);
+
+  for (i = 0; i < noReplicates; i++) {
+    splicing_matrix_t *psi = splicing_Calloc(1, splicing_matrix_t);
+    splicing_matrix_t *psinew = splicing_Calloc(1, splicing_matrix_t);
+    splicing_matrix_t *alpha = splicing_Calloc(1, splicing_matrix_t);
+    splicing_matrix_t *alphanew = splicing_Calloc(1, splicing_matrix_t);
+    if (!psi || !psinew || !alpha || !alphanew) {
+      SPLICING_ERROR("No memory to run MISO", SPLICING_ENOMEM);
+    }
+    VECTOR(vpsi)[i] = psi;
+    VECTOR(vpsiNew)[i] = psinew;
+    VECTOR(valpha)[i] = alpha;
+    VECTOR(valphaNew)[i] = alphanew;
+    SPLICING_CHECK(splicing_matrix_init(psi, noiso, noChains));
+    SPLICING_CHECK(splicing_matrix_init(psinew, noiso, noChains));
+    SPLICING_CHECK(splicing_matrix_init(alpha, noiso-1, noChains));
+    SPLICING_CHECK(splicing_matrix_init(alphanew, noiso-1, noChains));
+  }
+  
+  if (match_matrix) { 
+     for (i = 0; i < noReplicates; i++) {
+      splicing_matrix_t *mat = VECTOR(*match_matrix)[i];
+      SPLICING_CHECK(splicing_matrix_resize(mat, noiso, VECTOR(noReads)[i]));
+    }
+  } else {
+    mymatch_matrix = &vmatch_matrix;
+    SPLICING_CHECK(splicing_vector_ptr_init(mymatch_matrix, noReplicates));
+    splicing_vector_ptr_set_item_destructor(mymatch_matrix,
+      (splicing_finally_func_t *) splicing_matrix_destroy_free);
+    SPLICING_FINALLY(splicing_vector_ptr_destroy, mymatch_matrix);
+    for (i = 0; i < noReplicates; i++) {
+      splicing_matrix_t *mat = splicing_Calloc(1, splicing_matrix_t);
+      if (!mat) SPLICING_ERROR("No memory for match matrix", SPLICING_ENOMEM);
+      VECTOR(*mymatch_matrix)[i] = mat;
+      SPLICING_CHECK(splicing_matrix_init(mat, noiso, VECTOR(noReads)[i]));
+    }
+  }
+
+  SPLICING_CHECK(splicing_vector_ptr_init(&match_order, noReplicates));
+  splicing_vector_ptr_set_item_destructor(&match_order,
+    (splicing_finally_func_t *) splicing_vector_int_destroy_free);
+  SPLICING_FINALLY(splicing_vector_ptr_destroy, &match_order);
+  for (i = 0; i < noReplicates; i++) {
+    splicing_vector_int_t *vec = splicing_Calloc(1, splicing_vector_int_t);
+    if (!vec) { SPLICING_ERROR("No memory for match order", SPLICING_ENOMEM); }
+    VECTOR(match_order)[i] = vec;
+    SPLICING_CHECK(splicing_vector_int_init(vec, VECTOR(noReads)[i]));
+  }
+
+  SPLICING_CHECK(splicing_vector_ptr_init(&fragmentLength, noReplicates));
+  splicing_vector_ptr_set_item_destructor(&fragmentLength,
+    (splicing_finally_func_t *) splicing_matrix_int_destroy_free);
+  SPLICING_FINALLY(splicing_vector_ptr_destroy, &fragmentLength);
+  for (i = 0; i < noReplicates; i++) {
+    splicing_matrix_int_t *fl = splicing_Calloc(1, splicing_matrix_int_t);
+    if (!fl) { SPLICING_ERROR("No memory for fragment length", SPLICING_ENOMEM); }
+    VECTOR(fragmentLength)[i] = fl;
+    SPLICING_CHECK(splicing_matrix_int_init(fl, noiso, VECTOR(noReads)[i]));
+  }
+
+  for (i = 0; i < noReplicates; i++) {
+    const splicing_vector_int_t *position =
+      splicing_replicate_reads_pos(reads, i);
+    const char **cigarstr = splicing_replicate_reads_cigar(reads, i);
+    splicing_matrix_t *mm = VECTOR(*mymatch_matrix)[i];
+    splicing_vector_int_t *mo = VECTOR(match_order)[i];
+    splicing_matrix_int_t *fl = VECTOR(fragmentLength)[i];
+    SPLICING_CHECK(splicing_matchIso_paired(gff, (int) gene, position, cigarstr,
+					    readLength, overHang, 
+					    myfragmentProb, 
+					    fragmentStart, normalMean, 
+					    normalVar, numDevs, mm, fl));
+    SPLICING_CHECK(splicing_order_matches(mm, mo));
+  }
+  
   if (class_templates || bin_class_templates) {
-    SPLICING_CHECK(splicing_i_miso_classes(mymatch_matrix, &match_order, 
-					   class_templates, class_counts,
-					   bin_class_templates, 
-					   bin_class_counts));
+    if (class_counts) {
+      SPLICING_CHECK(splicing_vector_ptr_resize(class_counts, noReplicates));
+      splicing_vector_ptr_set_item_destructor(class_counts,
+        (splicing_finally_func_t *) splicing_vector_destroy_free);
+      SPLICING_FINALLY(splicing_vector_ptr_destroy, class_counts);
+      for (i = 0; i < noReplicates; i++) {
+	splicing_vector_t *cc = splicing_Calloc(1, splicing_vector_t);
+	if (!cc) { SPLICING_ERROR("No memory for class counts", SPLICING_ENOMEM); }
+	VECTOR(*class_counts)[i] = cc;
+	SPLICING_CHECK(splicing_vector_init(cc, 0));
+      }
+    }
+    if (bin_class_counts) {
+      SPLICING_CHECK(splicing_vector_ptr_resize(bin_class_counts, noReplicates));
+      splicing_vector_ptr_set_item_destructor(bin_class_counts,
+        (splicing_finally_func_t *) splicing_vector_destroy_free);
+      SPLICING_FINALLY(splicing_vector_ptr_destroy, bin_class_counts);
+      for (i = 0; i < noReplicates; i++) {
+	splicing_vector_t *bcc = splicing_Calloc(1, splicing_vector_t);
+	if (!bcc) { SPLICING_ERROR("No memory for class counts", SPLICING_ENOMEM); }
+	VECTOR(*bin_class_counts)[i] = bcc;
+	SPLICING_CHECK(splicing_vector_init(bcc, 0));
+      }
+    }
+
+    for (i = 0; i < noReplicates; i++) {
+      splicing_matrix_t *mm = VECTOR(*mymatch_matrix)[i];
+      splicing_vector_int_t *mo = VECTOR(match_order)[i];
+      splicing_vector_t *cc = class_counts ? VECTOR(*class_counts)[i] : 0;
+      splicing_vector_t *bcc = bin_class_counts ? VECTOR(*bin_class_counts)[i] : 0;
+      SPLICING_CHECK(splicing_i_miso_classes(mm, mo, class_templates, cc,
+					     bin_class_templates,  bcc));
+    }
   }
 
   SPLICING_CHECK(splicing_vector_int_init(&isolen, noiso));
@@ -418,7 +608,6 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
     VECTOR(assscores)[i] = log(VECTOR(assscores)[i]);
   }
 
-  SPLICING_CHECK(splicing_matrix_resize(samples, noiso, noSamples));
   SPLICING_CHECK(splicing_vector_resize(logLik, noSamples));
 
   SPLICING_CHECK(splicing_matrix_init(&chainMeans, noiso, noChains));
@@ -426,23 +615,40 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_CHECK(splicing_matrix_init(&chainVars, noiso, noChains));
   SPLICING_FINALLY(splicing_matrix_destroy, &chainVars);
 
+  if (pop_samples) {
+    SPLICING_CHECK(splicing_matrix_resize(pop_samples, noiso, noSamples));
+  }
+
+  if (samples) {
+    SPLICING_CHECK(splicing_vector_ptr_resize(samples, noReplicates));
+    splicing_vector_ptr_set_item_destructor(samples,
+      (splicing_finally_func_t *) splicing_matrix_destroy_free);
+    SPLICING_FINALLY(splicing_vector_ptr_destroy, samples);
+    for (i = 0; i < noReplicates; i++) {
+      splicing_matrix_t *ss = splicing_Calloc(1, splicing_matrix_t);
+      if (!ss) { SPLICING_ERROR("No memory for samples", SPLICING_ENOMEM); }
+      VECTOR(*samples)[i] = ss;
+      SPLICING_CHECK(splicing_matrix_init(ss, noiso, noSamples));
+    }
+  }  
+  
   /* Initialize Psi(0) randomly */
 
-  SPLICING_CHECK(splicing_drift_proposal_init(noiso, noChains, psi, alpha, &sigma,
-					 start, start_psi, gff,
-					 gene, readLength, overHang, 
-					 position, cigarstr, /*paired=*/ 1, 
+  SPLICING_CHECK(splicing_drift_proposal_init_paired((int)noiso, noChains, psi, alpha,
+					 &sigma, start, start_psi, gff,
+					 (int) gene, readLength, overHang,
+					 reads, /*paired=*/ 1, 
 					 fragmentProb, fragmentStart,
 					 normalMean, normalVar, numDevs));
 
-  SPLICING_CHECK(splicing_drift_proposal_propose(noiso, noChains, 
+  SPLICING_CHECK(splicing_drift_proposal_propose_paired((int) noiso, noChains,
 						 alpha, sigma, psi, alpha));
   
   /* Initialize assignments of reads */  
   
   SPLICING_CHECK(splicing_reassign_samples_paired(mymatch_matrix,
 						  &match_order, 
-						  psi, noiso, noChains, 
+						  psi, (int) noiso, noChains,
 						  fragmentStart,
 						  &vass));
   
@@ -452,39 +658,76 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
     for (m=0; m < noIterations; m++) {
       
-      SPLICING_CHECK(splicing_drift_proposal_propose(noiso, noChains,
+      SPLICING_CHECK(splicing_drift_proposal_propose_paired((int) noiso, noChains,
 						     alpha, sigma,
 						     psiNew, alphaNew));
 
-      SPLICING_CHECK(splicing_metropolis_hastings_ratio_paired(&vass,
-					     noReads, noChains,
-					     psiNew, alphaNew, psi, alpha,
-					     sigma, noiso, &isolen, hyperp, 
-					     &isoscores, &assscores,
-					     &fragmentLength, fragmentStart,
-					     m > 0 ? 1 : 0, 
-					     &acceptP, &cJS, &pJS));
+      for (i = 0; i < noReplicates; i++) {
 
-      for (j=0; j<noChains; j++) {
-	if (VECTOR(acceptP)[j] >= 1 || RNG_UNIF01() < VECTOR(acceptP)[j]) {
-	  memcpy(&MATRIX(*psi, 0, j), &MATRIX(*psiNew, 0, j), 
-		 noiso * sizeof(double));
-	  memcpy(&MATRIX(*alpha, 0, j), &MATRIX(*alphaNew, 0, j),
+	splicing_matrix_int_t *vass1 = VECTOR(vass)[i];
+	splicing_matrix_t *psiNew1 = VECTOR(*psiNew)[i];
+	splicing_matrix_t *alphaNew1 = VECTOR(*alphaNew)[i];
+	splicing_matrix_t *psi1 = VECTOR(*psi)[i];
+	splicing_matrix_t *alpha1 = VECTOR(*alpha)[i];
+	splicing_matrix_int_t *fragmentLength1 = VECTOR(fragmentLength)[i];
+	
+
+	SPLICING_CHECK(splicing_metropolis_hastings_ratio_paired(vass1,
+ 	  VECTOR(noReads)[i], noChains, psiNew1, alphaNew1, psi1, alpha1,
+	  sigma, (int) noiso, &isolen, hyperprior,
+	  &isoscores, &assscores, fragmentLength1, fragmentStart,
+	  m > 0 ? 1 : 0, &acceptP, &cJS, &pJS));
+
+	for (j=0; j<noChains; j++) {
+	  if (VECTOR(acceptP)[j] >= 1 || RNG_UNIF01() < VECTOR(acceptP)[j]) {
+	    memcpy(&MATRIX(*psi1, 0, j), &MATRIX(*psiNew1, 0, j), 
+		   noiso * sizeof(double));
+	    memcpy(&MATRIX(*alpha1, 0, j), &MATRIX(*alphaNew1, 0, j),
 		 (noiso - 1) * sizeof(double));
-	  VECTOR(cJS)[j] = VECTOR(pJS)[j];
-	  rundata->noAccepted ++;
-	} else {
-	  rundata->noRejected ++;
+	    VECTOR(cJS)[j] = VECTOR(pJS)[j];
+	    rundata->noAccepted ++;
+	  } else {
+	    rundata->noRejected ++;
+	  }
 	}
-      }
 
+      }	/*  i < noReplicates */
+
+      /* Update population mean, var */
+      if (noReplicates > 1) {
+	splicing_update_replicate_mean(hyperprior, psi);
+	splicing_update_replicate_var(hyperprior, psi);
+      }
+      
       if (m >= noBurnIn) {
 	if (lagCounter == noLag - 1) {
-	  memcpy(&MATRIX(*samples, 0, noS), &MATRIX(*psi, 0, 0), 
-		 noChains * noiso * sizeof(double));
+
 	  memcpy(VECTOR(*logLik)+noS, VECTOR(cJS), noChains * sizeof(double));
+	  
+	  if (samples) {
+	    for (i = 0; i < noReplicates; i++) {
+	      splicing_matrix_t *samples1 = VECTOR(*samples)[i];
+	      splicing_matrix_t *psi1 = VECTOR(*psi)[i];
+	      memcpy(&MATRIX(*samples1, 0, noS), &MATRIX(*psi1, 0, 0), 
+		     noChains * noiso * sizeof(double));
+	    }
+	  }
+
+	  if (pop_samples) {
+	    if (noReplicates == 1 && samples) {
+	      splicing_matrix_t *psi1 = VECTOR(*psi)[0];
+	      memcpy(&MATRIX(*pop_samples, 0, noS), &MATRIX(*psi1, 0, 0),
+		     noChains * noiso * sizeof(double));
+	    } else {
+	      splicing_logit_inv_raw(VECTOR(hyperprior->logistic_mean),
+				     &MATRIX(*pop_samples, 0, noS),
+				     (int) noiso - 1, noChains);
+	    }
+	  }
+
 	  noS += noChains;
 	  lagCounter = 0;
+	  
 	} else {
 	  lagCounter ++;
 	}
@@ -492,7 +735,7 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
       
       SPLICING_CHECK(splicing_reassign_samples_paired(mymatch_matrix,
 						      &match_order,
-						      psi, noiso, noChains, 
+						      psi, (int) noiso, noChains,
 						      fragmentStart, &vass));
 
     } /* for m < noIterations */
@@ -506,9 +749,9 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
       if (maxIterations <= noIterations) {
 	shouldstop = 1;
       } else {
+	splicing_matrix_t *sam = pop_samples ? pop_samples : VECTOR(*samples)[0];
 	SPLICING_CHECK(splicing_i_check_convergent_mean(&chainMeans,
-							&chainVars, 
-							samples, 
+							&chainVars, sam,
 							&shouldstop));
       }
       break;
@@ -522,7 +765,15 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
     noSamples = noChains * (noIterations - noBurnIn) / noLag;
     lagCounter = 0;
 
-    SPLICING_CHECK(splicing_matrix_resize(samples, noiso, noSamples));
+    if (samples) {
+      for (i = 0; i < noReplicates; i++) {
+	splicing_matrix_t *sam = VECTOR(*samples)[i];
+	SPLICING_CHECK(splicing_matrix_resize(sam, noiso, noSamples));
+      }
+    }
+    if (pop_samples) {
+      SPLICING_CHECK(splicing_matrix_resize(pop_samples, noiso, noSamples));
+    }
     SPLICING_CHECK(splicing_vector_resize(logLik, noSamples));
   }
 
@@ -531,27 +782,39 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
   SPLICING_FINALLY_CLEAN(2);
 
   if (assignment) {
-    SPLICING_CHECK(splicing_vector_int_resize(assignment, noReads));
-    for (i=0; i<noReads; i++) {
-      VECTOR(*assignment)[i] = MATRIX(vass, i, 0);
+    splicing_vector_ptr_resize(assignment, noReplicates);
+    splicing_vector_ptr_set_item_destructor(assignment,
+      (splicing_finally_func_t *) splicing_vector_int_destroy_free);
+    SPLICING_FINALLY(splicing_vector_ptr_destroy, assignment);
+
+    for (i = 0; i < noReplicates; i++) {
+      int j, nor = VECTOR(noReads)[i];
+      splicing_matrix_int_t *vass1 = VECTOR(vass)[i];
+      splicing_vector_int_t *ass = splicing_Calloc(1, splicing_vector_int_t);
+      if (!ass) { SPLICING_ERROR("No memory for assignment", SPLICING_ENOMEM); }
+      VECTOR(*assignment)[i] = ass;
+      SPLICING_CHECK(splicing_vector_int_init(ass, nor));
+      for (j=0; j<nor; j++) {
+	VECTOR(*ass)[j] = MATRIX(*vass1, j, 0);
+      }
     }
   }
 
   splicing_vector_destroy(&assscores);
   splicing_matrix_destroy(&isoscores);
   splicing_vector_int_destroy(&isolen);
-  splicing_matrix_int_destroy(&fragmentLength);
-  splicing_vector_int_destroy(&match_order);
+  splicing_vector_ptr_destroy(&fragmentLength);
+  splicing_vector_ptr_destroy(&match_order);
   SPLICING_FINALLY_CLEAN(5);
   if (!match_matrix) {
-    splicing_matrix_destroy(mymatch_matrix);
+    splicing_vector_ptr_destroy(mymatch_matrix);
     SPLICING_FINALLY_CLEAN(1);
   }
-  splicing_matrix_destroy(&valphaNew);
-  splicing_matrix_destroy(&valpha);
-  splicing_matrix_destroy(&vpsiNew);
-  splicing_matrix_destroy(&vpsi);
-  splicing_matrix_int_destroy(&vass);
+  splicing_vector_ptr_destroy(&valphaNew);
+  splicing_vector_ptr_destroy(&valpha);
+  splicing_vector_ptr_destroy(&vpsiNew);
+  splicing_vector_ptr_destroy(&vpsi);
+  splicing_vector_ptr_destroy(&vass);
   splicing_vector_destroy(&cJS);
   splicing_vector_destroy(&pJS);
   splicing_vector_destroy(&acceptP);
@@ -566,10 +829,19 @@ int splicing_miso_paired(const splicing_gff_t *gff, size_t gene,
 
   if (rundata->noSamples != noSamples) {
     splicing_vector_remove_section(logLik, 0, noSamples-rundata->noSamples);
-    splicing_matrix_remove_cols_section(samples, 0,
-					noSamples-rundata->noSamples);
+    if (samples) {
+      for (i = 0; i < noReplicates; i++) {
+	splicing_matrix_t *sam = VECTOR(*samples)[i];
+	splicing_matrix_remove_cols_section(sam, 0,
+					  noSamples-rundata->noSamples);
+      }
+    }
+    if (pop_samples) {
+      splicing_matrix_remove_cols_section(pop_samples, 0,
+					  noSamples-rundata->noSamples);
+    }
   }
-
+  
   return 0;
 }
 
@@ -578,7 +850,7 @@ int splicing_i_miso_classes1(const splicing_matrix_t *match_matrix,
 			     splicing_matrix_t *class_templates,
 			     splicing_vector_t *class_counts) {
   
-  int noiso=splicing_matrix_nrow(match_matrix);
+  int noiso = (int) splicing_matrix_nrow(match_matrix);
   
   if (splicing_matrix_size(match_matrix) == 0) { 
 
@@ -588,7 +860,7 @@ int splicing_i_miso_classes1(const splicing_matrix_t *match_matrix,
 
   } else { 
 
-    int i, noreads=splicing_vector_int_size(match_order);
+    int i, noreads = (int) splicing_vector_int_size(match_order);
     int lastclass=0;
     double *prev, *curr;
     int *order=VECTOR(*match_order);
@@ -629,7 +901,7 @@ int splicing_i_miso_classes2(const splicing_matrix_t *match_matrix,
 			     splicing_matrix_t *class_templates,
 			     splicing_vector_t *class_counts) {
 
-  int noiso=splicing_matrix_nrow(match_matrix);
+  int noiso = (int) splicing_matrix_nrow(match_matrix);
   
   if (splicing_matrix_size(match_matrix) == 0) { 
 
@@ -639,7 +911,7 @@ int splicing_i_miso_classes2(const splicing_matrix_t *match_matrix,
 
   } else { 
 
-    int i, j, noreads=splicing_matrix_ncol(match_matrix);
+    int i, j, noreads = (int) splicing_matrix_ncol(match_matrix);
     int lastclass=0;
     double *prev, *curr;
     splicing_vector_int_t match_order;
@@ -650,7 +922,7 @@ int splicing_i_miso_classes2(const splicing_matrix_t *match_matrix,
 
     SPLICING_CHECK(splicing_matrix_binorder_cols(match_matrix, &match_order));
     order=VECTOR(match_order);
- 
+
     SPLICING_CHECK(splicing_matrix_resize(class_templates, noiso, 1));
     SPLICING_CHECK(splicing_vector_resize(class_counts, 1));
    

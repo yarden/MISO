@@ -10,7 +10,7 @@ int splicing_matchIso(const splicing_gff_t *gff, int gene,
 		      const char **cigarstr, int overHang, int readLength,
 		      splicing_matrix_t *result) {
 
-  int noreads=splicing_vector_int_size(position);
+  int noreads = (int) splicing_vector_int_size(position);
   int r, i;
   splicing_vector_int_t exstart, exend, exidx, cigar, cigaridx, cigarlength;
   size_t noiso;
@@ -114,8 +114,8 @@ int splicing_getMatchVector(const splicing_gff_t *gff, int gene,
 			    const splicing_matrix_t *assMatrix,
 			    splicing_vector_t *match) {
 
-  int no_classes=splicing_matrix_ncol(assMatrix);
-  int noiso=splicing_matrix_nrow(assMatrix);
+  int no_classes = (int) splicing_matrix_ncol(assMatrix);
+  int noiso = (int) splicing_matrix_nrow(assMatrix);
   int r;
 
   SPLICING_CHECK(splicing_vector_resize(match, no_classes));
@@ -233,7 +233,7 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
     char *s= (char*) cigar[i];
     int mode=0;			/* 0: begin, 1:middle, 2:end */
     int len=0;
-    VECTOR(*cigaridx)[i] = pos;
+    VECTOR(*cigaridx)[i] = (int) pos;
     while (*s) {
       long l = strtol(s, &s, 10L);
 
@@ -250,12 +250,12 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 	if (maxReadLength > 0 && len + l > maxReadLength) { 
 	  l = maxReadLength - len;
 	}
-	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
+	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, (int) l));
 	len += l;
 	pos++;
 	s++;
       } else if (*s == 'N') {	/* SKIPPING */
-	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, -l));
+	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, (int) (-l)));
 	pos++;
 	s++;
       } else if (*s == 'X') {	/* SEQ MISMATCH */
@@ -264,7 +264,7 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 	if (maxReadLength > 0 && len + l > maxReadLength) { 
 	  l = maxReadLength - len;
 	}
-	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
+	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, (int) l));
 	len += l;
 	pos++;
 	s++;
@@ -273,7 +273,7 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 	if (maxReadLength > 0 && len + l > maxReadLength) { 
 	  l = maxReadLength - len;
 	}
-	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
+	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, (int) l));
 	len += l;
 	pos++;
 	s++;
@@ -283,7 +283,7 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
 	if (maxReadLength > 0 && len + l > maxReadLength) { 
 	  l = maxReadLength - len;
 	}
-	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, l));
+	SPLICING_CHECK(splicing_vector_int_push_back(numcigar, (int) l));
 	len += l;
 	pos++;
 	s++;
@@ -300,7 +300,7 @@ int splicing_parse_cigar(const char **cigar, size_t noreads,
     }
     VECTOR(*cigarlength)[i] = len;
   }
-  VECTOR(*cigaridx)[i] = pos;
+  VECTOR(*cigaridx)[i] = (int) pos;
 
   return 0;
 }
@@ -321,7 +321,6 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
   size_t no_classes;
   size_t no_reads=splicing_vector_int_size(position);
   size_t noiso;
-  size_t r;
   long int nsetp;
   double rnorm;
   splicing_matrix_t *mymatch_matrix=match_matrix, vmatch_matrix;
@@ -351,11 +350,11 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
   noiso=splicing_matrix_nrow(myass_matrix);
 
   /* Calculate match vector from match matrix */
-  SPLICING_CHECK(splicing_matchIso(gff, gene, position, cigarstr, overHang,
+  SPLICING_CHECK(splicing_matchIso(gff, (int) gene, position, cigarstr, overHang,
 				   readLength, mymatch_matrix));
   SPLICING_CHECK(splicing_vector_init(&match, no_classes));
   SPLICING_FINALLY(splicing_vector_destroy, &match);
-  SPLICING_CHECK(splicing_getMatchVector(gff, gene, no_reads, position,
+  SPLICING_CHECK(splicing_getMatchVector(gff, (int) gene, (int) no_reads, position,
 					 cigarstr, overHang, readLength,
 					 mymatch_matrix, myass_matrix,
 					 &match));
@@ -372,7 +371,7 @@ int splicing_solve_gene(const splicing_gff_t *gff, size_t gene,
 			       &nsetp));
 
   if (residuals) {
-    int i, n=splicing_vector_size(&match);
+    int i, n = (int) splicing_vector_size(&match);
     splicing_dgemv(/*transpose=*/ 1, /*alpha=*/ 1.0, myass_matrix, 
 		   expression, /*beta=*/ 0.0, &match);
     SPLICING_CHECK(splicing_vector_resize(residuals, no_classes));
@@ -462,7 +461,7 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
   noiso=splicing_matrix_nrow(myass_matrix);
 
   /* Calculate match vector from match matrix */
-  SPLICING_CHECK(splicing_matchIso_paired(gff, gene, position, cigarstr, 
+  SPLICING_CHECK(splicing_matchIso_paired(gff, (int) gene, position, cigarstr,
 					  readLength, overHang, fragmentProb,
 					  fragmentStart, normalMean, 
 					  normalVar, numDevs, mymatch_matrix, 
@@ -499,7 +498,7 @@ int splicing_solve_gene_paired(const splicing_gff_t *gff, size_t gene,
 			       &nsetp));
 
   if (residuals) {
-    int i, n=splicing_vector_size(&match);
+    int i, n = (int) splicing_vector_size(&match);
     splicing_dgemv(/*transpose=*/ 1, /*alpha=*/ 1.0, myass_matrix, 
 		   expression, /*beta=*/ 0.0, &match);
     SPLICING_CHECK(splicing_vector_resize(residuals, no_classes));

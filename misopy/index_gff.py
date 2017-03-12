@@ -165,7 +165,11 @@ def index_gff(gff_filename, output_dir,
     print "Indexing of GFF took %.2f seconds." %(overall_t2 - overall_t1)
 
     
-def main():
+def main(argv = None):
+
+    if argv is None:
+        argv = sys.argv[1:]
+
     from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("--index", dest="index_gff", nargs=2, default=None,
@@ -176,7 +180,7 @@ def main():
                       help="Use the compressed version of the GFF \'ID=\' "
                       "field rather than the ID itself when creating "
                       ".miso output filenames.")
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(argv)
 
     if options.index_gff != None:
         gff_filename = \

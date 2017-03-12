@@ -2,3 +2,9 @@
 *.pyc
 splicing_0.1.tar.gz
 pysplicing-0.1.tar.gz
+/tags
+/output
+/tests/output
+/pysplicing/pysplicing/pysplicing.so
+/misopy.egg-info
+/build

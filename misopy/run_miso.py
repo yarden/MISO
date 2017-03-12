@@ -23,6 +23,8 @@ import misopy.misc_utils as misc_utils
 from misopy.parse_csv import *
 from misopy.samples_utils import *
 
+import pysplicing
+
 import numpy as np
 np.seterr(all='ignore')
 
@@ -35,7 +37,8 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
                      output_dir, read_len, overhang_len,
                      paired_end=None,
                      event_type=None,
-                     verbose=True):
+                     verbose=True,
+                     prior=pysplicing.MISO_PRIOR_DIRICHLET):
     """
     Run Psi at the Gene-level (for multi-isoform inference.)
 
@@ -59,7 +62,7 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
     print "Computing Psi for %d genes..." %(num_genes)
     print "  - " + ", ".join(gene_ids)
     print "  - GFF filename: %s" %(gff_index_filename)
-    print "  - BAM: %s" %(bam_filename)
+    print "  - BAM: %s" %(' '.join(bam_filename))
     print "  - Outputting to: %s" %(output_dir)
 
     if paired_end:
@@ -96,11 +99,16 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
     else:
         filter_reads = settings["filter_reads"]
         
-    # Load the BAM file upfront
-    bamfile = sam_utils.load_bam_reads(bam_filename,
-                                       template=template)
+    # Load the BAM files upfront
+    bamfile = [ sam_utils.load_bam_reads(bam, template=template)
+                for bam in bam_filename ]
     # Check if we're in compressed mode
     compressed_mode = misc_utils.is_compressed_index(gff_index_filename)
+
+    # Replicates need the logistic prior
+    if len(bamfile) > 1 and prior != pysplicing.MISO_PRIOR_LOGISTIC:
+        print "Error: replicates need the logistic prior"
+        sys.exit(1)
     
     for gene_id, gene_info in gff_genes.iteritems():
         lookup_id = gene_id
@@ -124,28 +132,32 @@ def compute_gene_psi(gene_ids, gff_index_filename, bam_filename,
 
         # Fetch reads aligning to the gene boundaries
         gene_reads = \
-            sam_utils.fetch_bam_reads_in_gene(bamfile,
-                                              gene_obj.chrom,
-                                              tx_start,
-                                              tx_end,
-                                              gene_obj)
+            [ sam_utils.fetch_bam_reads_in_gene(bam,
+                                                gene_obj.chrom,
+                                                tx_start,
+                                                tx_end,
+                                                gene_obj) for bam in bamfile ]
         # Parse reads: checking strandedness and pairing
         # reads in case of paired-end data
-        reads, num_raw_reads = \
-            sam_utils.sam_parse_reads(gene_reads,
-                                      paired_end=paired_end,
-                                      strand_rule=strand_rule,
-                                      target_strand=gene_obj.strand,
-                                      given_read_len=read_len)
+        reads, num_raw_reads = zip(
+            *(sam_utils.sam_parse_reads(
+                gr, paired_end=paired_end, strand_rule=strand_rule,
+                target_strand=gene_obj.strand,
+                given_read_len=read_len) for gr in gene_reads))
+
         # Skip gene if none of the reads align to gene boundaries
-        if filter_reads:
+        if filter_reads and len(reads) > 1:
+            print "Not filtering reads for replicates"
+
+        if filter_reads and len(reads) == 1:
             if num_raw_reads < min_event_reads:
                 print "Only %d reads in gene, skipping (needed >= %d reads)" \
                       %(num_raw_reads,
                         min_event_reads)
                 continue
             else:
-                print "%d raw reads in event" %(num_raw_reads)
+                print "%s raw reads in event" \
+                    %(", ".join([str(r) for r in num_raw_reads]))
 
         num_isoforms = len(gene_obj.isoforms)
         hyperparameters = ones(num_isoforms)
@@ -224,9 +236,10 @@ def run_compute_genes_from_file(options):
     genes_filename = \
         os.path.abspath(os.path.expanduser(options.compute_genes_from_file[0]))
     bam_filename = \
-        os.path.abspath(os.path.expanduser(options.compute_genes_from_file[1]))
+        [ os.path.abspath(os.path.expanduser(bam))
+          for bam in options.compute_genes_from_file[1:-1]]
     output_dir = \
-        os.path.abspath(os.path.expanduser(options.compute_genes_from_file[2]))
+        os.path.abspath(os.path.expanduser(options.compute_genes_from_file[-1]))
     print "Computing Psi for genes from file..."
     print "  - Input file: %s" %(genes_filename)
     if options.paired_end != None:
@@ -237,9 +250,10 @@ def run_compute_genes_from_file(options):
     if not os.path.isfile(genes_filename):
         print "Error: %s filename does not exist." %(genes_filename)
         sys.exit(1)
-    if not os.path.isfile(bam_filename):
-        print "Error: BAM filename %s does not exist." %(bam_filename)
-        sys.exit(1)
+    for bam in bam_filename:
+        if not os.path.isfile(bam):
+            print "Error: BAM filename %s does not exist." %(bam)
+            sys.exit(1)
     # Load the events and their indexed GFF paths
     num_genes = 0
     with open(genes_filename) as genes_in:
@@ -251,7 +265,8 @@ def run_compute_genes_from_file(options):
             compute_gene_psi([gene_id], gff_filename, bam_filename,
                              output_dir, options.read_len, overhang_len,
                              paired_end=paired_end,
-                             event_type=options.event_type)
+                             event_type=options.event_type,
+                             prior=options.prior)
             num_genes += 1
     print "Processed %d genes" %(num_genes)
             
@@ -291,7 +306,8 @@ def run_compute_gene_psi(options):
     compute_gene_psi(gene_ids, gff_filename, bam_filename, output_dir,
                      options.read_len, overhang_len,
                      paired_end=paired_end,
-                     event_type=options.event_type)
+                     event_type=options.event_type,
+                     prior=options.prior)
 
         
 def greeting(parser=None):
@@ -303,9 +319,25 @@ def greeting(parser=None):
         parser.print_help()
     
     
-def main():
+def main(argv = None):
+
+    if argv is None:
+        argv = sys.argv[1:]
+
     from optparse import OptionParser
     parser = OptionParser()
+
+    def bam_cb(option, opt_str, value, parser):
+        args=[]
+        for arg in parser.rargs:
+            if arg[0] != "-":
+                args.append(arg)
+            else:
+                del parser.rargs[:len(args)]
+                break
+        if getattr(parser.values, option.dest):
+            args.extend(getattr(parser.values, option.dest))
+        setattr(parser.values, option.dest, args)
 
     ##
     ## Main options
@@ -325,14 +357,14 @@ def main():
                       "deviation for the fragment length distribution (assumed "
                       "to have discretized normal form.)")
     parser.add_option("--compute-genes-from-file", dest="compute_genes_from_file",
-                      nargs=3, default=None,
+                      action="callback", callback = bam_cb, default=None,
                       help="Runs on a set of genes from a file. Takes as input: "
                       "(1) a two-column tab-delimited file, where column 1 is the "
                       "event ID (ID field from GFF) and the second column is "
                       "the path to the indexed GFF file for that event. "
                       "MISO will run on all the events described in the file, "
-                      "(2) a sorted, indexed BAM file to run on, and (3) a "
-                      "directory to output results to.")
+                      "(2) one or more sorted, indexed BAM files to run on,"
+                      "and (3) a directory to output results to.")
     
     ##
     ## Psi utilities
@@ -385,6 +417,11 @@ def main():
                       help="Use compressed event IDs. Takes as input a "
                       "genes_to_filenames.shelve file produced by the "
                       "index_gff script.")
+    parser.add_option("--prior", dest="prior", nargs=1, default="dirichlet",
+                      help="Prior to use for the expression profiles "
+                      "defaults to a Dirichlet prior. The other choice "
+                      "is a Logistic prior, only implemented for "
+                      "two-isoform genes currently")
     ##
     ## Gene utilities
     ##
@@ -393,10 +430,19 @@ def main():
                       help="View the contents of a gene/event that has "
                       "been indexed. Takes as input an "
                       "indexed (.pickle) filename.")
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(argv)
 
     if options.compute_gene_psi is None:
         greeting()
+
+    options.prior = options.prior.lower()
+    if options.prior == "dirichlet":
+        options.prior = pysplicing.MISO_PRIOR_DIRICHLET
+    elif options.prior == "logistic":
+        options.prior = pysplicing.MISO_PRIOR_LOGISTIC
+    else:
+        print("Error: unkown prior, much be 'dirichlet' or 'logistic'")
+        sys.exit(1)
 
     ##
     ## Load the settings file 

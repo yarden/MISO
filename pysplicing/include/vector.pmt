@@ -355,6 +355,13 @@ void FUNCTION(splicing_vector,destroy)   (TYPE(splicing_vector)* v) {
   }
 }
 
+void FUNCTION(splicing_vector,destroy_free)(TYPE(splicing_vector)* v) {
+  if (v) {
+    FUNCTION(splicing_vector,destroy)(v);
+    splicing_Free(v);
+  }
+}
+
 /**
  * \ingroup vector
  * \function splicing_vector_reserve
@@ -1096,6 +1103,57 @@ BASE FUNCTION(splicing_vector,sum)(const TYPE(splicing_vector) *v) {
 #endif
   }
   return res;
+}
+
+BASE FUNCTION(splicing_vector,mean)(const TYPE(splicing_vector) *v) {
+  return FUNCTION(splicing_vector,sum)(v) / FUNCTION(splicing_vector,size)(v);
+}
+
+BASE FUNCTION(splicing_vector,var)(const TYPE(splicing_vector) *v) {
+  BASE mean = FUNCTION(splicing_vector,mean)(v);
+  BASE var = 0.0;
+  BASE *p;
+  for (p = v->stor_begin; p < v->end; p++) {
+    var += (*p - mean) * (*p - mean);
+  }
+  return var / FUNCTION(splicing_vector,size)(v);
+}
+
+BASE FUNCTION(splicing_vector,median)(const TYPE(splicing_vector) *v) {
+  size_t len = FUNCTION(splicing_vector,size)(v);
+  size_t half = len / 2;
+  BASE median;
+
+  TYPE(splicing_vector) v2;
+  FUNCTION(splicing_vector,copy)(&v2, v);
+  FUNCTION(splicing_vector,sort)(&v2);
+
+  if (len == 1) {
+    median = VECTOR(v2)[0];
+  } else if (len % 2) {
+    median = VECTOR(v2)[half];
+  } else {
+    median = (VECTOR(v2)[half - 1] + VECTOR(v2)[half]) / 2.0;
+  }
+
+  FUNCTION(splicing_vector,destroy)(&v2);
+  return median;
+}
+
+BASE FUNCTION(splicing_vector,iqr)(const TYPE(splicing_vector) *v) {
+  size_t len = FUNCTION(splicing_vector,size)(v);
+  size_t q14 = len / 4;
+  size_t q34 = q14 * 3;
+  BASE iqr;
+
+  TYPE(splicing_vector) v2;
+  FUNCTION(splicing_vector,copy)(&v2, v);
+  FUNCTION(splicing_vector,sort)(&v2);
+
+  iqr = VECTOR(v2)[q34] - VECTOR(v2)[q14];
+
+  FUNCTION(splicing_vector,destroy)(&v2);
+  return iqr;
 }
 
 /**
@@ -2246,7 +2304,7 @@ int FUNCTION(splicing_vector,difference_sorted)(const TYPE(splicing_vector) *v1,
     else j++;
   }
   if (i < i0) {
-    int oldsize = FUNCTION(splicing_vector,size)(result);
+    size_t oldsize = FUNCTION(splicing_vector,size)(result);
     SPLICING_CHECK(FUNCTION(splicing_vector,resize)(result, oldsize+i0-i));
     memcpy(result->stor_begin+oldsize, v1->stor_begin+i, sizeof(BASE)*(i0-i));
   }

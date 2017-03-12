@@ -201,7 +201,14 @@ class MISOSampler:
                     num_chains=6,
                     burn_in=1000,
                     lag=2,
+                    prior = pysplicing.MISO_PRIOR_DIRICHLET,
                     prior_params=None,
+                    logistic_prior_mean = 0.0,
+                    logistic_prior_var = 3.0,
+                    replicate_mean_prior_mean = 0.0,
+                    replicate_mean_prior_var = 100.0,
+                    replicate_var_prior_numobs = 1/10.0,
+                    replicate_var_prior_var = 1/10.0,
                     # By default, use sampler with read classes (collapsed)
                     # to get speed boost for single-end reads
                     # (To revert to old reassigning sampler, use
@@ -221,14 +228,16 @@ class MISOSampler:
         if prior_params == None:
             prior_params = (1.0,) * num_isoforms
 
-        read_positions = reads[0]
-        read_cigars = reads[1]
+        if prior != pysplicing.MISO_PRIOR_DIRICHLET and len(reads) > 1:
+            self.miso_logger.error("Replicates need the Dirichlet prior")
+            sys.exit(1)
 
-        self.num_reads = len(read_positions)
+        if len(reads) == 1:
+            self.num_reads = len(reads[0][0])
 
-        if self.num_reads == 0:
-            print "No reads for gene: %s" %(gene.label)
-            return
+            if self.num_reads == 0:
+                print "No reads for gene: %s" %(gene.label)
+                return
 
         output_file = output_file + ".miso"
         # If output filename exists, don't run sampler
@@ -281,7 +290,14 @@ class MISOSampler:
         ##
         ## Run C MISO
         ##
-        read_positions = tuple([r+1 for r in read_positions])
+        # TODO: this is baaaad
+        reads = list(reads)
+        for i, v in enumerate(reads):
+            reads[i] = list(reads[i])
+            reads[i][0] = tuple([r+1 for r in v[0]])
+            reads[i] = tuple(reads[i])
+        reads = tuple(reads)
+
         if self.paired_end:
             # Number of standard deviations in insert length
             # distribution to consider when assigning reads
@@ -289,38 +305,68 @@ class MISOSampler:
             num_sds = 4L
 
             # Run paired-end
-            miso_results = pysplicing.MISOPaired(c_gene, 0L,
-                                                 read_positions,
-                                                 read_cigars,
-                                                 long(self.read_len),
-                                                 float(self.mean_frag_len),
-                                                 float(self.frag_variance),
-                                                 float(num_sds),
-                                                 long(num_iters),
-                                                 long(burn_in),
-                                                 long(lag),
-                                                 prior_params,
-                                                 long(self.overhang_len),
-                                                 long(num_chains),
-                                                 start_cond,
-                                                 stop_cond)
+            miso_results = pysplicing.doMISOPaired(
+                GFF = c_gene,
+                gene = 0L,
+                reads = reads,
+                read_len = long(self.read_len),
+                mean_frag_len = float(self.mean_frag_len),
+                frag_variance = float(self.frag_variance),
+                num_sds = float(num_sds),
+                num_iters = long(num_iters),
+                burn_in = long(burn_in),
+                lag = long(lag),
+                prior = prior,
+                dirichlet_prior_params = prior_params,
+                logistic_prior_mean = float(logistic_prior_mean),
+                logistic_prior_var = float(logistic_prior_var),
+                replicate_mean_prior_mean = float(replicate_mean_prior_mean),
+                replicate_mean_prior_var =  float(replicate_mean_prior_var),
+                replicate_var_prior_numobs = float(replicate_var_prior_numobs),
+                replicate_var_prior_var = float(replicate_var_prior_var),
+                overHang = long(self.overhang_len),
+                num_chains = long(num_chains),
+                start = start_cond,
+                stop = stop_cond)
+            self.handle_results_paired(miso_results, gene, num_iters,
+                                       burn_in, lag, proposal_type,
+                                       num_chains, prior, output_file)
+
         else:
             # Run single-end
-            miso_results = pysplicing.MISO(c_gene,
-                                           0L,
-                                           read_positions,
-                                           read_cigars,
-                                           long(self.read_len),
-                                           long(num_iters),
-                                           long(burn_in),
-                                           long(lag),
-                                           prior_params,
-                                           long(self.overhang_len),
-                                           long(num_chains),
-                                           start_cond,
-                                           stop_cond,
-                                           pysplicing.MISO_ALGO_REASSIGN)
-#                                           algorithm)
+            miso_results = pysplicing.doMISO(
+                GFF = c_gene,
+                gene = 0L,
+                reads = reads,
+                read_len = long(self.read_len),
+                num_iters = long(num_iters),
+                burn_in = long(burn_in),
+                lag = long(lag),
+                prior = prior,
+                dirichlet_prior_params = prior_params,
+                logistic_prior_mean = float(logistic_prior_mean),
+                logistic_prior_var = float(logistic_prior_var),
+                replicate_mean_prior_mean = float(replicate_mean_prior_mean),
+                replicate_mean_prior_var =  float(replicate_mean_prior_var),
+                replicate_var_prior_numobs = float(replicate_var_prior_numobs),
+                replicate_var_prior_var = float(replicate_var_prior_var),
+                overHang = long(self.overhang_len),
+                num_chains = long(num_chains),
+                start = start_cond,
+                stop = stop_cond,
+                algorithm = algorithm)
+            self.handle_results_nonpaired(miso_results, gene, num_iters,
+                                          burn_in, lag, proposal_type,
+                                          num_chains, prior, output_file)
+
+        if verbose:
+            t2 = time.time()
+            print "Event took %.2f seconds" %(t2 - t1)
+
+
+    def handle_results_paired(self, miso_results, gene, num_iters,
+                              burn_in, lag, proposal_type, num_chains,
+                              prior, output_file):
 
         # Psi samples
         psi_vectors = transpose(array(miso_results[0]))
@@ -367,15 +413,65 @@ class MISOSampler:
         self.output_miso_results(output_file, gene, reads_data, assignments,
                                  psi_vectors, kept_log_scores, num_iters,
                                  burn_in, lag, percent_acceptance,
-                                 proposal_type)
-        if verbose:
-            t2 = time.time()
-            print "Event took %.2f seconds" %(t2 - t1)
+                                 proposal_type, num_chains, prior)
+
+
+    def handle_results_nonpaired(self, miso_results, gene, num_iters,
+                                 burn_in, lag, proposal_type, num_chains,
+                                 prior, output_file):
+
+        # Psi samples
+        psi_vectors = transpose(array(miso_results[0]))
+
+        # Log scores of accepted samples
+        kept_log_scores = transpose(array(miso_results[1]))
+
+        # Read classes
+        read_classes = miso_results[2]
+
+        # Read class statistics
+        read_class_data = miso_results[3][0]
+
+        # Assignments of reads to isoforms
+        assignments = miso_results[4][0]
+
+        # Statistics and parameters about sampler run
+        run_stats = miso_results[5]
+
+        # Assignments of reads to classes.
+        # read_classes[n] represents the read class that has
+        # read_assignments[n]-many reads.
+        reads_data = (read_classes, read_class_data)
+
+        assignments = array(assignments)
+
+        # Skip events where all reads are incompatible with the annotation;
+        # do not output a file for those.
+        if all(assignments == -1):
+            print "All reads incompatible with annotation, skipping..."
+            return
+
+        accepted_proposals = run_stats[4]
+        rejected_proposals = run_stats[5]
+
+        percent_acceptance = (float(accepted_proposals)/(accepted_proposals + \
+                                                         rejected_proposals)) * 100
+        #self.miso_logger.info("Percent acceptance (including burn-in): %.4f" %(percent_acceptance))
+        #self.miso_logger.info("Number of iterations recorded: %d" %(len(psi_vectors)))
+
+        # Write MISO output to file
+        print "Outputting samples to: %s..." %(output_file)
+        self.miso_logger.info("Outputting samples to: %s" %(output_file))
+        self.output_miso_results(output_file, gene, reads_data, assignments,
+                                 psi_vectors, kept_log_scores, num_iters,
+                                 burn_in, lag, percent_acceptance,
+                                 proposal_type, num_chains, prior)
 
 
     def output_miso_results(self, output_file, gene, reads_data, assignments,
                             psi_vectors, kept_log_scores, num_iters, burn_in,
-                            lag, percent_acceptance, proposal_type):
+                            lag, percent_acceptance, proposal_type,
+                            num_chains, prior):
         """
         Output results of MISO to a file.
         """
@@ -396,6 +492,15 @@ class MISOSampler:
         # And of the exon lengths
         exon_lens = ",".join(["(\'%s\',%d)" %(p.label, p.len) \
                               for p in gene.parts])
+
+        if prior == pysplicing.MISO_PRIOR_AUTO:
+            prior_str = "auto"
+        elif prior == pysplicing.MISO_PRIOR_DIRICHLET:
+            prior_str = "dirichlet"
+        elif prior == pysplicing.MISO_PRIOR_LOGISTIC:
+            prior_str = "logistic"
+        else:
+            prior_str = "unknown"
 
         ## Compile header with information about isoforms and internal parameters used
         ## by the sampler, and also information about read counts and number of
@@ -441,10 +546,12 @@ class MISOSampler:
         strand = gene.strand
         if strand == None:
             strand = "NA"
-        header = "#isoforms=%s\texon_lens=%s\titers=%d\tburn_in=%d\tlag=%d\t" \
+        header = "#isoforms=%s\texon_lens=%s\tprior=%s\treplicates=1\t" \
+                 "chains=%d\titers=%d\tburn_in=%d\tlag=%d\t" \
                  "percent_accept=%.2f\tproposal_type=%s\t" \
                  "counts=%s\tassigned_counts=%s\tchrom=%s\tstrand=%s\tmRNA_starts=%s\tmRNA_ends=%s\n" \
-                 %(str_isoforms, exon_lens, num_iters, burn_in, lag,
+                 %(str_isoforms, exon_lens, prior_str, num_chains,
+                   num_iters, burn_in, lag,
                    percent_acceptance, proposal_type, read_counts_str,
                    assigned_counts_str,
                    # Fields related to gene/event
