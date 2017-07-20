@@ -1086,6 +1086,10 @@ MISO comes with a built-in utility, `sashimi_plot`_, for visualizing its output 
 Updates
 ========
 
+**2017**
+
+* Thu, July 20**: Released ``0.5.4``. Fixes indexing bug in credible intervals computation (see issues [#103](https://github.com/yarden/MISO/issues/103) and [#98](https://github.com/yarden/MISO/issues/98)).
+
 **2015**
 
 * **Tue, March 10**: Released ``0.5.3``, which fixes a bug in processing stranded reads. Thanks to Renee Sears. MISO license updated: it is licensed under GPL 2, not BSD, since it depends on GPL 2 code. We apologize for the confusion. Added support for Travis CI.

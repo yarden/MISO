@@ -74,7 +74,7 @@ for scheme in INSTALL_SCHEMES.values():
 ## Definition of the current version. This is defined here
 ## and then gets written to __init__.py in misopy.
 ##
-MISO_VERSION = "0.5.3"
+MISO_VERSION = "0.5.4"
 
 ##
 ## Generate a __version__.py attribute
