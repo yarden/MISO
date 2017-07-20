@@ -43,10 +43,10 @@ def compute_credible_intervals(samples, confidence_level=.95):
     # compute the lower bound of the interval
     # the lower bound is the (alpha/2)*n-th smallest sample, where n is the
     # number of samples
-    lower_bound_indx = round((alpha/2)*num_samples) - 1
+    lower_bound_indx = int(round((alpha/2)*num_samples)) - 1
     # the upper bound is the (1-alpha/2)*n nth smallest sample, where n is
     # the number of samples
-    upper_bound_indx = round((1-alpha/2)*num_samples) - 1
+    upper_bound_indx = int(round((1-alpha/2)*num_samples)) - 1
     assert(lower_bound_indx > 0)
     assert(upper_bound_indx > 0)
     # sort samples along first axis
