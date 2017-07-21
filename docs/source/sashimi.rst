@@ -7,7 +7,6 @@
 
 
 .. image:: images/sashimi-plot.png
-  :scale: 45%
   :align: right
   :alt: sashimi_plot: a tool for visualizing raw RNA-Seq data and MISO output
 
@@ -27,7 +26,6 @@ The MISO framework is described in Katz et. al., `Analysis and design of RNA seq
 
 
   .. figure:: images/sashimi-plot-example.png 
-      :scale: 80%
       :figclass: align-center
       :align: center
       :alt: An example plot made by sashimi_plot
@@ -123,7 +121,6 @@ We can now plot this event by running the following from within the ``sashimi_pl
 If successful, you should get a plot in the directory ``test-plot/`` called ``chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-.pdf``. An annotated graphical explanation of the main features of the output is shown below.
 
   .. figure:: images/sashimi-plot-example-annotated.png 
-      :scale: 35%
       :figclass: align-center
       :align: center
       :alt: sashimi_plot example with annotations
@@ -317,7 +314,6 @@ In the main example of ``--plot-event`` shown above, the MISO posterior distribu
 yields the plot below:
 
 .. image:: images/plot_event_bar_posteriors.png
-  :scale: 80%
   :align: center
   :alt: Showing summaries of MISO posterior distributions as horizontal bars
 
@@ -333,7 +329,6 @@ It is often useful to plot the distribution of events that meet various Bayes fa
 This will plot the distribution of events meeting various Bayes factors thresholds in the file ``control_vs_knockdown.miso_bf`` (outputted by calling ``--compare-samples`` in MISO) using the plotting settings file ``settings.txt``, and output the resulting plot to ``plots/``. The resulting plot will look like:
  
   .. figure:: images/bf_dist.png
-      :scale: 50%
       :figclass: align-center
       :align: center
       :alt: Distribution of events meeting various Bayes factor thresholds
@@ -365,7 +360,6 @@ The distribution can be plotted using the ``--plot-insert-len`` option, which ta
 will produce a histogram of the insert length in ``sample.insert_len`` and place it in the ``plots`` directory. The histogram might look like this: 
 
 .. image:: images/insert-length-dist.png
-  :scale: 50%
   :align: center
   :alt: Insert length distribution plotted from a MISO insert length file
 

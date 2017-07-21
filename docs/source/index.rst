@@ -322,7 +322,6 @@ differentially expressed isoforms is given in :ref:`pipeline`.
 The figure below shows an overview of how to run MISO.
 
  .. image:: images/MISO-graphical-pipeline.png
-   :scale: 30%
    :alt: Overview of how to run MISO
    :align: center
 
@@ -695,7 +694,6 @@ This indicates that the mean of the insert length distribution was 129, the stan
 The dispersion constant *d* is defined as the standard deviation |sigma| of the insert length distribution divided by the square root of its mean |mu|:
 
   .. figure:: images/dispersion.png
-      :scale: 40%
       :figclass: align-center
       :align: center
       :alt: Definition of dispersion constant for an insert length distribution
@@ -1011,7 +1009,6 @@ The relevant read counts are given in the ``counts`` field of the ``.miso, .summ
 where ``X, Y, Z, L`` are integer counts corresponding to the number of reads in each of these categories. Class ``(1,0)`` are reads consistent with the first isoform in the annotation but not the second, class ``(0,1)`` are reads consistent with the second but not the first, class ``(1,1)`` are consistent with both isoforms, and reads in ``(0,0)`` are consistent with neither. These are illustrated graphically in the figure below for alternatively skipped exon event:
 
   .. figure:: images/read_classes_for_SE.png
-      :scale: 80%
       :figclass: align-center
       :align: center
       :alt: Illustration of MISO read class counts for a skipped exon
@@ -1044,7 +1041,6 @@ Using the confidence intervals
 ------------------------------
 
  .. figure:: images/confidence_intervals.png
-      :scale: 70%
       :figclass: align-right
       :align: right
       :alt: MISO confidence intervals
