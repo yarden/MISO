@@ -9,7 +9,6 @@ MISO (Mixture of Isoforms) software documentation
 =================================
 
 .. image:: images/MISO-docs-logo-small.png
-   :scale: 70%
    :align: right
    :alt: A pipeline of RNA-Seq samples as bowls of MISO soup (graphic by Lou Eisenman)
 
@@ -1314,7 +1313,6 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 .. and the second column specifies the counts for the skipped exon event:
 
 ..   .. image:: images/MISO-SEC-SE.png
-..    :scale: 40%
 ..    :alt: SEC format for SE
 ..    :align: right
 
@@ -1347,7 +1345,6 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 .. where the first column specifies the coordinates of the core and extension regions of the TandemUTR event as follows:
 
 ..  .. image:: images/MISO-SEC-TandemUTR.png
-..    :scale: 40%
 ..    :alt: SEC format for TandemUTR
 ..    :align: right
 
@@ -1379,7 +1376,6 @@ If ``samtools`` cannot access the reads in that region, MISO will not be able to
 .. where the first column specifies the coordinates of the retained intron and its flanking exons as follows:
 
 ..  .. image:: images/MISO-SEC-RI.png
-..    :scale: 40%
 ..    :alt: SEC format for RI
 ..    :align: right
 
