@@ -1085,7 +1085,7 @@ Updates
 
 **2017**
 
-* **Thu, July 20**: Released ``0.5.4``. Fixes indexing bug in credible intervals computation (see issues [#103](https://github.com/yarden/MISO/issues/103) and [#98](https://github.com/yarden/MISO/issues/98)).
+* **Thu, July 20**: Released ``0.5.4``. Fixes indexing bug in credible intervals computation (see issues `issue_98`_ and `issue_103`_).
 
 **2015**
 
@@ -1580,6 +1580,8 @@ General reading on probabilistic modeling and inference
 .. _White House adopts MISO: http://www.mediabistro.com/fishbowldc/white-house-soup-of-the-day-64_b53593#.Tp2c76k31tA.gmail
 .. _bedtools: http://code.google.com/p/bedtools/
 .. _sashimi_plot: sashimi.html
+.. _issue_98: https://github.com/yarden/MISO/issues/98
+.. _issue_103: https://github.com/yarden/MISO/issues/103
 
 .. Indices and tables
 .. ^^^^^^^^^^^^^^^^^^
