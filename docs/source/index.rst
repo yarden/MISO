@@ -1085,7 +1085,7 @@ Updates
 
 **2017**
 
-* Thu, July 20**: Released ``0.5.4``. Fixes indexing bug in credible intervals computation (see issues [#103](https://github.com/yarden/MISO/issues/103) and [#98](https://github.com/yarden/MISO/issues/98)).
+* **Thu, July 20**: Released ``0.5.4``. Fixes indexing bug in credible intervals computation (see issues [#103](https://github.com/yarden/MISO/issues/103) and [#98](https://github.com/yarden/MISO/issues/98)).
 
 **2015**
 
