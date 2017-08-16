@@ -31,7 +31,7 @@ def sam_to_bam(sam_filename, output_dir,
     os.system(cmd)
 
     # Index
-    final_filename = "%s.bam" %(sorted_filename)
+    final_filename = "%s" %(sorted_filename)
     print "Indexing BAM..."
     cmd = "samtools index %s" %(final_filename)
     print "  - Executing: %s" %(cmd)
