@@ -25,8 +25,8 @@ def sam_to_bam(sam_filename, output_dir,
     # Sort
     print "Sorting BAM file..."
     sorted_filename = "%s.sorted" %(bam_filename.split(".bam")[0])
-    cmd = "samtools sort %s %s" %(bam_filename,
-                                  sorted_filename)
+    cmd = "samtools sort -o %s %s" %(sorted_filename,
+                                     bam_filename)
     print "  - Executing: %s" %(cmd)
     os.system(cmd)
 
