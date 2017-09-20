@@ -99,7 +99,7 @@ def check_gff_and_bam(gff_dir, bam_filename, main_logger,
         # Check more of the reads for mixed read lengths
         if n >= (num_reads * 10):
             break
-        seq_lens[len(bam_read.seq)] = True
+        seq_lens[bam_read.query_alignment_length] = True
         n += 1
     all_seq_lens = seq_lens.keys()
     if len(all_seq_lens) > 1:
