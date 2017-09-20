@@ -92,7 +92,7 @@ def check_gff_and_bam(gff_dir, bam_filename, main_logger,
                             %(bam_index_fname))
         main_logger.warning("Are you sure your BAM file is indexed?")
     print "Checking if BAM has mixed read lengths..."
-    bam_file = pysam.Samfile(bam_filename, "rb")
+    bam_file = pysam.AlignmentFile(bam_filename, "rb")
     n = 0
     seq_lens = {}
     for bam_read in bam_file:
@@ -152,7 +152,7 @@ def check_gff_and_bam(gff_dir, bam_filename, main_logger,
                 gff_starts_with_chr = True
             n += 1
     # Read first few BAM reads chromosomes
-    bam_file = pysam.Samfile(bam_filename, "rb")
+    bam_file = pysam.AlignmentFile(bam_filename, "rb")
     bam_chroms = {}
     bam_starts_with_chr = False
     n = 0
