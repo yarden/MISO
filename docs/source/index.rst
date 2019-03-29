@@ -45,6 +45,8 @@ from a particular isoform.
 
 The MISO framework is described in Katz et. al., `Analysis and design of RNA sequencing experiments for identifying isoform regulation`_. *Nature Methods* (2010).
 
+**Note: MISO is no longer maintained. This page is archived for reference.**
+
 
 How MISO works
 ==============
