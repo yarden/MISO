@@ -88,10 +88,10 @@ class Sashimi:
         output_fname = None
         if plot_label is not None:
             # Use custom plot label if given
-            ext = self.output_filename.rsplit(".")[0]
+            ext = self.output_filename.rsplit(".")[1]
             dirname = os.path.dirname(self.output_filename)
             output_fname = \
-                os.path.dirname(dirname, "%s.%s" %(plot_label, ext))
+                os.path.join(dirname, "%s.%s" %(plot_label, ext))
         else:
             output_fname = self.output_filename
         print "Saving plot to: %s" %(output_fname)
