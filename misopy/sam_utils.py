@@ -146,7 +146,7 @@ def load_bam_reads(bam_filename,
     """
     print "Loading BAM filename from: %s" %(bam_filename)
     bam_filename = os.path.abspath(os.path.expanduser(bam_filename))
-    bamfile = pysam.Samfile(bam_filename, "rb",
+    bamfile = pysam.AlignmentFile(bam_filename, "rb",
                             template=template)
     return bamfile
 

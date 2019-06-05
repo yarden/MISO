@@ -45,7 +45,7 @@ def plot_density_single(settings, sample_label,
     Plot MISO events using BAM files and posterior distribution files.
     TODO: If comparison files are available, plot Bayes factors too.
     """
-    bamfile = pysam.Samfile(bam_filename, 'rb')
+    bamfile = pysam.AlignmentFile(bam_filename, 'rb')
     try:
         subset_reads = bamfile.fetch(reference=chrom, start=tx_start,end=tx_end)
     except ValueError as e:
