@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#SBATCH -p serial_requeue
+#SBATCH --mem 4000
+#SBATCH -t 0-1:00
+#SBATCH -n 1
+#SBATCH -N 1
+
+source new-modules.sh
+module load python/2.7.6-fasrc01
+
+{cmd}
+
