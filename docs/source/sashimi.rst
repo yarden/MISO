@@ -287,15 +287,7 @@ Command-line options
 Making Sashimi plots from IGV
 =============================
 
-To create Sashimi plot within IGV, download the snapshot release of IGV:
-
-`IGV Browser snapshot (http://www.broadinstitute.org/igv/projects/downloads/snapshot/IGV_snapshot.zip) <http://www.broadinstitute.org/igv/projects/downloads/snapshot/IGV_snapshot.zip>`_
-
-Run IGV with the Sashimi plot feature enabled: ::
-
-  java -jar -Xmx2g -DenableSashimi="true" igv.jar
-
-Load the RNA-Seq samples as BAM tracks.  Navigate to the region of interest, right click the tracks window and select "Sashimi plot" from the menu. A customizable Sashimi plot will appear in a new window, which can be saved in PNG or SVG formats.
+To create Sashimi plot within IGV  [https://software.broadinstitute.org/software/igv/download](http://software.broadinstitute.org/software/igv/download)  first load the RNA-Seq samples as BAM tracks.  Navigate to the region of interest, right click the tracks window and select "Sashimi plot" from the menu. A customizable Sashimi plot will appear in a new window, which can be saved in PNG or SVG formats.
 
 
 Visualizing and plotting MISO output
