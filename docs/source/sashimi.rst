@@ -56,6 +56,10 @@ We chose "Sashimi" because our tool plots the *raw* RNA-Seq data in addition to 
 Updates
 =======
 
+**2015**
+
+* **Sun, Jan 25**: Sashimi plot paper is `published in Bioinformatics <https://doi.org/10.1093/bioinformatics/btv034>`_.
+
 **2014**
 
 * **Tue, Feb 11**: Sashimi plot paper is now `on the bioRxiv <http://biorxiv.org/content/early/2014/02/11/002576>`_.
