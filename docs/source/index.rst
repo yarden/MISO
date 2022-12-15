@@ -1551,26 +1551,26 @@ General reading on probabilistic modeling and inference
 .. _SAM: http://samtools.sourceforge.net/SAM1.pdf
 .. _GFF: http://www.sequenceontology.org/gff3.shtml
 .. _GTF2GFF: http://www.sequenceontology.org/resources/converter_readme.html
-.. _gtf2gff3.pl: http://genes.mit.edu/burgelab/miso/scripts/gtf2gff3.pl
-.. _ucsc_table2gff3.pl: http://genes.mit.edu/burgelab/miso/scripts/ucsc_table2gff3.pl
+.. _gtf2gff3.pl: http://hollywood.mit.edu/burgelab/miso/scripts/gtf2gff3.pl
+.. _ucsc_table2gff3.pl: http://hollywood.mit.edu/burgelab/miso/scripts/ucsc_table2gff3.pl
 .. _genePredToGtf: http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/
 .. _biotoolbox: http://code.google.com/p/biotoolbox/
-.. _Drosophila melanogaster alternative events (modENCODE): http://genes.mit.edu/burgelab/miso/annotations/modENCODE_alt_events.zip
-.. _Events to genes mapping for mm9: http://genes.mit.edu/burgelab/miso/annotations/mm9_events_to_genes.zip
-.. _Events to genes mapping for hg18: http://genes.mit.edu/burgelab/miso/annotations/hg18_events_to_genes.zip
-.. _Events to genes mapping for hg19: http://genes.mit.edu/burgelab/miso/annotations/hg19_events_to_genes.zip
-.. _mm9 ensGene GFF annotation: http://genes.mit.edu/burgelab/miso/annotations/ucsc_tables/mm9/ensGene.gff3
-.. _mm10 ensGene GFF annotation: http://genes.mit.edu/burgelab/miso/annotations/ucsc_tables/mm10/ensGene.gff3
-.. _hg18 ensGene GFF annotation: http://genes.mit.edu/burgelab/miso/annotations/ucsc_tables/hg18/ensGene.gff3
-.. _hg19 ensGene GFF annotation: http://genes.mit.edu/burgelab/miso/annotations/ucsc_tables/hg19/ensGene.gff3
-.. _Mouse genome (mm9) alternative events: http://genes.mit.edu/burgelab/miso/annotations/mm9_alt_events.zip
-.. _Human genome (hg18) alternative events: http://genes.mit.edu/burgelab/miso/annotations/hg18_alt_events.zip
-.. _Human genome (hg19) alternative events: http://genes.mit.edu/burgelab/miso/annotations/hg19_alt_events.zip
-.. _3′READS annotations for (mm9) mouse genome (.zip): http://genes.mit.edu/burgelab/miso/annotations/tian_apa_events.zip
-.. _Mus_musculus.NCBIM37.65.gff: http://genes.mit.edu/burgelab/miso/annotations/gene-models/Mus_musculus.NCBIM37.65.gff.zip
-.. _Mus_musculus.NCBIM37.65.with_chr.gff: http://genes.mit.edu/burgelab/miso/annotations/gene-models/Mus_musculus.NCBIM37.65.with_chr.gff.zip
-.. _Homo_sapiens.GRCh37.65.gff: http://genes.mit.edu/burgelab/miso/annotations/gene-models/Homo_sapiens.GRCh37.65.gff.zip
-.. _Homo_sapiens.GRCh37.65.with_chr.gff: http://genes.mit.edu/burgelab/miso/annotations/gene-models/Homo_sapiens.GRCh37.65.with_chr.gff.zip
+.. _Drosophila melanogaster alternative events (modENCODE): http://hollywood.mit.edu/burgelab/miso/annotations/modENCODE_alt_events.zip
+.. _Events to genes mapping for mm9: http://hollywood.mit.edu/burgelab/miso/annotations/mm9_events_to_genes.zip
+.. _Events to genes mapping for hg18: http://hollywood.mit.edu/burgelab/miso/annotations/hg18_events_to_genes.zip
+.. _Events to genes mapping for hg19: http://hollywood.mit.edu/burgelab/miso/annotations/hg19_events_to_genes.zip
+.. _mm9 ensGene GFF annotation: http://hollywood.mit.edu/burgelab/miso/annotations/ucsc_tables/mm9/ensGene.gff3
+.. _mm10 ensGene GFF annotation: http://hollywood.mit.edu/burgelab/miso/annotations/ucsc_tables/mm10/ensGene.gff3
+.. _hg18 ensGene GFF annotation: http://hollywood.mit.edu/burgelab/miso/annotations/ucsc_tables/hg18/ensGene.gff3
+.. _hg19 ensGene GFF annotation: http://hollywood.mit.edu/burgelab/miso/annotations/ucsc_tables/hg19/ensGene.gff3
+.. _Mouse genome (mm9) alternative events: http://hollywood.mit.edu/burgelab/miso/annotations/mm9_alt_events.zip
+.. _Human genome (hg18) alternative events: http://hollywood.mit.edu/burgelab/miso/annotations/hg18_alt_events.zip
+.. _Human genome (hg19) alternative events: http://hollywood.mit.edu/burgelab/miso/annotations/hg19_alt_events.zip
+.. _3′READS annotations for (mm9) mouse genome (.zip): http://hollywood.mit.edu/burgelab/miso/annotations/tian_apa_events.zip
+.. _Mus_musculus.NCBIM37.65.gff: http://hollywood.mit.edu/burgelab/miso/annotations/gene-models/Mus_musculus.NCBIM37.65.gff.zip
+.. _Mus_musculus.NCBIM37.65.with_chr.gff: http://hollywood.mit.edu/burgelab/miso/annotations/gene-models/Mus_musculus.NCBIM37.65.with_chr.gff.zip
+.. _Homo_sapiens.GRCh37.65.gff: http://hollywood.mit.edu/burgelab/miso/annotations/gene-models/Homo_sapiens.GRCh37.65.gff.zip
+.. _Homo_sapiens.GRCh37.65.with_chr.gff: http://hollywood.mit.edu/burgelab/miso/annotations/gene-models/Homo_sapiens.GRCh37.65.with_chr.gff.zip
 .. _Bowtie: http://bowtie-bio.sourceforge.net/
 .. _Tophat: http://tophat.cbcb.umd.edu/
 .. _IGV: http://www.broadinstitute.org/igv/
